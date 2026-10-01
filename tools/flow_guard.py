@@ -337,16 +337,17 @@ def pre(payload: dict, root: Path, helper: Path) -> dict | None:
 
 # ---------- scan ----------
 
-def check_view_shape(view: Path, intent: dict) -> list[str]:
+def check_view_shape(view: Path, intent: dict, label: str = "Diagram") -> list[str]:
+    """Diagram·작업 Graph 의 노드와 선행 관계가 intent.md §3 과 같은지 본다."""
     try:
         nodes = json.loads(view.read_text(encoding="utf-8"))["nodes"]
         shape = {n["id"]: sorted(n.get("depends_on", [])) for n in nodes}
     except (ValueError, KeyError, TypeError):
-        return ["[W5] initial-view.json 을 읽을 수 없습니다."]
+        return [f"[W5] {label} 파일({view.name})을 읽을 수 없습니다."]
     if list(shape) != intent["q_ids"]:
-        return [f"[W5] Diagram 노드 {list(shape)} 와 intent.md 상태 표 {intent['q_ids']} 가 다릅니다."]
+        return [f"[W5] {label} 노드 {list(shape)} 와 intent.md 상태 표 {intent['q_ids']} 가 다릅니다."]
     wrong = [q for q in shape if shape[q] != sorted(intent["q_deps"].get(q, []))]
-    return [f"[W5] Diagram 의 선행 관계가 intent.md §3 선행 칸과 다릅니다: {', '.join(wrong)}"] if wrong else []
+    return [f"[W5] {label} 의 선행 관계가 intent.md §3 선행 칸과 다릅니다: {', '.join(wrong)}"] if wrong else []
 
 
 def scan_decisions(root: Path, intent: dict, decisions: dict | None) -> list[str]:
@@ -478,6 +479,7 @@ def scan(root: Path, helper: Path) -> list[str]:
     if view.is_file():
         warnings += check_view_shape(view, intent)
     if graph.is_file():
+        warnings += check_view_shape(graph, intent, "작업 Graph")
         if review_state(root, decisions) != "REVIEWED":
             warnings.append("[W3] 지금 버전의 Intent 가 검토되지 않았는데 작업 Graph(graph.json)가 있습니다. 순서: Intent 검토 → Graph.")
         if not view.is_file():

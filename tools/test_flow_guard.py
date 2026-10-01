@@ -199,6 +199,16 @@ class ScanTest(Workspace):
         self.write_view()
         self.assertTrue(any("다시 만들어졌습니다" in w for w in fg.scan(self.root, HELPER)))
 
+    def test_graph_must_follow_intent_states_w5(self):
+        self.review()
+        self.decide("DEC-1", "후보 B")
+        self.write_graph([exec_node("M1", [], "a.txt")])
+        self.assertTrue(any("작업 Graph 노드" in w for w in fg.scan(self.root, HELPER)))
+        self.write_graph([exec_node("Q1", [], "a.txt"), exec_node("Q2", ["Q1"], "b.txt"), exec_node("Q3", ["Q1"], "c.txt")])
+        self.assertTrue(any("작업 Graph 의 선행 관계" in w for w in fg.scan(self.root, HELPER)))
+        self.write_graph([exec_node("Q1", [], "a.txt"), exec_node("Q2", ["Q1"], "b.txt"), exec_node("Q3", ["Q2"], "c.txt")])
+        self.assertFalse(any("작업 Graph" in w and w.startswith("[W5]") for w in fg.scan(self.root, HELPER)))
+
     def test_product_output_before_graph_warns_w2(self):
         (self.root / "specs").mkdir()
         self.assertTrue(any(w.startswith("[W2]") and "specs" in w for w in fg.scan(self.root, HELPER)))
@@ -405,6 +415,11 @@ class RepoConsistencyTest(unittest.TestCase):
         self.assertEqual(fg.scan_decisions(REPO, intent, decisions), [])
         self.assertEqual(fg.check_view_shape(REPO / "initial-view.json", intent), [])
         self.assertEqual(sorted(intent["vectors"]), ["V-BWD", "V-DOWN", "V-FWD", "V-LEFT", "V-RIGHT", "V-UP"])
+
+    def test_live_graph_follows_intent(self):
+        intent, _ = fg.load(REPO)
+        if (REPO / "graph.json").is_file():
+            self.assertEqual(fg.check_view_shape(REPO / "graph.json", intent, "작업 Graph"), [])
 
     @NEEDS_HELPER
     def test_live_diagram_matches_intent(self):
