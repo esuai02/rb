@@ -1,0 +1,1690 @@
+{
+ "note": "6방향 첫 점검(2026-10-01) 하위 조사 원본. 출처는 하위 에이전트가 본 것이며 주 세션 재확인은 evidence.jsonl F7·F8 뿐이다. 요약·판단은 K6-six-vectors.md.",
+ "workflow": "rb-six-vector-baseline",
+ "accessed": "2026-10-01",
+ "reviews": [
+  {
+   "vector": "좌 — 경쟁·관련 게임 벤치마킹, 마케팅·바이럴",
+   "summary": "Roblox에서 크게 성공한 게임들의 공통점은 화려한 콘텐츠보다 튜토리얼 없이 바로 하는 행동 하나, 혼자 해도 되지만 같이 하면 더 좋은 구조, 꾸준한 업데이트 주기였다. Grow a Garden, Natural Disaster Survival, Adopt Me!가 그 예다. 교육용 쪽에서는 게임이 먼저인 Math Tower Race(누적 방문 약 3.77억, Rolimons)가 교육과정이 먼저인 Mission: Mars(약 600만 플레이, 출처 미확인)보다 훨씬 널리 퍼졌다. 다만 Math Tower Race의 핵심은 시간제한 문제풀이라서 rb 불변식 INV-8과 맞지 않는다. 그래서 rb에 맞는 쪽은 수학을 세계 속 행동으로 쓰는 Distance Dash나 Words of Power 계열이다. 바이럴 수단은 Roblox가 공식 제공하는 것(초대 프롬프트, 추천 보상, Party, 무료 사설 서버, Experience 이벤트, 공유 링크, Learn & Explore 분류)으로 충분하다. 다만 13세 미만에는 알림, 보상형 광고, 채팅(얼굴 연령 확인 필요), 자유 2D 창작, 소셜 행아웃에 제약이 있다. 따라서 9~14세 대상인 rb는 알림·채팅에 기대지 않는 성장과 재방문 구조로 설계해야 한다. 가져오지 말아야 할 것은 재고 타이머, 주간 한정판 같은 FOMO 장치, 확률형 펫·알, Robux로 시간 단축이나 빼앗기, 다른 사람 외모 투표, 속도 압박 퀴즈다.",
+   "findings": [
+    {
+     "claim": "Roblox 추천 알고리즘에서 가장 중요한 신호는 노출 대비 플레이율, 첫 플레이 이탈률(60초 이하, 61~180초 구간), 사용자당 플레이 일수(D1, D2~7, D8~28), 플레이 시간(사용자당 하루 60분까지만 반영)이다. '의도적 함께 플레이 일수'(참여, 초대, 사설 서버 경유)와 결제 일수, 결제액은 그다음 중요도의 신호다.",
+     "sources": [
+      "https://create.roblox.com/docs/discovery (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "K5의 '첫 60초 안 첫 성공'을 첫 플레이 이탈 지표와 직접 연결해 게이트 첫 행동을 60초 안에 둔다. 2인 신호와 NPC 대체를 함께 플레이 일수 신호로 연결한다.",
+     "do_not_copy": "플레이 시간 신호를 높이려고 세션을 억지로 늘리는 장치(하루 60분 상한이 있어 효과도 없다)",
+     "applies_to": [
+      "Q5",
+      "INV-9",
+      "INV-13"
+     ]
+    },
+    {
+     "claim": "공식 문서에 따르면, 게임 이름이 경품·보상을 앞세우면 노출이 줄고, 썸네일은 실제 게임을 정확히 보여 줘야 한다(홈 썸네일 개인화 적용). Community Standards는 발견·참여를 노린 오해 소지 있는 메타데이터를 금지한다.",
+     "sources": [
+      "https://create.roblox.com/docs/discovery (접속 2026-10-01)",
+      "https://about.roblox.com/community-standards (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "게임 이름·썸네일은 실제 게이트 플레이 장면(신호 복구, 2인 협동)으로 만든다. 이름에 '무료 보상' 같은 문구를 넣지 않는다.",
+     "do_not_copy": "'FREE UGC', '보상 지급' 같은 경품형 이름, 실제와 다른 썸네일",
+     "applies_to": [
+      "Q6",
+      "DEC-1"
+     ]
+    },
+    {
+     "claim": "공식 초대 프롬프트: SocialService:CanSendGameInviteAsync로 가능 여부를 확인한 뒤 PromptGameInvite를 호출하고, ExperienceInviteOptions로 메시지, 대상 친구, LaunchData(최대 200자)를 넘길 수 있다. 플랫폼·사용자에 따라 기능이 달라질 수 있다.",
+     "sources": [
+      "https://create.roblox.com/docs/production/promotion/invite-prompts (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "초대는 자연스러운 순간에 한 번만 띄운다. 예를 들어 '2인 신호에 짝이 필요할 때'나 '첫 성공 직후'다. LaunchData로 초대받은 친구를 같은 게이트 구역·같은 신호 짝으로 바로 넣는다. 띄우지 못하면 NPC 짝으로 이어 간다.",
+     "do_not_copy": "초대해야 진행되는 구조, 같은 세션에서 초대창 반복 노출(Community Standards의 반복 메시지 스팸 금지와도 충돌)",
+     "applies_to": [
+      "INV-9",
+      "Q5"
+     ]
+    },
+    {
+     "claim": "Roblox 공식 친구 추천 시스템은 Player:GetJoinData()의 ReferredByPlayerId로 초대자를 식별하고, 초대한 쪽과 초대받은 쪽 모두에게 보상하는 것을 권장한다. 남용 방지책으로 1회성 보상, 재추천 대기 시간, 이상 활동 감시를 제시한다. 문서에 나이 제한이나 스팸 경고는 없다.",
+     "sources": [
+      "https://create.roblox.com/docs/production/promotion/referral-system (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "쓴다면 두 사람에게 같은 1회성 꾸미기 보상('도시 환영 배지' 등)만 주고, 진행·학습·힌트와는 무관하게 둔다. 서버만 지급한다(INV-4). 쓸지 여부는 사람이 정한다(DEC-5).",
+     "do_not_copy": "초대 인원에 따라 커지는 단계형 보상, 초대해야 받는 진행 보상, 초대 수 순위표",
+     "applies_to": [
+      "INV-4",
+      "INV-12",
+      "DEC-5"
+     ]
+    },
+    {
+     "claim": "Party(2024-12-03 발표)는 친구 최대 6명이 같은 서버에 함께 들어가는 기능이다. 누구나 만들 수 있지만 Party 채팅은 13세 이상만 쓸 수 있고, 13세 미만은 보호자가 Party를 막거나 1:1로 제한할 수 있다. 개발자는 Player.PartyId와 SocialService:GetPlayersByPartyId로 같은 파티원을 묶어 순간 이동시킬 수 있다.",
+     "sources": [
+      "https://about.roblox.com/newsroom/2024/12/join-the-party-on-roblox (접속 2026-10-01)",
+      "https://create.roblox.com/docs/projects/teleport (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "같은 PartyId인 플레이어는 같은 게이트 인스턴스·같은 신호 조로 자동 배치한다. 파티가 없으면 NPC 짝을 붙인다. 파티원끼리도 채팅 없이 핑·이모트로 협동되게 한다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "INV-9",
+      "INV-10"
+     ]
+    },
+    {
+     "claim": "사설 서버는 무료로 열 수 있다('Requires Robux' 끔). 다만 13세 미만은 개인정보·보호자 설정에 따라 들어가지 못할 수 있다. 사설 서버로 함께 플레이한 날은 추천의 함께 플레이 신호에 포함된다.",
+     "sources": [
+      "https://create.roblox.com/docs/production/monetization/private-servers (접속 2026-10-01)",
+      "https://create.roblox.com/docs/discovery (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "무료 사설 서버를 학급·친구 모임의 기본 경로로 둔다. 보호자 설정 때문에 못 들어오는 아이를 위해 공개 서버에서도 같은 경험이 되게 한다.",
+     "do_not_copy": "사설 서버 유료화로 학급 사용을 막는 것",
+     "applies_to": [
+      "DEC-7",
+      "INV-12"
+     ]
+    },
+    {
+     "claim": "Experience 알림은 13세 이상 동의자만 받는다. 13세 미만은 업데이트 안내(Experience Updates)만 받을 수 있다. 같은 게임에서 사용자당 하루 1건까지이고, 가짜 시간 압박·위장 광고·다크패턴은 금지되며, 알림 동의를 게임 참여 조건으로 걸 수 없다.",
+     "sources": [
+      "https://create.roblox.com/docs/production/promotion/experience-notifications (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "9~12세 핵심 이용자에게는 알림이 닿지 않는다. 재방문은 세션 사이에 도시가 복구된 모습(다음 접속 때 보이는 변화)과 Experience 이벤트·업데이트 안내로 설계한다.",
+     "do_not_copy": "'곧 사라짐' 식 가짜 긴급 알림, 알림 동의를 보상으로 유도",
+     "applies_to": [
+      "INV-10",
+      "INV-12",
+      "Q5"
+     ]
+    },
+    {
+     "claim": "Experience 이벤트로 시간 한정 이벤트를 상세 페이지·이벤트 페이지·차트·그룹 페이지에 노출할 수 있다. 사용자는 'Notify Me'로 받은편지함 알림을 받는다. 게임당 진행 중·예정 이벤트는 최대 10개, 업데이트 안내는 3일에 1번(60자)까지다.",
+     "sources": [
+      "https://create.roblox.com/docs/production/promotion/experience-events (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "팀이 감당할 수 있는 주기(예: 격주·월간)의 '도시 복구 이벤트'를 이벤트 기능으로 알린다. 놓쳐도 손해 없는 상시 콘텐츠로 남긴다.",
+     "do_not_copy": "이벤트 한정 영구 소멸 아이템",
+     "applies_to": [
+      "Q6",
+      "INV-12"
+     ]
+    },
+    {
+     "claim": "공유 링크(roblox.com/join/…)로 외부 유입 채널을 추적하고 LaunchData로 특정 위치나 혜택에 연결할 수 있다. 2025-10-02에는 게임 안에서 링크를 만드는 PromptLinkSharing API가 나왔다. 한편 Community Standards는 Social Links 기능 외의 외부 URL 표시·공유를 금지하고, Social Links는 연령 확인된 16세 이상만 쓸 수 있다.",
+     "sources": [
+      "https://devforum.roblox.com/t/introducing-the-share-link-api-deep-link-players-directly-into-the-action/3972678 (접속 2026-10-01)",
+      "https://about.roblox.com/community-standards (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "공유 링크는 교사·보호자 대상 소개 자료나 채널별 유입 측정에만 쓴다. 게임 안에서 아이에게 외부 링크·외부 커뮤니티 참여를 권하지 않는다.",
+     "do_not_copy": "게임 안 외부 URL·디스코드 안내, 공유해야 콘텐츠가 열리는 구조",
+     "applies_to": [
+      "INV-10",
+      "Q7"
+     ]
+    },
+    {
+     "claim": "보상형 동영상 광고는 13세 이상에게만 노출된다. Roblox는 13세 미만 광고를 열면서도 보상형 광고를 빼며 '아이들이 오래 머물도록 유인하지 않으려는' 취지라고 밝혔다(2026-06-04 보도). 18세 미만 맞춤 광고는 없다.",
+     "sources": [
+      "https://create.roblox.com/docs/production/promotion/ad-integrations (접속 2026-10-01)",
+      "https://www.adexchanger.com/gaming/roblox-opens-up-advertising-to-kids-under-13/ (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "rb는 보상형 광고를 쓰지 않는다. 광고 수익화 여부는 DEC-5에서 사람이 정한다.",
+     "do_not_copy": "광고 시청 보상(힌트·재도전·진행)",
+     "applies_to": [
+      "INV-12",
+      "DEC-5"
+     ]
+    },
+    {
+     "claim": "2024년 11~12월부터 13세 미만은 다음을 이용할 수 없다: 소셜 행아웃(주목적이 본인으로서 대화하는 게임, 역할극·생활 시뮬레이션은 제외), 검수 없는 자유 2D 창작(그리기·쓰기를 다른 사람에게 복제하는 기능, 블록식 3D 제작은 제외), 성숙도 미평가 게임.",
+     "sources": [
+      "https://devforum.roblox.com/t/updating-experience-guideline-policies-to-keep-our-younger-users-safe/3249079 (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "B안의 '수학 언어 소셜'은 주목적이 도시 복구 게임 플레이로 보이게 유지한다. 플레이어가 그래프·식을 '쓰거나 그려서' 다른 사람에게 보여 주는 기능은 미리 정한 조각(토큰·3D 부품) 조합으로만 만든다.",
+     "do_not_copy": "자유 화이트보드·손글씨 식 공유, 대화가 목적인 광장",
+     "applies_to": [
+      "INV-10",
+      "DEC-9",
+      "DEC-10"
+     ]
+    },
+    {
+     "claim": "2026년 1월부터 전 세계에서 채팅에 얼굴 연령 확인이 필요하다. 확인 후 9세 미만·9~12세·13~15세·16세 이상 등 연령대로 나뉘고, 바로 위아래 연령대하고만 채팅할 수 있다. 9세 미만은 보호자 동의가 필요하다. 2025년 12월 먼저 의무화된 호주·뉴질랜드·네덜란드에서는 일일 활성 이용자의 50% 이상이 확인을 마쳤다.",
+     "sources": [
+      "https://about.roblox.com/newsroom/2026/01/roblox-age-checks-required-to-chat (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "상당수 아이는 채팅이 없거나 제한된 상태로 들어온다. 협동·소셜 순환은 핑·이모트·미리 정한 도시 언어 문구만으로 완결되게 한다(INV-10의 근거를 강화).",
+     "do_not_copy": "채팅이 있어야 성립하는 협동 퍼즐",
+     "applies_to": [
+      "INV-10",
+      "INV-9"
+     ]
+    },
+    {
+     "claim": "유료 확률형 아이템(Robux 또는 Robux로 산 게임 내 화폐로 무작위 결과를 얻는 것)은 결과별 확률을 구매 전에 숫자로 공개해야 하고, 손해만 나는 결과는 둘 수 없다. 호주·벨기에·네덜란드·영국·브라질 이용자에게는 제한된다(2026-05-26 공지).",
+     "sources": [
+      "https://devforum.roblox.com/t/clarifying-requirements-for-paid-random-items/4654622 (접속 2026-10-01)",
+      "https://about.roblox.com/community-standards (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "INV-12(확률형 상자 금지)를 그대로 유지한다. 무료 보상도 무작위 대신 '선택형·확정형'으로 만든다.",
+     "do_not_copy": "알·상자·뽑기, 간접 화폐로 우회한 뽑기",
+     "applies_to": [
+      "INV-12"
+     ]
+    },
+    {
+     "claim": "Grow a Garden: 2025-03 출시, 2025-06 동시 접속 2,160만 명(Roblox 공식), 2025-08-23 최고 2,230만 명(Wikipedia). 개발자는 성공 요인으로 오프라인 성장(다시 오면 식물이 자라 있음), 경쟁적이지 않은 재미, 매주 정해진 시각 업데이트, 숙련자가 신규에게 열매를 선물하는 모습을 들었다. 'Roblox엔 튜토리얼·세계관 설명에 쓸 시간이 없다'는 분석도 있다.",
+     "sources": [
+      "https://about.roblox.com/newsroom/2025/06/roblox-infrastructure-supporting-record-breaking-games (접속 2026-10-01)",
+      "https://en.wikipedia.org/wiki/Grow_a_Garden (접속 2026-10-01)",
+      "https://gamesbeat.com/janzen-madsen-interview/ (접속 2026-10-01)",
+      "https://newsletter.gamediscover.co/p/what-grow-a-gardens-89-million-ccu (접속 2026-10-01)"
+     ],
+     "evidence": "success_case",
+     "transfer_to_rb": "①복구한 도시 구역이 다음 접속 때 '자라 있는' 지속성(타이머·결제 단축 없이) ②돌아온 플레이어가 신규에게 신호 조각·꾸미기를 건네는 '안내자' 행동(기여 인정은 꾸미기만) ③설명보다 첫 행동이 먼저인 게이트.",
+     "do_not_copy": "상점 재고 타이머, 매주 한정 아이템(FOMO), 확률형 펫 상자, Robux로 대기 단축·남의 작물 훔치기, 현금 거래로 번지는 희귀 아이템 경제, 지속하기 힘든 주간 이벤트 쳇바퀴",
+     "applies_to": [
+      "Q5",
+      "INV-12",
+      "INV-2"
+     ]
+    },
+    {
+     "claim": "Grow a Garden은 Robux로 대기 단축·특전·남의 작물 훔치기가 가능하고 펫을 확률형 상자로 얻는다. 과도한 수익화 비판과, 희귀 아이템을 eBay·Discord에서 현금 거래하는 약관 위반 암시장이 보고됐다.",
+     "sources": [
+      "https://en.wikipedia.org/wiki/Grow_a_Garden (접속 2026-10-01)"
+     ],
+     "evidence": "failure_case",
+     "transfer_to_rb": "거래 가능한 희소 아이템을 만들지 않는다. 보상은 거래 불가 꾸미기로 한정한다.",
+     "do_not_copy": "거래 가능한 희소 아이템, 남의 진행을 빼앗는 결제 기능",
+     "applies_to": [
+      "INV-12",
+      "INV-10"
+     ]
+    },
+    {
+     "claim": "Adopt Me!: 54주 연속 매주 금요일 업데이트를 이어 갔고, 카운트다운 실시간 이벤트(바다에서 배가 떠올라 상점으로 바뀜)로 2020-04-11 당시 Roblox 최고 기록인 동시 접속 1,615,085명을 기록했다.",
+     "sources": [
+      "https://www.playadopt.me/news/cute-pet-collecting-roblox-game-adopt-me-sets-new-record (접속 2026-10-01)"
+     ],
+     "evidence": "success_case",
+     "transfer_to_rb": "Q6 뒤 업데이트를 '도시가 눈앞에서 바뀌는 공유 순간'(예: 복구 완료 시 다리가 올라옴)으로 연출한다. 주기는 감당할 수 있는 고정 주기로 정한다.",
+     "do_not_copy": "확률형 알로 펫 획득, 희귀도 기반 거래 경제",
+     "applies_to": [
+      "Q6",
+      "INV-12"
+     ]
+    },
+    {
+     "claim": "Adopt Me!의 거래 면허(2020-11-05): Safety Hub에서 3문항 퀴즈를 통과해야(무제한 재응시) 고급 펫을 거래할 수 있고, 거래 기록 열람과 게임 안 신고도 가능해진다. 불균형 거래는 경고한다.",
+     "sources": [
+      "https://www.playadopt.me/news/trade-changes-and-scam-prevention-update (접속 2026-10-01)"
+     ],
+     "evidence": "success_case",
+     "transfer_to_rb": "위험이 따르는 소셜 기능(예: 다른 플레이어에게 신호·선물 보내기)을 열기 전에, 상황을 보고 발판을 밟아 고르는 세계 행동형 '안전 견습' 단계를 둔다. 재도전은 무제한이다.",
+     "do_not_copy": "안전 단계를 팝업 시험지로 만드는 것(INV-8)",
+     "applies_to": [
+      "INV-10",
+      "INV-8"
+     ]
+    },
+    {
+     "claim": "Dress to Impress: 테마를 받아 360초 안에 옷을 고르고, 런웨이에서 서로 1~5점으로 평가해 상위 3명이 단상에 오른다. 경쟁 없는 자유 모드, 2인 모드, 스토리형 시즌 이벤트, 브랜드 협업(Charli XCX 협업 때 동시 접속 65.1만 명)이 있다. 2024년 9월 제작자 논란이 있었다.",
+     "sources": [
+      "https://en.wikipedia.org/wiki/Dress_to_Impress_(video_game) (접속 2026-10-01)"
+     ],
+     "evidence": "success_case",
+     "transfer_to_rb": "'도시 의뢰 테마 → 짧은 제작 → 모두의 해결책 전시'라는 짧은 라운드 구조와 자유 모드를 빌린다. 전시에서는 점수 대신 '어떤 도시 언어를 썼는지'를 보여 준다.",
+     "do_not_copy": "다른 아이 외모·작품에 대한 상호 점수와 순위 단상(사회적 비교·괴롭힘 위험, K3의 패배자 배제 금지), 한 사람에게 쏠린 평판 의존",
+     "applies_to": [
+      "INV-8",
+      "INV-10",
+      "Q5"
+     ]
+    },
+    {
+     "claim": "Natural Disaster Survival: 2011년 출시한 라운드형 생존 게임으로, 매 라운드 무작위 맵에 무작위 재난이 온다. 누적 방문 약 44.9억, 최대 30명(Rolimons, 2026-10-01 조회)으로 오래 장수하고 있다.",
+     "sources": [
+      "https://www.rolimons.com/game/189707 (접속 2026-10-01)",
+      "https://roblox.fandom.com/wiki/Player:Stickmasterluke/Natural_Disaster_Survival (검색 결과에서 확인, 2026-10-01)"
+     ],
+     "evidence": "success_data",
+     "transfer_to_rb": "게이트의 '도시 신호 고장'을 작은 변형 풀(위치·변화 신호 조합)에서 무작위로 골라, 새 콘텐츠 없이도 다시 할 만한 3~5분 라운드로 만든다(INV-2와 양립).",
+     "do_not_copy": "탈락·공포 연출(성숙도 Minimal·Mild 목표와 K3 실패 연출 기준)",
+     "applies_to": [
+      "DEC-1",
+      "INV-2",
+      "Q5"
+     ]
+    },
+    {
+     "claim": "Brookhaven RP는 목표가 없는 생활·역할극 게임으로, 2023-09-29 기준 누적 방문 372억 회로 Roblox 최다 방문 게임(기네스)이다. 역할극·생활 시뮬레이션은 13세 미만 소셜 행아웃 제한 대상에서 빠진다.",
+     "sources": [
+      "https://www.guinnessworldrecords.com/world-records/503335-most-visited-videogame-created-in-roblox (접속 2026-10-01)",
+      "https://devforum.roblox.com/t/updating-experience-guideline-policies-to-keep-our-younger-users-safe/3249079 (접속 2026-10-01)"
+     ],
+     "evidence": "success_data",
+     "transfer_to_rb": "장기적으로(Q5 이후, INV-2) 게이트 뒤에 압박 없는 '도시 시민 역할' 공간을 둘 수 있다는 근거다. 지금은 키 자리만 둔다.",
+     "do_not_copy": "자유 채팅에 기대는 역할극, 사적 공간 위주 설계",
+     "applies_to": [
+      "INV-2",
+      "INV-10"
+     ]
+    },
+    {
+     "claim": "Doors(2022-08-10, 1인칭 공포 탈출)에서는 같은 위협에 반복해서 죽을수록 사망 화면의 'Guiding Light'가 그 위협의 이름과 피하는 법을 점점 더 구체적으로 알려 준다는 설명이 있다(팬 위키, 검색 결과 수준).",
+     "sources": [
+      "https://en.wikipedia.org/wiki/Doors_(game) (접속 2026-10-01)",
+      "https://doors-game.fandom.com/wiki/Guiding_Light (검색 결과에서 확인, 본문 접근 실패, 2026-10-01)"
+     ],
+     "evidence": "success_case",
+     "transfer_to_rb": "신호를 잘못 고르면 같은 지점에서 실패할 때마다 힌트를 한 단계씩 구체화한다(방향 → 관계 → 예시). 재도전 언어를 쓴다(INV-8, K5 적응형 튜토리얼).",
+     "do_not_copy": "공포 연출, 유료 부활",
+     "applies_to": [
+      "INV-8",
+      "Q5"
+     ]
+    },
+    {
+     "claim": "Roblox 공식 온보딩 지침은 맥락형 튜토리얼(필요한 순간에 트리거), 타이머 힌트(예: 11초가 지나도 버튼을 못 찾으면 강조), 첫 세션 정보 줄이기를 권장한다. 온보딩 퍼널 이벤트(LogOnboardingFunnelStepEvent)는 서버에서만 보낼 수 있고, 단계당 사용자 1회로 집계돼 대시보드에 모인다.",
+     "sources": [
+      "https://create.roblox.com/docs/production/game-design/onboarding-techniques (접속 2026-10-01)",
+      "https://create.roblox.com/docs/production/analytics/funnel-events (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "K5 §5 퍼널을 Roblox 내장 퍼널 이벤트로 잰다. 개인별 저장 없이 집계만 보므로 INV-10·DEC-12와 충돌이 적다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "Q5",
+      "INV-10",
+      "DEC-12"
+     ]
+    },
+    {
+     "claim": "Math Tower Race(TeamRy, Roblox Learning Hub 출시 작품): 빨리 정답을 맞힐수록 블록을 얻어 탑을 쌓고, 틀리면 용암이 기다리는 최대 8인 경주다. 문제를 바꿀 수 있는 무료 사설 서버와 지난 문제 복습 탭이 있다. 누적 방문 약 3.77억, 좋아요 비율 88.4%다(Rolimons, 2026-10-01 조회).",
+     "sources": [
+      "https://www.rolimons.com/game/17571821642 (접속 2026-10-01)",
+      "https://www.roblox.com/games/17571821642/Math-Tower-Race (접속 2026-10-01)",
+      "https://www.destructoid.com/math-tower-race-codes/ (접속 2026-10-01)",
+      "https://about.roblox.com/newsroom/2025/07/roblox-learning-hub-for-educational-experiences (접속 2026-10-01)"
+     ],
+     "evidence": "success_data",
+     "transfer_to_rb": "빌릴 것은 '친구·학급용 무료 사설 서버'와 '돌아보기' 기능뿐이다. 사설 서버에서 사용자가 문제를 넣는 기능은 INV-7(사람 승인)과 텍스트 필터 문제가 있어 보류한다.",
+     "do_not_copy": "속도 압박 문제풀이, 오답 시 용암 탈락, 객관식 시험 UI(INV-8 위반), 코드·그룹 가입 보상 유도",
+     "applies_to": [
+      "INV-8",
+      "INV-7",
+      "DEC-10"
+     ]
+    },
+    {
+     "claim": "Mission: Mars(보스턴 과학관 + Filament, 2022-12, Roblox Community Fund 첫 출시작)는 NASA 실측 데이터 기반 탐사차 설계·협동 미션, NGSS에 맞춘 교사 자료를 갖췄지만 학습 성과 수치는 공개하지 않았다. 과학관 X 게시물에 '600만 플레이 돌파'가 보인다.",
+     "sources": [
+      "https://about.roblox.com/newsroom/2022/12/museum-of-science-boston-enters-the-metaverse-with-new-roblox-experience-mission-mars (접속 2026-10-01)",
+      "https://x.com/museumofscience/status/1957887318188077168 (검색 결과에서 확인, 본문 접근 실패)"
+     ],
+     "evidence": "success_case",
+     "transfer_to_rb": "교사용 관찰 자료(교사 관점 결과)는 따로 패키지로 만든다. 다만 도달 규모는 게임이 먼저인 작품보다 훨씬 작았다는 점을 고려해, 놀이 순환을 먼저 검증한다(Q5).",
+     "do_not_copy": "",
+     "applies_to": [
+      "Q5",
+      "DEC-10"
+     ]
+    },
+    {
+     "claim": "NWEA·Filament의 Distance Dash(2023-11)는 학생이 질량이 다른 두 탈것의 힘을 조절해 동시에 도착하게 만드는 게임이다. 데이터 규칙 찾기, 예측, 뉴턴 제2법칙 적용을 평가 목표로 둔다.",
+     "sources": [
+      "https://www.nwea.org/news-center/press-releases/nwea-launches-new-experience-on-roblox-to-engage-students-in-immersive-physics/ (접속 2026-10-01)"
+     ],
+     "evidence": "expert_work",
+     "transfer_to_rb": "'관계·변화' 신호를 '두 신호가 동시에 도착하도록 기울기·출발점을 맞추기' 같은 세계 행동 퍼즐로 만든다. 2인 동시 신호와 자연스럽게 맞는다(INV-8).",
+     "do_not_copy": "",
+     "applies_to": [
+      "INV-8",
+      "DEC-1"
+     ]
+    },
+    {
+     "claim": "Words of Power(Mrs Wordsmith, Learning Hub 작품)에서는 단어 하나하나가 능력이 되어, 단어 카드를 골라 적과 싸우고 기술을 연다. 혼자 또는 친구와 할 수 있고 무료이며, 간격 반복을 쓴다고 주장한다. 이용·학습 수치는 공개되지 않았다.",
+     "sources": [
+      "https://mrswordsmith.com/pages/roblox (접속 2026-10-01)",
+      "https://about.roblox.com/newsroom/2025/07/roblox-learning-hub-for-educational-experiences (접속 2026-10-01)"
+     ],
+     "evidence": "expert_work",
+     "transfer_to_rb": "B안의 핵심 은유로 쓸 수 있다. 위치·변화·관계·규칙 같은 '도시 언어'를 도구로 들고 그 단어가 월드에 실제 효과를 내게 한다. 다만 정답 하나를 고르는 카드 선택이 되지 않게 여러 표현이 각각 다른 결과를 내도록 한다.",
+     "do_not_copy": "전투 중심 연출(성숙도 목표), 사실상 객관식인 카드 선택",
+     "applies_to": [
+      "DEC-10",
+      "INV-8"
+     ]
+    },
+    {
+     "claim": "Roblox Learning Hub(2025-07-21 공개, 더보기 탭의 Learn 아이콘)와 Learn & Explore 분류가 교육용 게임의 별도 노출 경로다. Learn & Explore 조건은 교육자가 알아볼 수 있는 교육적 가치, 초반 공격적 수익화 없음, 모든 연령 교실 적합, 좋아요 비율 50% 초과, 동시 접속 15명 이상이고, 심사는 1~2개월마다 한다.",
+     "sources": [
+      "https://create.roblox.com/docs/creator-programs/learn-explore-sort (접속 2026-10-01)",
+      "https://about.roblox.com/newsroom/2025/07/roblox-learning-hub-for-educational-experiences (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "Q6 이후 Learn & Explore 신청을 성장 경로 하나로 잡는다. INV-12가 이미 조건과 맞는다. B안을 고르면 '수학 언어 친숙화'를 교육자에게 설명할 문서가 필요하다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "Q6",
+      "DEC-10",
+      "INV-12"
+     ]
+    },
+    {
+     "claim": "게임 안에서 무료 한정 UGC를 뿌리는 방식이 유입 수단으로 유행했지만, 한정 아이템이 넘쳐나면서 효과가 떨어졌다는 업계 분석이 있다(2024-01).",
+     "sources": [
+      "https://naavik.co/deep-dives/state-of-ugc2024/ (접속 2026-10-01)"
+     ],
+     "evidence": "expert_work",
+     "transfer_to_rb": "UGC 경품을 유입 지렛대로 쓰지 않는다. 보상은 게임 세계관 안의 꾸미기로 한정한다.",
+     "do_not_copy": "무료 UGC를 얻으려 오래 반복하게 만드는 'UGC 게임' 구조",
+     "applies_to": [
+      "INV-12"
+     ]
+    },
+    {
+     "claim": "EU 집행위원회의 DSA 제28조 미성년자 보호 지침(2025-07-14)은 다음을 권고한다: 연속 기록(streak), 푸시 알림, 자동 재생 등 과사용 기능은 기본값 끔, 참여만 노린 설득적 설계 제거, 아이의 상업적 이해 부족을 악용하지 않기(일부 가상화폐·루트박스 포함). 이 지침은 온라인 플랫폼 대상이고 소·영세 기업은 제외된다.",
+     "sources": [
+      "https://digital-strategy.ec.europa.eu/en/library/commission-publishes-guidelines-protection-minors (접속 2026-10-01)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "rb가 직접 적용 대상인지는 미정이지만 설계 기준선으로 쓴다. 연속 출석 기록, 출석 압박, 한정 시간 보상을 넣지 않는다.",
+     "do_not_copy": "연속 출석 기록, 출석 압박, 한정 시간 보상",
+     "applies_to": [
+      "INV-12",
+      "INV-13",
+      "DEC-5"
+     ]
+    },
+    {
+     "claim": "FTC는 Epic Games(Fortnite)에서 2022-12-19 총 5.2억 달러를 받아 냈다. COPPA 위반 민사 벌금 2.75억 달러(기본값으로 켜진 음성·텍스트 채팅 포함)와 다크패턴 결제 환불 2.45억 달러(혼란스러운 버튼 배치로 의도치 않은 결제)다.",
+     "sources": [
+      "https://www.ftc.gov/news-events/news/press-releases/2022/12/fortnite-video-game-maker-epic-games-pay-more-half-billion-dollars-over-ftc-allegations (접속 2026-10-01)"
+     ],
+     "evidence": "failure_case",
+     "transfer_to_rb": "소통 기능은 기본값 끔·선택형으로 두고, 결제 버튼은 진행 버튼과 위치·모양을 분리한다(수익화를 한다면).",
+     "do_not_copy": "기본값으로 켜진 소통, 진행·결제 버튼을 섞은 배치",
+     "applies_to": [
+      "INV-10",
+      "INV-12",
+      "DEC-5"
+     ]
+    },
+    {
+     "claim": "Roblox 교육용 게임의 학습 효과는 실증이 아직 적다. Roblox 교육 담당 부사장도 '파트너 중 게임 속 성과가 다른 무엇을 예측한다고 인과적으로 입증할 준비가 된 곳은 없다'고 말했다(EdWeek, 2023-05-15). Roblox 학습 연구 체계적 문헌고찰도 실증 연구가 적다고 정리했다.",
+     "sources": [
+      "https://www.edweek.org/teaching-learning/roblox-makes-its-move-into-stem-education-what-are-the-risks-for-schools/2023/05 (접속 2026-10-01)",
+      "https://www.mdpi.com/2227-7102/13/3/296 (검색 결과에서 확인, 본문 403)"
+     ],
+     "evidence": "press",
+     "transfer_to_rb": "마케팅 문구에 '학습 효과 입증'을 쓰지 않는다. Q5 파일럿 지표는 '관찰된 언어 재사용·완주' 수준으로만 표현한다.",
+     "do_not_copy": "근거 없는 학습 효과 광고",
+     "applies_to": [
+      "Q5",
+      "DEC-10"
+     ]
+    }
+   ],
+   "proposals": [
+    "게이트 첫 60초 설계를 Roblox 추천의 첫 플레이 이탈 신호(60초 이하, 61~180초)에 맞춘다. 첫 세계 행동 1개 + 맥락형 튜토리얼 + 타이머 힌트를 두고, LogOnboardingFunnelStepEvent로 K5 §5 퍼널을 집계만 한다(Q4·Q5 산출물이므로 순서는 INV-1을 따른다).",
+    "실패할수록 구체화되는 힌트(Doors 패턴)를 게이트 신호 오답 처리 규칙으로 Q2 Graph에 넣는다. 방향 → 관계 → 예시 3단계, 재도전 언어.",
+    "같은 Party면 같은 게이트·같은 신호 조로 자동 배치하고, 파티가 없으면 NPC 짝을 붙인다. 채팅 없이 핑·이모트·미리 정한 도시 언어 문구만으로 협동이 완결되는지 Play 시나리오로 검사한다(INV-9·INV-10).",
+    "초대는 '짝이 필요한 순간' 또는 '첫 성공 직후'에 세션당 최대 1회만 띄우고, LaunchData로 초대받은 친구를 같은 게이트로 연결한다. 추천 보상을 쓴다면 두 사람에게 같은 1회성 꾸미기만 주고 진행과는 무관하게 둔다. 쓸지는 사람이 정한다.",
+    "재방문 장치는 알림(13세 이상만 받음)이 아니라 '복구한 도시가 다음 접속 때 바뀌어 있음'과 Experience 이벤트·업데이트 안내로 설계한다. 연속 출석 기록, 한정 시간 보상, 재고 타이머는 금지어·금지 패턴 검사(Q3)에 넣는다.",
+    "게이트 신호 고장을 작은 변형 풀에서 무작위로 골라 재플레이 가치를 만든다(Natural Disaster Survival 패턴). 콘텐츠 양을 늘리지 않고 INV-2 범위 안에서 할 수 있다.",
+    "'관계·변화' 신호를 '두 신호를 동시에 도착시키기' 같은 세계 행동 퍼즐로 만드는 안을 DEC-1(게이트 신호 구성) 후보로 기록한다(Distance Dash 패턴).",
+    "돌아온 플레이어가 신규를 돕는 '안내자' 행동(Grow a Garden의 선물 패턴)과, 점수 없이 해결책을 전시하는 장면(Dress to Impress를 뒤집은 형태)을 Q5 이후 장기 구조 후보 목록에 둔다(INV-2).",
+    "Q6 이후 Learn & Explore 신청 기준(좋아요 비율 50% 초과, 동시 접속 15명 이상, 초반 수익화 없음, 교실 적합)을 Q6 체크리스트에 추가하고, 학급용 무료 사설 서버를 기본값으로 한다.",
+    "6방향 점검(W8)의 '좌' 주기에 맞춰 Roblox 차트 상위·Learning Hub 신작 3~5개를 정기 재조사하고, 근거는 evidence.jsonl에 추가만 한다."
+   ],
+   "needs_human": [
+    "추천(초대) 보상을 아예 쓸지, 쓴다면 어떤 꾸미기 보상으로 할지는 아동 대상 윤리·사업 판단이다(DEC-5·INV-12).",
+    "Roblox 추천에는 결제 일수·결제액이 '중요' 신호로 들어간다. 수익화를 하지 않거나 최소화할 때의 노출 손실을 감수할지(DEC-5).",
+    "유튜브·틱톡 크리에이터, 공유 링크 등 Roblox 밖에서 13세 미만에게 하는 마케팅은 COPPA, 각 플랫폼 연령 제한, 한국 법령 검토가 필요하다(법률 전문가).",
+    "EU DSA 미성년자 지침 같은 규제가 플랫폼 안 게임 개발자에게 직접 적용되는지(법률 판단).",
+    "업데이트 주기(주간·격주·월간)를 팀 역량에 맞게 약속할지. Grow a Garden도 주간 이벤트가 반복적이 됐다고 밝혔다는 보도가 있다.",
+    "Learning Hub·Learn & Explore 경로를 노릴지. B안(DEC-10)이면 교육자용 설명 틀이 필요하다.",
+    "학급 파일럿에서 무료 사설 서버를 쓸 때 13세 미만의 보호자 설정 제약을 어떻게 처리할지(DEC-7).",
+    "브랜드·IP 협업(Dress to Impress 방식)을 할지, 한다면 아동 대상 광고 표시 기준을 어떻게 지킬지(사업·법률)."
+   ],
+   "unverified": [
+    "Doors의 Guiding Light가 반복 사망 시 힌트를 구체화한다는 설명은 팬 위키 검색 결과로만 봤고, 본문은 접근하지 못했다(402).",
+    "Mission: Mars '600만 플레이'는 과학관 X 게시물 검색 결과로만 봤다. 게시 날짜와 수치는 직접 확인하지 못했다.",
+    "Grow a Garden 개발자가 '주간 이벤트가 반복적이라 새 시대로 전환한다'고 말했다는 내용은 PC Gamer 기사 제목과 검색 요약에서만 봤다. 본문은 가져오지 못했다.",
+    "'좋아요·즐겨찾기에 보상 주기 금지'는 DevForum 커뮤니티 해석뿐이다. 공식 Community Standards 본문에서는 해당 문장을 찾지 못했다.",
+    "Rolimons의 방문 수·좋아요 비율은 제3자 추적값이고 2026-10-01 조회 시점의 값이다.",
+    "친구 추천 보상 시스템에 연령 제한이나 정책상 상한이 있는지 공식 문서에 언급이 없다.",
+    "Roblox Advertising Standards 원문(help.roblox.com)은 403으로 열리지 않았다. 13세 미만 광고 규칙은 개발자 문서와 AdExchanger 보도로만 확인했다.",
+    "Learning Hub에 들어가는 기준은 공개되지 않았다(Learn & Explore 기준만 공개).",
+    "2026년 1월 연령 확인 체계 이후 Party 채팅 연령 조건이 바뀌었는지는 확인하지 못했다.",
+    "Math Tower Race의 코드·그룹 가입 보상이 정책에 맞는지, 결제 구조 전체가 어떤지는 확인하지 못했다.",
+    "Words of Power, Distance Dash의 이용자 수와 학습 성과 수치는 공개 자료에서 찾지 못했다.",
+    "Roblox 학습 체계적 문헌고찰(MDPI)은 검색 요약만 봤다(본문 403)."
+   ]
+  },
+  {
+   "vector": "우 — 인지과학적 밸런스·리듬, 건강한 몰입(동기) 설계",
+   "summary": "근거가 지지하는 '몰입'은 세 가지로 만들어진다. 분명한 근접 목표와 즉시 피드백, 실력에 맞는 도전(Flow), 그리고 자율·유능감·관계감(SDT)이다. 학습 효과는 짧은 세션을 여러 번 나눠 할 때, 간격을 둔 회상과 섞기를 할 때, 정답을 바로 주지 않는 단계형 힌트를 쓸 때 커진다. '도파민 최적화'를 과학적으로 풀면 '원함(wanting)'을 키우는 일이지 즐거움이나 학습을 키우는 일이 아니다. 보상의 불확실성은 도박과 같은 경로로 원함을 증폭시킨다. 그래서 무작위 보상, 스트릭, FOMO, 비활동 알림, 아이별 참여 극대화는 규제 문서(ICO 표준 5·12·13, EU DSA 28조 지침, UN 일반논평 25호)와 Roblox 정책이 모두 막는 방향이다. 결론적으로 rb의 '우' 축은 '도파민·생활 데이터 최적화'에서 '미션 단위 집계 신호로 난이도·힌트·휴식 리듬을 사람이 조정하는 건강한 몰입 설계'로 바꿔야 한다. 이 축 문구를 바꾸는 일은 사람이 승인해야 한다.",
+   "findings": [
+    {
+     "claim": "Flow의 근접 조건은 세 가지다: 실력을 조금 넘는 도전, 분명한 근접 목표, 진행에 대한 즉시 피드백. 이 균형은 깨지기 쉽다. 도전이 실력을 넘으면 불안해지고, 실력이 도전을 넘으면 지루해진다. Flow 상태에서는 시간 감각도 왜곡된다.",
+     "sources": [
+      "https://nuovoeutile.it/wp-content/uploads/2015/12/2002-Flow.pdf (Nakamura & Csikszentmihalyi 2002, 접속 2026-10-01)"
+     ],
+     "evidence": "expert_work",
+     "transfer_to_rb": "미션마다 화면에 보이는 근접 목표 1개와 1초 안 월드 피드백을 두어 INV-8과 맞춘다. 난이도는 단계적으로 올린다. 몰입하면 시간 감각이 흐려지므로 미션 끝마다 자연스러운 정지점과 중립적인 시간 단서를 둔다.",
+     "do_not_copy": "Flow를 '체류시간 늘리기' 목표로 해석해 정지점을 없애는 설계",
+     "applies_to": [
+      "Q2",
+      "Q3",
+      "INV-8"
+     ]
+    },
+    {
+     "claim": "학습게임 이용자 173명을 조사한 결과, 게임 안 도전 수준이 학습을 가장 강하게 예측했다. 몰입감(immersion)과 학습 사이에는 유의한 관계가 없었다.",
+     "sources": [
+      "https://www.researchwithrutgers.com/en/publications/challenging-games-help-students-learn-an-empirical-study-on-engag/ (Hamari et al. 2016, 검색결과 확인, 접속 2026-10-01)",
+      "https://www.gbl.uzh.ch/quartz/references/Hamari-et-al.-(2016) (접속 2026-10-01)"
+     ],
+     "evidence": "paper",
+     "transfer_to_rb": "제작 자원은 연출·몰입감보다 '실력이 늘면 같이 오르는 도전 곡선'에 먼저 쓴다. Q2 Graph에서 미션마다 난도 단계를 명시한다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "Q2",
+      "Q5",
+      "DEC-10"
+     ]
+    },
+    {
+     "claim": "SDT의 세 욕구(자율·유능감·관계감)는 각각 독립적으로 게임 즐거움과 이후 플레이를 예측한다. 유능감·자율 지각은 조작이 직관적인지와도 관련된다. 단, 연구 표본은 주로 성인이다.",
+     "sources": [
+      "https://selfdeterminationtheory.org/SDT/documents/2006_RyanRigbyPrzybylski_MandE.pdf (Ryan, Rigby, Przybylski 2006, 접속 2026-10-01)"
+     ],
+     "evidence": "paper",
+     "transfer_to_rb": "미션 검수표에 세 칸을 둔다. 자율: 해결 경로 2개 이상. 유능감: 터치·키보드·패드 조작 직관성과 정보형 피드백. 관계감: 협동하되 NPC로 대체 가능(INV-9). 9~14세에 그대로 적용되는지는 파일럿에서 확인한다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "Q2",
+      "Q3",
+      "INV-9"
+     ]
+    },
+    {
+     "claim": "128개 연구를 메타분석한 결과, 미리 기대하게 하고 과제에 걸어 둔 유형 보상(참여·완료·성과 연동)은 자발적 내재동기를 떨어뜨렸다(d=-0.40/-0.36/-0.28). 긍정적 피드백은 내재동기를 높였다(d=0.33). 유형 보상의 해는 아동에게 더 컸다. 이 결론에는 반론 논문도 있다.",
+     "sources": [
+      "https://depts.washington.edu/techdocs/papers/deciExtrinsicRewardsAndIntrinsicMotivation99.pdf (Deci, Koestner, Ryan 1999, 접속 2026-10-01)",
+      "https://pubmed.ncbi.nlm.nih.gov/10589298 (반론 comment, 검색결과, 접속 2026-10-01)"
+     ],
+     "evidence": "paper",
+     "transfer_to_rb": "보상의 중심은 '도시가 실제로 바뀌는 것'과 정보형 칭찬(무엇을 잘했는지)으로 둔다. '문제 하나 풀면 코인 N개'처럼 미리 알리는 유형 보상 루프는 수학 행동에 붙이지 않는다. 완주 기본 보상은 모두 같게 한다(INV-4).",
+     "do_not_copy": "수학 정답 1개당 미리 알린 화폐·아이템을 주는 루프",
+     "applies_to": [
+      "Q2",
+      "INV-4",
+      "INV-8",
+      "INV-12"
+     ]
+    },
+    {
+     "claim": "'먼저 문제 해결, 뒤에 설명(PS-I)'이 반대 순서보다 개념 이해와 전이에 유리했다(g=0.36, 53개 연구). 그러나 초2~5학년에서는 '설명 먼저'가 유리한 역전이 나타났다.",
+     "sources": [
+      "https://api.semanticscholar.org/graph/v1/paper/DOI:10.3102/00346543211019105?fields=title,year,abstract (Sinha & Kapur 2021 초록, 접속 2026-10-01)",
+      "https://eric.ed.gov/?id=EJ1308129 (검색결과, 접속 2026-10-01)"
+     ],
+     "evidence": "paper",
+     "transfer_to_rb": "힌트 시점을 연령대에 따라 다르게 둔다. 9~10세는 짧은 시연을 먼저 보여 주고 시도하게 한다. 11~14세는 짧은 탐색을 먼저 허용한 뒤 힌트를 준다. 실패에는 비용이 없어야 한다(재도전 언어, INV-8). 연령 신호를 쓸지는 사람이 결정한다.",
+     "do_not_copy": "모든 연령에 '스스로 헤매게 두기'를 일괄 적용",
+     "applies_to": [
+      "Q2",
+      "INV-8",
+      "DEC-9",
+      "DEC-12"
+     ]
+    },
+    {
+     "claim": "형성 피드백 지침의 요점은 다음과 같다. 어렵거나 처음 배우는 과제와 저성취 학습자에게는 즉시 피드백, 쉬운 과제와 고성취 학습자에게는 지연 피드백을 준다. 매번 정답으로 끝나는 점진 힌트는 피한다. 힌트 남용을 막는 장치를 둔다. 피드백은 사람이 아니라 과제에 초점을 둔다. 저성취 학생에게 남과 비교하는 피드백을 주지 않는다. 텍스트만 쓰지 않는다.",
+     "sources": [
+      "https://myweb.fsu.edu/vshute/pdf/shute%202008_b.pdf (Shute 2008, Tables 2–4, 접속 2026-10-01)"
+     ],
+     "evidence": "expert_work",
+     "transfer_to_rb": "힌트 사다리는 '월드 신호 → 전략 질문 → 같은 구조의 다른 예시' 순서로 하고, 정답을 직접 보여 주는 단계는 두지 않는다. 다음 단계 힌트는 최소 1회 시도한 뒤에 연다. 피드백은 월드 변화·소리·시각으로 준다. 순위표나 '친구보다 느림' 표시는 쓰지 않는다.",
+     "do_not_copy": "정답으로 끝나는 힌트 연타, 공개 순위 비교",
+     "applies_to": [
+      "Q2",
+      "Q3",
+      "INV-8"
+     ]
+    },
+    {
+     "claim": "컴퓨터 기반 학습 피드백 메타분석(40편)에서 설명형 피드백이 정오만 알려 주는 피드백보다 고차 학습에 효과적이었다. 즉시와 지연 중 어느 쪽이 나은지는 결론이 나지 않았다.",
+     "sources": [
+      "https://research.utwente.nl/en/publications/effects-of-feedback-in-a-computer-based-learning-environment-on-s/ (Van der Kleij et al. 2015, 검색결과, 접속 2026-10-01)"
+     ],
+     "evidence": "paper",
+     "transfer_to_rb": "틀렸을 때 '왜 그런지'를 월드 결과(예: 기울기가 커서 다리가 미끄러짐)로 보여 준다. 피드백 지연 시간은 고정 법칙으로 두지 않고 파일럿 가설로 둔다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "Q2",
+      "Q5",
+      "INV-8"
+     ]
+    },
+    {
+     "claim": "'시스템 공략' 행동(힌트 연타, 체계적 찍기)을 자주 하는 학생은 비슷한 학생보다 약 2/3만큼만 배웠다. 도움을 언제 주고 언제 보류할지는 '도움 딜레마'로 불리며, 정해진 답이 아직 없다.",
+     "sources": [
+      "https://link.springer.com/chapter/10.1007/978-3-540-30139-4_50 (Baker, Corbett, Koedinger 2004, 검색결과, 접속 2026-10-01)",
+      "https://eric.ed.gov/?id=EJ785065 (Koedinger & Aleven 2007, 접속 2026-10-01)"
+     ],
+     "evidence": "paper",
+     "transfer_to_rb": "힌트는 무료로 두되, 힌트 단계 사이에 시도 1회를 요구해 연타를 막는다. 빠른 연속 찍기 비율은 미션 단위로 집계해 '난도가 맞지 않음' 신호로만 쓴다. 아이를 벌주지 않는다.",
+     "do_not_copy": "힌트 사용에 비용·감점을 매기는 것",
+     "applies_to": [
+      "Q2",
+      "Q3",
+      "INV-12"
+     ]
+    },
+    {
+     "claim": "세 가지 학습환경에서 지루함은 매우 오래 지속됐고, 낮은 학습과 시스템 공략 행동과 연관됐다. 좌절은 덜 지속됐고 학습 저하와의 연관도 약했다. 혼란과 몰입 집중이 가장 흔한 상태였다.",
+     "sources": [
+      "https://learninganalytics.upenn.edu/ryanbaker/BDRG-IJHCS-Final.pdf (Baker, D'Mello, Rodrigo, Graesser 2010 초록, 접속 2026-10-01)"
+     ],
+     "evidence": "paper",
+     "transfer_to_rb": "지루함 신호를 우선 감시한다. 미션 단위로 빠른 건너뛰기, 무작정 찍기, 목적 없는 배회 비율을 본다. 혼란은 정상 상태이므로 곧바로 쉽게 만들지 않는다. 감시는 아이 개인의 감정을 추론하는 방식이 아니라 미션 집계로만 한다.",
+     "do_not_copy": "아이별 실시간 감정 추론·표정 분석",
+     "applies_to": [
+      "Q2",
+      "Q5",
+      "INV-10",
+      "DEC-12"
+     ]
+    },
+    {
+     "claim": "인지부하 이론에 따르면 새 정보는 용량이 제한된 작업기억을 먼저 거친다. 초보자에게 효과적인 안내가 숙련자에게는 오히려 방해가 된다(전문성 역전 효과). Roblox 문서도 상황형 튜토리얼이 첫 세션의 인지부하를 줄인다고 권한다.",
+     "sources": [
+      "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1007/s10648-019-09465-5?fields=title,abstract (Sweller et al. 2019, 접속 2026-10-01)",
+      "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1007/s10648-007-9054-3?fields=title,abstract (Kalyuga 2007, 접속 2026-10-01)",
+      "https://raw.githubusercontent.com/Roblox/creator-docs/main/content/en-us/production/game-design/onboarding-techniques.md (접속 2026-10-01)"
+     ],
+     "evidence": "paper",
+     "transfer_to_rb": "미션 하나에 새 개념은 1개만 넣는다. 화면에는 행동 하나만 둔다(K4). 같은 세션에서 연속 성공하면 안내를 줄여 나간다. 이 적응은 세션 안 상태로만 처리하고 장기 프로파일로 쌓지 않는다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "Q2",
+      "Q3",
+      "INV-8",
+      "DEC-12"
+     ]
+    },
+    {
+     "claim": "연습 시험(회상)과 분산 연습은 연령·능력에 걸쳐 '높은 효용'으로 평가됐다. 섞기 연습은 '중간 효용'이다. 7학년 54개 학급 RCT에서 섞기 연습군이 1개월 뒤 시험에서 61% 대 38%(d=0.83)로 앞섰다.",
+     "sources": [
+      "https://iverson.cm.utexas.edu/courses/310M/Handouts/Dunlosky%20et%20al.%20-%202013%20-%20Improving%20Students%E2%80%99%20Learning%20With%20Effective%20Learni.pdf (Dunlosky et al. 2013, 접속 2026-10-01)",
+      "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1037/edu0000367?fields=title,abstract (Rohrer et al. RCT, 접속 2026-10-01)",
+      "https://ies.ed.gov/use-work/awards/efficacy-study-interleaved-mathematics-practice (접속 2026-10-01)"
+     ],
+     "evidence": "paper",
+     "transfer_to_rb": "같은 도시 언어(위치·변화·관계·규칙)를 다른 지역 미션에 간격을 두고 다시 등장시킨다. 숙달한 뒤에는 유형을 섞어 낸다. 회상은 퀴즈창이 아니라 월드 행동으로 한다(INV-8). 다시 방문하면 짧은 회상 미션 1개로 시작한다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "Q2",
+      "INV-8",
+      "DEC-10"
+     ]
+    },
+    {
+     "claim": "게임 학습 메타분석 결과는 다음과 같다. 게임은 비게임 조건보다 학습 효과가 컸다(g=0.33). 진지한 게임은 학습(d=0.29)에서는 우세했지만 동기에서는 기존 수업보다 유의하게 높지 않았다. 학습 효과는 다른 수업과 병행할 때, 여러 회차로 할 때, 그룹으로 할 때 더 컸다.",
+     "sources": [
+      "https://api.semanticscholar.org/graph/v1/paper/DOI:10.3102/0034654315582065?fields=title,abstract (Clark et al. 2016, 접속 2026-10-01)",
+      "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1037/a0031311?fields=title,abstract (Wouters et al. 2013, 접속 2026-10-01)"
+     ],
+     "evidence": "paper",
+     "transfer_to_rb": "한 번 길게 하는 세션보다 여러 날에 걸친 짧은 방문을 기준으로 설계한다. 협동(그룹) 경로를 우선 다듬는다. '게임이니까 동기가 생긴다'는 가정을 버리고 Q5에서 동기를 따로 잰다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "Q2",
+      "Q5",
+      "INV-9",
+      "DEC-10"
+     ]
+    },
+    {
+     "claim": "'85% 규칙'(훈련 정확도 약 85%일 때 학습이 가장 빠름)은 이진 분류와 경사하강 학습기에서 수학적으로 유도된 결과다. 저자들도 다른 과제나 학습기로 일반화하는 것은 과제로 남겼다.",
+     "sources": [
+      "https://www.biorxiv.org/content/10.1101/255182v1.full (Wilson et al., 접속 2026-10-01)",
+      "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1038/s41467-019-12552-4?fields=title,abstract (접속 2026-10-01)"
+     ],
+     "evidence": "paper",
+     "transfer_to_rb": "미션 단위 목표 성공 구간(첫 번째나 두 번째 시도 성공 약 70~90%)은 출발 가설로만 쓴다. 파일럿 집계로 검증한다. 아이별로 85%에 맞추는 실시간 최적화는 하지 않는다.",
+     "do_not_copy": "85%를 아동 개인별 실시간 목표값으로 쓰는 것",
+     "applies_to": [
+      "Q2",
+      "Q5",
+      "INV-13"
+     ]
+    },
+    {
+     "claim": "도파민은 쾌락이 아니라 보상 예측오차(예상과 실제의 차이)를 코딩하는 학습 신호다. 중변연계 도파민은 '원함'을 매개하고 '좋아함'은 매개하지 않는다는 데 합의가 있다. 보상의 불확실성은 단서의 유인 현저성과 도파민 반응을 키운다(주로 동물 연구, 도박 중독과 관련). 비디오게임 중 선조체 도파민 방출을 보인 연구는 성인 남성 8명 대상이었다.",
+     "sources": [
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC7804370/ (Diederen & Fletcher 2021, 접속 2026-10-01)",
+      "https://sites.lsa.umich.edu/berridge-lab/wp-content/uploads/sites/743/2025/06/2025-Robinson-Berridge-The-incentive-sensitization-theory-of-addiction-30-years-on-An-Rev-Psychol.pdf (Robinson & Berridge 2025, §6.4·결론, 접속 2026-10-01)",
+      "https://www.nature.com/articles/30498 (Koepp et al. 1998, 검색결과, 접속 2026-10-01)"
+     ],
+     "evidence": "paper",
+     "transfer_to_rb": "'도파민 활성화 최적화'라는 목표는 폐기한다. 그것은 즐거움이나 학습을 키우는 일이 아니라 원함과 강박을 키우는 일이다. 대체 수단은 유능감 피드백, 풀 수 있는 정보 공백(호기심), 협동이다. 게임 로그로 아이의 도파민을 측정하는 검증된 방법은 없다.",
+     "do_not_copy": "가변비율 보상, 무작위 드롭, 니어미스 연출, 미스터리 박스, 보상 시점 무작위화",
+     "applies_to": [
+      "INV-12",
+      "INV-13",
+      "DEC-10"
+     ]
+    },
+    {
+     "claim": "호기심은 정보 공백이 만드는 상태다. 도파민 '원함' 시스템과 연결되지만 특정 정보를 얻으면 해소된다. 상황적 흥미는 자율·유능감·관계감에서 생긴다.",
+     "sources": [
+      "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1007/s10648-019-09497-x?fields=title,abstract ('Homo Curious: Curious or Interested?' 2019, 접속 2026-10-01)"
+     ],
+     "evidence": "paper",
+     "transfer_to_rb": "다시 오고 싶게 만드는 장치는 '풀리지 않은 도시의 수수께끼'나 '다음 패턴 예고'처럼 해소 가능한 정보 공백으로 만든다. 확률 보상은 쓰지 않는다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "Q2",
+      "DEC-10"
+     ]
+    },
+    {
+     "claim": "루트박스는 다음과 같은 증거가 쌓여 있다. 루트박스 지출과 문제도박의 연관(η²=0.054, 성인 7,422명, 인과 방향은 불명)이 있고, 13편 중 12편이 양의 관계를 보고했다(리뷰). FTC는 2025년 HoYoverse에 2,000만 달러 합의를 받아 16세 미만에게 부모 동의 없는 루트박스 판매를 금지하고 확률·실제 비용을 공개하게 했다. Roblox는 유료 무작위 아이템의 확률 공개와 PolicyService 적용을 의무화했고, 커뮤니티 기준에서 '모의·실제 도박'을 모두 금지한다.",
+     "sources": [
+      "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0206767 (Zendle & Cairns 2018, 접속 2026-10-01)",
+      "https://journals.sagepub.com/doi/abs/10.1177/14614448211027175 (Spicer et al. 2022, 검색결과, 접속 2026-10-01)",
+      "https://consumer.ftc.gov/consumer-alerts/2025/01/ftc-settlement-order-bans-sales-genshin-impact-loot-boxes-kids-under-16-without-their-parents (접속 2026-10-01)",
+      "https://create.roblox.com/docs/production/monetization/paid-random-items (접속 2026-10-01)",
+      "https://about.roblox.com/community-standards (접속 2026-10-01)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "INV-12를 넓힌다. 유료뿐 아니라 무료 무작위 보상(알 깨기, 룰렛, 뽑기 연출)도 금지한다. Q3 Harness의 금지 패턴 검사에 확률 보상 코드와 UI 문구 탐지를 넣는다.",
+     "do_not_copy": "가챠, 알·상자, 스핀 휠, 행운 부스터, 천장(pity) 시스템",
+     "applies_to": [
+      "Q3",
+      "INV-12",
+      "DEC-5"
+     ]
+    },
+    {
+     "claim": "EU 집행위원회의 DSA 28조 미성년자 보호 지침(2025-07-14, 법적 구속력 없음)은 다음을 권고한다. 과다 사용을 부르는 기능(스트릭, 휘발성 콘텐츠, 읽음 표시, 자동재생, 푸시 알림)을 기본으로 끈다. 주로 참여를 늘리려는 설득형 설계를 제거한다. 가상화폐와 루트박스로 아동의 상업적 미숙함을 이용하지 않는다.",
+     "sources": [
+      "https://digital-strategy.ec.europa.eu/en/library/commission-publishes-guidelines-protection-minors (접속 2026-10-01)",
+      "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=OJ:C_202505519 (원문 링크, 자동 접근 차단으로 본문 미확인)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "출석 스트릭, 연속 접속 보상, 결석하면 잃는 진행, 한정 시간 FOMO 이벤트를 rb 설계에서 뺀다. 이 지침은 '온라인 플랫폼'(Roblox)이 대상이다. 개별 experience에 직접 적용되는지는 미확인이지만 같은 기준을 따른다.",
+     "do_not_copy": "스트릭, 일일 로그인 보상 체인, 기간 한정 수집 이벤트",
+     "applies_to": [
+      "Q2",
+      "Q3",
+      "INV-12",
+      "INV-13"
+     ]
+    },
+    {
+     "claim": "영국 ICO 아동 코드의 요점은 다음과 같다. 표준 5: 보상 루프·알림·자동재생 같은 '끈적한' 기능에 개인정보를 쓰지 말 것. 개인 맞춤 게임 내 이점으로 참여를 유도하지 말 것. 능동적 선택 없이 사용을 자동 연장하지 말 것. 진행을 잃지 않는 일시정지를 제공할 것. 표준 12: 프로파일링은 기본으로 끌 것. 비활동에 반응하는 시간 맞춤 알림은 해로울 수 있는 예로 든다. 표준 13: 웰빙 방향의 넛지(일시정지·저장 버튼)는 허용한다.",
+     "sources": [
+      "https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/childrens-information/childrens-code-guidance-and-resources/age-appropriate-design-a-code-of-practice-for-online-services/5-detrimental-use-of-data/ (접속 2026-10-01)",
+      "https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/childrens-information/childrens-code-guidance-and-resources/age-appropriate-design-a-code-of-practice-for-online-services/12-profiling/ (접속 2026-10-01)",
+      "https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/childrens-information/childrens-code-guidance-and-resources/age-appropriate-design-a-code-of-practice-for-online-services/13-nudge-techniques/ (접속 2026-10-01)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "언제든 일시정지하고 자동 저장한다. 미션이 끝나면 '계속/쉬기'를 같은 크기로 보여 준다. 다음 미션은 자동으로 시작하지 않는다. 비활동한 아이에게 '돌아와' 유도를 보내지 않는다. 적응형 난이도는 장기 프로파일 없이 동작해야 한다(DEC-12 기본값 근거).",
+     "do_not_copy": "자동 다음 미션 카운트다운, 비활동 반응 알림, 아이별 맞춤 보상 시간표",
+     "applies_to": [
+      "Q2",
+      "Q3",
+      "INV-10",
+      "INV-13",
+      "DEC-12"
+     ]
+    },
+    {
+     "claim": "UN 아동권리위원회 일반논평 25호(2021)의 관련 조항은 다음과 같다. 42항: 아동 프로파일링·상업적 타기팅을 금지하고, 뉴로마케팅·감정 분석을 아동과의 관여에서 금지한다. 62항: 자동화 시스템으로 아동의 내면 상태를 추론해 행동·감정에 영향을 주지 않게 한다. 110항: 고도로 설득적이거나 도박 같은 설계를 위험으로 명시한다. 69항: 데이터 최소화를 요구한다.",
+     "sources": [
+      "https://www.unicef.org/bulgaria/en/media/10596/file (CRC/C/GC/25 원문 PDF, 접속 2026-10-01)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "이 조항이 '게임 밖 생활 데이터 수집'과 '아이별 도파민 최적화'를 받아들일 수 없는 국제 기준의 직접 근거다. rb의 신호는 미션 단위 집계로 한정하고, 감정 추론은 하지 않는다.",
+     "do_not_copy": "아이별 감정·기분 추론, 생활 패턴 기반 개입",
+     "applies_to": [
+      "INV-10",
+      "INV-13",
+      "DEC-12"
+     ]
+    },
+    {
+     "claim": "Roblox 수익화 가이드라인의 내용: 가짜 긴급성 금지, 자동으로 다시 시작되는 카운트다운 금지, 미성년자에게 강압적 문구 피하기('GET IT NOW' 대신 'View Item'). 반면 인기 Roblox 월드 82곳을 크롤링한 연구에서는 다수가 조작적·기만적 수익화를 썼고, 일일 보상 같은 '참여 강요' 유형도 있었다. FTC는 Epic에 다크패턴 문제로 2억 4,500만 달러를 부과했다.",
+     "sources": [
+      "https://raw.githubusercontent.com/Roblox/creator-docs/main/content/en-us/production/monetization/index.md (Guidelines 절, 접속 2026-10-01)",
+      "https://www.franziroesner.com/pdf/eiger-conpro25.pdf (Eiger & Roesner, 접속 2026-10-01)",
+      "https://www.ftc.gov/news-events/news/press-releases/2022/12/fortnite-video-game-maker-epic-games-pay-more-half-billion-dollars-over-ftc-allegations (검색결과, 접속 2026-10-01)"
+     ],
+     "evidence": "failure_case",
+     "transfer_to_rb": "Q3 금지어·UI 검사에 강압 문구 목록('지금 아니면', '마지막 기회', '친구가 기다려요')과 '참여 강요'(일일 선물, 좋아요 보상) 패턴을 넣는다. 벤치마킹할 때 이 패턴은 복사 금지로 표시한다.",
+     "do_not_copy": "일일 선물, 좋아요·즐겨찾기 보상 코드, 가짜 할인, 재시작 타이머",
+     "applies_to": [
+      "Q3",
+      "INV-12"
+     ]
+    },
+    {
+     "claim": "세션·휴식 근거는 다음과 같다. 캐나다 24시간 활동 지침: 5~17세 여가 화면시간은 하루 2시간 이하, 5~13세 수면 9~11시간. 10~15세 대상 연구: 하루 1시간 미만 게임은 더 나은 적응, 3시간 초과는 반대와 연관됐으나 효과는 작았다(분산 1.6% 미만). WHO는 게임장애가 소수에게만 해당한다고 본다. Roblox는 부모가 일일 화면시간 한도를 정할 수 있고, 한도에 도달하면 다음 날까지 접속할 수 없다. 한국은 18세 미만 본인이나 법정대리인이 요청하면 '게임시간 선택제'(게임산업법 12조의3)를 적용한다.",
+     "sources": [
+      "https://csepguidelines.ca/guidelines/children-youth/ (접속 2026-10-01)",
+      "https://ora.ox.ac.uk/objects/uuid:cc0f8ac4-14c8-454b-b91d-1c06244547e7 (Przybylski 2014, 접속 2026-10-01)",
+      "https://www.who.int/news-room/questions-and-answers/item/addictive-behaviours-gaming-disorder (접속 2026-10-01)",
+      "https://about.roblox.com/newsroom/2024/11/major-updates-to-our-safety-systems-and-parental-controls (접속 2026-10-01)",
+      "https://www.korea.kr/news/policyNewsView.do?newsId=148897555 (접속 2026-10-01)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "하드 캡은 플랫폼의 부모 통제에 맡기고, rb는 강제 종료나 진행 손실로 벌주지 않는다. rb가 맡을 것은 세 가지다. 짧은 미션 단위, 미션마다 정지점, 장시간 연속 플레이 시 중립적 휴식 안내 1회. 이 안내의 임계 수치는 근거가 없는 가설이므로 사람이 정한다. K3 §4의 '[미대조]' 부모 통제 문구(이용시간·지출 한도)는 이번에 공식 뉴스룸으로 대조했다.",
+     "do_not_copy": "휴식하면 손해 보는 구조, 시간 초과 시 진행 삭제",
+     "applies_to": [
+      "Q5",
+      "Q6",
+      "INV-9",
+      "INV-13",
+      "DEC-9"
+     ]
+    },
+    {
+     "claim": "Roblox 공식 문서는 진행이 막힌 플레이어에게만 정해진 시간 뒤 힌트를 보이는 '시간 지연 힌트'를 권한다. 너무 빨리 보이면 스스로 풀 기회를 빼앗고, 너무 늦으면 좌절한다. 5초와 10초를 Experiments로 A/B하고 Configs로 실시간 반영하는 예도 든다.",
+     "sources": [
+      "https://raw.githubusercontent.com/Roblox/creator-docs/main/content/en-us/production/game-design/onboarding-techniques.md (Timed hints 절, 접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "K5 §3의 '[미대조]' 시간 지연 힌트 주장은 공식 문서로 대조했다. 힌트는 '무진행 N초 또는 첫 실패' 중 먼저 오는 쪽에 띄운다. N은 스테이징 플레이테스트로 정한다. Configs 실시간 반영은 사람이 승인한 뒤에만 한다(INV-13).",
+     "do_not_copy": "승인 없는 라이브 Configs 자동 반영",
+     "applies_to": [
+      "Q2",
+      "Q4",
+      "Q5",
+      "INV-13"
+     ]
+    },
+    {
+     "claim": "Roblox 커스텀 이벤트는 날짜별로 집계된다(횟수, 고유 사용자 수, 평균·합·최소·최대, 사용자당 평균). 연령·성별·OS별로 분해할 수 있고 게임당 최대 100개다. 문서에는 개인정보를 커스텀 필드에서 빼라는 지침이 없다. 퍼널 이벤트로 단계별 이탈을 볼 수 있다. 13세 미만에게는 experience 알림 동의 요청 자체를 띄울 수 없다(13세 이상은 3일에 1회 한도).",
+     "sources": [
+      "https://create.roblox.com/docs/production/analytics/custom-events (접속 2026-10-01)",
+      "https://raw.githubusercontent.com/Roblox/creator-docs/main/content/en-us/production/analytics/funnel-events.md (접속 2026-10-01)",
+      "https://raw.githubusercontent.com/Roblox/creator-docs/main/content/en-us/production/promotion/experience-notifications.md (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "신호는 Roblox 집계 대시보드 안에서만 본다. 커스텀 필드에는 미션 ID·힌트 단계·결과 코드처럼 열거형 값만 넣는다. 자유 텍스트, 사용자 ID, 사용자 입력은 넣지 않는다. 이 규칙을 Q3 검사에 둔다. 소규모 셀은 보고하지 않는 하한을 둔다(값은 사람이 결정).",
+     "do_not_copy": "커스텀 필드에 채팅·이름·사용자 입력을 넣는 것",
+     "applies_to": [
+      "Q2",
+      "Q3",
+      "INV-10",
+      "DEC-12"
+     ]
+    },
+    {
+     "claim": "Roblox Creator Rewards는 최근 60일에 9.99달러 이상 쓴 Active Spender가 하루 10분 이상 머물면(그날 처음 실행한 3개 experience 중 하나일 때) 1인당 5 Robux를 지급한다. Roblox 분석 가이드는 평균 세션 시간을 핵심 지표로 두고 희귀 아이템·컬렉션 목표를 예로 든다.",
+     "sources": [
+      "https://raw.githubusercontent.com/Roblox/creator-docs/main/content/en-us/creator-rewards.md (접속 2026-10-01)",
+      "https://raw.githubusercontent.com/Roblox/creator-docs/main/content/en-us/production/analytics/engagement.md (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "플랫폼 보상은 '하루 10분 이상 재방문'을 유인한다. 이 유인 구조는 아동 웰빙 목표와 충돌할 수 있다(추론). rb는 세션 길이를 10분 임계값에 맞춰 늘리지 않는다. 세션 시간·재방문은 진단 지표로만 쓰고 자동 최적화 목표로 쓰지 않는다(INV-13).",
+     "do_not_copy": "10분 임계값을 넘기기 위한 미션 늘리기, 희귀 아이템 수집 루프",
+     "applies_to": [
+      "Q5",
+      "INV-12",
+      "INV-13",
+      "DEC-5"
+     ]
+    },
+    {
+     "claim": "강화학습 AI 플레이어와 단순한 플레이어 집단 시뮬레이션을 결합해, 실제 플레이어 데이터 없이 레벨별 통과율과 이탈률을 예측했다.",
+     "sources": [
+      "https://arxiv.org/abs/2008.12937 (Roohi et al. CHI PLAY 2020, 접속 2026-10-01)"
+     ],
+     "evidence": "success_case",
+     "transfer_to_rb": "아이에게 내보내기 전에 Q3 Harness에서 봇 플레이테스트로 미션별 예상 통과율을 추정한다. 그러면 아동 데이터에 덜 의존하면서 난이도를 1차 보정할 수 있다.",
+     "do_not_copy": "상업 게임의 이탈 최소화 목적 함수를 그대로 쓰는 것",
+     "applies_to": [
+      "Q3",
+      "Q4",
+      "INV-10"
+     ]
+    },
+    {
+     "claim": "FTC가 2025년 확정한 COPPA 개정은 제3자 공유에 별도 동의를 요구하고, 개인정보를 특정 목적에 합리적으로 필요한 기간만 보관하게 했다. 아동 대상 푸시 알림 제한은 채택하지 않았지만, 참여 기법이 정신건강에 해롭게 아이를 붙잡아 두는 데 계속 우려를 표했다.",
+     "sources": [
+      "https://www.ftc.gov/news-events/news/press-releases/2025/01/ftc-finalizes-changes-childrens-privacy-rule-limiting-companies-ability-monetize-kids-data (접속 2026-10-01)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "DEC-12를 정할 때 '진행 상태'만 최소한으로 보관하고 보관 기간을 명시하는 것을 기본값으로 제안한다. 참여 알림은 쓰지 않는다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "INV-10",
+      "DEC-12"
+     ]
+    }
+   ],
+   "proposals": [
+    "[리듬 R1 · 미션 길이] 핵심 미션은 3~5분이다. 미션 하나는 새 개념 1개, 근접 목표 1개, 1초 안 월드 피드백으로 구성한다. 한 번 방문은 미션 3~5개(약 15~25분)를 설계 단위로 삼는다. 미션이 끝날 때마다 저장하고 도시 변화를 보여 주는 정지점을 둔다. 수치는 가설이며 Q5 파일럿에서 검증한다.",
+    "[리듬 R2 · 난이도 적응] 미션 단위 목표 성공 구간(첫 번째나 두 번째 시도 성공 약 70~90%)을 출발 가설로 둔다. 세션 안 적응은 직전 2~3회 결과만 쓰고 세션이 끝나면 버린다. 장기 보관은 '어디까지 했는가'(진행 상태)만 한다. 이것을 DEC-12의 기본안으로 제안한다.",
+    "[리듬 R3 · 힌트 시점] 힌트는 '무진행 N초 또는 첫 실패' 중 먼저 오는 쪽에서 시작한다. 사다리는 '월드 신호 → 전략 질문 → 같은 구조의 다른 예시' 순서이고, 정답을 직접 주는 단계는 없다. 다음 단계는 1회 시도한 뒤에 연다. 힌트는 무료이고 감점이 없다. 9~10세는 시연을 먼저, 11~14세는 짧은 탐색을 먼저 한다. N은 스테이징 플레이테스트로 정한다.",
+    "[리듬 R4 · 피드백] 처음 배우는 과제나 어려운 과제는 즉시 월드 피드백을 준다. 숙달된 뒤의 쉬운 반복은 묶음 피드백도 허용한다. 피드백은 과제 중심의 설명형으로 하고 남과 비교하지 않는다. 텍스트보다 시각·소리를 우선한다.",
+    "[리듬 R5 · 회상·간격·섞기] 같은 도시 언어를 다른 지역에서 간격을 두고 다시 등장시킨다. 숙달한 뒤에는 유형을 섞는다. 다시 방문하면 짧은 회상 미션 1개로 시작한다. 결석했다고 손실을 주지 않는다.",
+    "[리듬 R6 · 보상] 주된 보상은 '도시가 바뀌는 것'과 정보형 칭찬이다. 수학 행동마다 미리 알린 화폐 보상은 붙이지 않는다. 확률 보상은 유료·무료 모두 금지한다. 완주 기본 보상은 모두 같게 한다(INV-4·INV-12).",
+    "[리듬 R7 · 휴식] 언제든 일시정지하고 자동 저장한다. 미션이 끝나면 '계속/쉬기'를 같은 크기로 보여 주고, 다음 미션을 자동으로 시작하지 않는다. 장시간 연속 플레이 시 중립적 휴식 안내를 1회 띄우되 임계값은 사람이 정한다. 하드 캡은 Roblox 부모 통제에 맡긴다.",
+    "[집계 신호] 아래 신호를 미션 단위로 날짜별 집계해서만 본다. 완주율, 첫 시도 성공률, 평균 시도 수, 힌트 단계 도달 분포, 첫 행동까지 걸린 시간 중앙값, 무진행 구간 비율, 빠른 연속 찍기 비율, 실패 뒤 재도전률과 이탈률, 선택 미션 건너뛰기율, 협동과 NPC 경로별 완주율, 퍼널 단계별 이탈, 세션 길이 분포의 꼬리(웰빙 감시용이며 목표치 아님). 해석 규칙은 이렇다. 실패가 많고 힌트 3단계 도달이 많으면 좌절 쪽이고, 짧은 시간에 연속 찍기와 건너뛰기가 많으면 지루함 쪽이다. 재도전이 높고 이탈이 낮으면 생산적 분투로 본다.",
+    "[집계 신호 규칙] 커스텀 필드에는 열거형 값(미션 ID, 힌트 단계, 결과 코드)만 넣는다. 사용자 ID, 자유 텍스트, 채팅은 넣지 않는다. 아이 개인의 감정 추론과 장기 프로파일은 만들지 않는다. 일정 인원 미만의 셀은 보지 않는다(하한값은 사람이 결정). 신호는 사람이 검토하는 설계 변경의 근거로만 쓰고, 라이브 자동 반영은 하지 않는다(INV-13). 이 규칙을 Q2 이벤트 허용 목록과 Q3 검사에 넣는다.",
+    "[금지선 G1] 무작위 보상 전부(가챠, 알, 상자, 룰렛, 행운 부스터, 천장 시스템, 니어미스 연출)를 금지한다. 유료든 무료든 같다.",
+    "[금지선 G2] 스트릭, 연속 출석·일일 로그인 보상 체인, 결석하면 잃는 진행, 한정 시간 FOMO 이벤트, 재시작되는 카운트다운, 강압 문구('지금 아니면', '친구가 기다려요')를 금지한다.",
+    "[금지선 G3] 알림은 쓰지 않는다. 13세 미만은 플랫폼이 이미 막고 있다. 13세 이상 사용 여부는 사람이 결정하되, 비활동에 반응하는 '돌아와' 알림은 어느 경우에도 금지한다. 다음 미션 자동 시작, 공개 순위 비교, 수학 판단에 시간 압박 타이머를 거는 것도 금지한다.",
+    "[금지선 G4] 게임 밖 생활 데이터(수면, 학교, 위치, 기분 일기, 외부 SNS, 연락처)와 얼굴·음성·감정 추론 수집, 아이별 '도파민·참여' 최적화를 금지한다. 근거는 다음과 같다. UN GC25 42·62항, ICO 표준 5·12, COPPA 보관 제한, Roblox 커뮤니티 기준(PII·외부 유도 금지), INV-10. 과학적으로도 도파민은 '원함'의 신호이고 로그로 측정할 수 없다.",
+    "[\\Harness Q3] 금지 패턴 검사를 추가한다: 확률 보상 코드·UI, 스트릭·일일 보상, 강압 문구, 커스텀 필드 PII. 봇 플레이테스트로 미션별 예상 통과율을 추정하는 단계도 추가한다.",
+    "[지식 정리] K5 §3의 시간 지연 힌트와 K3 §4의 부모 통제(이용시간·지출 한도)는 이번에 공식 문서로 대조했다. 상위 세션에서 '[미대조]' 표기를 갱신할 후보로 둔다."
+   ],
+   "needs_human": [
+    "'우' 축 정의 승인: 사용자 원문의 '생활 및 실사용 소셜 상호작용 데이터 수집 분석을 통한 도파민 활성화 최적화'는 INV-10, UN GC25, ICO 코드와 충돌합니다. '게임 안 미션 단위 집계 신호로 건강한 몰입 리듬을 사람이 조정'으로 바꾸려면 사람의 승인이 필요합니다(intent 문구 변경).",
+    "DEC-12: 플레이어별로 무엇을 얼마 동안 저장할지 정해야 합니다. 제안 기본안은 '진행 상태만, 기간 명시, 세션 안 적응 상태는 폐기'입니다.",
+    "연령대별 힌트 차등(9~10세 대 11~14세)을 위해 연령 신호를 쓸지 결정해야 합니다. 프로파일링과 개인정보 판단이 걸립니다.",
+    "13세 이상 대상 experience 알림 사용 여부를 정해야 합니다. 플랫폼은 허용하고, EU 지침은 기본 꺼짐을 권고합니다.",
+    "휴식 안내 임계값, 방문 설계 단위, 목표 성공 구간, 집계 하한 같은 가설 수치를 확정해야 합니다. 교사·아동 전문가 검토를 권합니다.",
+    "법률 검토 2건이 필요합니다. 한국 게임산업법 12조의3(게임시간 선택제)이 Roblox experience 개발자에게 직접 의무인지, EU DSA 28조 지침이 개별 experience에 적용되는지입니다.",
+    "수익화(DEC-5)를 할 경우 Roblox Creator Rewards의 '하루 10분' 유인과 아동 웰빙 원칙 중 무엇을 우선할지 사업 판단이 필요합니다."
+   ],
+   "unverified": [
+    "Spicer et al. 2022의 효과크기(문제도박 r=.27, 문제게임 r=.40)와 청소년 루트박스 연구(JBA 2022)는 검색 요약으로만 확인했습니다. 원문은 403으로 열리지 않았습니다.",
+    "Clark et al. 2016의 회차 조절 효과(단일 g=0.08, 다회 g=0.44)와 강화 비계 효과(g=0.41)는 검색 요약에만 있고, 확인한 초록에는 없습니다.",
+    "Baker et al. 2004의 '약 2/3만 학습' 수치는 검색 요약으로만 확인했습니다. 원문 PDF는 인증서 오류로 열리지 않았습니다.",
+    "Hamari et al. 2016과 Van der Kleij et al. 2015는 검색결과 수준에서만 확인했고 초록은 가져오지 못했습니다.",
+    "EU DSA 28조 지침 원문은 EUR-Lex 자동 접근이 차단되어 열지 못했습니다. 위 내용은 집행위원회 요약 페이지 기준입니다.",
+    "AAP 2026 정책성명('Digital Ecosystems, Children, and Adolescents')이 설득형 설계와 푸시 알림을 비판했다는 내용은 언론·검색 요약 수준이며 본문은 403이었습니다.",
+    "Eiger & Roesner 논문의 게재처(ConPro 2025)는 파일명에서 추정했습니다.",
+    "Koepp 1998은 성인 남성 8명 대상이라 아동에게 일반화된다는 근거가 없습니다. 불확실성이 원함을 증폭한다는 근거도 주로 동물 연구입니다.",
+    "SDT 2006 연구는 주로 성인 표본이라 9~14세에 그대로 적용되는지 확인되지 않았습니다.",
+    "제안 수치(미션 3~5분, 방문 15~25분, 성공 구간 70~90%, 휴식 안내 임계값, 집계 하한)는 출처가 없는 설계 가설입니다.",
+    "Roblox 시간 지연 힌트가 유지율을 높인다는 주장은 Roblox 문서의 서술일 뿐 데이터는 제시되지 않았습니다.",
+    "'Homo Curious' 논문의 저자명은 확인하지 못했습니다(제목·초록만 확인).",
+    "Deci et al. 1999의 보상 역효과는 Eisenberger·Cameron 측 반론이 있는 쟁점입니다."
+   ]
+  },
+  {
+   "vector": "아래 — 운영·법적 안정성, 위험관리",
+   "summary": "이 문서는 법률 자문이 아니며, 2026-10-01에 조회한 공식 문서·법령·보도를 정리한 위험 등록부다. 가장 큰 위험은 법 위반보다 Roblox 성숙도 설문에서 생긴다. '소셜 행아웃'(대화가 주 활동), '자유 창작'(누구나 칸을 칠할 수 있는 격자 포함), '민감 이슈'(예시 목록에 이민이 있음)는 16세 이상 전용이다. 대화가 길게 이어지거나 세션 간 기억이 있는 생성형 AI NPC는 18세 이상 전용이다. 이 중 하나라도 걸리면 목표 연령인 9~14세가 아예 들어오지 못한다(B안 '소셜 어드벤처', 좌표 퍼즐, NPC 보조, 게이트 세계관과 직접 충돌). 개인정보는 Roblox가 UserId·행동 이력도 보호 대상으로 보고, COPPA·UK AADC·PIPA·LGPD·ECA Digital(브라질, 2026-03-17 시행)·일본 개정 APPI(16세 미만)가 모두 '최소 수집·외부 전송 금지·몰입 연장 설계 제한'을 요구한다. 그래서 '우' 벡터의 '도파민 활성화 최적화'는 아동용으로는 법적으로 가장 위험한 표현이다. 확률형 유료 아이템은 한국·브라질·벨기에·호주·영국·네덜란드 어디서든 rb 대상 연령과 맞지 않으므로, INV-12를 영구 금지 규칙으로 유지하는 것이 맞다.",
+   "findings": [
+    {
+     "claim": "[R1 플랫폼·연령 차단] 성숙도 설문에서 '소셜 행아웃'(음성·문자 대화가 주 활동)과 '자유 창작'(다른 사람에게 보이는 자유 그리기·쓰기, 누구나 아무 칸이나 칠할 수 있는 빈 격자)은 16세 이상만 이용할 수 있다. 3D 에셋 조립이나 Roblox 검수를 거친 창작물은 제외된다. 2024-11 공지 때 13세 이상이던 기준이 현재 문서에서는 16세 이상으로 올라갔다. 가능성 M·영향 H (inference)",
+     "sources": [
+      "https://create.roblox.com/docs/production/promotion/content-maturity (접속 2026-10-01)",
+      "https://github.com/Roblox/creator-docs/blob/main/content/en-us/production/promotion/content-maturity.md (접속 2026-10-01)",
+      "https://devforum.roblox.com/t/updating-experience-guideline-policies-to-keep-our-younger-users-safe/3249079 (staff, 2024-11-06; 접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "B안 '글로벌 소셜 어드벤처'에서 대화가 주 활동이 되지 않게 한다(협동은 미리 정한 신호·핑으로). 좌표·패턴 퍼즐은 정해진 후보 점·스냅 지점만 고르게 하고, 다른 사람에게 보이는 자유 격자나 자유 필기는 두지 않는다. Q1 월드 명세에 '설문 항목별 예상 답'을 필수 칸으로 넣는다.",
+     "do_not_copy": "플레이어끼리 자유롭게 그리거나 쓰는 칠판·격자 캔버스, 대화 중심 광장(hangout)",
+     "applies_to": [
+      "INV-8",
+      "INV-9",
+      "INV-10",
+      "DEC-9",
+      "DEC-10",
+      "Q1",
+      "Q3",
+      "Q6"
+     ]
+    },
+    {
+     "claim": "[R2 세계관·정치] '민감 이슈'(현재의 사회·정치·종교 쟁점) 예시에 '이민(immigration)'이 명시돼 있다. 이것이 주 테마인 게임은 16세 이상 전용이고, 연령 확인을 하지 않은 이용자에게는 추천·검색되지 않는다. 커뮤니티 표준도 정치인·정치 단체 묘사와 현실의 민감 사건 재현을 금지한다. 한국에서는 2026-03 계엄을 소재로 한 Roblox 게임이 이용자 단체·정부 문제 제기 대상이 됐다(보도). 가능성 M·영향 H (inference)",
+     "sources": [
+      "https://create.roblox.com/docs/production/promotion/content-maturity (접속 2026-10-01)",
+      "https://about.roblox.com/community-standards (접속 2026-10-01)",
+      "https://zdnet.co.kr/view/?no=20260320113346 (2026-03-20 보도, 접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "INV-11을 그대로 지키되, 금지어 검사 범위를 게임 안 문구뿐 아니라 제목·썸네일·설명·광고문구(ko/en/ja/pt)까지 넓힌다. 금지어 예: 입국심사·여권·비자·이민·국경·국적. '게이트'는 가상 도시의 '탐험가 등록'으로만 표현하고, 서울풍 도시에는 현실 정치 상징·사건을 넣지 않는다.",
+     "do_not_copy": "현실 출입국 심사 재현, 국적·국기로 플레이어를 분류하는 연출, 현실 정치·역사 사건 소재",
+     "applies_to": [
+      "INV-11",
+      "DEC-1",
+      "Q2",
+      "Q3",
+      "Q6"
+     ]
+    },
+    {
+     "claim": "[R3 AI NPC] 플레이어가 생성형 AI와 상호작용하는 기능이 있으면 설문에 신고해야 한다. AI 대화가 게임의 주 목적이거나 세션 간 기억이 있는 '확장 상호작용'은 Restricted(18세 이상) 라벨이 필요하다. 가능성 M·영향 H (inference)",
+     "sources": [
+      "https://create.roblox.com/docs/generative-AI (접속 2026-10-01)",
+      "https://create.roblox.com/docs/production/promotion/content-maturity (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "혼자 하는 플레이어용 NPC 보조(INV-9)는 Q6까지 미리 쓴 대사와 규칙 기반으로만 만든다. 런타임 생성형 AI를 쓰더라도 짧은 1회성 응답만 허용하고, 세션 간 기억은 두지 않으며, 설문에 신고한다. Q3 검사에 '런타임 LLM 호출 없음'을 추가한다.",
+     "do_not_copy": "플레이어를 기억하는 AI 친구·튜터 NPC, 시간 제한 없는 AI 대화",
+     "applies_to": [
+      "INV-7",
+      "INV-9",
+      "DEC-9",
+      "Q2",
+      "Q4",
+      "Q6"
+     ]
+    },
+    {
+     "claim": "[R4 외부 링크] 외부 웹사이트·서비스의 URL은 게임·그룹·사용자 상세 페이지의 Social Links 기능으로만 보여 줄 수 있다. 이 기능은 연령 확인을 마친 16세 이상만 볼 수 있고, 그 밖에 이용자를 Roblox 밖으로 유도하는 모든 시도는 금지된다. 가능성 M·영향 M (inference)",
+     "sources": [
+      "https://about.roblox.com/community-standards (접속 2026-10-01)",
+      "https://devforum.roblox.com/t/discord-or-social-links-in-game-policyservice/3139899 (접속 2026-10-01, 검색 결과로만 확인)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "교사·보호자 안내(§2 교사 대상 관찰 기능)를 게임 안 URL·QR·디스코드 안내로 하지 않는다. 교사 채널은 게임 밖 별도 경로로 설계하고, Q3 검사에 'URL·도메인·메신저 ID 문자열 금지'를 추가한다.",
+     "do_not_copy": "게임 안 '홈페이지 방문', '디스코드 참여' 안내, 교사용 QR 코드",
+     "applies_to": [
+      "INV-10",
+      "Q3",
+      "Q6"
+     ]
+    },
+    {
+     "claim": "[R5 텍스트 필터] 제작자가 직접 통제하지 않는 텍스트(TextBox 입력, DataStore·외부 서버에서 온 문자열)를 화면에 보여 주려면 반드시 필터를 거쳐야 한다. 필터 미적용이 신고되거나 감지되면 필터를 넣을 때까지 게임이 내려간다. 가능성 M·영향 H (inference)",
+     "sources": [
+      "https://create.roblox.com/docs/ui/text-filtering (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "플레이어 자유입력(팀 이름, 수학 문장 쓰기, 탐험 카드 메모)은 아예 두지 않는 것이 기본이다. 수학 언어 사용(B안 북극성 지표)은 미리 정한 단어 블록을 조합하는 방식으로 측정한다. 자유입력을 꼭 둬야 하면 TextService 필터를 거치고, Q3 검사에서 필터 누락을 찾는다.",
+     "do_not_copy": "필터 없이 다른 플레이어에게 보이는 자유 서술 답변",
+     "applies_to": [
+      "INV-10",
+      "INV-8",
+      "Q2",
+      "Q3"
+     ]
+    },
+    {
+     "claim": "[R6 데이터·분석] Roblox는 UserId·사용자명·표시명·개별 행동 이력을 보호 대상으로 본다. 이를 SNS·채팅앱·광고망·외부 업체로 보내거나, Roblox 밖에서 행동 프로필을 만들거나, 한 이용자의 데이터를 다른 이용자에게 노출하는 것은 금지다(staff, 2026-06-02). 2026-10부터는 새 이용자가 게임마다 다른 Scoped User ID를 받는다(staff, 2026-06-10). 가능성 M·영향 H (inference)",
+     "sources": [
+      "https://devforum.roblox.com/t/a-reminder-about-user-privacy-and-third-party-integrations/4665118 (접속 2026-10-01)",
+      "https://devforum.roblox.com/t/update-on-safety-privacy-introducing-scoped-user-identifiers/4677155 (접속 2026-10-01)",
+      "https://devforum.roblox.com/t/roblox-data-stewardship-principles-cookie-based-api-update/4579220 (접속 2026-10-01)",
+      "https://create.roblox.com/docs/production/analytics/custom-events (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "'우' 벡터의 '소셜 상호작용 데이터 분석'은 Roblox 내장 분석(서버에서 보내는 커스텀 이벤트, 일 단위 집계)과 허용 목록 이벤트로만 한다. 외부 분석 도구(PostHog 등)로 UserId를 보내지 않는다. 다른 친구의 기록을 보여 주는 순위·비교 기능은 두지 않는다. DEC-11에서 시장별로 게임을 나누면 같은 아이가 게임마다 다른 ID를 받아 진행 기록이 이어지지 않는다는 점을 함께 판단한다.",
+     "do_not_copy": "플레이어별 행동 프로필을 외부로 내보내기, 친구 개인 기록 노출 순위표",
+     "applies_to": [
+      "INV-10",
+      "INV-13",
+      "DEC-11",
+      "DEC-12",
+      "Q2",
+      "Q4",
+      "Q5"
+     ]
+    },
+    {
+     "claim": "[R7 삭제 요청] 이용자가 개인정보 삭제를 요청하면 Roblox Support가 webhook으로 UserId와 Start Place ID 목록을 보낸다. 제작자는 그 데이터를 영구 삭제할 책임이 있다. RemoveAsync로 지운 키는 30일 동안 툼스톤으로 남는다(DevForum 커뮤니티 튜토리얼). 가능성 H·영향 M (inference)",
+     "sources": [
+      "https://create.roblox.com/docs/cloud/webhooks/automate-right-to-erasure (접속 2026-10-01)",
+      "https://devforum.roblox.com/t/right-to-erasure-deleting-player-data-from-datastores-tutorial/2392456 (접속 2026-10-01, 검색 결과로만 확인)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "DEC-12의 기본값은 '진행 저장에 필요한 최소 상태만, 보존 기한 포함'으로 둔다. Q6 전에 삭제 webhook과 Open Cloud 삭제 경로를 만들고 Q3에서 시험한다. 플레이어별 데이터를 DataStore 여러 곳에 흩어 두지 않는다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "INV-10",
+      "DEC-12",
+      "Q3",
+      "Q4",
+      "Q6"
+     ]
+    },
+    {
+     "claim": "[R8 확률형 유료 아이템·플랫폼] Robux(또는 Robux로 산 게임 화폐)로 사는 랜덤 결과물은 구매 전에 모든 결과의 확률을 합 100%로 공개해야 한다. 결제만 하고 아무것도 얻지 못하는 결과는 허용되지 않는다. ArePaidRandomItemsRestricted·IsPaidItemTradingAllowed로 대상이 아닌 이용자를 막아야 한다. 규제 시장으로 호주·벨기에·네덜란드·영국·브라질이 명시돼 있다(staff, 2026-05-26). 가능성 L(INV-12 유지 시)·영향 H (inference)",
+     "sources": [
+      "https://create.roblox.com/docs/production/monetization/paid-random-items (접속 2026-10-01)",
+      "https://devforum.roblox.com/t/clarifying-requirements-for-paid-random-items/4654622 (접속 2026-10-01)",
+      "https://about.roblox.com/community-standards (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "INV-12를 영구 금지 규칙으로 둔다. Robux로 살 수 있는 화폐가 생기는 순간 모든 랜덤 보상이 규제 대상이 될 수 있으므로, 수익화를 하더라도(DEC-5) 확정형 외형 아이템 직접 구매만 허용하고 랜덤 보상은 무료로만 얻게 한다. Q3 검사에 '구매 경로와 랜덤 생성기의 연결 없음'을 넣는다.",
+     "do_not_copy": "알 뽑기·상자·룰렛·행운 부스트·천장 시스템",
+     "applies_to": [
+      "INV-12",
+      "DEC-5",
+      "Q3",
+      "Q6"
+     ]
+    },
+    {
+     "claim": "[R9 광고] 보상형 영상 광고는 13세 이상에게만 보여 줄 수 있다. 13세 미만에게 광고 시청을 유도하는 보상 장치는 금지되고, 18세 미만에게는 개인화 광고를 하지 않는다. 가능성 L·영향 M (inference)",
+     "sources": [
+      "https://create.roblox.com/docs/production/promotion/ad-integrations (접속 2026-10-01)",
+      "https://en.help.roblox.com/hc/en-us/articles/13722260778260-Advertising-Standards (403, 검색 결과로만 확인)",
+      "https://about.roblox.com/community-standards (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "DEC-5 검토 때 '광고 시청 → 힌트·보상' 구조는 9~14세 대상과 맞지 않는다고 적어 둔다. 힌트·재도전은 항상 무료(INV-12)로 둔다.",
+     "do_not_copy": "광고 보면 힌트 주기, 광고 보면 보상 2배",
+     "applies_to": [
+      "INV-12",
+      "DEC-5"
+     ]
+    },
+    {
+     "claim": "[R10 알림·재방문] 게임 알림(Experience Notifications)은 동의한 13세 이상만 받는다. 13세 미만은 게임 업데이트 소식만 동의할 수 있고, 게임 안 동의 요청 창도 13세 이상에게만 띄울 수 있다. 가능성 M·영향 L (inference)",
+     "sources": [
+      "https://create.roblox.com/docs/production/promotion/experience-notifications (접속 2026-10-01, 검색 결과로만 확인)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "Q5의 D1 재방문은 푸시 알림 없이 측정한다(주 대상 9~12세에게는 알림이 오지 않는다). 재방문 장치는 게임 안 '다음 실험 예고'처럼 알림이 필요 없는 방식으로 만든다.",
+     "do_not_copy": "미접속하면 손해를 보는 알림, 연속 출석이 끊기면 벌을 주는 구조",
+     "applies_to": [
+      "INV-13",
+      "Q5",
+      "Q7"
+     ]
+    },
+    {
+     "claim": "[R11 대화 연령 확인] 2026-01-07부터 전 세계에서 대화를 하려면 얼굴 연령 추정 또는 신분증 확인을 거쳐야 한다. 대화는 같은 연령대와 바로 옆 연령대끼리만 된다(예: 9~12세는 9세 미만·13~15세와 가능). 9세 미만은 대화가 기본으로 꺼져 있다. 13세 미만이 Trusted Friends에 추가되려면 부모 동의가 필요하다. 가능성 H·영향 M (inference)",
+     "sources": [
+      "https://about.roblox.com/newsroom/2026/01/roblox-age-checks-required-to-chat (접속 2026-10-01)",
+      "https://about.roblox.com/newsroom/2026/04/expanding-trusted-friends (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "협동이 대화 없이도 되게 만든다(INV-9·10). 이 결정은 근거로 확정됐다. DEC-7에서 Trusted Friends로 시험 참가자를 받는 경로는 13세 미만이면 보호자 동의가 필요하다는 점을 반영한다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "INV-9",
+      "INV-10",
+      "DEC-7",
+      "Q2",
+      "Q5"
+     ]
+    },
+    {
+     "claim": "[R12 상세 페이지·정책 변화] 게임 상세 페이지의 썸네일·제목·설명은 모두 '전 연령' 또는 '9세 이상'이어야 한다(2024-11 staff 공지). 이로써 K3에서 출처 없던 주장이 확인됐다. 같은 항목의 연령 기준이 2024년 13세 이상에서 2026년 16세 이상으로 올라가는 등 정책이 자주 바뀐다. 가능성 H·영향 M (inference)",
+     "sources": [
+      "https://devforum.roblox.com/t/updating-experience-guideline-policies-to-keep-our-younger-users-safe/3249079 (접속 2026-10-01)",
+      "https://create.roblox.com/docs/production/promotion/content-maturity (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "K3 §1의 '[자료 주장] 제목·썸네일·설명'을 검증 항목으로 올린다(근거 원장 새 F 항목). Q6 직전과 매 배포 전에 성숙도·커뮤니티 표준·결제·생성형 AI·데이터 정책 페이지를 다시 조회해 근거 원장에 날짜와 함께 남긴다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "Q6",
+      "INV-11",
+      "INV-5"
+     ]
+    },
+    {
+     "claim": "[R13 플랫폼 소송·규제 압력] 미국 여러 주 법무장관이 Roblox를 아동 안전 문제로 제소했다(테네시 2025-12, 네브래스카 2026-03, 오클라호마 2026-05, 아칸소 2026-06). 연방 소송은 MDL-3166으로 묶였다. 한국에서도 2026-03 이용자 단체가 '로블록스 전체를 게임물 하나로 등급 분류'하는 구조와 확률 정보 미표시 문제를 제기했다. 가능성 H(정책이 계속 강화됨)·영향 M (inference)",
+     "sources": [
+      "https://oklahoma.gov/oag/news/newsroom/2026/may/drummond-files-lawsuit-against-roblox-for-endangering-children-and-deceiving-parents.html (검색 결과, 접속 2026-10-01)",
+      "https://ago.nebraska.gov/nebraska-attorney-general-hilgers-files-lawsuit-against-roblox-enabling-child-exploitation-and (검색 결과, 접속 2026-10-01)",
+      "https://zdnet.co.kr/view/?no=20260320113346 (접속 2026-10-01)",
+      "https://mdlupdate.com/mdl/3166-roblox-child-safety/ (검색 결과, 접속 2026-10-01)"
+     ],
+     "evidence": "press",
+     "transfer_to_rb": "Roblox 규칙이 더 엄격해지는 방향을 기본 전제로 삼고, 최소 수집·대화 없는 협동·유료 랜덤 없음처럼 앞으로 강화돼도 영향이 적은 설계를 고른다. 한국에서 게임별 등급 분류가 도입될 가능성을 Q6 이후 확인 항목으로 둔다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "Q6",
+      "INV-10",
+      "INV-12",
+      "DEC-5"
+     ]
+    },
+    {
+     "claim": "[P1 미국 COPPA] 범용 플랫폼에 올린 콘텐츠가 아동 대상이고 본인 또는 대리인이 개인정보(지속 식별자 포함)를 수집하면 COPPA상 운영자(operator)로 본다. 단, 서비스 기능 유지·분석이나 콘텐츠 개인화 같은 '내부 운영 지원' 목적만이면 부모 동의가 필요 없는 예외가 있다(행동 광고·프로필 축적은 제외). 2025 개정은 제3자 제공에 대한 별도 부모 동의, 보존 기한 제한, 생체 식별자 추가를 담았고 준수 기한은 2026-04-22다. 가능성 M·영향 H (inference)",
+     "sources": [
+      "https://www.ftc.gov/business-guidance/resources/complying-coppa-frequently-asked-questions (접속 2026-10-01)",
+      "https://www.ftc.gov/news-events/news/press-releases/2025/01/ftc-finalizes-changes-childrens-privacy-rule-limiting-companies-ability-monetize-kids-data (검색 결과, 접속 2026-10-01)",
+      "https://www.hunton.com/privacy-and-information-security-law/ftc-publishes-final-coppa-rule-amendments (접속 2026-10-01, 검색 결과)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "UserId는 진행 저장·기능 분석 같은 내부 운영 목적에만 쓰고, 제3자 제공은 하지 않는다. 보존 기한을 적은 문서를 Q4 전에 만든다. DEC-12에서 플레이어별 진단·용어 사용 기록이 '내부 운영 지원'에 들어가는지는 법률 확인 전까지 저장하지 않는 쪽을 기본값으로 둔다.",
+     "do_not_copy": "플레이어별 학습 프로필 축적과 외부 공유",
+     "applies_to": [
+      "INV-10",
+      "DEC-12",
+      "Q4",
+      "Q6"
+     ]
+    },
+    {
+     "claim": "[P2 EU GDPR 제8조] 아동에게 직접 제공하는 정보사회서비스에서 처리 근거가 동의(6(1)(a))라면, 16세 미만은 친권자 동의가 있어야 적법하다(회원국은 13세까지 낮출 수 있음). 관리자는 가능한 기술을 고려해 동의를 확인하려는 합리적 노력을 해야 한다. 가능성 L·영향 M (inference)",
+     "sources": [
+      "https://gdpr-info.eu/art-8-gdpr/ (접속 2026-10-01)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "rb는 자체 동의 절차(생년월일·이메일 입력)를 만들지 않고, 동의가 필요한 처리를 하지 않는 설계를 기본으로 둔다. EU 시장에 넓히기 전(Q7)에 처리 근거 판단을 법률가에게 받는다.",
+     "do_not_copy": "게임 안 생년월일·이메일 수집",
+     "applies_to": [
+      "INV-10",
+      "DEC-12",
+      "Q7"
+     ]
+    },
+    {
+     "claim": "[P3 영국 아동 연령 적합 설계 코드(AADC)] 영국 아동의 데이터를 처리하면 영국 밖 회사에도 적용된다. 표준 5(해로운 데이터 사용)는 보상 루프·알림·자동재생 같은 '끈적한' 기능을 다룬다. 아동이 보상과 또래 압력에 약하다는 점을 이용해 개인 데이터 기반으로 몰입을 늘리는 설계는 공정성 원칙 위반 소지가 있다고 본다. 개인 데이터 기반 몰입 보상 회피, 중립적인 '계속하기' 제시, 진행을 잃지 않는 일시정지를 기대한다. 가능성 M·영향 H (inference)",
+     "sources": [
+      "https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/childrens-information/childrens-code-guidance-and-resources/age-appropriate-design-a-code-of-practice-for-online-services/5-detrimental-use-of-data/ (접속 2026-10-01)",
+      "https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/childrens-information/childrens-code-guidance-and-resources/age-appropriate-design-code/ (접속 2026-10-01)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "'우' 벡터의 '도파민 활성화 최적화'를 '인지 리듬·휴식 설계'로 다시 정의한다. 개인별 데이터로 플레이 시간을 늘리는 맞춤 보상을 금지하고, 어디서든 진행을 잃지 않는 일시정지·저장을 두며, '그만하면 손해' 식의 문구를 쓰지 않는다. 이를 INV-13 옆의 새 불변식 후보로 올린다.",
+     "do_not_copy": "개인 맞춤 연속 출석 보상, 이탈하면 손실을 강조하는 문구, 친구 초대 보상(또래 압력), 개인별 몰입 연장 자동 튜닝",
+     "applies_to": [
+      "INV-12",
+      "INV-13",
+      "Q5",
+      "Q7"
+     ]
+    },
+    {
+     "claim": "[P4 한국 개인정보 보호법] 제22조의2: 만 14세 미만 아동의 개인정보 처리에 동의가 필요하면 법정대리인 동의를 받고 확인해야 하며, 아동에게는 알기 쉬운 고지를 해야 한다. 개인정보보호위원회 2022-07-22 가이드라인은 연령 확인, 높은 보호 수준의 기본값, 위치정보 기본 끄기, 다크패턴 금지, 14세 미만 맞춤 광고 자제를 권고한다. 가능성 M·영향 H (inference)",
+     "sources": [
+      "https://casenote.kr/%EB%B2%95%EB%A0%B9/%EA%B0%9C%EC%9D%B8%EC%A0%95%EB%B3%B4_%EB%B3%B4%ED%98%B8%EB%B2%95/%EC%A0%9C22%EC%A1%B0%EC%9D%982 (검색 결과, 접속 2026-10-01)",
+      "https://www.kimchang.com/ko/insights/detail.kc?sch_section=4&idx=25475 (접속 2026-10-01)",
+      "https://www.pipc.go.kr/np/cop/bbs/selectBoardArticle.do?bbsId=BS074&mCode=C020010000&nttId=8159 (검색 결과, 접속 2026-10-01)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "ko-KR 원본(Q4)과 학생 파일럿(Q5, DEC-7)에서 게임 안에서는 개인정보를 받지 않는다. 파일럿 참가 동의서·학생 명단은 Roblox와 저장소 밖에서 보관하고, 14세 미만은 법정대리인 동의 절차를 거친다. 파일럿 설문에는 자유 서술을 최소화한다.",
+     "do_not_copy": "게임 안 학교·학년반 입력, 파일럿 명단을 저장소나 DataStore에 저장",
+     "applies_to": [
+      "INV-10",
+      "INV-6",
+      "DEC-7",
+      "DEC-12",
+      "Q5"
+     ]
+    },
+    {
+     "claim": "[P5 브라질 LGPD·ECA Digital] LGPD 제14조: 아동 데이터는 부모 한 명 이상의 구체적이고 눈에 띄는 동의가 필요하다(§1). 게임 참여를 꼭 필요한 정보 이상의 제공 조건으로 묶을 수 없다(§4). ECA Digital(Lei 15.211/2025)은 2026-03-17 전면 시행됐고, 아동·청소년 대상이거나 접근 가능성이 높은 게임에서 루트박스(유료 랜덤 보상)를 금지한다(제20조, 보도 기준). 이용자 간 소통 기본 차단, 보호자 통제, 몰입 극대화 기능 제한도 요구한다는 해설이 있다. 가능성 M·영향 H (inference)",
+     "sources": [
+      "https://lgpd-brasil.info/capitulo_02/artigo_14 (접속 2026-10-01)",
+      "https://conjur.com.br/2025-out-15/adultizacao-lei-no-15-211-proibe-caixa-de-recompensas-em-games-2/ (접속 2026-10-01)",
+      "https://www.conjur.com.br/2025-out-22/impactos-do-eca-digital-no-segmento-de-jogos-eletronicos/ (접속 2026-10-01)",
+      "https://www.ascjogos.org.br/en/post/brazil-loot-box-ban-eca-digital-kids-games (접속 2026-10-01)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "pt-BR 시장팩(Q8) 전에 브라질 법률 확인을 받는다. 설계 측면에서는 유료 랜덤 없음(INV-12), 대화 없는 협동, 몰입 연장 장치 없음이 이미 대부분의 요건을 충족한다. Roblox가 브라질을 랜덤 아이템 규제 지역으로 지정한 것과도 맞는다.",
+     "do_not_copy": "루트박스·유료 가챠, 기본으로 켜진 이용자 간 자유 소통",
+     "applies_to": [
+      "INV-10",
+      "INV-12",
+      "DEC-5",
+      "Q7",
+      "Q8"
+     ]
+    },
+    {
+     "claim": "[P6 일본 APPI] 현재 개인정보보호위원회 Q&A(1-62)는 동의가 필요한 경우 일반적으로 12~15세 이하는 법정대리인 동의가 필요하다고 본다. 2026 개정(2026-07-10 성립, 2026-07-17 공포, 공포 후 2년 안 시행, 2차 출처)은 16세 미만이면 동의·통지 대상을 법정대리인으로 바꾸고, 아동의 최선의 이익을 고려할 노력 의무와 완화된 이용 정지 청구권을 도입한다. 가능성 L·영향 M (inference)",
+     "sources": [
+      "https://www.ppc.go.jp/all_faq_index/faq1-q1-62/ (접속 2026-10-01)",
+      "https://www.businesslawyers.jp/articles/1521 (접속 2026-10-01)",
+      "https://gvalaw.jp/blog/i20260810/ (접속 2026-10-01)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "ja-JP 확장(Q7·Q8) 때 시행령·가이드라인 확정 여부를 다시 조회한다. 최소 수집 설계라면 추가 개발은 거의 필요 없을 것으로 본다(inference).",
+     "do_not_copy": "",
+     "applies_to": [
+      "INV-10",
+      "Q7",
+      "Q8"
+     ]
+    },
+    {
+     "claim": "[P7 EU DSA 제28조 미성년자 가이드라인(2025-07-14)] 과도한 사용을 부르는 기능(streak, 푸시 알림, 자동재생)은 기본으로 끄고, 몰입 위주의 설득형 설계는 없애며, AI 챗봇에는 안전장치를 두라고 권고한다. 상업적 이해력이 부족한 아동이 일부 가상화폐·루트박스에 노출되지 않게 하라는 내용도 있다. 대상은 온라인 플랫폼(Roblox)이고 rb에는 간접 적용된다. 가능성 L·영향 M (inference)",
+     "sources": [
+      "https://digital-strategy.ec.europa.eu/en/library/commission-publishes-guidelines-protection-minors (검색 결과, 접속 2026-10-01)",
+      "https://www.agcom.it/sites/default/files/media/allegato/2025/EU%20Guidelines_for_minors_online_28%20DSA.pdf (검색 결과, 접속 2026-10-01)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "Roblox 정책이 이 방향으로 더 강화될 것으로 보고, 처음부터 streak·알림·가상화폐 중심 설계를 피한다.",
+     "do_not_copy": "연속 기록(streak) 압박, 아동 대상 가상화폐 경제",
+     "applies_to": [
+      "INV-12",
+      "INV-13",
+      "Q7"
+     ]
+    },
+    {
+     "claim": "[L1 한국 확률형 아이템] 게임산업진흥법 확률 정보 공개 의무가 2024-03-22부터 시행 중이다. 예외 대상은 교육·종교용 예외 게임물, 3년 연평균 매출 1억 원 이하 중소기업 등이다. 2024-12-31 국회를 통과한 개정안은 공시 의무 위반 시 최대 3배 배상과 게임사 입증책임을 도입했다(공포 후 6개월 뒤 시행). 보도에 따르면 Roblox는 한국 규정을 계기로 확률 공개 규칙을 전 세계에 적용했다. 가능성 L(INV-12 유지 시)·영향 H (inference)",
+     "sources": [
+      "https://www.korea.kr/news/policyNewsView.do?newsId=148924297 (접속 2026-10-01)",
+      "https://zdnet.co.kr/view/?no=20241231175121 (접속 2026-10-01)",
+      "https://www.techtimes.com/articles/319148/20260626/koreas-loot-box-rules-push-roblox-disclose-item-odds-worldwide.htm (2026-06-26 보도, 접속 2026-10-01)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "수익화(DEC-5)에서 '확률형 없음'을 지키면 이 의무는 처음부터 생기지 않는다. 교육용 예외 게임물에 해당하는지는 법률 확인 항목으로만 남기고, 예외를 근거로 확률형을 도입하지 않는다.",
+     "do_not_copy": "확률형 상자, 강화·합성 확률 아이템",
+     "applies_to": [
+      "INV-12",
+      "DEC-5",
+      "Q6"
+     ]
+    },
+    {
+     "claim": "[L2 해외 확률형 규제] 벨기에 도박위원회(2018-04-25)는 유료 루트박스를 도박법상 불법으로 판단했다. 네덜란드 국가평의회(2022-03-09)는 FIFA 선수팩이 독립된 도박이 아니라며 EA에 부과된 강제금을 취소했다. 호주는 2024-09-22부터 유료 확률 요소가 있는 게임에 M(15세 이상) 이상, 모의 도박에 R18+ 등급을 매긴다. 일본은 2012년 경품표시법으로 콤프가챠를 금지했다. 가능성 L·영향 H (inference)",
+     "sources": [
+      "https://gameinformer.com/b/news/archive/2018/04/25/belgium-classifies-loot-boxes-as-illegal (접속 2026-10-01)",
+      "https://www.akd.eu/insights/loot-boxes-are-legal-in-the-netherlands (접속 2026-10-01)",
+      "https://www.gamedeveloper.com/business/games-featuring-paid-loot-boxes-will-soon-receive-a-mandatory-m-rating-in-australia (검색 결과, 접속 2026-10-01)",
+      "https://www.gamedeveloper.com/business/why-quot-kompu-gacha-quot-was-banned (검색 결과, 접속 2026-10-01)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "영어권(호주·영국)과 일본·브라질을 모두 보면, 유료 랜덤 요소는 Minimal/Mild·9~14세 목표와 양립하지 않는다. INV-12 출처 칸에 이 근거를 추가할 것을 제안한다.",
+     "do_not_copy": "모의 도박(슬롯·룰렛) 연출, 콤프가챠",
+     "applies_to": [
+      "INV-12",
+      "DEC-5",
+      "DEC-9"
+     ]
+    },
+    {
+     "claim": "[O1 무인 자동화] Roblox Open Cloud API 키에 대해 Roblox는 최소 권한, IP 허용 목록, 만료일 설정, 소스코드 보관 금지, 앱별 키 분리를 권고한다. 60일 동안 쓰지 않은 키는 자동 만료된다. rb의 경고 장치(flow_guard)는 스스로 '보안 경계가 아니다'라고 밝힌다(intent §9). 가능성 M·영향 H (inference)",
+     "sources": [
+      "https://create.roblox.com/docs/cloud/auth/api-keys (접속 2026-10-01)",
+      "https://devforum.roblox.com/t/open-cloud-api-key-status-improvement/1579779 (검색 결과, 접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "자동화용 키는 스테이징 universe·필요한 범위만으로 발급하고, 운영 Place 게시 권한 키는 자동화에 주지 않는다(INV-5·13). 키는 저장소·로컬 문서에 쓰지 않는다. 라이브 변경은 사람 승인 뒤 수동으로 게시한다.",
+     "do_not_copy": "지표 하락 시 운영 Place를 자동 수정·게시하는 루프",
+     "applies_to": [
+      "INV-5",
+      "INV-6",
+      "INV-13",
+      "DEC-2",
+      "DEC-8"
+     ]
+    },
+    {
+     "claim": "[O2 AI 생성 교육 내용 오류] AIME-Con 2025 논문(arXiv 2508.09932)은 LLM 4종을 직접 만든 수학 문제로 평가했다. 가장 흔한 오류는 절차적 실수였고 개념 오해는 적었으며, 두 에이전트 구성이 성능을 크게 높였다. 저자들은 남아 있는 오류가 교육 피드백·평가 용도의 신뢰도를 제한한다고 결론 냈다. 가능성 H·영향 M (inference)",
+     "sources": [
+      "https://arxiv.org/abs/2508.09932 (접속 2026-10-01)"
+     ],
+     "evidence": "paper",
+     "transfer_to_rb": "INV-7(생성·검수 분리)을 유지하고, Q3 Harness에 기호 계산 기반 수학 검사(E1·E2)를 결정론 관문으로 둔다. 런타임에 수학 내용을 생성하지 않고, 승인된 고정 콘텐츠만 배포한다. 오류 신고 → 수정 → 재검수 경로를 Q6 전에 만든다.",
+     "do_not_copy": "아동에게 실시간으로 AI가 생성한 문제·해설 제공",
+     "applies_to": [
+      "INV-7",
+      "Q3",
+      "Q8"
+     ]
+    },
+    {
+     "claim": "[O3 공개 저장소 유출] Truffle Security 연구(2026-09-30 보도)는 공개 저장소에서 유효한 자격증명 543,699건을 찾았다. 노출 기간 중앙값은 784일이었다. GitHub push protection이 2024-02 기본 적용된 뒤 해당 유형 노출이 53% 줄었지만, 확인된 자격증명의 36.8%는 그 뒤에 노출됐다. rb 원격은 공개 저장소이고 커밋은 0건이다. 로컬 점검에서 추적 예정 파일에 사용자명·키는 없었지만, evidence.jsonl·decisions.md에는 사용자 발화 원문이 들어간다. 가능성 M·영향 H (inference)",
+     "sources": [
+      "https://bleepingcomputer.com/news/security/over-543-000-valid-credentials-exposed-in-public-github-repositories (접속 2026-10-01)",
+      "https://docs.github.com/code-security/secret-scanning/secret-scanning-partnership-program/secret-scanning-partner-program (검색 결과, 접속 2026-10-01)"
+     ],
+     "evidence": "failure_case",
+     "transfer_to_rb": "DEC-3 전에 커밋 전 비밀값 검사(push protection과 로컬 스캐너)를 켠다. 근거 원장의 사람 발화에 사업 계획·개인 정보가 들어 있는지 검토한다. 파일럿 데이터·키·Place ID 같은 운영값은 저장소에 두지 않는다. 경쟁 정보 노출을 막으려면 Q6까지 비공개 저장소로 두는 것도 선택지로 올린다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "INV-6",
+      "DEC-3",
+      "DEC-7"
+     ]
+    }
+   ],
+   "proposals": [
+    "Q1 월드 명세에 '성숙도 설문 예상 답' 필수 칸을 추가한다(소셜 행아웃=아니오, 자유 창작=아니오, 민감 이슈=아니오, AI 상호작용=없음/제한, 유료 랜덤=아니오, 유료 거래=아니오). Q3 Harness에서 다음을 자동 검사한다: 런타임 LLM 호출, 필터 없는 텍스트 표시, URL·메신저 문자열, 외부로의 HttpService UserId 전송, 구매 경로와 랜덤 생성기의 연결.",
+    "금지어·대체어 용어집(INV-11) 적용 범위를 게임 상세 페이지(제목·썸네일·설명)와 홍보 문구까지 넓히고, 이민·입국심사·여권·비자·국경·국적 계열 단어를 ko/en/ja/pt로 넣는다.",
+    "DEC-12 기본안을 '진행 저장에 필요한 최소 상태 + 보존 기한'으로 제시하고, Q6 전에 삭제 요청 webhook → Open Cloud 삭제 경로를 Q3 시험 항목으로 넣는다.",
+    "'우' 벡터 표현을 '도파민 활성화 최적화'에서 '인지 리듬·휴식 설계'로 바꾸는 안을 사람 결정으로 올린다. 개인 맞춤 몰입 연장·연속 기록 압박·친구 초대 보상·13세 미만 알림 의존을 금지하는 불변식 후보를 함께 제시한다(근거: ICO 표준 5, DSA 제28조 가이드라인, ECA Digital).",
+    "NPC 보조(INV-9)는 Q6까지 미리 쓴 대사와 규칙 기반으로만 구현한다고 Q2 명세에 적는다.",
+    "INV-12 출처 칸에 플랫폼(Roblox 유료 랜덤 정책)과 법령(한국·브라질·벨기에·호주·일본) 근거를 추가하고, DEC-5 메모에 '확정형 외형 아이템 직접 구매만, 보상형 광고 없음'을 적는다.",
+    "DEC-3(첫 푸시) 전에 비밀값 스캔과 근거 원장·결정 기록의 공개 적합성 검토를 끝내고, 비공개 저장소 유지 안도 함께 올린다.",
+    "정책 변화 모니터링: Q6 직전과 매 배포 전에 Roblox 성숙도·커뮤니티 표준·유료 랜덤·생성형 AI·데이터·광고 정책 페이지를 다시 조회해 근거 원장에 날짜와 함께 남긴다(2024년 13세 이상 → 2026년 16세 이상 같은 변화를 감지하기 위해).",
+    "K3 §1의 '[자료 주장] 제목·썸네일·설명도 연령에 맞아야 한다'를 2024-11 staff 공지를 근거로 '[검증됨]'으로 올리는 근거 원장 항목을 추가한다.",
+    "Q5 파일럿(DEC-7)과 Q6 출시 전에 한국 개인정보·게임법 법률 검토 1회를 예산 결정(DEC-5·DEC-7) 항목에 넣는다."
+   ],
+   "needs_human": [
+    "[법률·미국] 한국에 있는 개인 제작자가 Roblox 안에서 UserId만 저장하는 아동 대상 게임을 운영할 때 COPPA 운영자인지, DEC-12의 플레이어별 진단·용어 사용 기록이 '내부 운영 지원' 예외에 들어가는지 미국 개인정보 전문가 확인이 필요하다.",
+    "[법률·EU/UK] GDPR·UK GDPR에서 DataStore 플레이어 기록의 처리 근거(동의인지 정당한 이익인지)와 DPIA 필요 여부(ICO는 아동 서비스에 DPIA를 기대한다) 확인이 필요하다.",
+    "[법률·한국] Roblox UserId와 플레이 기록이 rb에게 개인정보 보호법상 개인정보인지, rb가 개인정보처리자인지 확인이 필요하다. 학생 파일럿(DEC-7)의 만 14세 미만 법정대리인 동의 절차와 학교 협조 방식도 확인해야 한다.",
+    "[법률·한국] Roblox 안 UGC 제작자가 게임산업진흥법상 확률 공개·등급 분류 의무 주체인지, 교육용 예외 게임물 지정이 가능한지 확인이 필요하다.",
+    "[법률·브라질] ECA Digital이 외국 개인 UGC 제작자에게 직접 적용되는지, ANPD 집행 범위는 어디까지인지 확인이 필요하다(pt-BR 확장 전).",
+    "[사업 판단] DEC-5 수익화 자체를 할지 결정해야 한다. 13세 미만 대상에서 광고는 제약이 크고, 브라질 미성년자 소액결제에는 보호자 승인 요구가 있다는 해설이 있다.",
+    "[사업 판단] '우' 벡터의 '도파민 활성화 최적화' 표현과 범위를 아동 대상 규제(ICO 표준 5·DSA·ECA Digital)에 맞게 재정의할지 결정해야 한다.",
+    "[사업 판단] DEC-3 공개 저장소를 유지할지, Q6까지 비공개로 둘지 결정해야 한다.",
+    "[법률·지식재산] 서울풍 가상 도시에 실제 랜드마크·브랜드 건물 디자인을 쓸 때 상표·저작권 문제가 없는지 확인이 필요하다(이번 조사 범위 밖)."
+   ],
+   "unverified": [
+    "Roblox 이용약관·개인정보 처리방침·Creator Third-Party App Policy·광고 표준 원문: help.roblox.com이 403으로 막혀 검색 요약으로만 확인했다(제작자의 User PII 이용 제한, 18세 미만 개인화 광고 금지 등).",
+    "Scoped User ID의 '도메인' 범위: 같은 소유자나 그룹의 여러 게임이 같은 ID를 공유하는지는 확인 안 됨. DEC-11(시장별 게임 분리) 판단에 필요하다.",
+    "ECA Digital(Lei 15.211/2025) 원문 조항 번호(제20조), 벌금 상한(R$5천만 또는 브라질 매출 10%), 소통 기본 차단 요건: planalto.gov.br 조회에 실패해 2차 출처로만 확인했다.",
+    "일본 2026 APPI 개정의 성립·공포일: 법률사무소 해설 1건으로만 확인했다. 시행일은 정령으로 미정이다.",
+    "한국 게임산업법 2024-12 개정안(3배 배상)의 정확한 시행일: '공포 후 6개월'만 확인했다.",
+    "한국에서 Roblox 개별 게임 단위 등급 분류나 정부 조치가 실제로 시행됐는지: 2026-03 보도 단계까지만 확인했다.",
+    "'민감 이슈' 연령 기준 불일치: 2025-08 보도는 '13세 미만 기본 차단, 부모가 허용 가능', 현재 공식 문서는 '16세 이상만'이다. 현재 문서를 따랐다.",
+    "좌표 격자 퍼즐이 '아무 칸이나 칠할 수 있는 빈 격자'(자유 창작)에 해당하는지는 Roblox 해석을 확인하지 않았다.",
+    "Roblox가 GitHub에 유출된 Open Cloud 키를 자동 폐기하는지는 확인 안 됨.",
+    "네덜란드의 루트박스 입법 계획과 영국의 업계 자율 원칙 현황은 이번에 조회하지 않았다.",
+    "TechTimes가 전한 한국 과징금 '매출 3%' 법안은 보도로만 확인했다.",
+    "각 위험의 가능성·영향 등급(H/M/L)은 모두 추론이다."
+   ]
+  },
+  {
+   "vector": "위 — 시장 경쟁력·사용자 흡입력",
+   "summary": "Roblox 공식 문서로 확인한 결과, 홈 추천(Recommended For You)은 2026-06부터 28일 창(D1·D2–7·D8–28)으로 장기 재방문을 봅니다. 가장 중요한 신호는 노출 대비 플레이율, 첫 플레이 이탈률(60초 미만·61–180초), 이용자당 플레이 일수, 이용자당 플레이 시간(하루 60분 상한)입니다. 친구와의 의도적 동시 플레이는 그다음 단계인 '중요' 신호입니다. 이 신호는 추천으로 직접 들어온 이용자만 셉니다. 따라서 친구 초대·광고로 들어온 시험 참가자의 지표는 알고리즘에 반영되지 않고, 9–15세 노출 전 시험 단계의 초기 지표는 16세 이상 이용자의 반응입니다. Roblox는 D1/D7 수치 기준을 공개하지 않습니다. 대시보드 안에서 '비슷한 게임의 50–90 백분위'만 보여 주므로, 합격선은 사람이 그 상대 기준으로 미리 정해야 합니다(DEC-4·DEC-7). 교육 포지셔닝은 학습 허브라는 보조 통로가 있지만, 연구 근거(내재적 통합, 메타분석)는 수학을 게임 행동 자체로 녹이는 쪽이 흡입력에도 유리함을 시사합니다. 그래서 '학습 게임' 표방보다 모험·협동을 앞세우는 B안 쪽이 위험이 작다는 것이 추론입니다(검증 안 됨).",
+   "findings": [
+    {
+     "claim": "프로젝트 문서의 주장 'Roblox 홈 추천은 D1, D2–D7, D8–D28 재방문 신호와 친구와의 의도적 동시 플레이를 쓴다'는 대체로 사실이며 보정할 점이 있다. (a) D1·D2–7·D8–28은 이용자당 플레이 일수·플레이 시간 등의 시간 구간이다. (b) 동시 플레이(co-play)는 2순위 '중요' 신호다. 최우선 신호는 노출 대비 플레이율·첫 플레이 이탈률·플레이 일수·플레이 시간이다. (c) 의도적 동시 플레이의 정의는 친구 합류(join)·초대·프라이빗 서버이고 자동 매칭은 빠진다. 2025-12-11부터 예약 서버(reserved server) 세션도 포함된다. (d) 원천 문서는 '평균 세션 시간이 핵심 지표'라는 말의 출처를 2026-06 뉴스룸 글로 달았지만 그 글에는 없다. 이 말은 Engagement 문서에 있고, 추천 신호 자체는 '이용자당 플레이 시간(하루 60분 상한)'이다.",
+     "sources": [
+      "https://about.roblox.com/newsroom/2026/06/optimizing-discovery-great-games-reach-millions-players-roblox (접속 2026-10-01)",
+      "https://create.roblox.com/docs/en-us/discovery.md (접속 2026-10-01, last_updated 2026-09-30)",
+      "https://devforum.roblox.com/t/recommended-for-you-algorithm-improvements-that-better-value-long-term-retention/4684575 (접속 2026-10-01)",
+      "https://devforum.roblox.com/t/boost-your-discovery-with-the-improved-recommended-for-you-algorithm-and-analytics-for-creators/3587441 (접속 2026-10-01)",
+      "https://create.roblox.com/docs/en-us/production/analytics/engagement.md (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "docs/00 원천 문서 23·63·1009행의 인용을 고쳐 근거 원장(evidence.jsonl)에 새 F 항목으로 기록한다. 우선순위(최우선/중요)와 co-play 정의(join·invite·private/reserved server, 매칭 제외)를 K5·Q2 분석 이벤트 설계에 반영한다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "Q2",
+      "Q5",
+      "Q6",
+      "INV-9",
+      "K5"
+     ]
+    },
+    {
+     "claim": "추천 순위 단계에는 추천 목록으로 '직접(organic)' 들어온 이용자의 지표만 쓰인다. 광고·큐레이션·친구·검색·SNS로 들어온 이용자는 순위 계산에서 빠지고, 후보군에 오르는 것만 앞당길 수 있다. 신호는 총합이 아니라 이용자당 평균이라서 작은 게임도 불리하지 않다고 Roblox는 설명한다. 탐색(explore) 뒤 확장(expand) 방식으로 노출을 늘린다.",
+     "sources": [
+      "https://create.roblox.com/docs/en-us/discovery.md (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "출시 전 시험 참가자(Trusted Friends·초대)의 D1은 알고리즘 신호가 아니라 '설계 검증용'으로만 쓴다. 출시 후에는 Creator Analytics의 Acquisition > Home Recommendations 탭에서 추천 유입 집단을 따로 본다. 공유 링크·광고 유입 지표와 섞지 않는다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "Q5",
+      "Q6",
+      "DEC-4",
+      "DEC-7"
+     ]
+    },
+    {
+     "claim": "첫 플레이 이탈률은 '최우선' 부정 신호이고, 60초 미만과 61–180초 두 구간으로 측정된다. K5 5분 시나리오는 첫 상호작용을 0:45–1:15, 첫 수학 판단을 1:15–2:00에 둔다. 그래서 첫 60초 안에 '내가 움직이면 세계가 반응한다'는 확실한 순간이 오지 않을 수 있다.",
+     "sources": [
+      "https://create.roblox.com/docs/en-us/discovery.md (접속 2026-10-01)",
+      "docs/knowledge/K5-onboarding.md §2 (프로젝트 문서)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "게이트 설계 기준을 2개로 고정한다(측정 정의는 Q2). ① 60초 안에 첫 월드 반응(패널 점등 등). ② 180초 안에 첫 수학 행동 성공. 출시 전 플레이 시험에서 '60초·180초 시점 잔존 비율'을 이탈률 대리 지표로 잰다.",
+     "do_not_copy": "60초 안 이탈을 막으려고 깜빡임·보상 폭탄·강제 팝업을 넣는 것(아동 대상 자극 과잉)",
+     "applies_to": [
+      "Q4",
+      "Q5",
+      "INV-8",
+      "K5"
+     ]
+    },
+    {
+     "claim": "플레이 시간 신호는 이용자·게임당 하루 60분이 상한이다. 하루 60분을 넘게 붙잡아 두어도 추천에서 더 얻는 것이 없다.",
+     "sources": [
+      "https://create.roblox.com/docs/en-us/discovery.md (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "세션을 자연스럽게 끝맺는 지점(지역 복구 완료·다음 날 예고)을 설계에 넣는다. 지표 감시에 '하루 60분 초과 플레이 비율'을 늘려야 할 목표가 아닌 주의 지표(반대 지표)로 둔다(INV-13·우 벡터 연계). 이 연결은 추론이다.",
+     "do_not_copy": "끝없는 반복 루프·연속 출석 압박으로 체류 시간을 늘리는 설계",
+     "applies_to": [
+      "INV-13",
+      "Q2",
+      "Q5"
+     ]
+    },
+    {
+     "claim": "Roblox 온보딩 문서는 첫 사용 경험(FTUE)의 성공을 D1 재방문과 온보딩 목표 달성으로 판단한다. 재미에는 '되도록 5분 이내'에 닿아야 하고, 튜토리얼은 짧게, 단계별 퍼널을 보라고 권한다. 온보딩 퍼널은 AnalyticsService:LogOnboardingFunnelStepEvent로 기록하는데, 서버에서만, 게시된 게임에서만 전송된다. Engagement 대시보드에는 '신규 이용자 첫 세션 X분 뒤 잔존' 차트가 있다. 이로써 K5의 [미대조] 주장(D1·온보딩 목표·퍼널·A/B)이 공식 문서로 확인됐다.",
+     "sources": [
+      "https://create.roblox.com/docs/en-us/production/game-design/onboarding.md (접속 2026-10-01)",
+      "https://create.roblox.com/docs/en-us/production/analytics/retention.md (접속 2026-10-01)",
+      "https://create.roblox.com/docs/en-us/production/analytics/funnel-events.md (접속 2026-10-01)",
+      "https://create.roblox.com/docs/en-us/production/analytics/engagement.md (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "K5 §5 퍼널 이벤트를 서버 권위로 LogOnboardingFunnelStepEvent 단계 번호에 대응시킨다(Q2 허용 목록 하나로 관리). K5의 [미대조] 표기는 '대조됨'으로 바꾼다.",
+     "do_not_copy": "공식 문서는 Configs로 XP·시작 재화를 실시간 조정하고 Experiments로 시작 재화량을 시험하라고 권한다. 아동 행동 지표로 라이브 값을 사람 승인 없이 자동 조정하는 것은 INV-13 위반이다.",
+     "applies_to": [
+      "Q2",
+      "Q4",
+      "Q5",
+      "INV-13",
+      "K5"
+     ]
+    },
+    {
+     "claim": "Roblox는 D1/D7 재방문의 공개 수치 기준을 발표하지 않는다. 대시보드가 '비슷한 이용자를 가진 게임'(일간 활성 이용자 100명 이상 게임 풀)의 50–90 백분위 범위를 내 게임에만 보여 주고, 전체 성과 지표는 상위 200/500/1000 단계로 비교한다. 문서 속 'D1 12.11%–18.73%'는 설명용 예시라 목표치로 쓸 수 없다. 재방문 대시보드는 D1/D7/D30, 추천 신호는 D1/D2–7/D8–28로 구간이 다르다. 연령 구분(<9, 9–12, 13–15, 18+)은 Roblox가 집계해서 제공한다.",
+     "sources": [
+      "https://create.roblox.com/docs/en-us/production/analytics/analytics-dashboard.md (접속 2026-10-01)",
+      "https://create.roblox.com/docs/en-us/production/analytics/retention.md (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "합격선은 절대 수치가 아니라 '비슷한 게임 기준 대비 위치(예: 50 백분위 이상인가)' 형식으로 사람이 미리 정한다(DEC-4·DEC-7). 연령대 분석은 Roblox 집계(9–12·13–15)를 쓰고, rb가 나이를 따로 모으지 않는다(INV-10). 지표 이름은 'D1/D7/D30(재방문)'과 'D2–7/D8–28(추천 신호)'로 구분한다.",
+     "do_not_copy": "제3자 블로그의 'Roblox 평균 D1 xx%' 같은 수치를 목표로 옮겨 적는 것",
+     "applies_to": [
+      "DEC-4",
+      "DEC-7",
+      "Q5",
+      "Q7",
+      "INV-10"
+     ]
+    },
+    {
+     "claim": "Roblox Experiments(A/B 시험)는 14–60일 동안 돌아간다. 일간 활성 이용자 1,000명 미만 게임은 쓸 만한 데이터를 얻기 어렵다고 문서가 밝힌다. 변형이 지표를 해치는지에 대한 판정은 참가자 10,000명 미만이면 내리지 않는다.",
+     "sources": [
+      "https://create.roblox.com/docs/en-us/production/experiments.md (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "K5 §6 A/B 우선순위는 일간 활성 이용자가 충분해진 뒤로 미룬다. 그 전에는 버전별 신규 이용자 집단 비교(일간 집단 표)와 진행자가 관찰하는 플레이 시험으로 판단하고, 변경은 사람이 승인한다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "Q5",
+      "Q6",
+      "INV-13",
+      "K5"
+     ]
+    },
+    {
+     "claim": "Roblox 2026년 2분기 주주서한: 일간 활성 이용자 1억 2,300만 명(전년 대비 +10%). 연령 확인을 마친 이용자 가운데 13세 미만 35%, 13–17세 38%, 18세 이상 27%다(2026-06-30로 끝나는 7일 기준). 연령 확인 보급률은 전 세계 일간 활성 이용자의 57%다. 9–14세만 따로 본 수치는 없다. 계정 유형은 Kids(5–8세)·Select(9–15세)이고, 채팅 연령 그룹은 9세 미만·9–12·13–15·16–17·18–20·21세 이상이다. 9세 미만은 채팅이 기본으로 꺼져 있고, 9–12세는 자기 그룹과 바로 위·아래 그룹(9세 미만, 13–15)과만 채팅한다.",
+     "sources": [
+      "https://www.sec.gov/Archives/edgar/data/0001315098/000162828026051059/ex991-robloxq22026earnin.htm (접속 2026-10-01)",
+      "https://about.roblox.com/newsroom/2026/06/age-based-roblox-kids-and-select-accounts-now-globally-available (접속 2026-10-01)",
+      "https://ir.roblox.com/news/news-details/2026/Roblox-Requires-Users-Worldwide-to-Age-Check-to-Access-Chat/default.aspx (접속 2026-10-01)"
+     ],
+     "evidence": "regulation",
+     "transfer_to_rb": "대상 9–14세는 Select 계정과 채팅 그룹 2개(9–12·13–15)에 걸친다. 협동은 채팅 없이 월드 신호·아이콘·핑만으로 성립해야 한다(INV-9·INV-10). 9세 미만이 섞여도 진행에 문제가 없어야 한다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "DEC-9",
+      "INV-9",
+      "INV-10",
+      "Q2"
+     ]
+    },
+    {
+     "claim": "2분기 주주서한은 '친구와 함께하는 동시 플레이가 Roblox 플레이 시간의 큰 몫을 차지하지만, 그중 상당 부분이 Roblox의 안전 기준에 맞지 않을 수 있는 외부 소통 도구를 쓴다'고 밝혔다.",
+     "sources": [
+      "https://www.sec.gov/Archives/edgar/data/0001315098/000162828026051059/ex991-robloxq22026earnin.htm (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "친구 합류·초대(Roblox 내부 기능)와 예약 서버 기반 '팀 방'을 협동의 빠른 길로 만든다. 그러면 의도적 동시 플레이 신호가 쌓이면서도 INV-10을 지킨다. 혼자 온 플레이어용 NPC 대체는 유지한다(INV-9). NPC 협동은 이 신호에 잡히지 않는다.",
+     "do_not_copy": "Discord 등 외부 메신저·서버 가입 유도, 외부 연락처 교환으로 협동을 조직하게 하는 것",
+     "applies_to": [
+      "INV-9",
+      "INV-10",
+      "Q2",
+      "Q4"
+     ]
+    },
+    {
+     "claim": "Kids/Select 목록에는 '소셜 행아웃(모여서 노는 것 자체가 목적인 공간)이나 자유 그리기 기능이 있는 게임'이 들어갈 수 없다. Roblox Moments(플레이 클립 공유)는 출시 시점에 Kids/Select 계정에서 쓸 수 없다. 16세 미만에게 노출되려면 먼저 연령 확인된 16세 이상만 들어오는 시험 단계를 거치고, 60일 안에 고참여 이용자의 고유 플레이 250회를 채워야 한다.",
+     "sources": [
+      "https://about.roblox.com/newsroom/2026/06/age-based-roblox-kids-and-select-accounts-now-globally-available (접속 2026-10-01)",
+      "https://create.roblox.com/docs/en-us/production/publishing/kids-and-select.md (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "'글로벌 소셜 어드벤처'(B안)는 목표 지향 미션 구조로 설계하고 행아웃으로 분류되지 않게 한다. 자유 그리기(낙서·캔버스) 기능은 넣지 않는다. 출시 직후의 추천·재방문 지표는 16세 이상의 반응이므로 9–14세 흡입력 판정에 쓰지 않는다. Select 노출 뒤 연령대 구분으로 다시 판정한다(추론).",
+     "do_not_copy": "자유 그리기·행아웃 공간, 클립 공유를 전제로 한 바이럴 설계",
+     "applies_to": [
+      "DEC-9",
+      "DEC-10",
+      "Q6",
+      "INV-11"
+     ]
+    },
+    {
+     "claim": "Ads Manager의 Plays 목표는 '추천 시스템이 무엇이 통하는지 학습하도록 초기 트래픽을 주는' 용도로 설명된다. Engagement 목표는 Kids/Select 기준(고참여 이용자)에 들어가는 플레이를 직접 모으지만, 플레이당 비용이 더 높다. 광고로 들어온 이용자는 추천 순위 계산에서 빠진다.",
+     "sources": [
+      "https://create.roblox.com/docs/en-us/production/promotion/ads-manager.md (접속 2026-10-01)",
+      "https://create.roblox.com/docs/en-us/discovery.md (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "250회 기준을 채울 경로를 사람이 고른다. 자연 유입(16세 이상 교사·보호자·커뮤니티)이냐, Engagement 광고 예산이냐(DEC-5·§8 외부 지출 0 원칙)다. AI는 비용을 추정하지 않는다.",
+     "do_not_copy": "참여를 대가로 보상을 주거나 가짜 플레이로 기준을 채우는 행위",
+     "applies_to": [
+      "DEC-5",
+      "Q6"
+     ]
+    },
+    {
+     "claim": "게임 소개 정보(메타데이터)는 정확하고 고유해야 한다. 돈 보상을 앞세운 제목(예: 'Robux!')은 추천에서 밀리고, 썸네일·제목과 실제 플레이가 크게 다르면 추천되지 않는다. 썸네일 개인화는 2–5장을 활성화하면 시작되고, Roblox 시험에서 qualified play-through rate(의미 있는 플레이 비율)가 평균 +8.5% 올랐다. 다만 썸네일 문서는 아직 이 qPTR을 말하고, 추천 문서는 그것을 플레이율과 첫 플레이 이탈률로 대체했다고 해서 두 문서가 어긋난다.",
+     "sources": [
+      "https://create.roblox.com/docs/en-us/discovery.md (접속 2026-10-01)",
+      "https://create.roblox.com/docs/en-us/production/publishing/thumbnails.md (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "출시 전에 실제 플레이 장면(게이트·드론·도시 복구)을 담은 썸네일 2–5장을 준비한다. '수학' 문구를 넣을지는 DEC-10과 함께 사람이 정한다. 출시 뒤 썸네일 개인화를 켤지는 사람이 승인한다(INV-13).",
+     "do_not_copy": "무료 Robux·경품을 앞세운 소개, 실제 플레이와 다른 자극적 썸네일",
+     "applies_to": [
+      "DEC-10",
+      "Q6",
+      "INV-12",
+      "INV-13"
+     ]
+    },
+    {
+     "claim": "Standout Games는 사람이 직접 고르는 홈 목록이다. 새로운 메커닉, 독특한 시각 스타일, 공급이 적은 장르(퍼즐·전략 등 — 문서는 '나이 든 연령층의 수요'로 설명)를 찾는다. 현지화·트레일러·모바일/콘솔 최적화를 권하고, 인기 게임의 재탕은 어렵다고 밝힌다. 현재 '열림' 상태다.",
+     "sources": [
+      "https://create.roblox.com/docs/en-us/creator-programs/standout-games.md (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "출시 후 신청할 보조 노출 경로 후보다. 서울풍 미래 도시의 시각 정체성과 '수학 언어로 도시를 움직이는' 메커닉의 새로움을 증빙 영상으로 준비한다. 신청 여부는 사람이 정한다.",
+     "do_not_copy": "",
+     "applies_to": [
+      "Q6",
+      "Q7",
+      "DEC-5"
+     ]
+    },
+    {
+     "claim": "교육 경로: 2025-07 학습 허브(더보기 탭 > Learn 아이콘)가 출시됐고, '주요 교육 제공자·개발자'의 게임을 모아 보여 준다. 공개된 신청 기준은 찾지 못했다. Community Fund는 2021년 1,000만 달러로 시작했다. 개발자 문서에는 Learn and Explore 목록 신청과 교육팀 오피스아워 신청이 있다. EdWeek(2023)에서 Roblox 교육 부사장은 학습 성과의 인과적 증명은 아직 이르다고 말했다.",
+     "sources": [
+      "https://about.roblox.com/newsroom/2025/07/roblox-learning-hub-for-educational-experiences (접속 2026-10-01)",
+      "https://about.roblox.com/newsroom/2021/11/next-chapter-of-teaching-and-learning-on-roblox (접속 2026-10-01)",
+      "https://raw.githubusercontent.com/Roblox/creator-docs/main/content/en-us/education/resources/getting-started-for-developers-education.md (접속 2026-10-01)",
+      "https://www.edweek.org/teaching-learning/roblox-makes-its-move-into-stem-education-what-are-the-risks-for-schools/2023/05 (접속 2026-10-01)"
+     ],
+     "evidence": "platform_doc",
+     "transfer_to_rb": "교육 목록은 홈 추천을 대신하지 못하는 보조 통로로 본다. 소개 정보에 학습 효과를 주장하지 않는다(근거 없음). 교사용 가치(관찰 환경)는 별도 자료로 전달한다.",
+     "do_not_copy": "검증되지 않은 '성적 향상' 같은 학습 효과 문구",
+     "applies_to": [
+      "DEC-10",
+      "Q6",
+      "Q8"
+     ]
+    },
+    {
+     "claim": "학습 내용을 게임 메커닉 자체에 녹인 '내재적 통합' 버전은 7–11세 수학 게임 Zombie Division 실험에서 학습 효과가 더 컸고, 자유 시간에 7배 더 오래 플레이됐다. 교육용 게임 메타분석에서는 학습(d=0.29)·기억 유지(d=0.36)는 기존 수업보다 낫지만 동기 부여(d=0.26)는 유의하지 않았다. 집단(협동) 학습이 효과를 키우는 조절 요인이었다. '초콜릿 입힌 브로콜리' 비판(Bruckman 1999)은 재미를 교육 핵심 위에 코팅하는 설계를 지적한다.",
+     "sources": [
+      "http://shura.shu.ac.uk/3556/ (접속 2026-10-01)",
+      "https://eric.ed.gov/?id=EJ1008015 (접속 2026-10-01)",
+      "https://sites.cc.gatech.edu/fac/Amy.Bruckman/papers/bruckman_gdc99.html (접속 2026-10-01, 검색 결과로 확인)"
+     ],
+     "evidence": "paper",
+     "transfer_to_rb": "'교육 게임'이라고 붙이는 것만으로 흡입력이 생기지 않는다. 수학 판단을 월드 행동으로 만드는 INV-8이 학습 장치이자 흡입력 장치다. 포지셔닝은 모험·협동을 앞세우고 수학은 메커닉으로 드러내는 쪽이 근거와 맞는다(DEC-10 판단 자료, 추론 포함).",
+     "do_not_copy": "퀴즈 팝업 뒤에 보상을 붙이는 외재적 결합(초콜릿 입힌 브로콜리)",
+     "applies_to": [
+      "DEC-10",
+      "INV-8",
+      "Q5"
+     ]
+    },
+    {
+     "claim": "rb 흡입력 측정안(추론, 위 공식 지표에 맞춤). 출시 전(Q5, DEC-7 뒤)에는 다음을 잰다. 첫 입력까지 시간, 60초 시점 첫 월드 반응 도달률, 180초 시점 잔존·첫 수학 행동 성공률, 5분 안 게이트 개방률, 혼자 vs 협동 완주 차이(INV-9), 첫 지역 자발 진입률, 시험 참가자 D1 재방문(작은 표본이므로 비율이 아닌 '몇 명 중 몇 명'으로 보고). 출시 후(Q6~)에는 Home Recommendations의 플레이율, 첫 플레이 이탈(60초 미만/61–180초), 플레이 일수·시간(D1/D2–7/D8–28), 의도적 동시 플레이 일수를 본다. 여기에 재방문 D1/D7/D30, 첫 세션 X분 잔존, 온보딩 퍼널을 더하고 모두 연령대(9–12·13–15)별로 나눈다. B안이면 주간 도시 언어 재사용(DEC-12 범위 안 집계 이벤트)도 잰다.",
+     "sources": [
+      "https://create.roblox.com/docs/en-us/discovery.md (접속 2026-10-01)",
+      "https://create.roblox.com/docs/en-us/production/analytics/engagement.md (접속 2026-10-01)",
+      "https://create.roblox.com/docs/en-us/production/analytics/analytics-dashboard.md (접속 2026-10-01)",
+      "https://create.roblox.com/docs/en-us/production/analytics/funnel-events.md (접속 2026-10-01)"
+     ],
+     "evidence": "inference",
+     "transfer_to_rb": "Q2 분석 이벤트 허용 목록에 위 지표의 정의(분자·분모·시간창)만 넣고, 합격선 칸은 비워 둔다. 수치는 DEC-7(출시 전 시험)과 DEC-4(확장)에서 데이터를 보기 전에 사람이 정한다. 형식은 '비슷한 게임 기준 대비 위치'와 '한국어 원본 기준 대비'를 권한다.",
+     "do_not_copy": "지표가 낮을 때 AI가 라이브 설정·난도·보상을 자동으로 바꾸는 반복 루프(INV-13)",
+     "applies_to": [
+      "Q2",
+      "Q5",
+      "Q6",
+      "Q7",
+      "DEC-4",
+      "DEC-7",
+      "DEC-12",
+      "INV-10",
+      "INV-13"
+     ]
+    }
+   ],
+   "proposals": [
+    "근거 원장(evidence.jsonl)에 새 공식 사실을 추가한다. 추천 신호 우선순위와 시간 구간, 추천 직접 유입만 집계, 하루 60분 상한, co-play 정의(예약 서버 포함), Kids/Select의 행아웃·자유 그리기 제외, 2분기 연령 분포가 대상이다. 원천 문서 docs/00의 잘못 단 인용(평균 세션 시간 → 뉴스룸)은 지식 파일 K5·K0에 보정 메모로 남긴다.",
+    "K5 5분 시나리오를 첫 플레이 이탈 구간에 맞춰 조정하자고 사람에게 제안한다. ① 60초 안에 첫 월드 반응. ② 180초 안에 첫 수학 행동 성공. 현재 첫 상호작용 0:45–1:15는 60초를 넘길 수 있다.",
+    "Q2 분석 이벤트 명세에 흡입력 지표 사전을 만든다. 출시 전 지표 7종과 출시 후 Roblox 대시보드 지표 대응표를 넣고, 합격선 칸은 빈칸으로 두어 DEC-7·DEC-4가 채우게 한다.",
+    "협동 진입 경로를 설계 항목으로 고정한다. 친구 합류·초대·예약 서버 '팀 방'은 의도적 동시 플레이로 집계되고, 채팅 없이 아이콘·핑만으로 협동이 되게 한다. 혼자 온 플레이어용 NPC 대체도 유지한다.",
+    "출시 계획에 '16세 이상 시험 단계' 구간을 따로 둔다. 이 기간 지표는 9–14세 흡입력 판정에서 빼고, Audience Reach로 250회 진행 상황만 본다.",
+    "K5 §6 A/B 시험은 일간 활성 이용자 1,000명 이상이 될 때까지 미룬다. 그 전에는 버전별 신규 이용자 집단 비교와 진행자가 관찰하는 플레이 시험으로 대신한다.",
+    "실제 플레이 장면을 담은 썸네일 2–5장과 정확한 제목·설명 초안을 만든다. 돈 보상 문구는 쓰지 않는다. '수학' 문구를 넣을지는 DEC-10 결정과 묶는다.",
+    "출시 후 보조 노출 경로(Standout Games 신청, 학습 허브·교육팀 오피스아워 문의)를 후보 목록으로만 정리한다. 실제 신청은 사람이 결정한다."
+   ],
+   "needs_human": [
+    "DEC-10: 소개 정보(제목·썸네일)에 '수학/학습'을 드러낼지 결정한다. 연구 근거는 수학을 메커닉으로 녹이는 쪽을 지지하지만, 시장 포지셔닝은 사업 판단이다.",
+    "DEC-7: 출시 전 아동 시험의 합격선(60초 첫 반응률, 180초 첫 성공률, 5분 게이트 개방률, D1 'N명 중 몇 명')과 참가자 수·보호자 동의·관찰 방법(녹화 여부 포함)을 데이터를 보기 전에 정한다.",
+    "DEC-4: 확장 판정 기준을 '비슷한 게임 50–90 백분위 대비 위치' 또는 '한국어 원본 대비 비율' 가운데 어떤 형식으로 둘지 정한다.",
+    "DEC-5: 수익화를 최소화하면 '중요' 단계의 결제 일수·Robux 지출 신호를 포기하게 된다. 이것을 받아들일지, 그리고 Kids/Select 250회 기준을 광고(Engagement 목표) 예산으로 앞당길지 정한다(현재 외부 지출 0).",
+    "법률 검토: 외부 마케팅·광고에서 13세 미만 대상 연령 지정이 허용되는지(COPPA·GDPR-K·한국 개인정보보호법 등), 아동 대상 공유 링크 사용 범위.",
+    "Standout Games·학습 허브 등 Roblox 측 신청과 대외 접촉 여부."
+   ],
+   "unverified": [
+    "추천 신호별 실제 가중치: DevForum 4684575 글은 이미지 차트로만 제시해 텍스트 수치를 확인하지 못함.",
+    "새 게임의 초기 노출 처리(28일 창에서 신생 게임 평가 방식): 크리에이터 질문에 대한 Roblox 직원 답변을 찾지 못함.",
+    "예약 서버 세션이 친구가 아닌 사람과의 플레이까지 의도적 동시 플레이로 세는지: 업데이트 문구('Play sessions in reserved servers are now counted as intentional co-play')만 확인.",
+    "Limited(Playtesters) 공개 상태 게임에서 퍼널 이벤트·재방문 대시보드가 작은 표본으로도 보이는지: 문서는 '게시된 게임에서만 전송'이라고만 함.",
+    "Select(9–15) 목록 안에서 추천이 어떻게 작동하는지, 16세 이상 시험 단계의 신호가 Select 노출 뒤에도 이어지는지.",
+    "학습 허브 수록 기준·유입 규모와 'Learn and Explore' 목록의 2026년 현재 존재 여부, Community Fund 현재 신청 가능 여부.",
+    "Community Fund 2023년 추가 1,500만 달러: Fast Company 기사가 접근 거부(403)되어 검색 결과로만 확인(언론).",
+    "'교육 게임' 표방이 Roblox에서 플레이율을 낮추는지에 대한 Roblox 공식 데이터: 찾지 못함(추론만 있음).",
+    "Roblox 로드맵의 '초기 시험자용 미리보기 접근(친구 최대 10명, 2026년 말)': 로드맵 페이지가 스크립트로 그려져 본문 확인 실패, 검색 요약으로만 봄.",
+    "공개된 Roblox D1/D7 평균 수치: Roblox 공식 수치 없음. 문서의 12.11%–18.73%는 설명용 예시임.",
+    "Ads Manager 고급 타기팅에서 13세 미만 연령 지정이 가능한지·허용되는지."
+   ]
+  }
+ ]
+}
