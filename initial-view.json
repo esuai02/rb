@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "kind": "intent_view",
+  "run_id": "rb-mission",
+  "revision": 5,
+  "locale": "ko",
+  "intent_file": "intent.md",
+  "intent_sha256": "615140fbb8634268268ad0def1e932bbc4fcded7c0241f46316ee85ceeed3616",
+  "mission": "Neo Seoul 의 도시 언어 게이트에서 시작하는, 수학을 잘하지 않아도 수학적 언어로 친구와 도시를 움직이는 글로벌 소셜 어드벤처 (DEC-10 B안·DEC-1)",
+  "focus": "Q1",
+  "nodes": [
+    {
+      "id": "Q1",
+      "label": "의도 명세 고정",
+      "outcome": "월드 하나의 의도(월드 역할·대상 연령·성숙도 설문 예상 답·시장 결정 방식·번역 금지 구간 포함)가 기계가 읽는 명세로 고정되고 원본 월드 1개가 채워진다.",
+      "depends_on": [],
+      "review_question": "Intent 검토를 막는 결정(DEC-1·9·10)이 모두 정해졌습니다. Intent 전체를 보시고 검토를 마칠까요? (REVIEW)"
+    },
+    {
+      "id": "Q2",
+      "label": "교육과정·월드 Graph",
+      "outcome": "용어(일상 표현 → 수학 용어)·퀘스트/해금·보상·번역 키/금지어·분석 이벤트(북극성 지표 정의)·테스트 시나리오가 Q1 ID 만 참조하고, 용어마다 일상어 경로와 3개 이상 재사용 맥락이 연결된다.",
+      "depends_on": [
+        "Q1"
+      ],
+      "review_question": "문서마다 다른 값(매칭 대기·세션 길이·이름)을 정할 때 기준이 될 원칙이 있습니까?"
+    },
+    {
+      "id": "Q3",
+      "label": "생성·검수 Harness",
+      "outcome": "고정 시험 데이터에 심은 결함을 수학 6종·서버 권위·UI 14종·금지어 검사가 모두 잡고 기록을 남긴다.",
+      "depends_on": [
+        "Q2"
+      ],
+      "review_question": "소스 정본을 Studio Place 로 둘까요, Git 파일로 둘까요? (DEC-8)"
+    },
+    {
+      "id": "Q4",
+      "label": "원본 월드 제작",
+      "outcome": "엔진(UI 틀·현지화 배선·서버 권위 보상)과 ko-KR 원본 월드가 스테이징 Place 에 있고 Harness 를 통과한다.",
+      "depends_on": [
+        "Q3"
+      ],
+      "review_question": "플레이어별 진단·용어 사용 기록을 어디까지 저장할까요? (DEC-12)"
+    },
+    {
+      "id": "Q5",
+      "label": "한국어 원본 검증",
+      "outcome": "Play 테스트(혼자·입력 3종)와 학생 파일럿으로 60초 첫 반응·180초 첫 성공·첫 5분 퍼널·D1·언어 친숙화 지표를 잰다.",
+      "depends_on": [
+        "Q4"
+      ],
+      "review_question": "파일럿 규모·동의·목표치, 16세 미만 참가 경로는? (DEC-7)"
+    },
+    {
+      "id": "Q6",
+      "label": "공개 출시·연령 심사",
+      "outcome": "체크리스트·성숙도 설문·게시를 거쳐 16세 이상 시험 단계 뒤 Kids/Select 노출이 확인된다.",
+      "depends_on": [
+        "Q5"
+      ],
+      "review_question": "공개 출시·게시비·본인 인증·수익화를 어떻게 할까요? (DEC-5)"
+    },
+    {
+      "id": "Q7",
+      "label": "언어 수요 측정",
+      "outcome": "언어를 켜기 전 번역을 검사·교정하고, 한국어 원본 + 대상 17개 언어 중 켠 언어권의 유입·완주·재방문으로 다음 시장을 고른다.",
+      "depends_on": [
+        "Q6"
+      ],
+      "review_question": "어떤 수치를 넘으면 그 언어권 팩에 투자할까요? (DEC-4)"
+    },
+    {
+      "id": "Q8",
+      "label": "시장 교육팩 승인",
+      "outcome": "고른 시장(최대 2~3곳) 팩이 현지 교사 승인을 받고 A/B 결과가 성공 기준을 넘는다.",
+      "depends_on": [
+        "Q7"
+      ],
+      "review_question": "현지 검수자·비용·성공 기준은? (DEC-6)"
+    }
+  ]
+}
