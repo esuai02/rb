@@ -1,0 +1,14 @@
+# 도구 상태 파일 — 공개 저장소에 올리지 않는다 (intent.md DEC-3)
+# 작업 폴더가 하위 폴더로 바뀌면 그곳에도 생기므로 모든 깊이에서 막는다
+**/.claude/state/
+**/.claude/sessions/
+**/.claude/nunchi/
+**/.claude/memory/
+**/.harness-mem/
+graft/.cache/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
+
+# Python 실행 부산물
+__pycache__/
