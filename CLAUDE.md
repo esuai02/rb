@@ -11,6 +11,12 @@
 - 장치나 Intent 형식을 고치면 `python3 -m unittest discover -s tools` 를 다시 돌린다.
 - `[W8]` 이 뜨면 `intent.md` §11 의 해당 방향(전방·후방·위·아래·좌·우)을 점검하고 결과를 `evidence.jsonl` 에 `kind: vector_review` 로 추가한다(관찰·제안·다음 할 일·출처). 세부 근거는 `docs/knowledge/K6-six-vectors.md`.
 
+## 단계 검증 — 3층 게이트 (근거 원장 D-VERIFY)
+- ① 바뀔 때마다 자동 검사: `python3 -m unittest discover -s tools` · `python3 -m unittest discover -s tests` · `python3 tools/validate_spec.py`. 단계 기준 검사와 기록은 `python3 tools/verify.py run <Q>`.
+- ② 단계를 잠그기 전에만 독립 리뷰: `python3 tools/verify.py review <Q>` (Codex, 오래 걸리면 백그라운드). 리뷰 중에는 그 단계 산출물을 고치지 않는다.
+- ③ 사람이 대화에서 잠금을 승인한 뒤에만 `verify.py approve <Q> --source "<사람의 말·날짜>"` → `verify.py lock <Q>`. 남은 조건은 `verify.py gate <Q>`.
+- 산출물·계약이 바뀌면 이전 검증 기록은 낡는다 — run·review 를 다시 돌린다. 원본 출력은 `outputs/verify/<Q>/`.
+
 ## 작업 원칙 (원 가이드 `docs/01-roblox-studio-mcp-guide.md` §권장 운영 방식)
 - 처음엔 읽기 전용이다. 수정은 사람이 범위를 정한 뒤에 한다.
 - 수정은 한 요청에 한 기능만 한다. 끝나면 바뀐 Instance 경로, diff 요약, Play 테스트 결과를 보고한다.
