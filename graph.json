@@ -1,0 +1,520 @@
+{
+  "schema_version": 1,
+  "kind": "execution_graph",
+  "run_id": "rb-mission",
+  "revision": 1,
+  "locale": "ko",
+  "intent_file": "intent.md",
+  "intent_sha256": "615140fbb8634268268ad0def1e932bbc4fcded7c0241f46316ee85ceeed3616",
+  "mission": "Neo Seoul 의 도시 언어 게이트에서 시작하는, 수학을 잘하지 않아도 수학적 언어로 친구와 도시를 움직이는 글로벌 소셜 어드벤처 (DEC-10 B안·DEC-1)",
+  "focus": "Q1",
+  "nodes": [
+    {
+      "id": "Q1",
+      "label": "의도 명세 고정",
+      "outcome": "월드 하나의 의도(월드 역할·대상 연령·성숙도 설문 예상 답·시장 결정 방식·번역 금지 구간 포함)가 기계가 읽는 명세로 고정되고 원본 월드 1개가 채워진다.",
+      "depends_on": [],
+      "review_question": "Q1 명세 형식에 꼭 들어가야 할 항목이 더 있습니까? (시작 전 DEC-13: 위키 재구성 채택 여부)",
+      "artifacts": [
+        "specs/templates/world-intent.schema.json",
+        "specs/worlds/neo-seoul-city-language-gate.yaml",
+        "tools/validate_spec.py"
+      ],
+      "maker": "claude-code main session",
+      "review": "independent",
+      "human_holds": [
+        "DEC-13"
+      ],
+      "minor_limit": 0,
+      "criteria": [
+        {
+          "id": "Q1-C1",
+          "statement": "명세 형식이 필수 항목을 모두 요구한다",
+          "method": "tools/validate_spec.py 를 필수 항목을 하나씩 뺀 고정 데이터에 실행",
+          "target": "빠진 항목마다 실패, 완전한 명세는 통과",
+          "evidence_types": [
+            "test"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q1-C2",
+          "statement": "도시 언어 게이트 원본 명세가 검사를 통과하고, 성숙도 설문 예상 답이 16세 이상 항목(소셜 행아웃·자유 창작·민감 이슈·확장 AI 상호작용·유료 랜덤·유료 거래)에 모두 '아니오'다 (INV-16)",
+          "method": "검사기 실행 + 설문 칸 값 확인",
+          "target": "통과, 6항목 모두 아니오",
+          "evidence_types": [
+            "test"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q1-C3",
+          "statement": "언어·시장·교육과정 키가 나뉜다: locale 은 BCP-47, market 은 지역 포함, 엔진은 시장 중립 grade_band 만 쓴다 (INV-3)",
+          "method": "검사기의 키 규칙 테스트(섞인 키 고정 데이터는 실패)",
+          "target": "섞인 키 실패, 올바른 키 통과",
+          "evidence_types": [
+            "test"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q1-C4",
+          "statement": "B안 언어 우선 필드가 있다: 용어마다 일상 표현·행동·이름표 순서와 재사용 맥락 자리 (INV-15)",
+          "method": "검사기 실행",
+          "target": "필드 누락 시 실패",
+          "evidence_types": [
+            "test"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q1-6V",
+          "statement": "이 단계를 잠그기 전에 6방향(전방·후방·위·아래·좌·우) 검토가 이 단계를 대상으로 기록된다 (intent §11)",
+          "method": "evidence.jsonl 에서 stage=Q1 인 vector_review 를 방향별로 센다",
+          "target": "6방향 각 1건 이상",
+          "evidence_types": [
+            "observation"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        }
+      ],
+      "focus_gap": "명세 형식이 아직 없다. 목표: 필수 항목(월드 역할·대상 연령 9~14·성숙도 Minimal 과 설문 예상 답·locale/market/curriculum_id 분리·번역 금지 구간·시장 결정 방식 자리·용어와 일상 표현·세션 길이·협동과 NPC 대체·입력 방식)을 기계가 검사한다"
+    },
+    {
+      "id": "Q2",
+      "label": "교육과정·월드 Graph",
+      "outcome": "용어(일상 표현 → 수학 용어)·퀘스트/해금·보상·번역 키/금지어·분석 이벤트(북극성 지표 정의)·테스트 시나리오가 Q1 ID 만 참조하고, 용어마다 일상어 경로와 3개 이상 재사용 맥락이 연결된다.",
+      "depends_on": [
+        "Q1"
+      ],
+      "review_question": "문서마다 다른 값(매칭 대기·세션 길이·이름)을 정할 때 기준이 될 원칙이 있습니까?",
+      "artifacts": [
+        "specs/graph/neo-seoul-city-language-gate.graph.json",
+        "specs/localization/terms/ko-KR.yaml",
+        "specs/analytics/events.yaml"
+      ],
+      "maker": "claude-code main session",
+      "review": "independent",
+      "human_holds": [],
+      "minor_limit": 0,
+      "criteria": [
+        {
+          "id": "Q2-C1",
+          "statement": "Graph 의 모든 참조가 Q1 명세 ID 로 해석된다(끊긴 참조 0), 선수개념 그래프에 순환이 없다",
+          "method": "그래프 검사 스크립트",
+          "target": "끊긴 참조 0, 순환 0",
+          "evidence_types": [
+            "test"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q2-C2",
+          "statement": "용어마다 일상어 행동 경로 1개 이상과 서로 다른 재사용 맥락 3개 이상이 있다 (INV-15)",
+          "method": "그래프 검사 스크립트",
+          "target": "모든 용어 충족",
+          "evidence_types": [
+            "test"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q2-C3",
+          "statement": "분석 이벤트는 허용 목록 하나이고 필드는 열거형만(사용자 ID·자유 텍스트 없음), 북극성 지표 정의가 있다 (INV-10)",
+          "method": "events.yaml 스키마 검사",
+          "target": "위반 0",
+          "evidence_types": [
+            "test"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q2-C4",
+          "statement": "원천 문서 간 충돌 값(K0 §3)이 정본 값 하나로 정해지고 근거가 남는다",
+          "method": "K0 §3 각 행 ↔ Graph 값 대조",
+          "target": "미해결 행 0",
+          "evidence_types": [
+            "observation"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q2-C5",
+          "statement": "금지어·대체어 용어집(ko-KR)이 있고 이름 정본(Neo Seoul·도시 언어 게이트)이 반영된다 (INV-11)",
+          "method": "용어집 검사",
+          "target": "금지어 목록·정본 이름 존재",
+          "evidence_types": [
+            "test"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q2-6V",
+          "statement": "이 단계를 잠그기 전에 6방향(전방·후방·위·아래·좌·우) 검토가 이 단계를 대상으로 기록된다 (intent §11)",
+          "method": "evidence.jsonl 에서 stage=Q2 인 vector_review 를 방향별로 센다",
+          "target": "6방향 각 1건 이상",
+          "evidence_types": [
+            "observation"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        }
+      ]
+    },
+    {
+      "id": "Q3",
+      "label": "생성·검수 Harness",
+      "outcome": "고정 시험 데이터에 심은 결함을 수학 6종·서버 권위·UI 14종·금지어 검사가 모두 잡고 기록을 남긴다.",
+      "depends_on": [
+        "Q2"
+      ],
+      "review_question": "소스 정본을 Studio Place 로 둘까요, Git 파일로 둘까요? (DEC-8)",
+      "artifacts": [
+        "harness/",
+        "tests/harness/"
+      ],
+      "maker": "claude-code main session",
+      "review": "independent",
+      "human_holds": [
+        "DEC-8"
+      ],
+      "minor_limit": 0,
+      "criteria": [
+        {
+          "id": "Q3-C1",
+          "statement": "고정 데이터에 심은 결함을 모두 잡는다: 클라이언트 보상 결정·중복 보상·끊긴 번역 키·넘치는 긴 번역문·틀린 수학 대사·금지어·무작위 보상 코드·URL 문자열·런타임 LLM 호출·필터 없는 텍스트·커스텀 필드 PII",
+          "method": "Harness 실행 후 결함별 검출 여부 기록",
+          "target": "심은 결함 전부 검출",
+          "evidence_types": [
+            "test"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q3-C2",
+          "statement": "수학 검사 E1(참/거짓)·E2(조건 완전성)는 결정론(기호 계산) 관문이다 (INV-7)",
+          "method": "틀린 명제·조건 누락 고정 데이터로 실행",
+          "target": "모두 실패 판정",
+          "evidence_types": [
+            "test"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q3-C3",
+          "statement": "검사마다 실행 기록(명령·결과·시각)이 남는다",
+          "method": "기록 파일 확인",
+          "target": "검사 수 = 기록 수",
+          "evidence_types": [
+            "observation"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q3-6V",
+          "statement": "이 단계를 잠그기 전에 6방향(전방·후방·위·아래·좌·우) 검토가 이 단계를 대상으로 기록된다 (intent §11)",
+          "method": "evidence.jsonl 에서 stage=Q3 인 vector_review 를 방향별로 센다",
+          "target": "6방향 각 1건 이상",
+          "evidence_types": [
+            "observation"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        }
+      ]
+    },
+    {
+      "id": "Q4",
+      "label": "원본 월드 제작",
+      "outcome": "엔진(UI 틀·현지화 배선·서버 권위 보상)과 ko-KR 원본 월드가 스테이징 Place 에 있고 Harness 를 통과한다.",
+      "depends_on": [
+        "Q3"
+      ],
+      "review_question": "플레이어별 진단·용어 사용 기록을 어디까지 저장할까요? (DEC-12)",
+      "artifacts": [
+        "src/"
+      ],
+      "maker": "claude-code main session",
+      "review": "independent",
+      "human_holds": [
+        "DEC-2",
+        "DEC-12"
+      ],
+      "minor_limit": 0,
+      "criteria": [
+        {
+          "id": "Q4-C1",
+          "statement": "엔진(UI 틀·LocalizationTable 배선·서버 권위 보상)과 도시 언어 게이트가 스테이징 Place 에 있고 Q3 Harness 를 통과한다",
+          "method": "Harness 실행 + Studio 스테이징 Place 확인(get_studio_state)",
+          "target": "Harness 위반 0, 스테이징 Place 일치",
+          "evidence_types": [
+            "test"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q4-C2",
+          "statement": "Play 테스트: 혼자(NPC 대체)·2인·터치/키보드/게임패드로 게이트를 끝까지 연다 (INV-9)",
+          "method": "Studio Play 시나리오",
+          "target": "모든 조합 완주",
+          "evidence_types": [
+            "test",
+            "observation"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q4-C3",
+          "statement": "첫 월드 반응 60초 안, 첫 수학 행동 성공 180초 안 (F7)",
+          "method": "스테이징 플레이 시험 측정",
+          "target": "두 기준 충족(중앙값)",
+          "evidence_types": [
+            "measurement"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q4-6V",
+          "statement": "이 단계를 잠그기 전에 6방향(전방·후방·위·아래·좌·우) 검토가 이 단계를 대상으로 기록된다 (intent §11)",
+          "method": "evidence.jsonl 에서 stage=Q4 인 vector_review 를 방향별로 센다",
+          "target": "6방향 각 1건 이상",
+          "evidence_types": [
+            "observation"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        }
+      ]
+    },
+    {
+      "id": "Q5",
+      "label": "한국어 원본 검증",
+      "outcome": "Play 테스트(혼자·입력 3종)와 학생 파일럿으로 60초 첫 반응·180초 첫 성공·첫 5분 퍼널·D1·언어 친숙화 지표를 잰다.",
+      "depends_on": [
+        "Q4"
+      ],
+      "review_question": "파일럿 규모·동의·목표치, 16세 미만 참가 경로는? (DEC-7)",
+      "artifacts": [
+        "reports/pilot/"
+      ],
+      "maker": "claude-code main session",
+      "review": "independent",
+      "human_holds": [
+        "DEC-7"
+      ],
+      "minor_limit": 0,
+      "criteria": [
+        {
+          "id": "Q5-C1",
+          "statement": "파일럿 합격선(60초 첫 반응률·180초 첫 성공률·5분 게이트 개방률·D1·언어 친숙화 지표)이 데이터를 보기 전에 정해져 있다",
+          "method": "decisions.md DEC-7 기록 시각 < 첫 파일럿 데이터 시각",
+          "target": "참",
+          "evidence_types": [
+            "observation"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q5-C2",
+          "statement": "합격선 대비 실측이 집계로만 보고된다(개인 기록 없음)",
+          "method": "reports/pilot 집계표",
+          "target": "모든 지표 보고, 합격 여부 표시",
+          "evidence_types": [
+            "measurement"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q5-6V",
+          "statement": "이 단계를 잠그기 전에 6방향(전방·후방·위·아래·좌·우) 검토가 이 단계를 대상으로 기록된다 (intent §11)",
+          "method": "evidence.jsonl 에서 stage=Q5 인 vector_review 를 방향별로 센다",
+          "target": "6방향 각 1건 이상",
+          "evidence_types": [
+            "observation"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        }
+      ]
+    },
+    {
+      "id": "Q6",
+      "label": "공개 출시·연령 심사",
+      "outcome": "체크리스트·성숙도 설문·게시를 거쳐 16세 이상 시험 단계 뒤 Kids/Select 노출이 확인된다.",
+      "depends_on": [
+        "Q5"
+      ],
+      "review_question": "공개 출시·게시비·본인 인증·수익화를 어떻게 할까요? (DEC-5)",
+      "artifacts": [
+        "release/checklist.md"
+      ],
+      "maker": "claude-code main session",
+      "review": "independent",
+      "human_holds": [
+        "DEC-5"
+      ],
+      "minor_limit": 0,
+      "criteria": [
+        {
+          "id": "Q6-C1",
+          "statement": "출시 전 체크리스트(K3 §9)와 성숙도 설문 제출, 개인정보 삭제 요청 처리 경로 시험을 마친다",
+          "method": "체크리스트 항목별 근거",
+          "target": "전 항목 통과",
+          "evidence_types": [
+            "observation",
+            "test"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q6-C2",
+          "statement": "16세 이상 시험 단계 뒤 Kids/Select 노출이 확인된다",
+          "method": "Creator Hub Audience Reach 확인",
+          "target": "노출 확인",
+          "evidence_types": [
+            "observation"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q6-6V",
+          "statement": "이 단계를 잠그기 전에 6방향(전방·후방·위·아래·좌·우) 검토가 이 단계를 대상으로 기록된다 (intent §11)",
+          "method": "evidence.jsonl 에서 stage=Q6 인 vector_review 를 방향별로 센다",
+          "target": "6방향 각 1건 이상",
+          "evidence_types": [
+            "observation"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        }
+      ]
+    },
+    {
+      "id": "Q7",
+      "label": "언어 수요 측정",
+      "outcome": "언어를 켜기 전 번역을 검사·교정하고, 한국어 원본 + 대상 17개 언어 중 켠 언어권의 유입·완주·재방문으로 다음 시장을 고른다.",
+      "depends_on": [
+        "Q6"
+      ],
+      "review_question": "어떤 수치를 넘으면 그 언어권 팩에 투자할까요? (DEC-4)",
+      "artifacts": [
+        "reports/language/"
+      ],
+      "maker": "claude-code main session",
+      "review": "independent",
+      "human_holds": [
+        "DEC-4",
+        "DEC-11"
+      ],
+      "minor_limit": 0,
+      "criteria": [
+        {
+          "id": "Q7-C1",
+          "statement": "언어를 켜기 전에 그 언어 번역을 금지어·넘침·수식 검사하고 실패 항목은 사람이 고친다",
+          "method": "언어별 검사 기록",
+          "target": "켠 언어 모두 검사 통과",
+          "evidence_types": [
+            "test"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q7-C2",
+          "statement": "언어권별 유입·완주율·재방문을 DEC-4 기준으로 판정한다",
+          "method": "집계 보고",
+          "target": "판정 기록",
+          "evidence_types": [
+            "measurement"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q7-6V",
+          "statement": "이 단계를 잠그기 전에 6방향(전방·후방·위·아래·좌·우) 검토가 이 단계를 대상으로 기록된다 (intent §11)",
+          "method": "evidence.jsonl 에서 stage=Q7 인 vector_review 를 방향별로 센다",
+          "target": "6방향 각 1건 이상",
+          "evidence_types": [
+            "observation"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        }
+      ]
+    },
+    {
+      "id": "Q8",
+      "label": "시장 교육팩 승인",
+      "outcome": "고른 시장(최대 2~3곳) 팩이 현지 교사 승인을 받고 A/B 결과가 성공 기준을 넘는다.",
+      "depends_on": [
+        "Q7"
+      ],
+      "review_question": "현지 검수자·비용·성공 기준은? (DEC-6)",
+      "artifacts": [
+        "reports/market/"
+      ],
+      "maker": "claude-code main session",
+      "review": "independent",
+      "human_holds": [
+        "DEC-6"
+      ],
+      "minor_limit": 0,
+      "criteria": [
+        {
+          "id": "Q8-C1",
+          "statement": "고른 시장 팩에 현지 교사 승인 기록이 있다 (INV-7)",
+          "method": "승인 기록 확인",
+          "target": "시장마다 1건 이상",
+          "evidence_types": [
+            "observation"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q8-C2",
+          "statement": "제한적 A/B 결과가 DEC-6 성공 기준을 넘는다",
+          "method": "A/B 보고",
+          "target": "기준 이상",
+          "evidence_types": [
+            "measurement"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        },
+        {
+          "id": "Q8-6V",
+          "statement": "이 단계를 잠그기 전에 6방향(전방·후방·위·아래·좌·우) 검토가 이 단계를 대상으로 기록된다 (intent §11)",
+          "method": "evidence.jsonl 에서 stage=Q8 인 vector_review 를 방향별로 센다",
+          "target": "6방향 각 1건 이상",
+          "evidence_types": [
+            "observation"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": []
+        }
+      ]
+    }
+  ]
+}
