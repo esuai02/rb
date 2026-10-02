@@ -20,6 +20,7 @@ claims:
     this: {rise: 3, run: 1}
     other: {rise: 1, run: 1}
     states: steeper
+    states_text: 더 가팔라
     conditions: {run_nonzero: true, same_unit: grid_cell}
   - id: claim.line.point
     line_key: label.line.point

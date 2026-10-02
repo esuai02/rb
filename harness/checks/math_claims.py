@@ -101,8 +101,15 @@ def _direction_words(rules) -> dict[str, str]:
 
 
 def stated_patterns(claim: dict, rules) -> list[tuple[str, str]]:
-    """원문에 그대로 있어야 하는 것 — (설명, 정규식). 묶을 수 없는 종류는 빈 목록."""
+    """원문에 그대로 있어야 하는 것 — (설명, 정규식).
+
+    수로 묶을 수 없는 값(비교 방향·분수)은 명제가 states_text 로 '대사에 있어야 할 말'을 적어야 한다.
+    그 말은 데이터(명제 파일)에 두고 검사기에는 특정 언어의 말을 적지 않는다.
+    """
     kind, out = claim.get("kind"), []
+    stated = claim.get("states_text")
+    if isinstance(stated, str) and stated.strip():
+        out.append((stated, re.escape(stated)))
     if kind == "coordinate":
         words = _direction_words(rules)
         for move in claim.get("moves") or []:
@@ -133,6 +140,28 @@ def _math_terms(rules) -> list[str]:
     return [t for goal in rules.world_spec.get("language_goals", []) for t in [_word(rules, goal.get("label_key", ""))] if t]
 
 
+def needs_states_text(claim: dict) -> bool:
+    """수만으로는 대사와 묶을 수 없는 명제 — 비교 방향, 또는 분수·소수로 적은 값."""
+    kind = claim.get("kind")
+    if kind == "slope_compare":
+        return True
+    if kind == "slope":
+        try:
+            return _num(claim.get("states")).denominator != 1
+        except ClaimError:
+            return False
+    if kind in ("coordinate", "line_point"):
+        try:
+            values = list(_point(claim.get("states" if kind == "coordinate" else "point")))
+            if kind == "line_point":
+                line = claim.get("line") or {}
+                values += [_num(line.get("m")), _num(line.get("b"))]
+            return any(v.denominator != 1 for v in values)
+        except ClaimError:
+            return False
+    return False
+
+
 def truth(tree, rules, config) -> list[str]:
     """E1 — 수학 대사의 명제가 실제로 맞고, 대사가 그 명제를 말한다. 수학이 든 대사는 모두 명제를 가진다."""
     if not tree.claims:
@@ -152,6 +181,8 @@ def truth(tree, rules, config) -> list[str]:
             continue
         tied.add(claim.get("line_key"))
         source = row.get("Source", "")
+        if needs_states_text(claim) and not str(claim.get("states_text") or "").strip():
+            out.append(f"{cid}: 수만으로는 대사와 묶을 수 없는 명제다 — states_text 에 대사가 반드시 말해야 할 말을 적어야 한다 (E1)")
         out += [f"{cid}: 대사 {claim.get('line_key')} 가 명제의 '{shown}' 을 말하지 않는다 — 명제와 대사가 따로 논다"
                 for shown, pattern in stated_patterns(claim, rules) if not re.search(pattern, source)]
     terms = _math_terms(rules)

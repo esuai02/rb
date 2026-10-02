@@ -27,12 +27,7 @@ def _text_columns(row: dict) -> dict[str, str]:
 
 
 def _aliases(f, module: str) -> set[str]:
-    """이 파일에서 문구 모듈을 가리키는 이름 — 자기 이름과 `local X = require(... Text)` 의 X."""
-    names, toks = {module}, f.tokens
-    for i in range(len(toks) - 2):
-        if toks[i].kind == NAME and toks[i + 1].text == "=" and any(t.kind == NAME and t.text == module for t in toks[i + 2:i + 12]):
-            names.add(toks[i].text)
-    return names
+    return luau.require_aliases(f.tokens, module)
 
 
 def _key_calls(f, config) -> list[tuple[int, list]]:
@@ -97,15 +92,23 @@ def _dev_strings(f) -> set[int]:
     return {id(t) for name in DEV_MESSAGE_CALLS for i in luau.find_calls(f.tokens, (name,)) for arg in luau.call_args(f.tokens, i) for t in arg}
 
 
+def _string_constants(f) -> dict:
+    """`local name = "글자"` 로 묶인 이름 → 그 문자열 토큰."""
+    toks = f.tokens
+    return {toks[i + 1].text: toks[i + 3] for i in range(len(toks) - 3)
+            if toks[i].kind == NAME and toks[i].text == "local" and toks[i + 1].kind == NAME and toks[i + 2].text == "=" and toks[i + 3].kind == STRING}
+
+
 def _ui_text_literals(f, config) -> list:
-    """UI 글자 속성에 바로 넣은 문자열 — 내용과 관계없이 문구 키를 거쳐야 한다."""
-    toks, out = f.tokens, []
+    """UI 글자 속성에 들어가는 문자열 — 바로 쓴 것도, 문자열 상수에 담아 쓴 것도 문구 키를 거쳐야 한다."""
+    toks, out, constants = f.tokens, [], _string_constants(f)
     for i in range(len(toks) - 2):
         dotted = toks[i].text == "." and toks[i + 1].kind == NAME and toks[i + 1].text in config["ui_text_properties"] and toks[i + 2].text == "="
         bracket = (toks[i].text == "[" and toks[i + 1].kind == STRING and toks[i + 1].text in config["ui_text_properties"]
                    and i + 3 < len(toks) and toks[i + 2].text == "]" and toks[i + 3].text == "=")
         if not (dotted or bracket):
             continue
+        prop = toks[i + 1].text
         depth, j = 0, i + 3 + (1 if bracket else 0)
         while j < len(toks) and not (toks[j].kind == NAME and toks[j].text in ("local", "function", "end", "return")):
             if toks[j].kind == luau.SYMBOL and toks[j].text in ("(", "{", "["):
@@ -115,7 +118,9 @@ def _ui_text_literals(f, config) -> list:
                     break
                 depth -= 1
             elif toks[j].kind == STRING and depth == 0:
-                out.append((toks[i + 1].text, toks[j]))
+                out.append((prop, toks[j]))
+            elif toks[j].kind == NAME and depth == 0 and toks[j].text in constants:
+                out.append((prop, constants[toks[j].text]))
             elif toks[j].line > toks[i].line and depth == 0:
                 break
             j += 1

@@ -13,15 +13,7 @@ def _at(f, tok) -> str:
 
 
 def _module_names(f, module: str) -> set[str]:
-    """이 파일에서 보상/분석 같은 모듈을 가리키는 이름 — 자기 이름과 `local X = require(... Module)` · `local X = Module` 의 X."""
-    names, toks = {module}, f.tokens
-    for i in range(len(toks) - 2):
-        if not (toks[i].kind == NAME and toks[i + 1].text == "=" ):
-            continue
-        tail = toks[i + 2:i + 12]
-        if any(t.kind == NAME and t.text == module for t in tail):
-            names.add(toks[i].text)
-    return names
+    return luau.require_aliases(f.tokens, module)
 
 
 def _grant_aliases(f, module_names: set[str]) -> set[tuple[str, ...]]:
@@ -246,19 +238,58 @@ def _guard_positions(body) -> dict[str, int]:
     return out
 
 
+LOW, HIGH = ("<", "<="), (">", ">=")
+
+
+def _split_or(cond: list) -> list[list]:
+    """조건을 맨 바깥 or 로 나눈다."""
+    parts, cur, depth = [], [], 0
+    for tok in cond:
+        if tok.kind == SYMBOL and tok.text in ("(", "{", "["):
+            depth += 1
+        elif tok.kind == SYMBOL and tok.text in (")", "}", "]"):
+            depth -= 1
+        if depth == 0 and tok.kind == NAME and tok.text == "or":
+            parts.append(cur)
+            cur = []
+        else:
+            cur.append(tok)
+    parts.append(cur)
+    return parts
+
+
+def _comparisons(part: list) -> list[tuple[str, str]]:
+    """한 조각이 비교 하나뿐이면 (이름, 막는 방향) 목록.
+
+    막는 가드이므로 `x < A` 는 A 보다 작은 값을 거른다 = x 의 하한, `x > A` 는 상한이다. 이름이 오른쪽이면 방향이 뒤집힌다.
+    """
+    ops = [k for k, tok in enumerate(part) if tok.kind == SYMBOL and tok.text in LOW + HIGH]
+    if len(ops) != 1 or any(tok.kind == NAME and tok.text in ("and", "not") for tok in part):
+        return []
+    k = ops[0]
+    before, after, op = part[:k], part[k + 1:], part[ops[0]].text
+    out = []
+    if len(before) == 1 and before[0].kind == NAME:
+        out.append((before[0].text, "low" if op in LOW else "high"))
+    if after and after[-1].kind == NAME and len([x for x in after if x.kind == NAME]) == 1:
+        out.append((after[-1].text, "high" if op in LOW else "low"))
+    return out
+
+
 def _range_positions(body) -> dict[str, int]:
-    """막는 형태의 범위 가드가 시작하는 자리 — `if x < A or x > B then return end` 처럼 크기를 견주어 멈추는 곳."""
-    out = {}
+    """막는 형태의 범위 가드 — `if x < A or x > B then return end` 처럼 하한·상한을 or 로 걸러야 센다.
+
+    `x < A and x > B` 처럼 둘 다여야 멈추는 조건은 성립할 수 없으므로 세지 않는다.
+    """
+    found: dict[str, dict[str, int]] = {}
     for start, stop in _if_spans(body):
         cond, after = body[start + 1:stop], body[stop + 1:stop + 2]
         if not (after and after[0].kind == NAME and after[0].text in BLOCKING):
             continue
-        for k, tok in enumerate(cond):
-            if tok.kind == NAME and k + 1 < len(cond) and cond[k + 1].text in ("<", ">", "<=", ">="):
-                out.setdefault(tok.text, start)
-            elif tok.text in ("<", ">", "<=", ">=") and k + 1 < len(cond) and cond[k + 1].kind == NAME:
-                out.setdefault(cond[k + 1].text, start)
-    return out
+        for part in _split_or(cond):
+            for name, side in _comparisons(part):
+                found.setdefault(name, {}).setdefault(side, start)
+    return {name: max(sides.values()) for name, sides in found.items() if len(sides) == 2}
 
 
 def _first_work(body, cooldown: tuple[str, ...]) -> int:
@@ -324,7 +355,8 @@ def remote_cooldown(tree, rules, config) -> list[str]:
             where, work = _at(f, f.tokens[i]), _first_work(body, path)
             blocking = [start for start, stop in _if_spans(body)
                         if luau.find_calls(body[start:stop], path) and body[stop + 1:stop + 2]
-                        and body[stop + 1].kind == NAME and body[stop + 1].text in BLOCKING]
+                        and body[stop + 1].kind == NAME and body[stop + 1].text in BLOCKING
+                        and any(x.kind == NAME and x.text == "not" for x in body[start:stop])]
             if not luau.find_calls(body, path):
                 out.append(f"{where} 원격 이벤트 처리가 {'.'.join(path)} 를 거치지 않는다 (연타·자동 반복 방지)")
             elif not blocking:
@@ -360,8 +392,9 @@ def _inside_verdict(body, index: int, verdicts) -> bool:
         j = start + 1
         while j < len(body) and not (body[j].kind == NAME and body[j].text == "then"):
             j += 1
-        if j >= len(body) or not any(luau.find_calls(body[start:j], v) for v in verdicts):
-            continue
+        cond = body[start:j]
+        if not any(luau.find_calls(cond, v) for v in verdicts) or any(x.kind == NAME and x.text == "not" for x in cond):
+            continue   # 판정이 거짓일 때 들어가는 가지는 보상 자리가 아니다
         depth, k = 1, j + 1
         while k < len(body) and depth:
             if body[k].kind == NAME and body[k].text in ("if", "do", "function", "repeat"):

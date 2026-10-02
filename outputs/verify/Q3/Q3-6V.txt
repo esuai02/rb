@@ -1,11 +1,11 @@
 criterion: Q3-6V — 이 단계를 잠그기 전에 6방향(전방·후방·위·아래·좌·우) 검토가 이 단계를 대상으로 기록된다 (intent §11)
-binding: 0840d46df590b4de3163f48fb37cf403726e1301c0bcef61148ed646663f4b78
-time: 2026-10-02T11:58:18.615294+00:00
+binding: bcd27803c4d0e77ae3f912dbf4f6028d6e5d0f348b18e68247a44b670a322187
+time: 2026-10-02T12:12:00.416036+00:00
 
-V-BWD: VR-BWD-Q3-0840d46d
-V-DOWN: VR-DOWN-Q3-0840d46d
-V-FWD: VR-FWD-Q3-0840d46d
-V-LEFT: VR-LEFT-Q3-0840d46d
-V-RIGHT: VR-RIGHT-Q3-0840d46d
-V-UP: VR-UP-Q3-0840d46d
-세지 않은 기록(다른 버전이거나 내용이 빠짐): VR-FWD-Q3-b06dcd43, VR-BWD-Q3-b06dcd43, VR-UP-Q3-b06dcd43, VR-DOWN-Q3-b06dcd43, VR-LEFT-Q3-b06dcd43, VR-RIGHT-Q3-b06dcd43 (필수: 지금 binding, observed, proposal, next, sources)
+V-BWD: VR-BWD-Q3-bcd27803
+V-DOWN: VR-DOWN-Q3-bcd27803
+V-FWD: VR-FWD-Q3-bcd27803
+V-LEFT: VR-LEFT-Q3-bcd27803
+V-RIGHT: VR-RIGHT-Q3-bcd27803
+V-UP: VR-UP-Q3-bcd27803
+세지 않은 기록(다른 버전이거나 내용이 빠짐): VR-FWD-Q3-b06dcd43, VR-BWD-Q3-b06dcd43, VR-UP-Q3-b06dcd43, VR-DOWN-Q3-b06dcd43, VR-LEFT-Q3-b06dcd43, VR-RIGHT-Q3-b06dcd43, VR-FWD-Q3-0840d46d, VR-BWD-Q3-0840d46d, VR-UP-Q3-0840d46d, VR-DOWN-Q3-0840d46d, VR-LEFT-Q3-0840d46d, VR-RIGHT-Q3-0840d46d (필수: 지금 binding, observed, proposal, next, sources)

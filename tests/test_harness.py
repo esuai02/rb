@@ -186,8 +186,8 @@ class MathClaimTest(TreeCase):
                  ("    line: {m: 2, b: 1}\n    point: [2, 5]\n    states: true\n    conditions: {domain: real}\n",
                   "    line: {m: '1/2', b: 1}\n    point: [2, 2]\n    states: true\n    conditions: {domain: grid_integer}\n", "격자 정수"),
                  ("    this: {rise: 3, run: 1}\n", "    this: {rise: 3, run: 0}\n", "가로 변화가 0"),
-                 ("    states: steeper\n    conditions: {run_nonzero: true, same_unit: grid_cell}\n",
-                  "    states: steeper\n    conditions: {run_nonzero: true, same_unit: meter}\n", "단위"),
+                 ("    states_text: 더 가팔라\n    conditions: {run_nonzero: true, same_unit: grid_cell}\n",
+                  "    states_text: 더 가팔라\n    conditions: {run_nonzero: true, same_unit: meter}\n", "단위"),
                  ("    kind: line_point\n", "    kind: circle\n", "명제 종류")]
         for old, new, fragment in cases:
             with self.subTest(fragment=fragment):
@@ -392,6 +392,18 @@ class CheckBranchTest(TreeCase):
                   '\tassert(typeof(x) == "number" and typeof(y) == "number", "bad input")\n')
         self.assertEqual(run.run_checks(tree, MANIFEST, RULES)["server.remote_validation"], [])
 
+    def test_bracket_access_is_normalized(self):
+        toks = luau.normalize_index(luau.fold_strings(luau.tokenize('R["OnServer" .. "Event"]:Connect(f)\nlocal t = {["a"] = 1}\nm[key] = 2\n')))
+        self.assertEqual([x.text for x in toks[:5]], ["R", ".", "OnServerEvent", ":", "Connect"])
+        self.assertIn("[", [x.text for x in toks])        # 표 리터럴과 변수 색인은 그대로 둔다
+        self.assertEqual(sum(1 for x in toks if x.text == "a"), 1)
+
+    def test_module_alias_does_not_leak_across_statements(self):
+        tree = source.load_tree(self.make_tree())
+        tokens = next(f for f in tree.luau if f.rel.endswith("MissionService.luau")).tokens
+        self.assertEqual(luau.require_aliases(tokens, "Analytics"), {"Analytics"})
+        self.assertEqual(luau.require_aliases(tokens, "RewardService"), {"RewardService"})
+
     def test_table_payload_fields_need_type_and_range(self):
         tree = self.make_tree()
         self.edit(tree, "src/server/Main.server.luau",
@@ -480,11 +492,31 @@ class CheckBranchTest(TreeCase):
                   "AnalyticsService:LogCustomEvent(player, stepName, 1, pack(fields))")
         self.assertCaught(tree, "analytics.calls", "플랫폼 전송 함수 LogOnboardingFunnelStepEvent")
 
+    def test_range_guard_needs_both_bounds_joined_by_or(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/server/Main.server.luau", "\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n",
+                  "\tif x < -GRID or x > GRID or y < -GRID or y > GRID or isBad(x) then return end\n")
+        self.assertEqual(run.run_checks(tree, MANIFEST, RULES)["server.remote_validation"], [])
+        tree = self.make_tree()
+        self.edit(tree, "src/server/Main.server.luau", "\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n",
+                  "\tif -GRID > x or GRID < x or -GRID > y or GRID < y then return end\n")
+        self.assertEqual(run.run_checks(tree, MANIFEST, RULES)["server.remote_validation"], [])
+
     def test_absolute_rojo_path_is_refused_without_echoing_it(self):
         tree = self.make_tree("D-absolute-path")
         found = run.run_checks(tree, MANIFEST, RULES)["safety.url"]
         self.assertTrue(any("상대 경로여야 한다" in x for x in found), found)
         self.assertFalse(any("/tmp/gate-ui" in x for x in found), found)
+
+    def test_claim_needing_states_text_must_have_it(self):
+        tree = self.make_tree()
+        self.edit(tree, "content/math_claims.yaml", "    rise: 2\n    run: 1\n    states: 2\n", "    rise: 1\n    run: 2\n    states: '1/2'\n")
+        self.assertCaught(tree, "math.truth", "states_text")
+
+    def test_states_text_must_appear_in_the_line(self):
+        tree = self.make_tree()
+        self.edit(tree, "content/math_claims.yaml", "    states_text: 더 가팔라\n", "    states_text: 덜 가팔라\n")
+        self.assertCaught(tree, "math.truth", "'덜 가팔라' 을 말하지 않는다")
 
     def test_safety_branches(self):
         tree = self.make_tree()

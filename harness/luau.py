@@ -100,6 +100,41 @@ def fold_strings(tokens: list[Token]) -> list[Token]:
     return out
 
 
+def require_aliases(tokens: list[Token], module: str) -> set[str]:
+    """이 파일에서 그 모듈을 가리키는 이름 — 자기 이름과 `local X = require(….Module)` · `local X = Module` 의 X."""
+    names = {module}
+    for i in range(len(tokens) - 3):
+        if not (tokens[i].kind == NAME and tokens[i].text == "local" and tokens[i + 1].kind == NAME and tokens[i + 2].text == "="):
+            continue
+        rhs = tokens[i + 3]
+        if rhs.kind == NAME and rhs.text == module and (i + 4 >= len(tokens) or tokens[i + 4].text != "."):
+            names.add(tokens[i + 1].text)
+        elif rhs.kind == NAME and rhs.text == "require" and i + 4 < len(tokens) and tokens[i + 4].text == "(":
+            inner = [x.text for x in balanced(tokens, i + 4) if x.kind == NAME]
+            if inner and inner[-1] == module:
+                names.add(tokens[i + 1].text)
+    return names
+
+
+def normalize_index(tokens: list[Token]) -> list[Token]:
+    """값에 붙은 상수 대괄호 접근을 점 접근으로 바꾼다 — R["OnServerEvent"] 를 R.OnServerEvent 로.
+    표를 만들 때 쓰는 { ["a"] = 1 } 은 건드리지 않는다."""
+    out: list[Token] = []
+    i = 0
+    while i < len(tokens):
+        tok = tokens[i]
+        if (tok.kind == SYMBOL and tok.text == "[" and out and (out[-1].kind == NAME or out[-1].text in (")", "]", "}"))
+                and i + 2 < len(tokens) and tokens[i + 1].kind == STRING and tokens[i + 2].text == "]"
+                and _NAME.fullmatch(tokens[i + 1].text)):
+            out.append(Token(SYMBOL, ".", tok.line))
+            out.append(Token(NAME, tokens[i + 1].text, tokens[i + 1].line))
+            i += 3
+            continue
+        out.append(tok)
+        i += 1
+    return out
+
+
 def find_calls(tokens: list[Token], path: tuple[str, ...]) -> list[int]:
     """이름 경로(예: ("RewardService", "grant"))로 시작하는 호출 위치(첫 토큰 번호). 구분자는 . 또는 :"""
     hits = []

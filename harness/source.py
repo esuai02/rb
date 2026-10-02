@@ -138,9 +138,13 @@ def load_tree(root: Path) -> Tree:
                 owners.setdefault(path.resolve(), chain[0])
     for path in sorted(p for p in root.rglob("*") if p.is_file()):
         rel = path.relative_to(root).as_posix()
-        if rel == PROJECT_FILE or rel.split("/", 1)[0] in HARNESS_INPUT:
+        if rel == PROJECT_FILE:
             continue
         owner = owners.get(path.resolve())
+        if rel.split("/", 1)[0] in HARNESS_INPUT:
+            if owner is not None:
+                tree.problems.append(f"{rel}: 검사 입력 폴더({'/'.join(HARNESS_INPUT)})는 Rojo 에 싣지 않는다 — 게임에 들어가는 파일과 섞이면 안 된다")
+            continue
         if owner is None:
             tree.problems.append(f"{rel}: Rojo 프로젝트가 어디에도 넣지 않는 파일이다")
             continue
@@ -153,7 +157,8 @@ def _load_file(tree: Tree, path: Path, rel: str, owner: str) -> None:
     kind = _kind(path.name)
     try:
         if kind:
-            tree.luau.append(LuauFile(rel, owner, kind, luau.fold_strings(luau.tokenize(path.read_text(encoding="utf-8")))))
+            tokens = luau.normalize_index(luau.fold_strings(luau.tokenize(path.read_text(encoding="utf-8"))))
+            tree.luau.append(LuauFile(rel, owner, kind, tokens))
         elif path.suffix == ".csv":
             _load_csv(tree, path, rel)
         elif path.name.endswith(DATA_SUFFIXES):

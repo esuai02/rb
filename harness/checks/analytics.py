@@ -17,11 +17,7 @@ def _allowed(rules) -> dict[str, tuple[str, list[str]]]:
 
 
 def _aliases(f, module: str) -> set[str]:
-    names, toks = {module}, f.tokens
-    for i in range(len(toks) - 2):
-        if toks[i].kind == NAME and toks[i + 1].text == "=" and any(t.kind == NAME and t.text == module for t in toks[i + 2:i + 12]):
-            names.add(toks[i].text)
-    return names
+    return luau.require_aliases(f.tokens, module)
 
 
 def _table_fields(arg: list) -> tuple[dict, list[str]]:
@@ -63,15 +59,36 @@ def calls(tree, rules, config) -> list[str]:
             continue
         out += [f"{f.rel}:{t.line} 분석 모듈을 거치지 않고 AnalyticsService 를 쓴다" for t in f.tokens
                 if t.text in ("AnalyticsService", *config["platform_apis"]) and t.kind in (NAME, STRING)]
-        for name in _aliases(f, module):
-            for kind, sender in senders.items():
-                out += _check_call(f, name, sender, kind, allowed, enums, module)
+        names = _aliases(f, module)
+        for kind, sender in senders.items():
+            for name in names:
+                out += _check_call(f, name, sender, kind, allowed, enums, module, (name, sender))
+            for direct in _method_aliases(f, names, sender):
+                out += _check_call(f, direct, sender, kind, allowed, enums, module, (direct,))
+        out += [f"{f.rel}:{f.tokens[i].line} 분석 모듈의 모르는 함수 {f.tokens[i + 2].text} 를 부른다 — {sender_names(config)} 만 쓴다"
+                for name in names for i in range(len(f.tokens) - 3)
+                if f.tokens[i].kind == NAME and f.tokens[i].text == name and f.tokens[i + 1].text == "."
+                and f.tokens[i + 2].kind == NAME and f.tokens[i + 2].text not in senders.values() and f.tokens[i + 3].text == "("]
     return out
 
 
-def _check_call(f, name: str, sender: str, kind: str, allowed: dict, enums: dict, module: str) -> list[str]:
+def sender_names(config) -> str:
+    return f"{config['analytics_module']}.{config['custom_call']} · {config['analytics_module']}.{config['funnel_call']}"
+
+
+def _method_aliases(f, module_names: set[str], sender: str) -> set[str]:
+    """`local send = Analytics.log` 처럼 전송 함수를 담은 이름."""
+    toks, out = f.tokens, set()
+    for i in range(len(toks) - 4):
+        if (toks[i].kind == NAME and toks[i + 1].text == "=" and toks[i + 2].kind == NAME and toks[i + 2].text in module_names
+                and toks[i + 3].text == "." and toks[i + 4].text == sender):
+            out.add(toks[i].text)
+    return out
+
+
+def _check_call(f, name: str, sender: str, kind: str, allowed: dict, enums: dict, module: str, path: tuple[str, ...]) -> list[str]:
     out = []
-    for i in luau.find_calls(f.tokens, (name, sender)):
+    for i in luau.find_calls(f.tokens, path):
         where = f"{f.rel}:{f.tokens[i].line}"
         if f.client_visible:
             out.append(f"{where} 클라이언트 코드가 분석을 보낸다 — 서버에서만(F10)")
