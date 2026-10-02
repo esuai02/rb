@@ -109,7 +109,10 @@ def random_or_paid_reward(tree, rules, config) -> list[str]:
         out += [f"{f.rel}:{t.line} 결제·구독 조건 {t.text} 를 쓴다 (DEC-5 결정 전 · INV-12)" for t in f.tokens if t.kind in (NAME, STRING) and t.text in paid]
         if f.name in allowed:
             continue
-        for i in [i for path in RANDOM_PATHS for i in luau.find_calls(f.tokens, path)]:
+        paths = {path for path in RANDOM_PATHS} | {(alias,) for path in RANDOM_PATHS
+                                                    for alias in resolve.names_for(f.resolved, path) if alias != path[0]}
+        paths |= {(alias, path[1]) for path in RANDOM_PATHS for alias in resolve.names_for(f.resolved, (path[0],)) if alias != path[0]}
+        for i in sorted({i for path in paths for i in luau.find_calls(f.tokens, path)}):
             out.append(f"{f.rel}:{f.tokens[i].line} 난수를 쓴다 — 보상·진행은 완주·기여로만 정한다 (허용 모듈: {sorted(allowed) or '없음'})")
         out += [f"{f.rel}:{t.line} 난수 메서드 {t.text} 를 쓴다 — 보상·진행은 완주·기여로만 정한다" for k, t in enumerate(f.tokens)
                 if t.kind == NAME and t.text in RANDOM_METHODS and k and f.tokens[k - 1].text == ":"]

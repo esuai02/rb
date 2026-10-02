@@ -9,7 +9,7 @@ import re
 import unicodedata
 
 from harness import luau, resolve
-from harness.luau import NAME, STRING
+from harness.luau import NAME, STRING, SYMBOL
 
 IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]*$")      # 키·열거형 토큰 — 화면 문구가 아니다
 LETTER = re.compile(r"[^\W\d_]", re.UNICODE)               # 어떤 문자 체계든 '글자'

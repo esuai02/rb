@@ -36,6 +36,7 @@ EXPECTED_DEFECTS = {
     "D-analytics-alias": ("별칭으로 부른 허용 밖 분석 이벤트", ("analytics.calls",)),
     "D-analytics-dot-call": ("점 표기로 부른 플랫폼 분석 API", ("analytics.calls",)),
     "D-analytics-method-alias": ("전송 함수를 담은 이름으로 보낸 분석", ("analytics.calls",)),
+    "D-analytics-module-constant-event": ("분석 모듈이 상수 변수로 보낸 이벤트", ("analytics.calls",)),
     "D-analytics-module-literal": ("분석 모듈이 글자 그대로 보내는 이벤트", ("analytics.calls",)),
     "D-analytics-module-pii": ("분석 모듈 안의 개인정보", ("analytics.calls",)),
     "D-analytics-pii": ("커스텀 필드 개인정보", ("analytics.calls",)),
@@ -100,6 +101,7 @@ EXPECTED_DEFECTS = {
     "D-player-alias-pii": ("플레이어 별칭으로 넣은 개인정보", ("analytics.calls",)),
     "D-premium-gate": ("구독 회원 전용 보상", ("safety.random_or_paid_reward",)),
     "D-project-tree-not-object": ("구조가 틀린 Rojo 프로젝트", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
+    "D-random-alias-chain": ("별칭으로 부른 난수", ("safety.random_or_paid_reward",)),
     "D-random-helper": ("도우미 모듈로 옮긴 무작위 보상", ("safety.random_or_paid_reward",)),
     "D-random-reward": ("무작위 보상 코드", ("safety.random_or_paid_reward",)),
     "D-range-before-type": ("타입보다 앞선 범위 검사", ("server.remote_validation",)),
@@ -184,6 +186,14 @@ class PlantedDefectTest(TreeCase):
         for defect in MANIFEST["defects"]:
             with self.subTest(defect=defect["id"]):
                 self.assertEqual(sorted(self.failing(self.make_tree(defect["id"]))), sorted(defect["expected"]))
+
+    def test_no_check_ever_crashes(self):
+        """어떤 결함에서도 검사가 멈추지 않는다 — 멈춘 검사는 '잡았다'처럼 보이지만 이유가 없다 (리뷰 R-Q3 9차)."""
+        for defect_id in sorted(EXPECTED_DEFECTS):
+            with self.subTest(defect=defect_id):
+                found = run.run_checks(self.make_tree(defect_id), MANIFEST, RULES)
+                crashed = [f"{k}: {x}" for k, v in found.items() for x in v if "끝까지 돌지 못했다" in x]
+                self.assertEqual(crashed, [])
 
     def test_required_defect_classes_are_planted(self):
         """기준 Q3-C1 이 이름으로 든 결함 종류마다 실제 고정 데이터가 있고, 그 데이터가 검사에 잡힌다."""
@@ -636,8 +646,12 @@ class CheckBranchTest(TreeCase):
         self.assertCaught(self.make_tree("D-else-reward"), "server.reward_after_verdict", "서버 판정")
 
     def test_analytics_module_is_not_trusted(self):
-        self.assertCaught(self.make_tree("D-analytics-module-literal"), "analytics.calls", "글자 그대로의 값")
+        self.assertCaught(self.make_tree("D-analytics-module-literal"), "analytics.calls", "정해진 값")
         self.assertCaught(self.make_tree("D-analytics-module-pii"), "analytics.calls", "개인정보 속성 Name")
+
+    def test_unresolved_ui_assembly_has_its_own_diagnosis(self):
+        found = run.run_checks(self.make_tree("D-unresolved-ui-text"), MANIFEST, RULES)["i18n.hardcoded_text"]
+        self.assertTrue(any("값을 알 수 없는 조립 글자" in x for x in found), found)
 
     def test_rojo_mapping_must_stay_in_src(self):
         tree = self.make_tree("D-mapped-outside-src")

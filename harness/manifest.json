@@ -2351,6 +2351,34 @@
           "replace": "{\"Gate\": {\"$path\": \"src/client\"}}}\n  }]\n}"
         }
       ]
+    },
+    {
+      "id": "D-analytics-module-constant-event",
+      "class": "분석 모듈이 상수 변수로 보낸 이벤트",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
+          "replace": "\tlocal BAD = \"not_allowed\"\n\tAnalyticsService:LogCustomEvent(player, BAD, 1, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-random-alias-chain",
+      "class": "별칭으로 부른 난수",
+      "expected": [
+        "safety.random_or_paid_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\t\towned:SetAttribute(rewardId, true)\n",
+          "replace": "\t\towned:SetAttribute(rewardId, true)\n\t\tlocal m = math\n\t\tlocal r = m.random\n\t\tif r() < 0.1 then\n\t\t\towned:SetAttribute(\"reward.rare_drop\", true)\n\t\tend\n"
+        }
+      ]
     }
   ]
 }

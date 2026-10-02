@@ -101,8 +101,9 @@ def _check_module(f, config) -> list[str]:
                   and f.tokens[k + 1].text == "(" and (k == 0 or f.tokens[k - 1].text in (":", "."))]:
             args = luau.call_args(f.tokens, i)
             literals = [a[0].text for a in args if len(a) == 1 and a[0].kind == STRING]
+            literals += [f.resolved[a[0].text] for a in args if len(a) == 1 and a[0].kind == NAME and isinstance(f.resolved.get(a[0].text), str)]
             if literals:
-                out.append(f"{f.rel}:{f.tokens[i].line} 분석 모듈이 {api} 에 글자 그대로의 값 {literals} 를 넣는다 — 이벤트 이름·필드는 받은 값이어야 한다")
+                out.append(f"{f.rel}:{f.tokens[i].line} 분석 모듈이 {api} 에 정해진 값 {literals} 를 넣는다 — 이벤트 이름·필드는 받은 값이어야 한다")
     out += [f"{f.rel}:{t.line} 분석 모듈이 플레이어 개인정보 속성 {t.text} 를 쓴다 (INV-10)" for k, t in enumerate(f.tokens)
             if t.kind == NAME and t.text in config["player_identity_names"] and k >= 2 and f.tokens[k - 1].text == "."
             and f.tokens[k - 2].kind == NAME and f.tokens[k - 2].text in _player_names(f, config)]
