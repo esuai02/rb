@@ -34,6 +34,7 @@ EXPECTED_DEFECTS = {
     "D-absolute-path": ("절대 경로를 쓴 Rojo 프로젝트", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
     "D-alias-grant-in-handler": ("처리 함수 안의 별칭 보상", ("server.duplicate_reward", "server.reward_after_verdict")),
     "D-analytics-alias": ("별칭으로 부른 허용 밖 분석 이벤트", ("analytics.calls",)),
+    "D-analytics-computed-event": ("어디서 왔는지 알 수 없는 분석 이벤트", ("analytics.calls",)),
     "D-analytics-dot-call": ("점 표기로 부른 플랫폼 분석 API", ("analytics.calls",)),
     "D-analytics-method-alias": ("전송 함수를 담은 이름으로 보낸 분석", ("analytics.calls",)),
     "D-analytics-module-constant-event": ("분석 모듈이 상수 변수로 보낸 이벤트", ("analytics.calls",)),
@@ -98,6 +99,7 @@ EXPECTED_DEFECTS = {
     "D-one-sided-range": ("한쪽만 보는 범위 조건", ("server.remote_validation",)),
     "D-paid-item": ("유료 보상 코드", ("safety.random_or_paid_reward",)),
     "D-platform-api-alias": ("플랫폼 전송 함수를 담은 이름", ("analytics.calls",)),
+    "D-player-alias-dynamic-authority": ("플레이어 별칭의 동적 권한 접근", ("server.reward_authority",)),
     "D-player-alias-pii": ("플레이어 별칭으로 넣은 개인정보", ("analytics.calls",)),
     "D-premium-gate": ("구독 회원 전용 보상", ("safety.random_or_paid_reward",)),
     "D-project-tree-not-object": ("구조가 틀린 Rojo 프로젝트", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
@@ -106,6 +108,7 @@ EXPECTED_DEFECTS = {
     "D-random-reward": ("무작위 보상 코드", ("safety.random_or_paid_reward",)),
     "D-range-before-type": ("타입보다 앞선 범위 검사", ("server.remote_validation",)),
     "D-reassigned-grid": ("다시 묶인 범위 상수", ("server.remote_validation",)),
+    "D-reassigned-grid-after-block": ("블록 끝 뒤에 다시 묶인 상수", ("server.remote_validation",)),
     "D-remote-no-cooldown": ("쿨다운 없는 원격 입력", ("server.remote_cooldown",)),
     "D-remotefunction": ("검증 없는 RemoteFunction", ("server.remote_cooldown", "server.remote_validation")),
     "D-reward-alias": ("별칭으로 부른 중복 보상", ("server.duplicate_reward",)),
@@ -118,6 +121,7 @@ EXPECTED_DEFECTS = {
     "D-textgenerator": ("런타임 생성형 AI 대화(TextGenerator)", ("safety.external_call",)),
     "D-translated-math": ("번역된 수식", ("i18n.do_not_translate",)),
     "D-two-step-grant-alias": ("두 단계로 넘긴 보상 별칭", ("server.duplicate_reward", "server.reward_after_verdict")),
+    "D-ui-text-from-function": ("함수가 만든 UI 문구", ("i18n.hardcoded_text",)),
     "D-ui-text-literal": ("UI 글자 속성에 바로 넣은 문구", ("i18n.hardcoded_text",)),
     "D-ui-text-variable": ("변수로 넣은 UI 문구", ("i18n.hardcoded_text",)),
     "D-unknown-analytics-function": ("분석 모듈의 모르는 함수", ("analytics.calls",)),
@@ -651,7 +655,7 @@ class CheckBranchTest(TreeCase):
 
     def test_unresolved_ui_assembly_has_its_own_diagnosis(self):
         found = run.run_checks(self.make_tree("D-unresolved-ui-text"), MANIFEST, RULES)["i18n.hardcoded_text"]
-        self.assertTrue(any("값을 알 수 없는 조립 글자" in x for x in found), found)
+        self.assertTrue(any("값을 알 수 없는 글자" in x for x in found), found)
 
     def test_rojo_mapping_must_stay_in_src(self):
         tree = self.make_tree("D-mapped-outside-src")
@@ -699,6 +703,19 @@ class CheckBranchTest(TreeCase):
         tree = self.make_tree()
         self.edit(tree, "src/client/Hud.client.luau", "sendCell(2, 1)", 'sendCell(2, 1)\nlocal c = Instance.new(className)')
         self.assertCaught(tree, "safety.free_text", "글자 그대로 알 수 없다")
+
+    def test_decision_values_must_be_known_or_refused(self):
+        """값을 쓰는 판단 지점마다 — 글자 그대로이거나 풀리는 값이어야 하고, 아니면 거부한다 (전수 점검, 리뷰 R-Q3 10차)."""
+        for defect, check, fragment in (("D-analytics-computed-event", "analytics.calls", "어디서 왔는지 알 수 없는"),
+                                        ("D-ui-text-from-function", "i18n.hardcoded_text", "값을 알 수 없는 글자"),
+                                        ("D-player-alias-dynamic-authority", "server.reward_authority", "값을 알 수 없는 방식"),
+                                        ("D-reassigned-grid-after-block", "server.remote_validation", "범위")):
+            with self.subTest(defect=defect):
+                self.assertCaught(self.make_tree(defect), check, fragment)
+
+    def test_constant_table_lookup_is_not_refused(self):
+        """받은 값으로 상수 표를 조회하는 정상 코드는 막지 않는다."""
+        self.assertEqual(run.run_checks(self.make_tree(), MANIFEST, RULES)["analytics.calls"], [])
 
     def test_ordinary_string_building_is_not_refused(self):
         """키를 만드는 평범한 문자열 조립은 막지 않는다 — URL 조각이 섞였을 때만 거부한다."""

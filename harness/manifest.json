@@ -2379,6 +2379,62 @@
           "replace": "\t\towned:SetAttribute(rewardId, true)\n\t\tlocal m = math\n\t\tlocal r = m.random\n\t\tif r() < 0.1 then\n\t\t\towned:SetAttribute(\"reward.rare_drop\", true)\n\t\tend\n"
         }
       ]
+    },
+    {
+      "id": "D-analytics-computed-event",
+      "class": "어디서 왔는지 알 수 없는 분석 이벤트",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
+          "replace": "\tAnalyticsService:LogCustomEvent(player, getEvent(), 1, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-ui-text-from-function",
+      "class": "함수가 만든 UI 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "local msg = getA() .. getB()\ngoal.Text = msg"
+        }
+      ]
+    },
+    {
+      "id": "D-player-alias-dynamic-authority",
+      "class": "플레이어 별칭의 동적 권한 접근",
+      "expected": [
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "sendCell(2, 1)\nlocal player = game:GetService(\"Players\").LocalPlayer\nlocal p = player\nlocal key = getKey()\np[key] = 1\n"
+        }
+      ]
+    },
+    {
+      "id": "D-reassigned-grid-after-block",
+      "class": "블록 끝 뒤에 다시 묶인 상수",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
+          "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\nGRID = 9999\n"
+        }
+      ]
     }
   ]
 }

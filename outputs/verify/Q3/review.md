@@ -1,5 +1,7 @@
-major | harness/checks/analytics.py:99-105 | 분석 모듈이 이벤트를 상수 변수에 담아 플랫폼 API로 보내도 통과한다 | `local BAD = "not_allowed"; LogCustomEvent(..., BAD, ...)`에서 `analytics.calls`가 `[]`를 반환하며, 테스트는 직접 문자열만 검증한다 | 플랫폼 API의 이벤트·필드 인자가 함수 매개변수에서 전달되는지 또는 허용 목록과 정적으로 일치하는지 검증
+major | harness/checks/analytics.py:105 | 분석 모듈의 해석 불가능한 이벤트명이 통과한다 | `local event = getEvent()`을 플랫폼 API에 전달해도 `literals`가 비어 오류가 없다. 허용 이벤트인지 판정할 수 없다 | 이벤트·단계·필드를 정적으로 해석하지 못하면 거부한다
 
-major | harness/checks/safety.py:112-117 | 난수 API를 모듈·변수 별칭으로 호출하면 무작위 보상 검사가 통과한다 | `local m = math; local r = m.random; r()`에서 `random_or_paid_reward`가 `[]`를 반환한다 | `f.resolved`의 `("math", "random")`·`("Random", "new")` 경로 별칭도 호출 검사에 포함하거나 해석 불가 호출을 거부
+major | harness/checks/i18n.py:153 | 알 수 없는 UI 문자열 조립이 통과한다 | `local msg = getA() .. getB(); label.Text = msg`가 `i18n.hardcoded_text` 0건이다. 현재는 대입 RHS에 `..`가 있을 때만 거부한다 | UI 대입값이 Localization 호출 또는 해석 가능한 값이 아니면 점·대괄호 모두 거부한다
 
-minor | harness/checks/i18n.py:153 | 알 수 없는 UI 문자열 조립 결함이 의도한 검출이 아니라 `NameError`로 실패한다 | `unresolved_ui_text`가 import하지 않은 `SYMBOL`을 참조하며, 해당 결함 실행 시 `검사가 끝까지 돌지 못했다 (NameError...)`가 기록된다 | `from harness.luau import NAME, STRING, SYMBOL`로 가져오고 회귀 테스트에서 구체적 UI 조립 진단을 확인
+major | harness/checks/server.py:97 | 플레이어 별칭의 동적 보상 권한 접근이 통과한다 | `local p = player; local key = getKey(); p[key] = value`가 `server.reward_authority` 0건이다. 동적 멤버 검사가 원래 변수명만 본다 | 해석 가능한 플레이어 별칭까지 동적 멤버 검사 대상에 포함한다
+
+major | harness/checks/server.py:390 | 재할당된 범위 상수를 정본 값으로 오인한다 | 함수 뒤 `GRID = 9999`로 재할당해도 `f.resolved`의 `GRID=2`를 사용해 계약 범위 검사가 통과한다 | 재할당을 정확히 추적해 범위 경계를 해석 불가로 거부하거나 실제 최종 바인딩을 검증한다

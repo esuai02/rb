@@ -68,7 +68,8 @@ def _value(rhs: list[Token], known: dict[str, object]) -> object:
     if len(rhs) == 2 and rhs[0].text == "-" and rhs[1].kind == NUMBER:
         return -float(rhs[1].text)
     if len(rhs) == 1 and rhs[0].kind == NAME:
-        return known.get(rhs[0].text, (rhs[0].text,))
+        value = known.get(rhs[0].text)
+        return value if isinstance(value, (str, float, tuple)) else (rhs[0].text,)   # 값을 모르면 '그 이름을 가리킨다'로 둔다
     if rhs[0].kind == NAME and rhs[0].text == "require":
         names = [t.text for t in rhs if t.kind == NAME]
         return (names[-1],) if len(names) > 1 else UNRESOLVED
@@ -145,11 +146,22 @@ def dynamic_member_calls(f, module_names: set[str]) -> list[tuple[int, str]]:
     return out
 
 
+KEYWORDS = {"and", "break", "continue", "do", "else", "elseif", "end", "false", "for", "function", "if", "in",
+            "nil", "not", "or", "repeat", "return", "then", "true", "until", "while"}
+
+
 def _reassigned(tokens: list[Token]) -> set[str]:
-    """`local` 없이 다시 묶이는 이름 — 값이 바뀔 수 있으므로 상수로 보지 않는다."""
+    """`local` 없이 다시 묶이는 이름 — 값이 바뀔 수 있으므로 상수로 보지 않는다.
+
+    문장이 시작하는 자리는 앞 토큰이 기호(`.`·`,` 제외)이거나 예약어(end·then·do …)일 때다.
+    """
     out = set()
     for i in range(1, len(tokens) - 1):
-        if tokens[i].kind == NAME and tokens[i + 1].kind == SYMBOL and tokens[i + 1].text == "=" \
-                and tokens[i - 1].text not in ("local", ".", ",") and tokens[i - 1].kind != NAME:
+        if not (tokens[i].kind == NAME and tokens[i + 1].kind == SYMBOL and tokens[i + 1].text == "="):
+            continue
+        prev = tokens[i - 1]
+        starts = (prev.line < tokens[i].line or (prev.kind == SYMBOL and prev.text not in (".", ",", "="))
+                  or (prev.kind == NAME and prev.text in KEYWORDS)) and prev.text not in ("local", ".", ",")
+        if starts:
             out.add(tokens[i].text)
     return out

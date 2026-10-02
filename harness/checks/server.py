@@ -95,8 +95,14 @@ def reward_authority(tree, rules, config) -> list[str]:
         out += [f"{_at(f, t)} {where}가 보상·저장 권한 {t.text} 를 쓴다 — 보상은 {module} 만 정한다" for t in f.tokens
                 if t.text in names and t.kind in (NAME, STRING)]
         out += [f"{_at(f, f.tokens[i])} {where}가 {name} 의 멤버를 값을 알 수 없는 방식으로 고른다 — 보상·저장 권한인지 검사할 수 없다"
-                for i, name in resolve.dynamic_member_calls(f, set(config["player_variable_names"]) | {"game", "workspace"})]
+                for i, name in resolve.dynamic_member_calls(f, _player_like(f, config))]
     return out
+
+
+def _player_like(f, config) -> set[str]:
+    """플레이어·서비스를 가리키는 이름 — 설정의 이름과 거기에 담긴 다른 이름(`local p = player`)."""
+    base = set(config["player_variable_names"]) | {"game", "workspace"}
+    return base | {name for name, value in f.resolved.items() if isinstance(value, tuple) and len(value) == 1 and value[0] in base}
 
 
 def duplicate_reward(tree, rules, config) -> list[str]:
