@@ -95,12 +95,19 @@ def write_record(root: Path, node_id: str, name: str, text: str) -> tuple[str, s
 
 # ---------- ① 자동 검사 ----------
 
+def scrub(root: Path, text: str) -> str:
+    """기록(공개 저장소)에 로컬 경로가 남지 않게 저장소 경로·홈 경로를 바꿔 쓴다 (INV-6)."""
+    for local, alias in ((str(root.resolve()), "<repo>"), (str(root), "<repo>"), (str(Path.home()), "~")):
+        text = text.replace(local, alias)
+    return text
+
+
 def run_command(root: Path, argv: list[str]) -> tuple[int, str]:
     try:
         proc = subprocess.run(argv, cwd=root, capture_output=True, text=True, timeout=CHECK_TIMEOUT_SEC)
-        return proc.returncode, (proc.stdout + proc.stderr)
+        return proc.returncode, scrub(root, proc.stdout + proc.stderr)
     except (OSError, subprocess.TimeoutExpired) as exc:
-        return 99, f"{type(exc).__name__}: {exc}"
+        return 99, scrub(root, f"{type(exc).__name__}: {exc}")
 
 
 def valid_time(value: object) -> bool:

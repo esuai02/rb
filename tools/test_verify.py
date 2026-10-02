@@ -203,6 +203,17 @@ class GateFlowTest(unittest.TestCase):
 
 
 class ParseTest(unittest.TestCase):
+    def test_recorded_output_has_no_local_paths(self):
+        root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, root)
+        code, output = verify.run_command(root, [sys.executable, "-c", "import os, pathlib; print(os.getcwd(), pathlib.Path.home())"])
+        self.assertEqual(code, 0)
+        self.assertNotIn(str(root), output)
+        self.assertNotIn(str(Path.home()), output)
+        code, output = verify.run_command(root / "missing", ["true"])  # 실행 실패 메시지에도 경로가 남지 않는다
+        self.assertEqual(code, 99)
+        self.assertNotIn(str(root), output)
+
     def test_parse_review_lines(self):
         verdict, blockers = verify.parse_review("- **minor** | spec.yaml:3 | 오타 | x | y\nNO_FINDINGS")
         self.assertEqual((verdict, blockers[0]["severity"], blockers[0]["location"]), ("CLEAR", "minor", "spec.yaml:3"))
