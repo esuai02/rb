@@ -8,6 +8,7 @@ Graph 가 참조하는 Q1 명세·용어집·분석 이벤트·정본 값과 원
 """
 from __future__ import annotations
 
+import functools
 import json
 import re
 import sys
@@ -38,71 +39,103 @@ NS_NUMERATOR, NS_DENOMINATOR = "term_reused", "session_start"  # intent §1 북�
 STOP_CHOICES = ["pacing.continue", "pacing.rest"]               # K6 R7 계속·쉬기
 # 금지어 하한 — ko-KR 용어집의 금지어 전부. INV-11(현실 출입국·국적·신분) · INV-8/K5 §7(시험 언어) · INV-14(압박) · 보상형 초대.
 # 용어집에서 하나라도 빼면 실패한다(더하는 것은 된다). 빼려면 이 목록을 고치고 리뷰를 받는다
-REQUIRED_BANNED = {"입국", "출입국", "심사", "여권", "비자", "국적", "이민", "국경", "국기", "외국인", "시민권", "passport", "visa", "citizen",
-                   "immigration", "border", "불합격", "낙제", "오답", "정답", "틀렸", "틀린", "실패", "시험", "테스트", "진단", "순위", "연속", "매일",
-                   "서둘러", "남은 시간", "초대하면"}
+REQUIRED_BANNED = {"입국", "출입국", "심사", "여권", "비자", "국적", "이민", "국경", "국기", "외국인", "시민권", "난민", "망명", "추방", "체류", "신분증",
+                   "passport", "visa", "citizen", "nationalit", "immigra", "foreigner", "refugee", "asylum", "deport", "border",
+                   "불합격", "낙제", "오답", "정답", "틀렸", "틀린", "실패", "시험", "테스트", "진단", "순위", "연속", "매일", "서둘러", "남은 시간", "초대"}
 # 사람 결정(DEC)을 근거로 decided 가 될 수 있는 정본 값과, 그 결정 행에 글자 그대로 들어 있어야 하는 값 항목
 DECIDED_BY = {"cv.gate_name": ("DEC-1", "ko")}
 STEP_KINDS = {"situation", "everyday_expression", "player_action", "world_response", "math_label", "interaction", "reward"}
 HINT_KINDS = ["world_signal", "strategy_question", "similar_example"]
 STATUSES = {"decided", "proposed", "hypothesis"}
 LATER_STAGES = {"Q3", "Q4", "Q5", "Q6", "Q7", "Q8"}
-# 닫힌 형식 — 정해진 항목·형식만 쓴다. 모르는 항목(가격·확률·타이머 등)이 검사를 비켜 가지 못하게 한다.
-# 하위 형식(dict, '?' 로 시작하는 이름은 빠져도 됨) · [항목 형식] 목록 · ("map", 값 형식) 사전 · S 글자·수·참거짓·없음 · L 그런 값의 목록
-# M 글자 → 글자 사전 · SL S 또는 L · B 참거짓 · N 정수 또는 없음 · P 양수
-S, L, M, SL, B, N, P = "scalar", "list", "map", "scalar_or_list", "bool", "int_or_none", "positive"
-STEP = {"kind": S, "?key": S, "?keys": L, "?other_result_key": S, "?line_key": S, "?ids": L}
+# 닫힌 형식 — 정해진 항목·형식만 쓴다. 모르는 항목(가격·확률·타이머 등)이나 틀린 형식이 검사를 비켜 가지 못하게 한다.
+# 하위 형식(dict, '?' 로 시작하는 이름은 빠져도 됨) · [항목 형식] 목록 · ("map", 값 형식) 글자 키 사전 ·
+# T 비지 않은 글자 · T0 글자 또는 null · B 참거짓 · N 정수 또는 null · I 양의 정수 · P 양수 · ONE 형식 판 1 ·
+# LT 글자 목록 · LN 수 목록 · TL 글자 또는 글자 목록 · ANY 따로 검사함
+T, T0, B, N, I, P, ONE, LT, LN, TL, ANY = "text", "text_or_null", "bool", "int_or_null", "positive_int", "positive", "version_1", \
+    "text_list", "number_list", "text_or_text_list", "any"
+STEP = {"kind": T, "?key": T, "?keys": LT, "?other_result_key": T, "?line_key": T, "?ids": LT}
 GRAPH_SHAPE = {
-    "schema_version": S, "id": S, "note": S, "world_spec": S, "world_id": S, "market_id": S, "curriculum_id": S, "glossary": S, "events": S,
-    "canonical_values": S, "label_choice_key": S, "pings": L, "invite_key": S, "retry_key": S,
-    "terms": [{"term_id": S, "prerequisites": L, "first_mission": S}],
-    "missions": [{"id": S, "core": B, "signal": N, "new_term": S, "requires": L, "goal_key": S, "play_modes": L, "target_end_s": N,
-                  "steps": [STEP], "?params": L, "?hint_ladder": S, "?answer_keys": L, "?coop": S}],
-    "reuse_contexts": [{"id": S, "term_id": S, "mission": S, "situation_key": S, "action_keys": L, "response_key": S, "accepts": L,
-                        "hint_ladder": S, "answer_keys": L}],
-    "hint_ladders": [{"id": S, "?mission": S, "?term": S, "rule": S, "keys": L}],
-    "roles": [{"id": S, "name_key": S, "contribution": S, "npc_can_fill": B}],
-    "coop": [{"id": S, "mission": S, "objects": L, "object_keys": L, "roles": L, "role_assignment": S, "npc_fallback": S, "npc_line_key": S,
-              "waiting_key": S, "ready_key": S, "max_players": N, "params": L}],
-    "rewards": [{"id": S, "name_key": S, "mission": S, "basis": S, "granted_to": S, "granted_by": S, "kind": S}],
-    "pacing": {"countdown_fail": B, "streaks": B, "autoplay_next_mission": B, "autosave": B, "long_play_notice": S, "params": L,
-               "stop_point": {"mission": S, "choice_keys": L, "equal_size": B}},
-    "scenarios": [{"id": S, "play_mode": S, "input": S, "variation": S, "path": L, "expects_events": L}],
+    "schema_version": ONE, "id": T, "note": T, "world_spec": T, "world_id": T, "market_id": T, "curriculum_id": T, "glossary": T, "events": T,
+    "canonical_values": T, "label_choice_key": T, "pings": LT, "invite_key": T, "retry_key": T,
+    "terms": [{"term_id": T, "prerequisites": LT, "first_mission": T}],
+    "missions": [{"id": T, "core": B, "signal": N, "new_term": T0, "requires": LT, "goal_key": T0, "play_modes": LT, "target_end_s": N,
+                  "steps": [STEP], "?params": LT, "?hint_ladder": T, "?answer_keys": LT, "?coop": T}],
+    "reuse_contexts": [{"id": T, "term_id": T, "mission": T, "situation_key": T, "action_keys": LT, "response_key": T, "accepts": LT,
+                        "hint_ladder": T, "answer_keys": LT}],
+    "hint_ladders": [{"id": T, "?mission": T, "?term": T, "rule": T, "keys": LT}],
+    "roles": [{"id": T, "name_key": T, "contribution": T, "npc_can_fill": B}],
+    "coop": [{"id": T, "mission": T, "objects": LT, "object_keys": LT, "roles": LT, "role_assignment": T, "npc_fallback": T, "npc_line_key": T,
+              "waiting_key": T, "ready_key": T, "max_players": I, "params": LT}],
+    "rewards": [{"id": T, "name_key": T, "mission": T, "basis": T, "granted_to": T, "granted_by": T, "kind": T}],
+    "pacing": {"countdown_fail": B, "streaks": B, "autoplay_next_mission": B, "autosave": B, "long_play_notice": T, "params": LT,
+               "stop_point": {"mission": T, "choice_keys": LT, "equal_size": B}},
+    "scenarios": [{"id": T, "play_mode": T, "input": T, "variation": T, "path": LT, "expects_events": LT}],
 }
-CV_ENTRY_KEYS = {"id", "k0_item", "value", "status", "refs", "rationale", "measure_at", "q1_paths"}
+CANONICAL_SHAPE = {"schema_version": ONE, "source": T, "values": [{"id": T, "k0_item": T, "value": ANY, "status": T, "refs": LT, "rationale": T,
+                                                                     "?measure_at": T, "?q1_paths": ("map", T)}]}
 CV_SHAPES = {
-    "cv.gate_name": {"ko": S, "string_key": S},
-    "cv.world_title": {"world": S, "world_key": S, "first_title_key": S, "citizenship_loop": S},
-    "cv.first_rewards": L,
-    "cv.gate_signals": {"signal_1": S, "signal_2": S, "signal_3": S, "coop_on": S, "out_of_mvp": L},
-    "cv.gate_time": {"target_minutes": L},
-    "cv.match_wait": {"seconds": P, "then": S},
+    "cv.gate_name": {"ko": T, "string_key": T},
+    "cv.world_title": {"world": T, "world_key": T, "first_title_key": T, "citizenship_loop": T},
+    "cv.first_rewards": LT,
+    "cv.gate_signals": {"signal_1": T, "signal_2": T, "signal_3": T, "coop_on": T, "out_of_mvp": LT},
+    "cv.gate_time": {"target_minutes": LN},
+    "cv.match_wait": {"seconds": P, "then": T},
     "cv.coop_sync_window": {"seconds": P},
     "cv.server_distance": {"prompt_activation_studs": P, "server_check_studs": P},
-    "cv.server_cooldown": {"seconds": P, "scope": S},
-    "cv.hold_time": {"seconds": P, "accessible_alternative": S},
-    "cv.hold_cancel": {"server": S, "display_tween_seconds": P},
-    "cv.slope_choices": {"expressions": L, "steps": L, "fixed": L},
-    "cv.coordinate_expression": {"order": L, "axes": L, "plane": S, "origin": S, "moves_from": S, "grid": {"x": L, "y": L}, "numeric_form": S},
-    "cv.hint_ladder": {"first_trigger": {"idle_seconds": P, "other_results": P}, "advance": S, "levels": L, "reveals_answer": B, "tried_marker": B, "cost": S},
-    "cv.label_tag_display": {"full_seconds": P, "then": S},
-    "cv.events": {"allowlist": S, "naming": S, "renamed": M},
-    "cv.coop_switch_ids": L,
-    "cv.rule_source": {"authority": S, "prompt_attributes": S},
-    "cv.helper_npc": {"id": S, "name_key": S},
-    "cv.coop_offer_timing": {"in_gate": S, "invite_prompt": S},
-    "cv.first_try": {"forced_failure": S, "success_within_two_tries": L, "key_metrics": L},
-    "cv.color_meaning": {"purple": S, "hold_interrupted": L, "color_only": S},
+    "cv.server_cooldown": {"seconds": P, "scope": T},
+    "cv.hold_time": {"seconds": P, "accessible_alternative": T},
+    "cv.hold_cancel": {"server": T, "display_tween_seconds": P},
+    "cv.slope_choices": {"expressions": LT, "steps": LN, "fixed": LT},
+    "cv.coordinate_expression": {"order": LT, "axes": LT, "plane": T, "origin": T, "moves_from": T, "grid": {"x": LN, "y": LN}, "numeric_form": T},
+    "cv.hint_ladder": {"first_trigger": {"idle_seconds": P, "other_results": I}, "advance": T, "levels": LT, "reveals_answer": B, "tried_marker": B, "cost": T},
+    "cv.label_tag_display": {"full_seconds": P, "then": T},
+    "cv.events": {"allowlist": T, "naming": T, "renamed": ("map", T)},
+    "cv.coop_switch_ids": LT,
+    "cv.rule_source": {"authority": T, "prompt_attributes": T},
+    "cv.helper_npc": {"id": T, "name_key": T},
+    "cv.coop_offer_timing": {"in_gate": T, "invite_prompt": T},
+    "cv.first_try": {"forced_failure": B, "success_within_two_tries": LN, "key_metrics": LT},
+    "cv.color_meaning": {"purple": T, "hold_interrupted": LT, "color_only": B},
 }
-RATIO = {"event": S, "aggregation": S, "window_days": S}
+RATIO = {"event": T, "aggregation": T, "window_days": I}
 EVENTS_SHAPE = {
-    "schema_version": S, "transport": S, "limits": {"max_custom_events": S, "max_fields_per_event": S}, "fields": ("map", L),
-    "onboarding_funnel": [{"step": S, "name": S, "fields": L}], "custom_events": [{"name": S, "fields": L, "when": S}], "platform_metrics": L,
-    "north_star": {"id": S, "numerator": RATIO, "denominator": RATIO, "counts_only_when": L, "per_player_storage": S, "secondary": {"id": S, "note": S}},
-    "source_mapping": {"k5_funnel": ("map", SL), "k3_allowed": ("map", SL), "other_names": ("map", SL)},
+    "schema_version": ONE, "transport": T, "limits": {"max_custom_events": I, "max_fields_per_event": I}, "fields": ("map", LT),
+    "onboarding_funnel": [{"step": I, "name": T, "fields": LT}], "custom_events": [{"name": T, "fields": LT, "when": T}], "platform_metrics": LT,
+    "north_star": {"id": T, "numerator": RATIO, "denominator": RATIO, "counts_only_when": LT, "per_player_storage": B, "secondary": {"id": T, "note": T}},
+    "source_mapping": {"k5_funnel": ("map", TL), "k3_allowed": ("map", TL), "other_names": ("map", TL)},
 }
-GLOSSARY_SHAPE = {"schema_version": S, "market_id": S, "locale": S, "world_spec": S, "strings": M, "banned_terms": [{"term": S, "replacement": S, "reason": S}]}
-CANONICAL_TOP = {"schema_version", "source", "values"}
+GLOSSARY_SHAPE = {"schema_version": ONE, "market_id": T, "locale": T, "world_spec": T, "strings": ("map", T),
+                  "banned_terms": [{"term": T, "replacement": T0, "reason": T}]}
+GRANTED_TO = {"completion": "all_finishers", "role_contribution": "contributing_players"}  # INV-4 보상 기준별 수령 대상
+PLAY_MODES = {"solo_npc", "duo"}
+SCENARIO_VARIATIONS = {"first_try", "other_result_x3", "idle_hints", "never_uses_label", "uses_label"}
+TRANSPORT = "roblox_analytics_service"  # evidence F10
+MAX_CHOICE_SPAN = 5  # 좌표 격자 반폭·기울기 최대 단계 — 선택지가 작고 유한해야 정답 공개 없이도 힌트가 끝난다(cv.hint_ladder)
+ID_PATTERNS = {"terms": ("term_id", r"term\.[a-z_]+"), "missions": ("id", r"m\.[a-z_]+"), "reuse_contexts": ("id", r"ctx\.[a-z_]+\.[a-z_]+"),
+               "hint_ladders": ("id", r"hl\.[a-z_.]+"), "roles": ("id", r"role\.[a-z_]+"), "coop": ("id", r"coop\.[a-z_]+"),
+               "rewards": ("id", r"(reward|unlock)\.[a-z_]+"), "scenarios": ("id", r"sc\.[a-z_]+")}
+REF_RE = re.compile(r"^(DEC-\d+|INV-\d+|Q[1-8]|F\d+|K[0-6])$")
+# 불변식에 묶인 정본 값 — 바꾸려면 불변식부터 바뀌어야 한다
+CV_PINS = {
+    ("cv.rule_source", "authority"): ("server_config", "INV-4"), ("cv.rule_source", "prompt_attributes"): ("display_only", "INV-4"),
+    ("cv.hold_cancel", "server"): ("immediate", "INV-4"), ("cv.match_wait", "then"): ("npc_fallback", "INV-9"),
+    ("cv.first_try", "forced_failure"): (False, "INV-14"), ("cv.color_meaning", "color_only"): (False, "INV-9"),
+    ("cv.coordinate_expression", "order"): (["direction", "distance"], "INV-15"),
+    ("cv.coordinate_expression", "moves_from"): ("origin_always", "좌표 = 기준점에서 센 위치"),
+    ("cv.coordinate_expression", "numeric_form"): ("after_label_only", "INV-15"),
+    ("cv.slope_choices", "fixed"): (["start_point", "run"], "기울기와 절편을 섞지 않는다"),
+    ("cv.coop_offer_timing", "invite_prompt"): ("after_gate_open", "INV-14 — 첫 성공 전 초대 압박 없음"),
+    ("cv.events", "naming"): ("k5_funnel_names", "cv.events"),
+}
+# 가설 수치는 원천 문서들이 낸 값의 범위 안에서 고른다 (docs/knowledge/K0-docs-index.md §3)
+CV_RANGES = {
+    ("cv.match_wait", "seconds"): (10, 15), ("cv.coop_sync_window", "seconds"): (2, 4),
+    ("cv.server_distance", "prompt_activation_studs"): (8, 20), ("cv.server_distance", "server_check_studs"): (8, 20),
+    ("cv.server_cooldown", "seconds"): (0.35, 1.5), ("cv.hold_time", "seconds"): (0.4, 0.8), ("cv.hold_cancel", "display_tween_seconds"): (0, 0.2),
+    ("cv.label_tag_display", "full_seconds"): (1, 4), ("cv.hint_ladder", "first_trigger", "idle_seconds"): (5, 25),
+    ("cv.hint_ladder", "first_trigger", "other_results"): (1, 3),
+}
 # 번역 금지 경계 표본 — 큰 수·음수·소수·공백. Q1 검사기의 무작위 표본(0~99)이 닿지 않는 범위 (DEFER-Q1-9c3b4caa-1)
 BOUNDARY_SAMPLES = {
     "좌표": ("(100, 0)", "(0, 100)", "(-100, -250)", "(3.25, -0.5)", "( 12 ,  -7 )", "(999,999)", "(-0.75,12.5)", "(1000000, -1)"),
@@ -122,6 +155,8 @@ class Bundle:
     k3_text: str
     k5_text: str
     decisions_text: str
+    intent_text: str
+    evidence_ids: frozenset
 
 
 def load_bundle(root: Path = ROOT, graph_path: str = GRAPH_PATH) -> Bundle:
@@ -129,7 +164,8 @@ def load_bundle(root: Path = ROOT, graph_path: str = GRAPH_PATH) -> Bundle:
     read_yaml = lambda rel: yaml.safe_load((root / rel).read_text(encoding="utf-8"))  # noqa: E731
     read_text = lambda rel: (root / rel).read_text(encoding="utf-8")  # noqa: E731
     return Bundle(graph, read_yaml(graph["world_spec"]), read_yaml(graph["glossary"]), read_yaml(graph["events"]),
-                  read_yaml(graph["canonical_values"]), read_text(K0_PATH), read_text(K3_PATH), read_text(K5_PATH), read_text("decisions.md"))
+                  read_yaml(graph["canonical_values"]), read_text(K0_PATH), read_text(K3_PATH), read_text(K5_PATH), read_text("decisions.md"),
+                  read_text("intent.md"), frozenset(json.loads(line).get("id") for line in read_text("evidence.jsonl").splitlines() if line.strip()))
 
 
 # ---------- 공용 ----------
@@ -254,23 +290,24 @@ def dotted(doc, path: str):
 
 
 def value_shape_errors(value, shape, where: str) -> list[str]:
-    scalar = lambda x: isinstance(x, (str, int, float, bool)) or x is None  # noqa: E731
-    if shape == S:
-        return [] if scalar(value) else [f"{where}: 글자·수·참거짓이어야 한다"]
-    if shape == B:
-        return [] if isinstance(value, bool) else [f"{where}: true/false 여야 한다"]
-    if shape == N:
-        return [] if value is None or (isinstance(value, int) and not isinstance(value, bool)) else [f"{where}: 정수나 null 이어야 한다"]
-    if shape == P:
-        return [] if isinstance(value, (int, float)) and not isinstance(value, bool) and value > 0 else [f"{where}: 양수여야 한다"]
-    if shape == L:
-        return [] if isinstance(value, list) and all(scalar(x) for x in value) else [f"{where}: 단순 값의 목록이어야 한다"]
-    if shape == M:
-        return [] if isinstance(value, dict) and all(isinstance(k, str) and isinstance(v, str) for k, v in value.items()) else [f"{where}: 글자 → 글자 사전이어야 한다"]
-    if shape == SL:
-        return value_shape_errors(value, L if isinstance(value, list) else S, where)
+    text = lambda x: isinstance(x, str) and bool(x.strip())  # noqa: E731
+    number = lambda x: isinstance(x, (int, float)) and not isinstance(x, bool)  # noqa: E731
+    leaf = {
+        T: (text, "비지 않은 글자여야 한다"), T0: (lambda x: x is None or text(x), "글자나 null 이어야 한다"),
+        B: (lambda x: isinstance(x, bool), "true/false 여야 한다"),
+        N: (lambda x: x is None or (isinstance(x, int) and not isinstance(x, bool)), "정수나 null 이어야 한다"),
+        I: (lambda x: isinstance(x, int) and not isinstance(x, bool) and x > 0, "양의 정수여야 한다"),
+        P: (lambda x: number(x) and x > 0, "양수여야 한다"), ONE: (lambda x: x == 1 and not isinstance(x, bool), "형식 판(schema_version)은 1 이어야 한다"),
+        LT: (lambda x: isinstance(x, list) and all(text(i) for i in x), "글자 목록이어야 한다"),
+        LN: (lambda x: isinstance(x, list) and all(number(i) for i in x), "수 목록이어야 한다"),
+        TL: (lambda x: text(x) or (isinstance(x, list) and all(text(i) for i in x)), "글자나 글자 목록이어야 한다"),
+        ANY: (lambda x: True, ""),
+    }
+    if isinstance(shape, str):
+        ok, message = leaf[shape]
+        return [] if ok(value) else [f"{where}: {message}"]
     if isinstance(shape, tuple):  # ("map", 값 형식)
-        if not isinstance(value, dict) or not all(isinstance(k, str) for k in value):
+        if not isinstance(value, dict) or not all(text(k) for k in value):
             return [f"{where}: 글자 키 사전이어야 한다"]
         return [e for k, v in value.items() for e in value_shape_errors(v, shape[1], f"{where}.{k}")]
     if isinstance(shape, list):  # [항목 형식]
@@ -281,17 +318,36 @@ def value_shape_errors(value, shape, where: str) -> list[str]:
         return [f"{where}: 객체여야 한다"]
     names = {k.lstrip("?"): k for k in shape}
     required = {k for k in shape if not k.startswith("?")}
-    label = f"{where}<{value.get('id') or value.get('kind') or ''}>" if isinstance(value.get("id") or value.get("kind"), str) else where
+    label = f"{where}<{value.get('id') or value.get('kind')}>" if isinstance(value.get("id") or value.get("kind"), str) else where
     errors = [f"{label}: 모르는 항목 {sorted(set(value) - set(names))}"] if set(value) - set(names) else []
     errors += [f"{label}: 항목 {sorted(required - set(value))} 가 없다"] if required - set(value) else []
     return errors + [e for key in set(names) & set(value) for e in value_shape_errors(value[key], shape[names[key]], f"{where}.{key}")]
 
 
+def guarded(check):
+    """형식이 틀린 입력에서 검사가 멈추지 않고 오류로 알리게 한다(멈추면 그 기준은 실패로 본다)."""
+    @functools.wraps(check)
+    def run(b: Bundle) -> list[str]:
+        try:
+            return check(b)
+        except (TypeError, AttributeError, KeyError, ValueError, IndexError) as exc:
+            return [f"{check.__name__}: 형식이 틀려 검사를 끝까지 하지 못했다 ({type(exc).__name__}: {exc})"]
+    return run
+
+
 # ---------- Q2-C1 형식·참조·순환 ----------
 
+@guarded
 def check_references(b: Bundle) -> list[str]:
     errors, g, spec = value_shape_errors(b.graph, GRAPH_SHAPE, "graph"), b.graph, b.spec
     market = spec.get("market", {})
+    for group, (field, pattern) in ID_PATTERNS.items():
+        errors += [f"{group}: id '{x.get(field)}' 가 '{pattern}' 형식이 아니다" for x in g.get(group, [])
+                   if isinstance(x, dict) and not re.fullmatch(pattern, str(x.get(field)))]
+    errors += [f"reuse_contexts/{c['id']}: id 가 용어 이름(ctx.{str(c.get('term_id')).split('.')[-1]}.…)으로 시작하지 않는다" for c in g.get("reuse_contexts", [])
+               if not str(c.get("id")).startswith(f"ctx.{str(c.get('term_id')).split('.')[-1]}.")]
+    if g.get("id") != f"{g.get('world_id')}.graph":
+        errors.append(f"id: Graph id 는 world_id 뒤에 .graph 를 붙인 것이어야 한다 ({g.get('id')})")
     for field, expected in (("world_id", spec.get("id")), ("market_id", market.get("market_id")),
                             ("curriculum_id", market.get("curriculum_id")), ("glossary", spec.get("safety", {}).get("banned_terms_ref"))):
         if g.get(field) != expected:
@@ -325,6 +381,9 @@ def check_references(b: Bundle) -> list[str]:
             if step.get("kind") == "math_label" and step.get("key") != q1.get(term, {}).get("label_key"):
                 errors.append(f"missions/{m['id']}: 이름표 {step.get('key')} 가 Q1 명세의 {term} label_key 가 아니다")
             errors += [f"missions/{m['id']}: 보상 {r} 가 없다" for r in step.get("ids", []) if r not in reward_ids]
+            given = sorted(r["id"] for r in g.get("rewards", []) if r.get("mission") == m["id"] and r.get("basis") == "completion")
+            if step.get("kind") == "reward" and sorted(step.get("ids", [])) != given:
+                errors.append(f"missions/{m['id']}: 보상 단계 {step.get('ids')} 가 이 미션의 완주 보상 {given} 과 다르다")
         if m.get("hint_ladder") and ladders.get(m["hint_ladder"], {}).get("mission") != m["id"]:
             errors.append(f"missions/{m['id']}: 힌트 사다리 {m['hint_ladder']} 가 없거나 다른 미션의 것이다")
         if m.get("coop") and coops.get(m["coop"], {}).get("mission") != m["id"]:
@@ -382,6 +441,7 @@ def check_references(b: Bundle) -> list[str]:
 
 # ---------- Q2-C2 일상어 경로·재사용 ----------
 
+@guarded
 def check_reuse(b: Bundle) -> list[str]:
     errors, by_id, q1 = [], missions(b), goals(b)
     for m in by_id.values():
@@ -407,6 +467,9 @@ def check_reuse(b: Bundle) -> list[str]:
             if offered != set(goal.get(field, [])):
                 errors.append(f"{term}: 첫 미션이 Q1 {field} 를 모두 제시하지 않는다")
         before = ancestors(first.get("id", ""), by_id)
+        earlier = sorted(x["term_id"] for x in b.graph["terms"] if x.get("first_mission") in before)
+        if sorted(t.get("prerequisites", [])) != earlier:
+            errors.append(f"{term}: 선수 용어 {t.get('prerequisites')} 가 앞에서 먼저 배운 용어 {earlier} 와 다르다 (앞에서 배운 말 위에 쌓는다)")
         for pre in t.get("prerequisites", []):
             pre_first = next((x.get("first_mission") for x in b.graph["terms"] if x["term_id"] == pre), None)
             if pre_first not in before:
@@ -433,6 +496,7 @@ def name_tokens(name: str) -> set[str]:
     return set(re.sub(r"([a-z])([A-Z])", r"\1_\2", name).lower().replace(".", "_").split("_"))
 
 
+@guarded
 def check_events(b: Bundle) -> list[str]:
     errors, ev = value_shape_errors(b.events, EVENTS_SHAPE, "events"), b.events
     items = ev.get("onboarding_funnel"), ev.get("custom_events")
@@ -441,6 +505,9 @@ def check_events(b: Bundle) -> list[str]:
     fields, limits = ev.get("fields", {}), ev.get("limits", {})
     if limits.get("max_fields_per_event", 99) > MAX_FIELDS_PER_EVENT or limits.get("max_custom_events", 999) > MAX_CUSTOM_EVENTS:
         errors.append("limits: 플랫폼 한도(필드 3개·이벤트 100개, F10)보다 크다")
+    if ev.get("transport") != TRANSPORT:
+        errors.append(f"transport: 분석은 {TRANSPORT} 로 서버에서만 보낸다 (F10)")
+    errors += [f"platform_metrics: '{m}' 는 platform. 으로 시작하는 이름이어야 한다" for m in ev.get("platform_metrics", []) if not re.fullmatch(r"platform\.[a-z0-9_]+", str(m))]
     names = event_names(b)
     if len(names) != len(set(names)):
         errors.append("이벤트 이름이 중복된다")
@@ -479,6 +546,7 @@ def check_events(b: Bundle) -> list[str]:
             errors.append(f"source_mapping/{label}: 원천 목록을 {source} 에서 읽지 못했다")
         errors += [f"source_mapping/{label}: 원천 이벤트 '{n}' 이 대응되지 않았다" for n in parsed if n not in mapping.get(label, {})]
     for label, table in mapping.items():
+        errors += [f"source_mapping/{label}/{src}: 대응 대상이 비었다" for src, dst in table.items() if dst in ([], "", None)]
         for src, dst in table.items():
             errors += [f"source_mapping/{label}/{src}: {d} 가 허용 목록·플랫폼 지표에 없다" for d in (dst if isinstance(dst, list) else [dst])
                        if not (isinstance(d, str) and d in targets)]
@@ -517,10 +585,10 @@ def check_north_star(b: Bundle, by_id: dict[str, dict]) -> list[str]:
 
 # ---------- Q2-C4 정본 값 ----------
 
+@guarded
 def check_canonical(b: Bundle) -> list[str]:
     errors, entries, values = [], b.values.get("values", []), cv(b)
-    if set(b.values) - CANONICAL_TOP:
-        errors.append(f"정본 값 파일: 모르는 항목 {sorted(set(b.values) - CANONICAL_TOP)}")
+    errors += value_shape_errors(b.values, CANONICAL_SHAPE, "canonical")
     items = k0_items(b.k0_text)
     if not items:
         errors.append(f"{K0_PATH} §3 표를 읽지 못했다")
@@ -537,16 +605,12 @@ def check_canonical(b: Bundle) -> list[str]:
         eid = e.get("id", "?")
         if not CV_ID_RE.fullmatch(str(eid)):
             errors.append(f"{eid}: id 는 cv.이름 형식이어야 한다")
-        if set(e) - CV_ENTRY_KEYS:
-            errors.append(f"{eid}: 모르는 항목 {sorted(set(e) - CV_ENTRY_KEYS)}")
         if eid not in CV_SHAPES:
             errors.append(f"{eid}: 검사기에 형식이 없는 정본 값이다 (CV_SHAPES 에 더하고 리뷰를 받는다)")
         else:
             errors += value_shape_errors(e.get("value"), CV_SHAPES[eid], f"{eid}.value")
         if e.get("value") in (None, "", [], {}):
             errors.append(f"{eid}: 값이 비었다")
-        if not str(e.get("rationale") or "").strip():
-            errors.append(f"{eid}: 근거가 없다")
         if e.get("status") not in STATUSES:
             errors.append(f"{eid}: status 는 {sorted(STATUSES)} 중 하나")
         q1_paths = e.get("q1_paths") or {}
@@ -558,6 +622,15 @@ def check_canonical(b: Bundle) -> list[str]:
             and str(e["value"].get(field, "\0")) in decided[dec]
         if e.get("status") == "decided" and not (q1_paths or by_dec):
             errors.append(f"{eid}: 결정된 값은 decisions.md 에서 결정됨인 관련 DEC(검사기 DECIDED_BY, 값이 그 결정 행에 있음)나 잠긴 Q1 경로(q1_paths) 근거가 있어야 한다 — 불변식에서 끌어낸 값은 proposed")
+        if not e.get("refs"):
+            errors.append(f"{eid}: 근거 참조(refs)가 없다")
+        for ref in e.get("refs") or []:
+            if not REF_RE.fullmatch(str(ref)):
+                errors.append(f"{eid}: 참조 '{ref}' 는 DEC-·INV-·Q·F·K 형식이 아니다")
+            elif ref.startswith(("DEC-", "INV-")) and not re.search(rf"^\|\s*{re.escape(ref)}\s*\|", b.intent_text, re.M):
+                errors.append(f"{eid}: 참조 {ref} 가 intent.md 에 없다")
+            elif ref.startswith("F") and ref not in b.evidence_ids:
+                errors.append(f"{eid}: 참조 {ref} 가 evidence.jsonl 에 없다")
         if e.get("status") == "hypothesis" and e.get("measure_at") not in LATER_STAGES:
             errors.append(f"{eid}: 가설 값은 실측할 뒤 단계(measure_at: Q3~Q8)가 있어야 한다")
     g, spec = b.graph, b.spec
@@ -575,6 +648,31 @@ def check_canonical(b: Bundle) -> list[str]:
         ("cv.gate_signals", {k: v for k, v in val("cv.gate_signals").items() if k.startswith("signal_")}, signal_terms),
     ]
     errors += [f"{key}: 정본 값({want})과 Graph·Q1 의 실제 값({got})이 다르다" for key, want, got in consistency if want != got]
+    for (cid, *path), (want, why) in CV_PINS.items():
+        if dotted(val(cid), ".".join(path)) != want:
+            errors.append(f"{cid}.{'.'.join(path)}: {want} 이어야 한다 ({why})")
+    for (cid, *path), (low, high) in CV_RANGES.items():
+        got = dotted(val(cid), ".".join(path))
+        if isinstance(got, (int, float)) and not isinstance(got, bool) and not low <= got <= high:
+            errors.append(f"{cid}.{'.'.join(path)}: {got} 이 원천 문서 범위 {low}~{high} 밖이다 (K0 §3)")
+    grid = val("cv.coordinate_expression").get("grid") or {}
+    errors += [f"cv.coordinate_expression.grid.{axis}: [음수, 양수] 두 정수여야 한다 (기준점 0 이 가운데)" for axis in ("x", "y")
+               if not (isinstance(grid.get(axis), list) and len(grid[axis]) == 2 and all(isinstance(v, int) for v in grid[axis])
+                       and -MAX_CHOICE_SPAN <= grid[axis][0] < 0 < grid[axis][1] <= MAX_CHOICE_SPAN)]
+    steps = val("cv.slope_choices").get("steps")
+    if not (isinstance(steps, list) and steps and steps[0] == 0 and steps == sorted(set(steps)) and steps[-1] <= MAX_CHOICE_SPAN):
+        errors.append(f"cv.slope_choices.steps: 0(평평)에서 시작해 겹치지 않고 커지며 {MAX_CHOICE_SPAN} 이하인 단계여야 한다")
+    rate = val("cv.first_try").get("success_within_two_tries")
+    if not (isinstance(rate, list) and len(rate) == 2 and all(isinstance(r, (int, float)) for r in rate) and 0 < rate[0] <= rate[1] <= 1):
+        errors.append("cv.first_try.success_within_two_tries: 0 과 1 사이 [하한, 상한] 이어야 한다")
+    badge = next((r.get("name_key") for r in g.get("rewards", []) if r.get("kind") == "badge" and r.get("basis") == "completion"), None)
+    coop_signal = next((m.get("signal") for m in g.get("missions", []) if m.get("coop") == gate_coop.get("id")), None)
+    for key, want, got in (("cv.world_title.world_key", val("cv.world_title").get("world_key"), spec.get("setting", {}).get("world_name_key")),
+                           ("cv.world_title.first_title_key", val("cv.world_title").get("first_title_key"), badge),
+                           ("cv.helper_npc.name_key", val("cv.helper_npc").get("name_key"), f"{spec.get('coop', {}).get('npc_fallback')}.name"),
+                           ("cv.gate_signals.coop_on", val("cv.gate_signals").get("coop_on"), f"signal_{coop_signal}")):
+        if want != got:
+            errors.append(f"{key}: 정본 값({want})과 Graph·Q1 의 실제 값({got})이 다르다")
     distance = val("cv.server_distance")
     if all(isinstance(distance.get(k), (int, float)) for k in ("prompt_activation_studs", "server_check_studs")) \
             and distance["server_check_studs"] < distance["prompt_activation_studs"]:
@@ -584,6 +682,7 @@ def check_canonical(b: Bundle) -> list[str]:
 
 # ---------- Q2-C5 용어집 ----------
 
+@guarded
 def check_glossary(b: Bundle) -> list[str]:
     errors, gl, spec = value_shape_errors(b.glossary, GLOSSARY_SHAPE, "glossary"), b.glossary, b.spec
     if not isinstance(gl.get("strings"), dict) or not isinstance(gl.get("banned_terms"), list) or not all(isinstance(x, dict) for x in gl["banned_terms"]):
@@ -602,7 +701,6 @@ def check_glossary(b: Bundle) -> list[str]:
     for goal in spec.get("language_goals", []):
         q1_keys += [goal.get("label_key")] + goal.get("everyday_expression_keys", []) + goal.get("everyday_action_keys", [])
     errors += [f"Q1 문구 키 {k} 가 용어집에 없다" for k in q1_keys if k not in strings]
-    errors += [f"strings/{k}: 문구가 비었다" for k, v in strings.items() if not isinstance(v, str) or not v.strip()]
     values = cv(b)
     names = {spec.get("setting", {}).get("world_name_key"): cv_dict(b, "cv.world_title").get("world"),
              spec.get("title_key"): cv_dict(b, "cv.gate_name").get("ko")}
@@ -612,15 +710,13 @@ def check_glossary(b: Bundle) -> list[str]:
     errors += [f"strings/{k}: 아무도 쓰지 않는 키다" for k in strings if k not in used]
     banned = gl.get("banned_terms", [])
     terms = [x.get("term") for x in banned if isinstance(x, dict)]
-    if len(terms) != len(set(terms)) or not all(isinstance(t, str) and t.strip() for t in terms):
-        errors.append("banned_terms: 금지어는 비지 않고 겹치지 않아야 한다")
+    if len(terms) != len(set(terms)):
+        errors.append("banned_terms: 금지어가 겹친다")
     terms = [squash(t) for t in terms if isinstance(t, str) and t.strip()]
     missing = {squash(t) for t in REQUIRED_BANNED} - set(terms)
     if missing:
         errors.append(f"banned_terms: 반드시 있어야 할 금지어가 빠졌다 ({sorted(missing)})")
     for x in banned:
-        if not str(x.get("reason") or "").strip():
-            errors.append(f"banned_terms/{x.get('term')}: 이유가 없다")
         repl = x.get("replacement")
         if repl is not None and any(t in squash(repl) for t in terms):
             errors.append(f"banned_terms/{x.get('term')}: 대체어 '{repl}' 에 금지어가 들어 있다")
@@ -645,6 +741,7 @@ def boundary_misses(patterns: list[str]) -> list[str]:
     return misses + [f"일상 문장 '{s}' 까지 잡는다" for s in validate_spec.PLAIN_SAMPLES if any(c.search(s) for c in compiled)]
 
 
+@guarded
 def check_boundary(b: Bundle) -> list[str]:
     patterns = [r.get("pattern") for r in b.spec.get("do_not_translate", []) if isinstance(r, dict)]
     if not patterns:
@@ -671,14 +768,15 @@ def answer_tie_errors(b: Bundle, owner: str, term: str, answers: list[str], ladd
                      if squash(a) in squash(strings.get(k, ""))]
 
 
+@guarded
 def check_design_rules(b: Bundle) -> list[str]:
     errors, g, spec, by_id = [], b.graph, b.spec, missions(b)
     for r in g.get("rewards", []):
         rid = r.get("id")
         if r.get("granted_by") != "server":
             errors.append(f"rewards/{rid}: 서버만 보상을 정한다 (INV-4)")
-        if r.get("basis") == "completion" and r.get("granted_to") != "all_finishers":
-            errors.append(f"rewards/{rid}: 기본 보상은 완주한 모두에게 같게 (INV-4)")
+        if r.get("basis") in GRANTED_TO and r.get("granted_to") != GRANTED_TO[r["basis"]]:
+            errors.append(f"rewards/{rid}: {r['basis']} 보상은 {GRANTED_TO[r['basis']]} 에게만 (INV-4 — 기본 보상은 완주한 모두에게 같게, 협동 보너스는 기여한 사람에게)")
         if r.get("basis") not in ("completion", "role_contribution"):
             errors.append(f"rewards/{rid}: 보상 기준은 완주 또는 역할 기여만 (INV-4) — {r.get('basis')}")
         if r.get("basis") == "role_contribution" and r.get("kind") != "cosmetic":
@@ -720,16 +818,24 @@ def check_design_rules(b: Bundle) -> list[str]:
             errors.append(f"reuse_contexts/{c.get('id')}: 목표 표현(answer_keys)이 없어 정답 공개를 검사할 수 없다")
         errors += answer_tie_errors(b, c.get("id"), c.get("term_id"), answers, ladder)
     core = [m for m in g.get("missions", []) if m.get("core")]
-    errors += [f"missions/{m['id']}: 필수 미션은 혼자(NPC)로 끝낼 수 있어야 한다 (INV-9)" for m in core if "solo_npc" not in m.get("play_modes", [])]
+    for m in by_id.values():
+        if "solo_npc" not in m.get("play_modes", []) or set(m.get("play_modes", [])) - PLAY_MODES:
+            errors.append(f"missions/{m['id']}: 미션은 혼자(NPC)로 끝낼 수 있어야 하고 방식은 {sorted(PLAY_MODES)} 만 (INV-9)")
+        if m.get("core") and not m.get("goal_key"):
+            errors.append(f"missions/{m['id']}: 필수 미션은 현재 목표 문구(goal_key)가 있어야 한다 (K5 한 번에 하나)")
+        if not m.get("core") and m.get("target_end_s") is not None:
+            errors.append(f"missions/{m['id']}: 선택 미션에는 목표 시각을 두지 않는다 (시간 압박 없음)")
+    errors += [f"missions/{m['id']}: 필수 미션은 바로 앞 필수 미션 {core[i - 1]['id']} 하나만 기다려야 한다 (필수 경로는 한 줄)"
+               for i, m in enumerate(core) if i and m.get("requires") != [core[i - 1]["id"]]]
     for c in g.get("coop", []):
         if not c.get("npc_fallback"):
             errors.append(f"coop/{c['id']}: NPC 대체가 없다 (INV-9)")
+        if len(c.get("object_keys", [])) != len(c.get("objects", [])) or len(c.get("roles", [])) < 2:
+            errors.append(f"coop/{c['id']}: 오브젝트마다 표시 문구가 있고 역할이 둘 이상이어야 한다")
         if c.get("role_assignment") != "player_choice":
             errors.append(f"coop/{c['id']}: 역할은 플레이어가 고른다 (K3 §5 — 강제 배정 없음)")
         if c.get("max_players", 0) > spec.get("coop", {}).get("max_players", 0):
             errors.append(f"coop/{c['id']}: 인원이 Q1 명세 max_players 를 넘는다")
-    if cv_dict(b, "cv.match_wait").get("then") != "npc_fallback":
-        errors.append("cv.match_wait: 매칭 대기가 끝나면 NPC 가 맡아야 한다 (INV-9)")
     errors += [f"roles/{r['id']}: NPC 가 대신 맡을 수 없다 (INV-9)" for r in g.get("roles", []) if r.get("npc_can_fill") is not True]
     pacing = g.get("pacing", {})
     errors += [f"pacing/{k}: 강박형 장치는 쓰지 않는다 (INV-14)" for k in ("countdown_fail", "streaks", "autoplay_next_mission") if pacing.get(k) is not False]
@@ -760,6 +866,9 @@ def check_design_rules(b: Bundle) -> list[str]:
     if not {"first_try", "other_result_x3", "idle_hints", "never_uses_label"} <= {s.get("variation") for s in scenarios}:
         errors.append("scenarios: 첫 시도·다른 결과 반복·멈춤·일상어만 쓰기 변형을 모두 덮어야 한다")
     for s in scenarios:
+        if s.get("variation") not in SCENARIO_VARIATIONS or s.get("play_mode") not in PLAY_MODES or not s.get("expects_events") \
+                or not s.get("path") or (core and s["path"][0] != core[0]["id"]):
+            errors.append(f"scenarios/{s.get('id')}: 변형·방식은 정해진 값, 기대 이벤트가 있고 경로는 첫 필수 미션에서 시작해야 한다")
         seen = set()
         for step in s.get("path", []):
             missing = [r for r in by_id.get(step, {}).get("requires", []) if r not in seen]

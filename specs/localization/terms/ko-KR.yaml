@@ -138,7 +138,17 @@ banned_terms:
   - {term: passport, replacement: 탐험 카드, reason: INV-11 영문 표기 (대소문자 무시)}
   - {term: visa, replacement: 탐험 카드, reason: INV-11 영문 표기}
   - {term: citizen, replacement: 도시 언어 탐험가 배지, reason: INV-11 — Seoul Cyber Citizen 계열 이름을 쓰지 않는다}
-  - {term: immigration, replacement: null, reason: INV-11·F8}
+  - {term: immigra, replacement: null, reason: INV-11·F8 — immigration·immigrant 어간}
+  - {term: nationalit, replacement: null, reason: INV-11 — nationality 어간}
+  - {term: foreigner, replacement: 탐험가, reason: INV-11}
+  - {term: refugee, replacement: null, reason: INV-11·F8}
+  - {term: asylum, replacement: null, reason: INV-11·F8}
+  - {term: deport, replacement: null, reason: INV-11·F8}
+  - {term: 난민, replacement: null, reason: INV-11·F8}
+  - {term: 망명, replacement: null, reason: INV-11·F8}
+  - {term: 추방, replacement: null, reason: INV-11·F8}
+  - {term: 체류, replacement: null, reason: INV-11 — 불법 체류 등 현실 신분}
+  - {term: 신분증, replacement: 탐험 카드, reason: INV-11 현실 신분}
   - {term: border, replacement: 구역 경계, reason: INV-11}
   - {term: 불합격, replacement: 다시 해 보자, reason: INV-8}
   - {term: 낙제, replacement: 다시 해 보자, reason: INV-8}
@@ -155,4 +165,4 @@ banned_terms:
   - {term: 매일, replacement: null, reason: INV-14 출석·일일 보상 없음}
   - {term: 서둘러, replacement: null, reason: INV-14 시간 압박 없음}
   - {term: 남은 시간, replacement: null, reason: INV-14 시간 압박 없음}
-  - {term: 초대하면, replacement: 친구와 함께 가기, reason: 보상형 초대 없음(K6 좌 가드레일)}
+  - {term: 초대, replacement: 친구와 함께 가기, reason: 보상형 초대 없음(K6 좌 가드레일) — 초대해·초대하면·초대하기 모든 형태}

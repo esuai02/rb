@@ -1,9 +1,7 @@
-major | specs/graph/neo-seoul-city-language-gate.graph.json:466-470; tools/validate_graph.py:329-334 | `coop.plaza_bridge.objects`의 `plaza_bridge_left/right`가 Q1·용어집·정본 값에 정의되지 않았고 임의 객체 ID로 바꿔도 PASS한다 | 모든 협동 객체를 정본 ID로 등록·검증하고 unknown-object 변이 테스트 추가
+major | tools/validate_graph.py:53-70,256-287,292-298 | Q2-C1의 닫힌 형식이 실제로 닫히지 않았다. `S`가 문자열뿐 아니라 수·불리언·null을 허용하고 `graph.id`는 의미 검사를 하지 않는다. `graph.id=False` 또는 `"garbage"` 변이는 전체 검사에서 통과하며, 잘못된 수치형은 검사기를 충돌시킨다. | 문자열·nullable 문자열 등 타입을 분리하고 모든 필드 타입을 검사하며 해당 변이 테스트를 추가한다.
 
-major | tools/validate_graph.py:519-524; tests/test_q2_graph.py:384-389 | `decided` 값은 관련성 없는 결정된 DEC를 근거로 써도 통과한다. `cv.match_wait`를 `refs: [DEC-1]`로 바꿔도 PASS한다 | K0 행별 허용 DEC와 결정 내용을 검증하고 관련 없는 DEC 변이 테스트 추가
+major | tools/validate_graph.py:520-562 | Q2-C4가 근거 필드의 형식을 검사하지 않는다. `cv.gate_name.rationale=2` 및 `measure_at=1` 변이가 통과한다. 숫자를 근거로 인정해 “근거” 합격 기준을 우회할 수 있다. | 정본 항목 전체 스키마를 검사해 rationale·refs·measure_at·q1_paths를 올바른 문자열/목록/사전으로 제한한다.
 
-major | tools/validate_graph.py:474-484; tests/test_q2_graph.py:226-243 | 북극성 조건에 임의 조건을 추가해도 통과하여 지표 정의가 조용히 바뀐다 | `counts_only_when`를 요구 집합과 정확히 비교하고 추가 조건 변이 테스트 추가
+major | tools/validate_graph.py:41-43,617-630; specs/localization/terms/ko-KR.yaml:127-158 | Q2-C5 금지어 하한이 불완전하다. `nationality`가 목록에 없어 해당 단어를 문구에 넣어도 통과하며, `친구를 초대해 보상을 받아!`도 `초대하면`의 정확한 형태가 아니어서 통과한다. | 한·영 국적/신분 금지어와 보상형 초대의 형태·조합 패턴을 명시하고 변이 테스트를 추가한다.
 
-major | tools/validate_graph.py:40-41,576-588; tests/test_q2_graph.py:432-435 | 금지어 검사가 부분 집합만 강제한다. `테스트`를 금지 목록에서 제거하고 문구에 넣어도 PASS한다 | 금지어 전체 집합을 닫힌 목록으로 강제하고 각 금지어 제거·문구 삽입 변이 테스트 추가
-
-minor | tools/validate_graph.py:685-696; tests/test_q2_graph.py:573-614 | `target_end_s`의 음수·0을 거부하지 않아 `-1`로 바꾼 필수 미션도 시간 기준을 통과한다 | 목표 시간에 `0 <= target_end_s` 검사를 추가하고 음수 변이 테스트 추가
+major | tools/validate_graph.py:674-687; tests/test_q2_graph.py:571-585 | Q2-C7이 협동 보상의 수령 대상을 검사하지 않는다. `reward.coop_trail.basis=role_contribution`인 상태에서 `granted_to=all_finishers`로 바꿔도 통과해 INV-4의 역할별 기여 기준을 우회한다. | `role_contribution`이면 `granted_to=contributing_players`를 강제하고 변이 테스트를 추가한다.

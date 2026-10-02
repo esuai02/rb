@@ -84,6 +84,11 @@ class ReferenceTest(CheckCase):
         ("sc.solo_touch_first_try: 미션 m.ghost", lambda b: b.graph["scenarios"][0]["path"].append("m.ghost")),
         ("입력 vr_headset 가 Q1", lambda b: setv(b.graph["scenarios"][0], "input", "vr_headset")),
         ("terms: 같은 용어가 두 번 있다", lambda b: dup_first(b.graph["terms"])),
+        ("id 'garbage' 가", lambda b: setv(b.graph["scenarios"][0], "id", "garbage")),
+        ("id 가 용어 이름(ctx.coordinate.", lambda b: setv(b.graph["reuse_contexts"][0], "id", "ctx.slope.anchor_x")),
+        ("Graph id 는 world_id", lambda b: setv(b.graph, "id", "garbage")),
+        ("형식이 틀려 검사를 끝까지 하지 못했다", lambda b: setv(b.spec, "language_goals", 5)),  # 멈추지 않고 실패로 알린다
+        ("보상 단계", lambda b: setv(mission(b, "m.gate_open")["steps"][1], "ids", [])),
         ("graph.missions[5].core: true/false", lambda b: setv(mission(b, "m.plaza_drone_delivery"), "core", "false")),
         ("graph.missions[0].target_end_s: 정수나 null", lambda b: setv(mission(b, "m.signal_wake"), "target_end_s", "60")),
         ("항목 ['requires'] 가 없다", lambda b: mission(b, "m.gate_open").pop("requires")),
@@ -172,6 +177,7 @@ class ReuseTest(CheckCase):
         ("빈 미션", lambda b: setv(b.graph, "reuse_contexts", [c for c in b.graph["reuse_contexts"] if c["mission"] != "m.plaza_drone_delivery"])),
         ("에 행동이 없다", lambda b: setv(b.graph["reuse_contexts"][0], "action_keys", [])),
         ("일상어와 수학 이름 둘 다", lambda b: b.graph["reuse_contexts"][0]["accepts"].append("quiz")),
+        ("앞에서 먼저 배운 용어", lambda b: setv(b.graph["terms"][1], "prerequisites", [])),
     )
 
     def test_two_reuse_contexts_are_not_enough(self):
@@ -255,6 +261,9 @@ class EventsTest(CheckCase):
         ("events.custom_events: 목록이어야", lambda b: setv(b.events, "custom_events", {})),
         ("fields/hint_level", lambda b: setv(b.events["fields"], "hint_level", ["level_1", "level_2"])),
         ("fields/expression_used", lambda b: b.events["fields"]["expression_used"].append("guess")),
+        ("transport:", lambda b: setv(b.events, "transport", "third_party_sdk")),
+        ("platform. 으로 시작", lambda b: setv(b.events, "platform_metrics", ["d1_retention"])),
+        ("대응 대상이 비었다", lambda b: setv(b.events["source_mapping"]["k3_allowed"], "튜토리얼 시작/완료", [])),
     )
 
     def test_field_outside_allowlist(self):
@@ -351,6 +360,24 @@ class CanonicalValuesTest(CheckCase):
     cases = (
         ("§3 표를 읽지 못했다", lambda b: setattr(b, "k0_text", "")),
         ("서버 판정 거리가", lambda b: setv(value(b, "cv.server_distance")["value"], "server_check_studs", 8)),
+        ("cv.match_wait.then: npc_fallback", lambda b: setv(value(b, "cv.match_wait")["value"], "then", "keep_waiting")),
+        ("cv.rule_source.authority: server_config", lambda b: setv(value(b, "cv.rule_source")["value"], "authority", "client")),
+        ("cv.first_try.forced_failure: False", lambda b: setv(value(b, "cv.first_try")["value"], "forced_failure", True)),
+        ("원천 문서 범위 10~15", lambda b: setv(value(b, "cv.match_wait")["value"], "seconds", 10000)),
+        ("원천 문서 범위 0.4~0.8", lambda b: setv(value(b, "cv.hold_time")["value"], "seconds", 600.0)),
+        ("grid.x: [음수, 양수]", lambda b: setv(value(b, "cv.coordinate_expression")["value"]["grid"], "x", [0, 2])),
+        ("grid.y: [음수, 양수]", lambda b: setv(value(b, "cv.coordinate_expression")["value"]["grid"], "y", [-2000, 2000])),
+        ("이하인 단계", lambda b: setv(value(b, "cv.slope_choices")["value"], "steps", [0, 1, 3000])),
+        ("cv.slope_choices.steps: 0(평평)", lambda b: setv(value(b, "cv.slope_choices")["value"], "steps", [1, 2])),
+        ("success_within_two_tries: 0 과 1", lambda b: setv(value(b, "cv.first_try")["value"], "success_within_two_tries", [0.9, 0.7])),
+        ("cv.world_title.world_key", lambda b: setv(value(b, "cv.world_title")["value"], "world_key", "world.other.name")),
+        ("cv.world_title.first_title_key", lambda b: setv(value(b, "cv.world_title")["value"], "first_title_key", "reward.explorer_card.name")),
+        ("cv.helper_npc.name_key", lambda b: setv(value(b, "cv.helper_npc")["value"], "name_key", "npc.other.name")),
+        ("cv.gate_signals.coop_on", lambda b: setv(value(b, "cv.gate_signals")["value"], "coop_on", "signal_2")),
+        ("근거 참조(refs)가 없다", lambda b: setv(value(b, "cv.match_wait"), "refs", [])),
+        ("DEC-·INV-·Q·F·K 형식", lambda b: value(b, "cv.match_wait")["refs"].append("garbage")),
+        ("INV-99 가 intent.md 에 없다", lambda b: value(b, "cv.match_wait")["refs"].append("INV-99")),
+        ("F999 가 evidence.jsonl 에 없다", lambda b: value(b, "cv.match_wait")["refs"].append("F999")),
         ("cv.match_wait.value.seconds: 양수", lambda b: setv(value(b, "cv.match_wait")["value"], "seconds", -10)),
         ("cv.hint_ladder.value.reveals_answer: true/false", lambda b: setv(value(b, "cv.hint_ladder")["value"], "reveals_answer", "no")),
         ("K0 §3 에 없는 항목", lambda b: b.values["values"].append({"id": "cv.extra", "k0_item": "없는 항목", "value": 1, "status": "proposed", "rationale": "r"})),
@@ -360,18 +387,18 @@ class CanonicalValuesTest(CheckCase):
         ("cv.hold_time.value: 모르는 항목 ['price']", lambda b: setv(value(b, "cv.hold_time")["value"], "price", 1)),
         ("cv.hint_ladder.value.first_trigger: 모르는 항목", lambda b: setv(value(b, "cv.hint_ladder")["value"]["first_trigger"], "chance", 0.5)),
         ("항목 ['then'] 가 없다", lambda b: value(b, "cv.match_wait")["value"].pop("then")),
-        ("단순 값의 목록", lambda b: setv(value(b, "cv.first_rewards"), "value", [{"id": "reward.explorer_card", "price": 10}])),
-        ("글자 → 글자 사전", lambda b: setv(value(b, "cv.events")["value"], "renamed", {"a": ["b"]})),
-        ("글자·수·참거짓", lambda b: setv(value(b, "cv.match_wait")["value"], "then", {"x": 1})),
+        ("cv.first_rewards.value: 글자 목록이어야", lambda b: setv(value(b, "cv.first_rewards"), "value", [{"id": "reward.explorer_card", "price": 10}])),
+        ("cv.events.value.renamed.a: 비지 않은 글자", lambda b: setv(value(b, "cv.events")["value"], "renamed", {"a": ["b"]})),
+        ("cv.match_wait.value.then: 비지 않은 글자", lambda b: setv(value(b, "cv.match_wait")["value"], "then", {"x": 1})),
         ("객체여야 한다", lambda b: setv(value(b, "cv.gate_time"), "value", [3, 5])),
-        ("cv.hold_time: 모르는 항목 ['price']", lambda b: setv(value(b, "cv.hold_time"), "price", 1)),
+        ("<cv.hold_time>: 모르는 항목 ['price']", lambda b: setv(value(b, "cv.hold_time"), "price", 1)),
         ("검사기에 형식이 없는 정본 값", lambda b: b.values["values"].append({"id": "cv.extra", "k0_item": "게이트 이름", "value": 1, "status": "proposed", "rationale": "r"})),
         ("q1_paths target_minutes → session.first_world_reaction_s", lambda b: setv(value(b, "cv.gate_time"), "q1_paths", {"target_minutes": "session.first_world_reaction_s"})),
         ("결정됨인 관련 DEC", lambda b: setv(value(b, "cv.match_wait"), "status", "decided") or setv(value(b, "cv.match_wait"), "refs", ["Q1"])),
         ("결정됨인 관련 DEC", lambda b: setv(value(b, "cv.hold_cancel"), "status", "decided") or setv(value(b, "cv.hold_cancel"), "refs", ["DEC-2"])),
         ("cv.match_wait: 결정된 값은", lambda b: setv(value(b, "cv.match_wait"), "status", "decided") or setv(value(b, "cv.match_wait"), "refs", ["DEC-1"])),
         ("cv.gate_name: 결정된 값은", lambda b: setv(value(b, "cv.gate_name")["value"], "ko", "도시 언어 심사")),
-        ("정본 값 파일: 모르는 항목", lambda b: setv(b.values, "owner", "ai")),
+        ("canonical: 모르는 항목", lambda b: setv(b.values, "owner", "ai")),
         ("cv.coop_switch_ids:", lambda b: setv(b.graph["coop"][1], "objects", ["x_left", "x_right"])),
     )
 
@@ -386,7 +413,7 @@ class CanonicalValuesTest(CheckCase):
     def test_missing_rationale(self):
         b = bundle()
         value(b, "cv.match_wait")["rationale"] = " "
-        self.assertCaught(b, "근거가 없다")
+        self.assertCaught(b, "rationale: 비지 않은 글자")
 
     def test_hypothesis_needs_later_measurement(self):
         b = bundle()
@@ -431,11 +458,11 @@ class GlossaryTest(CheckCase):
         ("market_id: Q1 명세의 시장과 다르다", lambda b: setv(b.glossary, "market_id", "en-US")),
         ("planned_locales 에 없다", lambda b: setv(b.glossary, "locale", "en")),
         ("world_spec: Graph", lambda b: setv(b.glossary, "world_spec", "specs/worlds/other.yaml")),
-        ("문구가 비었다", lambda b: setv(b.glossary["strings"], "retry.again", " ")),
-        ("겹치지 않아야", lambda b: dup_first(b.glossary["banned_terms"])),
-        ("이유가 없다", lambda b: setv(b.glossary["banned_terms"][0], "reason", "")),
+        ("glossary.strings.retry.again: 비지 않은 글자", lambda b: setv(b.glossary["strings"], "retry.again", " ")),
+        ("금지어가 겹친다", lambda b: dup_first(b.glossary["banned_terms"])),
+        ("banned_terms[0].reason: 비지 않은 글자", lambda b: setv(b.glossary["banned_terms"][0], "reason", "")),
         ("glossary: 모르는 항목", lambda b: setv(b.glossary, "allow_terms", [])),
-        ("glossary.strings: 글자 → 글자 사전", lambda b: setv(b.glossary, "strings", [])),
+        ("glossary.strings: 글자 키 사전이어야", lambda b: setv(b.glossary, "strings", [])),
         ("glossary.banned_terms[0]: 모르는 항목", lambda b: setv(b.glossary["banned_terms"][0], "severity", "low")),
     )
 
@@ -548,6 +575,13 @@ class DesignRulesTest(CheckCase):
         ("Graph·용어집의 시장이 다르다", lambda b: setv(b.glossary, "market_id", "en-US")),
         ("플레이어가 고른다", lambda b: setv(b.graph["coop"][0], "role_assignment", "forced")),
         ("양의 정수", lambda b: setv(mission(b, "m.signal_wake"), "target_end_s", -1)),
+        ("m.plaza_drone_delivery: 미션은 혼자(NPC)", lambda b: setv(mission(b, "m.plaza_drone_delivery"), "play_modes", [])),
+        ("현재 목표 문구(goal_key)", lambda b: setv(mission(b, "m.gate_open"), "goal_key", None)),
+        ("선택 미션에는 목표 시각", lambda b: setv(mission(b, "m.plaza_partner_bridge"), "target_end_s", 7)),
+        ("바로 앞 필수 미션 m.signal_wake", lambda b: setv(mission(b, "m.signal_coordinate"), "requires", [])),
+        ("표시 문구가 있고 역할이 둘 이상", lambda b: setv(b.graph["coop"][0], "roles", ["role.map_reader"])),
+        ("scenarios/sc.solo_touch_first_try: 변형·방식", lambda b: setv(b.graph["scenarios"][0], "variation", "garbage")),
+        ("scenarios/sc.solo_touch_idle: 변형·방식", lambda b: setv(next(s for s in b.graph["scenarios"] if s["id"] == "sc.solo_touch_idle"), "expects_events", [])),
         ("재사용 맥락에 그 용어의 힌트 사다리가 없다", lambda b: b.graph["reuse_contexts"][4].pop("hint_ladder")),
         ("ctx.slope.booster_ramp: 힌트 문구 수가", lambda b: b.graph["hint_ladders"][3]["keys"].pop()),
         ("ctx.slope.partner_bridge: 목표 표현(answer_keys)이 없어", lambda b: setv(b.graph["reuse_contexts"][5], "answer_keys", [])),
@@ -597,11 +631,6 @@ class DesignRulesTest(CheckCase):
         b = bundle()
         value(b, "cv.hint_ladder")["value"]["advance"] = "idle_only"
         self.assertCaught(b, "R3")
-
-    def test_match_wait_ends_with_npc(self):
-        b = bundle()
-        value(b, "cv.match_wait")["value"] = {"seconds": 120, "then": "keep_waiting"}
-        self.assertCaught(b, "cv.match_wait")
 
     def test_coop_needs_npc(self):
         b = bundle()
