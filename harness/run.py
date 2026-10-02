@@ -67,7 +67,10 @@ def run_checks(root: Path, manifest: dict | None = None, rules: source.Rules | N
     """검사 id → 발견 목록. 트리를 읽다 생긴 문제는 모든 검사의 발견으로 넣는다(읽지 못한 것을 통과로 보지 않는다)."""
     manifest = manifest or load_manifest()
     rules = rules or source.load_rules(REPO)
-    tree = source.load_tree(root)
+    try:
+        tree = source.load_tree(root)
+    except Exception as exc:   # 읽기가 멈춰도 기록 없이 빠져나가지 않는다 — 모든 검사를 실패로 남긴다
+        return {check["id"]: [f"트리 읽기: 끝까지 읽지 못했다 ({type(exc).__name__}: {exc})"] for check in manifest["checks"]}
     results = {}
     for check in manifest["checks"]:
         func = REGISTRY.get(check["id"])

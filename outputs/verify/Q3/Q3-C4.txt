@@ -1,8 +1,8 @@
 criterion: Q3-C4 — 매니페스트가 수학 6종(E1~E6)·UI 14종(U1~U14)·안전 불변식 항목을 빠짐없이 담고 항목마다 방식(정적 Q3 · 실행 Q4 · 사람 Q5/Q8 · 잠긴 Q2 기준으로 덮음)과 이유를 가진다(이유는 모든 항목에 있다). 정적 항목은 실제 검사 함수가 있고, 고정 데이터 색인의 지문이 파일과 같다
 command: python3 -m unittest tests.test_harness.ManifestTest -v
 exit: 0
-binding: 0eead6a409586f0f38d71e114648a63c9e20545ca7c2310f6a327518902b379d
-time: 2026-10-02T15:41:43.369531+00:00
+binding: 9b39a6bae321c469cbe3c9f0d207df41537593a47d89f19142b6201536657a07
+time: 2026-10-02T15:58:59.439361+00:00
 
 test_each_item_has_mode_stage_and_reason_or_checks (tests.test_harness.ManifestTest.test_each_item_has_mode_stage_and_reason_or_checks) ... ok
 test_every_item_has_a_reason (tests.test_harness.ManifestTest.test_every_item_has_a_reason) ... ok
@@ -15,6 +15,6 @@ test_width_budgets_fit_the_locked_glossary (tests.test_harness.ManifestTest.test
 상한은 잠긴 Q2 용어집의 실측 폭보다 넓어야 한다 — 통과하는 원문을 거부하지 않는다. ... ok
 
 ----------------------------------------------------------------------
-Ran 8 tests in 0.173s
+Ran 8 tests in 0.163s
 
 OK

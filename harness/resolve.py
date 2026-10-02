@@ -14,9 +14,12 @@ UNRESOLVED = object()   # 여러 번 묶였거나 알 수 없는 값
 def _statements(tokens: list[Token]):
     """`local 이름 = …` 하나하나를 (이름, 오른쪽 토큰) 으로. 오른쪽은 줄이 바뀌거나 다음 문장이 시작할 때까지."""
     for i in range(len(tokens) - 3):
-        if not (tokens[i].kind == NAME and tokens[i].text == "local" and tokens[i + 1].kind == NAME and tokens[i + 2].text == "="):
+        if not (tokens[i].kind == NAME and tokens[i].text == "local" and tokens[i + 1].kind == NAME):
             continue
-        j, depth, rhs = i + 3, 0, []
+        equals = _assign_index(tokens, i)
+        if equals is None:
+            continue
+        j, depth, rhs = equals + 1, 0, []
         while j < len(tokens):
             tok = tokens[j]
             if tok.kind == SYMBOL and tok.text in ("(", "{", "["):
@@ -30,6 +33,23 @@ def _statements(tokens: list[Token]):
             rhs.append(tok)
             j += 1
         yield tokens[i + 1].text, rhs
+
+
+def _assign_index(tokens: list[Token], i: int) -> int | None:
+    """`local 이름 [: 형] =` 의 `=` 자리 — 같은 줄에서만 찾는다. 대입이 없으면 None."""
+    j, depth = i + 2, 0
+    while j < len(tokens) and tokens[j].line == tokens[i].line:
+        tok = tokens[j]
+        if tok.kind == SYMBOL and tok.text in ("(", "{", "["):
+            depth += 1
+        elif tok.kind == SYMBOL and tok.text in (")", "}", "]"):
+            depth -= 1
+        elif depth == 0 and tok.kind == SYMBOL and tok.text == "=":
+            return j
+        elif depth == 0 and j == i + 2 and not (tok.kind == SYMBOL and tok.text == ":"):
+            return None
+        j += 1
+    return None
 
 
 def resolve_names(tokens: list[Token]) -> dict[str, object]:

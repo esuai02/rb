@@ -125,7 +125,8 @@
       "LogCustomEvent": 1,
       "LogOnboardingFunnelStepEvent": 2
     },
-    "reward_module_path": "src/server/RewardService.luau"
+    "reward_module_path": "src/server/RewardService.luau",
+    "analytics_module_path": "src/server/Analytics.luau"
   },
   "checks": [
     {
@@ -2421,6 +2422,7 @@
       "id": "D-player-alias-dynamic-authority",
       "class": "플레이어 별칭의 동적 권한 접근",
       "expected": [
+        "i18n.hardcoded_text",
         "server.reward_authority"
       ],
       "edits": [
@@ -2429,7 +2431,8 @@
           "find": "sendCell(2, 1)\n",
           "replace": "sendCell(2, 1)\nlocal player = game:GetService(\"Players\").LocalPlayer\nlocal p = player\nlocal key = getKey()\np[key] = 1\n"
         }
-      ]
+      ],
+      "note": "속성 이름을 값을 알 수 없는 방식으로 고르면 보상 권한인지도, 화면 문구 속성인지도 알 수 없다 — 두 검사가 모두 맞다"
     },
     {
       "id": "D-reassigned-grid-after-block",
@@ -2581,6 +2584,78 @@
           "file": "content/math_claims.yaml",
           "find": "    conditions: {origin: [0, 0], axes: x_right_y_up}\n",
           "replace": "    conditions: 1\n"
+        }
+      ]
+    },
+    {
+      "id": "D-bracket-property-non-instance",
+      "class": "비인스턴스 객체의 알 수 없는 속성 이름",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "script.Parent[pickProp()] = Text.get(\"goal.signal_2\")"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-module-impostor",
+      "class": "이름만 분석 모듈인 Script",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.server.luau",
+          "create": "--!strict\n-- 이름만 분석 모듈인 Script — 플랫폼 API 를 직접 쓰면서 검사를 비켜 간다\nlocal AnalyticsService = game:GetService(\"AnalyticsService\")\n\nlocal Analytics = {}\n\nfunction Analytics.send(player: Player, name: string)\n\tAnalyticsService:LogCustomEvent(player, name, 1, {})\nend\n\nreturn Analytics\n"
+        }
+      ]
+    },
+    {
+      "id": "D-random-alias-dynamic-member",
+      "class": "난수 원천 별칭의 동적 멤버",
+      "expected": [
+        "safety.random_or_paid_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local R = math\nlocal method = script.Name\nR[method](1, 2)\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-project-path-not-a-string",
+      "class": "글자가 아닌 Rojo $path",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "default.project.json",
+          "find": "\"$path\": \"src/server\"",
+          "replace": "\"$path\": [\"src/server\"]"
         }
       ]
     }

@@ -1,9 +1,7 @@
-major | harness/checks/math_claims.py:30-36; tests/test_harness.py:276-299 | Q3-C2의 수치 문법과 테스트가 불일치한다 | `Fraction("0.333")`은 333/1000으로 허용되어 `evaluate()`가 False를 반환하지만, 테스트는 ClaimError를 기대한다. 제시된 C2 PASS 증거와 현재 코드는 양립하지 않는다 | `_num()`을 정수 또는 `분자/분모`만 허용하도록 고치거나 테스트·기준을 일치시킨다
+major | harness/source.py:107-149; harness/run.py:66-80 | 잘못된 `$path` 타입은 검사 실패로 기록되지 않고 `TypeError`로 실행기 전체를 중단시킨다 | `_mappings`가 `$path` 타입을 검증하지 않으며 `load_tree()`가 per-check 예외 처리 바깥에서 호출된다 | `$path`를 문자열로 검증해 `Tree.problems`로 거부하고 실행기에서 기록까지 진행한다
 
-major | harness/checks/server.py:86-103,119-148,543-559 | 클라이언트의 직접 `RewardService.grant()` 호출이 검출되지 않는다 | 클라이언트 파일의 고유 보상 호출은 `reward_authority=[]`, `duplicate_reward=[]`, `reward_after_verdict=[]`가 된다. 권한 검사는 설정된 저장 권한 이름만 보고, 보상 호출의 클라이언트 여부를 보지 않는다 | `grant_calls()`가 `client_visible` 파일에서 발견되면 즉시 거부한다
+major | harness/checks/i18n.py:146-173,192-205 | 비인스턴스 객체의 대괄호 UI 속성 대입은 현지화 검사를 우회한다 | `script.Parent[prop] = value`에서 `prop="Text"`, `value="Ready"`처럼 모두 식별자 문자열이면 `_instance_names()` 대상이 아니고 일반 하드코드 검사도 통과한다 | 모든 대괄호 대입을 분석하고 해석된 `Text`는 UI 문구 검사로, 미해석 속성은 거부한다
 
-major | harness/checks/i18n.py:106-158,161-173 | 해석 불가능한 대괄호 UI 속성이 화면 문구 검사를 우회한다 | `goal[prop] = makeText()`에서 `prop`이 해석되지 않으면 `_ui_assignments()`가 찾지 않고, 하드코딩 검사도 함수 결과를 잡지 못한다 | 대괄호 대입도 수집하고 속성 또는 RHS가 해석되지 않으면 거부한다
+major | harness/checks/analytics.py:53-78; harness/source.py:47-53 | `Analytics`라는 이름의 일반 서버 Script가 정식 분석 ModuleScript처럼 신뢰된다 | 판별이 basename `f.name == module`뿐이며 kind·정확한 경로를 확인하지 않아, 매개변수 이벤트를 플랫폼 API로 직접 보내도 허용될 수 있다 | 정식 `analytics_module_path`의 서버 전용 ModuleScript만 모듈로 신뢰하고 나머지는 호출자로 검사한다
 
-minor | tests/test_harness.py:356-371; harness/run.py:100-106 | Q3-C3 테스트가 기록된 대상 지문이 실제 지문인지 검증하지 않는다 | 테스트는 `target_sha256:` 존재만 확인하며 `run.fingerprint(tree)`와의 일치를 확인하지 않는다 | 각 기록의 지문을 계산값 및 64자리 SHA-256 형식과 비교한다
-
-minor | harness/checks/math_claims.py:221-235; harness/run.py:77-81 | YAML은 유효하지만 `conditions`가 스칼라면 수학 검사가 중단된다 | `conditions: 1`에서 `c not in cond`가 TypeError를 내고 실행기가 일반적인 “검사가 끝까지 돌지 못했다”로 처리한다 | `conditions`가 dict인지 먼저 검사하고 명시적 진단을 반환한다
+major | harness/checks/safety.py:125-141 | 알려진 `math`/`Random` 별칭의 미해석 동적 멤버 난수가 통과한다 | `local R = math; local method = getMethod(); R[method]()`는 구체 경로·난수 메서드·대입 패턴 어느 것도 검출하지 않으며 동적 멤버 거부도 없다 | 난수 원천 별칭의 미해석 대괄호 멤버를 보수적으로 거부한다

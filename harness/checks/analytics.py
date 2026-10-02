@@ -2,7 +2,7 @@
 온보딩 퍼널 단계와 사용자 정의 이벤트를 각각 맞는 전송 함수로 보낸다."""
 from __future__ import annotations
 
-from harness import luau, resolve
+from harness import luau, resolve, source
 from harness.luau import NAME, STRING
 
 FUNNEL, CUSTOM = "funnel", "custom"
@@ -49,15 +49,20 @@ def calls(tree, rules, config) -> list[str]:
     """AnalyticsService 는 서버 전용 분석 모듈 안에서만, 모듈 호출은 서버에서 허용 이벤트·필드·열거형 값 글자 그대로만."""
     module, allowed, enums = config["analytics_module"], _allowed(rules), rules.events.get("fields", {})
     senders = {FUNNEL: config["funnel_call"], CUSTOM: config["custom_call"]}
-    out = []
+    path, out = config["analytics_module_path"], []
+    trusted = source.trusted_module(tree, path, module)
+    if trusted is None:
+        out.append(f"분석 모듈은 {path} 의 서버 전용 ModuleScript 하나여야 한다 — 그 파일만 플랫폼 분석 API 를 쓸 수 있다")
     for f in tree.luau:
-        if f.name == module:
-            if f.client_visible:
-                out.append(f"{f.rel}:1 분석 모듈이 클라이언트가 볼 수 있는 곳({f.container})에 있다 — 분석은 서버에서만 보낸다(F10)")
+        if f is trusted:
             out += [f"{f.rel}:1 분석 모듈이 플랫폼 전송 함수 {api} 를 쓰지 않는다 (퍼널·사용자 정의를 모두 보내야 한다, F11)"
                     for api in config["platform_apis"] if not any(t.kind == NAME and t.text == api for t in f.tokens)]
             out += _check_module(f, config)
             continue
+        if f.name == module:
+            reason = (f"클라이언트가 볼 수 있는 곳({f.container})에 있다 — 분석은 서버에서만 보낸다(F10)" if f.client_visible
+                      else f"정해진 자리({path})의 ModuleScript 가 아니다 — 이름만으로 믿지 않는다")
+            out.append(f"{f.rel}:1 분석 모듈이 {reason}")
         out += [f"{f.rel}:{t.line} 분석 모듈을 거치지 않고 AnalyticsService 를 쓴다" for t in f.tokens
                 if t.text in ("AnalyticsService", *config["platform_apis"]) and t.kind in (NAME, STRING)]
         names = _aliases(f, module)

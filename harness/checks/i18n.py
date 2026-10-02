@@ -133,33 +133,51 @@ def _ui_text_literals(f, config) -> list:
     return out
 
 
-def _instance_names(f) -> set[str]:
-    """Instance.new 으로 만든 것을 담은 이름 — 그 속성 대입은 화면에 닿을 수 있다."""
+def _table_names(f) -> set[str]:
+    """`local X = {` 로 만든 평범한 표 — 속성이 아니라 자료이므로 대괄호 대입을 막지 않는다.
+
+    형 표기가 붙은 `local X: {[string]: number} = {}` 도 같이 본다.
+    """
     toks, out = f.tokens, set()
-    for i in range(len(toks) - 4):
-        if toks[i].kind == NAME and toks[i].text == "local" and toks[i + 1].kind == NAME and toks[i + 2].text == "=" \
-                and toks[i + 3].kind == NAME and toks[i + 3].text == "Instance" and toks[i + 4].text == ".":
+    for i in range(len(toks) - 3):
+        if not (toks[i].kind == NAME and toks[i].text == "local" and toks[i + 1].kind == NAME):
+            continue
+        equals = resolve._assign_index(toks, i)
+        if equals is not None and equals + 1 < len(toks) and toks[equals + 1].text == "{":
             out.add(toks[i + 1].text)
     return out
 
 
+def _chain_root(toks, j: int) -> int | None:
+    """j 의 여는 대괄호 바로 앞 이름 경로(A.b.c)가 시작하는 토큰 번호."""
+    k = j - 1
+    if k < 0 or toks[k].kind != NAME:
+        return None
+    while k >= 2 and toks[k - 1].kind == SYMBOL and toks[k - 1].text == "." and toks[k - 2].kind == NAME:
+        k -= 2
+    return k
+
+
 def _bracket_assignments(f) -> list[tuple[int, int, object]]:
-    """인스턴스의 obj[키] = … 대입 — (시작 토큰 번호, 오른쪽 시작 토큰 번호, 풀린 키 값)."""
-    toks, names, out = f.tokens, _instance_names(f), []
-    for i in range(len(toks) - 3):
-        if not (toks[i].kind == NAME and toks[i].text in names and toks[i + 1].kind == SYMBOL and toks[i + 1].text == "["):
+    """obj[키] = … 대입 — (경로 시작 토큰 번호, 오른쪽 시작 토큰 번호, 풀린 키 값). 평범한 표에 담는 것은 뺀다."""
+    toks, tables, out = f.tokens, _table_names(f), []
+    for j, tok in enumerate(toks):
+        if not (tok.kind == SYMBOL and tok.text == "["):
             continue
-        close = i + 1 + len(luau.balanced(toks, i + 1)) - 1
+        start = _chain_root(toks, j)
+        if start is None or (start == j - 1 and toks[start].text in tables):
+            continue
+        close = j + len(luau.balanced(toks, j)) - 1
         if close + 1 >= len(toks) or toks[close + 1].text != "=":
             continue
-        key, _has_text = resolve.expression_value(toks, i + 2, f.resolved)
-        out.append((i, close + 2, key))
+        key, _has_text = resolve.expression_value(toks, j + 1, f.resolved)
+        out.append((start, close + 2, key))
     return out
 
 
 def unresolved_ui_property(f, config) -> list[str]:
-    """인스턴스 속성 이름을 값을 알 수 없는 방식으로 고르면 거부한다 — 화면 문구 속성인지 검사할 수 없다."""
-    return [f"{f.rel}:{f.tokens[i].line} 인스턴스 {f.tokens[i].text} 의 속성 이름을 값을 알 수 없는 방식으로 고른다 "
+    """속성 이름을 값을 알 수 없는 방식으로 고르면 거부한다 — 화면 문구 속성인지 검사할 수 없다."""
+    return [f"{f.rel}:{f.tokens[i].line} {f.tokens[i].text} 의 속성 이름을 값을 알 수 없는 방식으로 고른다 "
             f"— 화면 문구 속성인지 검사할 수 없으므로 쓰지 않는다" for i, _rhs, key in _bracket_assignments(f) if not isinstance(key, str)]
 
 

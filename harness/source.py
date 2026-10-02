@@ -104,13 +104,22 @@ def load_rules(repo: Path = REPO) -> Rules:
     return Rules(read(graph["events"]), read(graph["glossary"]), read(graph["world_spec"]), read(graph["canonical_values"]))
 
 
+def trusted_module(tree, path: str, name: str):
+    """그 이름의 모듈로 믿을 수 있는 단 하나의 파일 — 정해진 자리의 서버 전용 ModuleScript.
+
+    같은 이름의 Script·클라이언트 파일은 믿지 않고 모두 '호출하는 쪽'으로 검사한다(이름만으로 권한을 주지 않는다).
+    """
+    found = [f for f in tree.luau if f.rel == path and f.kind == "ModuleScript" and f.server_only and f.name == name]
+    return found[0] if len(found) == 1 else None
+
+
 def _mappings(node: dict, chain: tuple[str, ...]) -> list[tuple[str, tuple[str, ...]]]:
     out = []
     for name, child in node.items():
         if name.startswith("$") or not isinstance(child, dict):
             continue
         if "$path" in child:
-            out.append((child["$path"], chain + (name,)))
+            out.append((child["$path"], chain + (name,)))   # 타입 검사는 load_tree 가 한다(진단 문구를 한 곳에서)
         out += _mappings(child, chain + (name,))
     return out
 
@@ -137,6 +146,9 @@ def load_tree(root: Path) -> Tree:
     owners: dict[Path, str] = {}
     places: dict[Path, tuple[str, ...]] = {}
     for rel_path, chain in mappings:
+        if not isinstance(rel_path, str):
+            tree.problems.append(f"Rojo 경로({'/'.join(chain)})의 $path 는 글자여야 한다 — {type(rel_path).__name__} 으로는 어느 파일인지 알 수 없다")
+            continue
         shown = "/".join(chain) if Path(str(rel_path)).is_absolute() else rel_path
         if Path(str(rel_path)).is_absolute():
             tree.problems.append(f"Rojo 경로({shown})는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다")

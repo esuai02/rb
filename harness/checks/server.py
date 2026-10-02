@@ -2,7 +2,7 @@
 원격 입력은 막는 형태로 형식을 검사하고 쿨다운을 거치며, 보상은 서버 판정 뒤에만 준다."""
 from __future__ import annotations
 
-from harness import luau, resolve
+from harness import luau, resolve, source
 from harness.luau import NAME, NUMBER, STRING, SYMBOL
 
 BLOCKING = ("return", "error")   # 조건이 맞지 않을 때 멈추는 말
@@ -107,10 +107,8 @@ def reward_authority(tree, rules, config) -> list[str]:
 
 
 def _trusted_reward_file(tree, config):
-    """보상·저장 권한을 쓸 수 있는 단 하나의 파일 — 정해진 경로의 서버 전용 ModuleScript."""
-    path, module = config["reward_module_path"], config["reward_module"]
-    found = [f for f in tree.luau if f.rel == path and f.kind == "ModuleScript" and f.server_only and f.name == module]
-    return found[0] if len(found) == 1 else None
+    """보상·저장 권한을 쓸 수 있는 단 하나의 파일."""
+    return source.trusted_module(tree, config["reward_module_path"], config["reward_module"])
 
 
 def _player_like(f, config) -> set[str]:

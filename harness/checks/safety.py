@@ -136,6 +136,9 @@ def random_or_paid_reward(tree, rules, config) -> list[str]:
             out.append(f"{f.rel}:{f.tokens[i].line} 난수를 쓴다 — 보상·진행은 완주·기여로만 정한다 (허용 모듈: {sorted(allowed) or '없음'})")
         out += [f"{f.rel}:{t.line} 난수 메서드 {t.text} 를 쓴다 — 보상·진행은 완주·기여로만 정한다" for k, t in enumerate(f.tokens)
                 if t.kind == NAME and t.text in RANDOM_METHODS and k and f.tokens[k - 1].text == ":"]
+        roots = {path[0] for path in RANDOM_PATHS} | {alias for path in RANDOM_PATHS for alias in resolve.names_for(f.resolved, (path[0],))}
+        out += [f"{f.rel}:{f.tokens[i].line} 난수 원천 {name} 의 멤버를 값을 알 수 없는 방식으로 고른다 — 난수를 쓰는지 검사할 수 없다"
+                for i, name in resolve.dynamic_member_calls(f, roots)]
         out += [f"{f.rel}:{f.tokens[k].line} 난수 원천을 다른 이름({f.tokens[k].text})에 담았다 — 이름을 바꿔도 난수다" for k in range(len(f.tokens) - 4)
                 if f.tokens[k].kind == NAME and f.tokens[k + 1].text == "=" and _is_random_source(f.tokens, k + 2)]
     return out
