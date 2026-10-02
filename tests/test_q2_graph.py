@@ -252,6 +252,7 @@ class EventsTest(CheckCase):
     check = staticmethod(vg.check_events)
     cases = (
         ("limits: 플랫폼 한도", lambda b: setv(b.events["limits"], "max_fields_per_event", 5)),
+        ("limits: 플랫폼 한도", lambda b: setv(b.events["limits"], "max_custom_events", 500)),
         ("이벤트 이름이 중복된다", lambda b: dup_first(b.events["custom_events"])),
         ("단계 번호가 1부터", lambda b: setv(b.events["onboarding_funnel"][1], "step", 5)),
         ("중복 없는 열거형", lambda b: setv(b.events["fields"], "outcome", ["target_reached", "target_reached"])),
@@ -452,6 +453,27 @@ class CanonicalValuesTest(CheckCase):
         value(b, "cv.coop_switch_ids")["value"] = ["prism_left_ready", "prism_right_ready"]
         self.assertCaught(b, "cv.coop_switch_ids")
 
+    def test_every_range_row_is_enforced(self):
+        for (cid, *path), (low, high) in vg.CV_RANGES.items():
+            with self.subTest(cv=cid, path=path):
+                b = bundle()
+                node = value(b, cid)["value"]
+                for key in path[:-1]:
+                    node = node[key]
+                outside = high * 10 + 1
+                node[path[-1]] = [outside, outside] if isinstance(node[path[-1]], list) else outside
+                self.assertCaught(b, f"{cid}.{'.'.join(path)}: ")
+
+    def test_every_pin_row_is_enforced(self):
+        for (cid, *path), (want, _) in vg.CV_PINS.items():
+            with self.subTest(cv=cid, path=path):
+                b = bundle()
+                node = value(b, cid)["value"]
+                for key in path[:-1]:
+                    node = node[key]
+                node[path[-1]] = ["changed"] if isinstance(want, list) else (not want if isinstance(want, bool) else "changed")
+                self.assertCaught(b, f"{cid}.{'.'.join(path)}: ")
+
     def test_decided_needs_human_decision_or_q1(self):
         b = bundle()
         v = value(b, "cv.match_wait")
@@ -590,7 +612,7 @@ class DesignRulesTest(CheckCase):
     cases = (
         ("첫 힌트 조건", lambda b: setv(value(b, "cv.hint_ladder")["value"], "first_trigger", {})),
         ("힌트 문구 수가", lambda b: b.graph["hint_ladders"][0]["keys"].pop()),
-        ("목표 표현(answer_keys)이 없어", lambda b: mission(b, "m.signal_slope").pop("answer_keys")),
+        ("수학 미션에 목표(target)가 없어", lambda b: mission(b, "m.signal_slope").pop("target")),
         ("max_players 를 넘는다", lambda b: setv(b.graph["coop"][0], "max_players", 8)),
         ("순서대로 늘어야", lambda b: setv(mission(b, "m.gate_open"), "target_end_s", 100)),
         ("마지막 미션에 정지점", lambda b: setv(b.graph["pacing"]["stop_point"], "mission", "m.gate_open")),
@@ -607,16 +629,39 @@ class DesignRulesTest(CheckCase):
         ("scenarios/sc.solo_touch_idle: 변형·방식", lambda b: setv(next(s for s in b.graph["scenarios"] if s["id"] == "sc.solo_touch_idle"), "expects_events", [])),
         ("재사용 맥락에 그 용어의 힌트 사다리가 없다", lambda b: b.graph["reuse_contexts"][4].pop("hint_ladder")),
         ("ctx.slope.booster_ramp: 힌트 문구 수가", lambda b: b.graph["hint_ladders"][3]["keys"].pop()),
-        ("ctx.slope.partner_bridge: 목표 표현(answer_keys)이 없어", lambda b: setv(b.graph["reuse_contexts"][5], "answer_keys", [])),
-        ("ctx.slope.metro_preview 의 목표 표현", lambda b: setv(b.glossary["strings"], "hint.reuse.slope.l2", "레일을 더 올라가게 바꿔 봐.")),
-        ("목표 표현 '오른쪽 2, 위 1' 의 구성 요소", lambda b: setv(b.glossary["strings"], "hint.coordinate.l2", "오른쪽 2,   위 1 일까?")),
-        ("목표 표현 '오른쪽 2, 위 1' 의 구성 요소", lambda b: setv(b.glossary["strings"], "hint.coordinate.l2", "위 1, 오른쪽 2로 보내면 돼.")),
+        ("ctx.slope.partner_bridge: 목표 {}", lambda b: setv(b.graph["reuse_contexts"][5], "target", {})),
+        ("ctx.slope.metro_preview 의 정답 '더 올라가게'", lambda b: setv(b.glossary["strings"], "hint.reuse.slope.l2", "레일을 더 올라가게 바꿔 봐.")),
+        ("정답 '오른쪽 2, 위 1' 의 구성 요소", lambda b: setv(b.glossary["strings"], "hint.coordinate.l2", "오른쪽 2,   위 1 일까?")),
+        ("정답 '오른쪽 2, 위 1' 의 구성 요소", lambda b: setv(b.glossary["strings"], "hint.coordinate.l2", "위 1, 오른쪽 2로 보내면 돼.")),
+        ("목표 칸 [9, 9] 이 정본 격자", lambda b: setv(mission(b, "m.signal_coordinate"), "target", {"cell": [9, 9]})),
+        ("기준점(0, 0)이 아닌", lambda b: setv(b.graph["reuse_contexts"][1], "target", {"cell": [0, 0]})),
+        ("Q1 일상 표현 키 하나여야", lambda b: setv(b.graph["reuse_contexts"][3], "target", {"expression": "expr.slope.zigzag"})),
+        ("Q1 일상 표현에 필요한 방향이 없다", lambda b: b.spec["language_goals"][0]["everyday_expression_keys"].remove("expr.position.left")),
+        ("목표에 필요한 행동 ['action.position.move_left']", lambda b: setv(b.graph["reuse_contexts"][0], "target", {"cell": [-1, 1]})),
+        ("목표에 필요한 행동 ['action.slope.set_zero']", lambda b: setv(b.graph["reuse_contexts"][3], "target", {"expression": "expr.slope.flat"})),
+        ("목표 칸의 좌표 (2, 1)", lambda b: setv(b.glossary["strings"], "label.coordinate.line", "출발 칸에서 오른쪽 2, 위 1 → (1, 2). 방금 쓴 말이 좌표야.")),
+        ("역할 기여는", lambda b: setv(b.graph["roles"][0], "contribution", "does_not_exist")),
+        ("역할 기여는", lambda b: setv(b.graph["roles"][1], "contribution", "ping_anchor_cell")),
+        ("변형 first_try 과 맞지 않는다", lambda b: setv(b.graph["scenarios"][0], "attempts_before_target", 2)),
+        ("변형 other_result_x3 과 맞지 않는다", lambda b: setv(b.graph["scenarios"][1], "attempts_before_target", 1)),
+        ("변형 idle_hints 과 맞지 않는다", lambda b: setv(b.graph["scenarios"][3], "idle_s", 3)),
+        ("변형 never_uses_label 과 맞지 않는다", lambda b: setv(b.graph["scenarios"][4], "expression", "label")),
+        ("변형 uses_label 과 맞지 않는다", lambda b: setv(b.graph["scenarios"][5], "path", [p for p in b.graph["scenarios"][5]["path"] if not p.startswith("m.plaza")])),
+        ("끝난 지점은 경로의 마지막", lambda b: setv(b.graph["scenarios"][3], "stops_after", "m.signal_wake")),
+        ("시도 수·멈춘 시간은 0 이상", lambda b: setv(b.graph["scenarios"][0], "attempts_before_target", -1)),
+        ("반드시 내는 이벤트 ['hint_shown']", lambda b: b.graph["scenarios"][1]["expects_events"].remove("hint_shown")),
+        ("반드시 내는 이벤트 ['co_play_started']", lambda b: b.graph["scenarios"][2]["expects_events"].remove("co_play_started")),
+        ("반드시 내는 이벤트 ['session_end']", lambda b: b.graph["scenarios"][3]["expects_events"].remove("session_end")),
+        ("반드시 내는 이벤트 ['term_reused']", lambda b: b.graph["scenarios"][4]["expects_events"].remove("term_reused")),
+        ("반드시 내는 이벤트 ['gate_opened']", lambda b: b.graph["scenarios"][0]["expects_events"].remove("gate_opened")),
+        ("반드시 내는 이벤트 ['onboarding_complete']", lambda b: b.graph["scenarios"][0]["expects_events"].remove("onboarding_complete")),
+        ("반드시 내는 이벤트 ['first_math_success', 'math_attempt']", lambda b: setv(b.graph["scenarios"][0], "expects_events", ["session_start", "gate_opened", "onboarding_complete"])),
+        ("반드시 내는 이벤트 ['session_start']", lambda b: b.graph["scenarios"][0]["expects_events"].remove("session_start")),
         ("필수 미션이 없다", lambda b: [m.update(core=False, target_end_s=None) for m in b.graph["missions"]]),
         ("필수 경로에 있어야 한다", lambda b: setv(mission(b, "m.signal_slope"), "core", False)),
         ("게이트 신호 미션은 필수다", lambda b: mission(b, "m.signal_wake").update(core=False, target_end_s=None)),
         ("멈춤 변형이 아니면 필수 경로 전체", lambda b: setv(b.graph["scenarios"][0], "path", ["m.signal_wake", "m.signal_coordinate"])),
-        ("이 term.coordinate 의 일상 표현으로", lambda b: setv(b.glossary["strings"], "answer.coordinate.portal_map", "지도 입구")),
-        ("이름표 대사가 목표 표현", lambda b: setv(b.glossary["strings"], "label.coordinate.line", "방금 쓴 말을 수학에서는 좌표라고 불러.")),
+        ("이름표 대사가 방금 쓴 말", lambda b: setv(b.glossary["strings"], "label.coordinate.line", "방금 쓴 말을 수학에서는 좌표라고 불러.")),
         ("계속·쉬기", lambda b: setv(b.graph["pacing"]["stop_point"], "choice_keys", ["pacing.continue", "pacing.continue"])),
     )
 
@@ -648,7 +693,7 @@ class DesignRulesTest(CheckCase):
     def test_hint_text_states_the_answer(self):
         b = bundle()
         b.glossary["strings"]["hint.coordinate.l3"] = "루미를 오른쪽 2, 위 1로 보내면 돼."
-        self.assertCaught(b, "목표 표현")
+        self.assertCaught(b, "구성 요소를 모두 말한다")
 
     def test_math_mission_needs_own_ladder(self):
         b = bundle()

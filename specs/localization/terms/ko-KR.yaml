@@ -20,8 +20,6 @@ strings:
   label.coordinate.line: 출발 칸에서 오른쪽 2, 위 1 → (2, 1). 방금 네가 쓴 말을 수학에서는 좌표라고 불러.
   label.slope.line: 방금 더 올라가게 바꾼 건 다리의 기울기야. 옆으로 한 칸 갈 때 다리가 얼마나 올라가는지를 수학에서는 기울기라고 불러. 평평하면 기울기 0이야.
 
-  # 미션의 목표 표현 — 힌트 문구에 들어가면 안 된다(정답 공개 검사)
-  answer.coordinate.signal_cell: 오른쪽 2, 위 1
 
   # 일상 표현과 행동 (Q1 everyday_expression_keys · everyday_action_keys)
   expr.position.right: 오른쪽
@@ -95,9 +93,6 @@ strings:
   sit.reuse.slope.partner_bridge: 두 탑 사이 다리가 기울어서 건널 수 없어. 다리를 어떻게 놓을까?
   resp.reuse.slope.bridge_flat: 다리가 평평해져서 건널 수 있어!
   choice.use_label: 수학 이름으로 말하기
-  answer.coordinate.slope_anchor: 오른쪽 1, 위 1
-  answer.coordinate.portal_map: 오른쪽 1, 위 2
-  answer.coordinate.drone_delivery: 왼쪽 1, 위 2
   hint.reuse.coordinate.l1: 출발점에서 가로줄과 세로줄에 빛이 켜졌어. 빛줄을 따라 세어 봐.
   hint.reuse.coordinate.l2: 출발점에서 목표까지, 옆으로 몇 칸이고 위아래로 몇 칸일까?
   hint.reuse.coordinate.l3: 옆 드론은 출발점에서 오른쪽 2, 아래 2로 날아가 자기 자리에 닿았어. 같은 방법으로 세어 보자.

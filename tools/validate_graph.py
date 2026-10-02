@@ -36,7 +36,7 @@ ALLOWED_EVENTS = {"onboarding_start", "character_spawned", "first_input", "gate_
 FREQUENCIES = {"once_per_user", "every_session", "per_occurrence", "once_per_context_per_session"}
 SERVER_CONFIRMED = "server_confirmed_world_response"
 STRING_KEY_FIELDS = {"key", "keys", "goal_key", "line_key", "other_result_key", "situation_key", "response_key", "name_key", "npc_line_key",
-                     "waiting_key", "ready_key", "object_keys", "label_choice_key", "invite_key", "retry_key", "pings", "answer_keys", "choice_keys"}
+                     "waiting_key", "ready_key", "object_keys", "label_choice_key", "invite_key", "retry_key", "pings", "choice_keys"}
 PARAM_FIELDS = {"params", "rule"}
 NS_NUMERATOR, NS_DENOMINATOR = "term_reused", "session_start"  # intent §1 북극성 지표 — 이벤트를 바꾸려면 이 검사기를 고치고 리뷰를 받는다
 STOP_CHOICES = ["pacing.continue", "pacing.rest"]               # K6 R7 계속·쉬기
@@ -63,14 +63,15 @@ LATER_STAGES = {"Q3", "Q4", "Q5", "Q6", "Q7", "Q8"}
 T, T0, B, N, I, P, ONE, LT, LN, TL, ANY = "text", "text_or_null", "bool", "int_or_null", "positive_int", "positive", "version_1", \
     "text_list", "number_list", "text_or_text_list", "any"
 STEP = {"kind": T, "?key": T, "?keys": LT, "?other_result_key": T, "?line_key": T, "?ids": LT}
+TARGET = {"?cell": LN, "?expression": T}  # 목표 — 위치 용어는 칸 [x, y], 변화 용어는 Q1 일상 표현 키
 GRAPH_SHAPE = {
     "schema_version": ONE, "id": T, "note": T, "world_spec": T, "world_id": T, "market_id": T, "curriculum_id": T, "glossary": T, "events": T,
     "canonical_values": T, "label_choice_key": T, "pings": LT, "invite_key": T, "retry_key": T,
     "terms": [{"term_id": T, "prerequisites": LT, "first_mission": T}],
     "missions": [{"id": T, "core": B, "signal": N, "new_term": T0, "requires": LT, "goal_key": T0, "play_modes": LT, "target_end_s": N,
-                  "steps": [STEP], "?params": LT, "?hint_ladder": T, "?answer_keys": LT, "?coop": T}],
+                  "steps": [STEP], "?params": LT, "?hint_ladder": T, "?target": TARGET, "?coop": T}],
     "reuse_contexts": [{"id": T, "term_id": T, "mission": T, "situation_key": T, "action_keys": LT, "response_key": T, "accepts": LT,
-                        "hint_ladder": T, "answer_keys": LT}],
+                        "hint_ladder": T, "target": TARGET}],
     "hint_ladders": [{"id": T, "?mission": T, "?term": T, "rule": T, "keys": LT}],
     "roles": [{"id": T, "name_key": T, "contribution": T, "npc_can_fill": B}],
     "coop": [{"id": T, "mission": T, "objects": LT, "object_keys": LT, "roles": LT, "role_assignment": T, "npc_fallback": T, "npc_line_key": T,
@@ -78,7 +79,8 @@ GRAPH_SHAPE = {
     "rewards": [{"id": T, "name_key": T, "mission": T, "basis": T, "granted_to": T, "granted_by": T, "kind": T}],
     "pacing": {"countdown_fail": B, "streaks": B, "autoplay_next_mission": B, "autosave": B, "long_play_notice": T, "params": LT,
                "stop_point": {"mission": T, "choice_keys": LT, "equal_size": B}},
-    "scenarios": [{"id": T, "play_mode": T, "input": T, "variation": T, "path": LT, "expects_events": LT}],
+    "scenarios": [{"id": T, "play_mode": T, "input": T, "variation": T, "path": LT, "expects_events": LT,
+                   "attempts_before_target": N, "idle_s": N, "expression": T, "stops_after": T0}],
 }
 CANONICAL_SHAPE = {"schema_version": ONE, "source": T, "values": [{"id": T, "k0_item": T, "value": ANY, "status": T, "refs": LT, "rationale": T,
                                                                      "?measure_at": T, "?q1_paths": ("map", T)}]}
@@ -120,6 +122,8 @@ GLOSSARY_SHAPE = {"schema_version": ONE, "market_id": T, "locale": T, "world_spe
 GRANTED_TO = {"completion": "all_finishers", "role_contribution": "contributing_players"}  # INV-4 보상 기준별 수령 대상
 PLAY_MODES = {"solo_npc", "duo"}
 SCENARIO_VARIATIONS = {"first_try", "other_result_x3", "idle_hints", "never_uses_label", "uses_label"}
+ROLE_CONTRIBUTIONS = {"ping_anchor_cell", "hold_prism_in_sync_window"}  # K3 §5 확인 가능한 기여 — 역할마다 하나
+DIRECTIONS = {"right": (1, 0), "left": (-1, 0), "up": (0, 1), "down": (0, -1)}  # Q1 위치 표현 키(expr.position.<방향>)
 TRANSPORT = "roblox_analytics_service"  # evidence F10
 MAX_CHOICE_SPAN = 5  # 좌표 격자 반폭·기울기 최대 단계 — 선택지가 작고 유한해야 정답 공개 없이도 힌트가 끝난다(cv.hint_ladder)
 ID_PATTERNS = {"terms": ("term_id", r"term\.[a-z_]+"), "missions": ("id", r"m\.[a-z_]+"), "reuse_contexts": ("id", r"ctx\.[a-z_]+\.[a-z_]+"),
@@ -785,14 +789,49 @@ def check_boundary(b: Bundle) -> list[str]:
 
 # ---------- Q2-C7 설계 규칙 ----------
 
-def answer_tie_errors(b: Bundle, owner: str, term: str, answers: list[str], ladder: dict) -> list[str]:
-    """목표 표현은 그 용어의 일상 표현으로 말해야 하고(INV-15), 힌트 문구는 목표 표현을 그대로 말하지 않는다(INV-8)."""
-    strings = b.glossary.get("strings", {})
-    words = [squash(strings.get(k, "")) for k in goals(b).get(term, {}).get("everyday_expression_keys", []) if strings.get(k)]
-    errors = [f"{owner}: 목표 표현 '{a}' 이 {term} 의 일상 표현으로 되어 있지 않다" for a in answers if not any(w and w in squash(a) for w in words)]
-    # 목표 표현의 구성 요소(쉼표로 나눈 조각)를 모두 담은 힌트는 순서를 바꿔도 정답 공개다. 바꿔 말한 표현의 판단은 사람 검토
-    return errors + [f"hint {k}: {owner} 의 목표 표현 '{a}' 의 구성 요소를 모두 말한다 (INV-8)" for k in ladder.get("keys", []) for a in answers
-                     if all(squash(part) in squash(strings.get(k, "")) for part in a.split(",") if part.strip())]
+def target_phrase(b: Bundle, term: str, target) -> tuple[list[str], list[str], list[str]]:
+    """목표에서 정답 구성 요소(문구 조각)·필요한 Q1 표현 키를 계산한다. 반환: (구성 요소, 표현 키, 오류)."""
+    goal, strings = goals(b).get(term, {}), b.glossary.get("strings", {})
+    keys = goal.get("everyday_expression_keys", [])
+    target = target if isinstance(target, dict) else {}
+    if goal.get("concept") == "position":
+        cell, grid = target.get("cell"), cv_dict(b, "cv.coordinate_expression").get("grid") or {}
+        if not (isinstance(cell, list) and len(cell) == 2 and all(isinstance(v, int) and not isinstance(v, bool) for v in cell)) or cell == [0, 0]:
+            return [], [], [f"목표 칸 {cell} 은 기준점(0, 0)이 아닌 정수 칸 [x, y] 여야 한다"]
+        if not all(isinstance(grid.get(a), list) and len(grid[a]) == 2 and grid[a][0] <= v <= grid[a][1] for a, v in zip("xy", cell)):
+            return [], [], [f"목표 칸 {cell} 이 정본 격자 {grid} 밖이다"]
+        by_dir = {k.rsplit(".", 1)[-1]: k for k in keys}
+        need = [by_dir.get(d) for d, (dx, dy) in DIRECTIONS.items() if (dx and dx * cell[0] > 0) or (dy and dy * cell[1] > 0)]
+        if None in need:
+            return [], [], [f"{term} 의 Q1 일상 표현에 필요한 방향이 없다"]
+        amounts = {k: abs(cell[0]) if DIRECTIONS[k.rsplit('.', 1)[-1]][0] else abs(cell[1]) for k in need}
+        order = [k for k in need if DIRECTIONS[k.rsplit(".", 1)[-1]][0]] + [k for k in need if DIRECTIONS[k.rsplit(".", 1)[-1]][1]]
+        return [f"{strings.get(k, '')} {amounts[k]}" for k in order], order, []
+    expression = target.get("expression")
+    if expression not in keys or "cell" in target:
+        return [], [], [f"목표 {target} 는 {term} 의 Q1 일상 표현 키 하나여야 한다"]
+    return [strings.get(expression, "")], [expression], []
+
+
+def target_errors(b: Bundle, owner: str, term: str, target, ladder: dict, actions: list[str], line_key: str | None = None) -> list[str]:
+    """목표는 Q1 일상 표현으로 말할 수 있고 필요한 행동이 있으며(INV-15), 이름표 대사는 방금 쓴 말을 담고, 힌트는 정답 구성 요소를 모두 말하지 않는다(INV-8)."""
+    parts, needed, errors = target_phrase(b, term, target)
+    if errors:
+        return [f"{owner}: {e}" for e in errors]
+    goal, strings = goals(b).get(term, {}), b.glossary.get("strings", {})
+    q1_keys, q1_actions = goal.get("everyday_expression_keys", []), goal.get("everyday_action_keys", [])
+    missing = [q1_actions[q1_keys.index(k)] for k in needed if q1_keys.index(k) < len(q1_actions) and q1_actions[q1_keys.index(k)] not in actions]
+    errors += [f"{owner}: 목표에 필요한 행동 {missing} 이 없다" for _ in [0] if missing]
+    if line_key is not None:
+        line = squash(strings.get(line_key, ""))
+        if squash(", ".join(parts)) not in line:
+            errors.append(f"{owner}: 이름표 대사가 방금 쓴 말 '{', '.join(parts)}' 을 담지 않는다 (INV-15)")
+        cell = target.get("cell") if isinstance(target, dict) else None
+        if cell and squash(f"({cell[0]}, {cell[1]})") not in line:
+            errors.append(f"{owner}: 이름표 대사가 목표 칸의 좌표 ({cell[0]}, {cell[1]}) 를 담지 않는다")
+    # 정답 구성 요소를 모두 담은 힌트는 순서를 바꿔도 정답 공개다. 바꿔 말한 표현의 판단은 사람 검토
+    return errors + [f"hint {k}: {owner} 의 정답 '{', '.join(parts)}' 의 구성 요소를 모두 말한다 (INV-8)" for k in ladder.get("keys", [])
+                     if all(squash(p) in squash(strings.get(k, "")) for p in parts)]
 
 
 @guarded
@@ -827,23 +866,18 @@ def check_design_rules(b: Bundle) -> list[str]:
             errors.append(f"missions/{m['id']}: 수학 미션에 자기 힌트 사다리가 없다 (INV-8)")
         if len(ladder.get("keys", [])) != len(rule.get("levels", [])):
             errors.append(f"missions/{m['id']}: 힌트 문구 수가 힌트 단계 수와 다르다")
-        answers = [strings.get(k, "") for k in m.get("answer_keys", []) if strings.get(k)]
-        if not answers:
-            errors.append(f"missions/{m['id']}: 목표 표현(answer_keys)이 없어 정답 공개를 검사할 수 없다")
-        errors += answer_tie_errors(b, m["id"], m["new_term"], answers, ladder)
-        line = next((s.get("line_key") for s in m.get("steps", []) if s.get("kind") == "math_label"), None)
-        errors += [f"missions/{m['id']}: 이름표 대사가 목표 표현 '{a}' 을 담지 않는다 (방금 쓴 말에 이름을 붙인다, INV-15)"
-                   for a in answers if squash(a) not in squash(strings.get(line, ""))]
+        if "target" not in m:
+            errors.append(f"missions/{m['id']}: 수학 미션에 목표(target)가 없어 정답 공개·이름표를 검사할 수 없다")
+        line = next((s.get("line_key") for s in m.get("steps", []) if s.get("kind") == "math_label"), "")
+        actions = [k for s in m.get("steps", []) if s.get("kind") == "player_action" for k in s.get("keys", [])]
+        errors += target_errors(b, f"missions/{m['id']}", m["new_term"], m.get("target"), ladder, actions, line)
     for c in g.get("reuse_contexts", []):
         ladder = ladders.get(c.get("hint_ladder"), {})
         if ladder.get("term") != c.get("term_id"):
             errors.append(f"reuse_contexts/{c.get('id')}: 재사용 맥락에 그 용어의 힌트 사다리가 없다 (INV-8·INV-9)")
         if len(ladder.get("keys", [])) != len(rule.get("levels", [])):
             errors.append(f"reuse_contexts/{c.get('id')}: 힌트 문구 수가 힌트 단계 수와 다르다")
-        answers = [strings.get(k, "") for k in c.get("answer_keys", []) if strings.get(k)]
-        if not answers:
-            errors.append(f"reuse_contexts/{c.get('id')}: 목표 표현(answer_keys)이 없어 정답 공개를 검사할 수 없다")
-        errors += answer_tie_errors(b, c.get("id"), c.get("term_id"), answers, ladder)
+        errors += target_errors(b, f"reuse_contexts/{c.get('id')}", c.get("term_id"), c.get("target"), ladder, c.get("action_keys", []))
     core = [m for m in g.get("missions", []) if m.get("core")]
     for m in by_id.values():
         if "solo_npc" not in m.get("play_modes", []) or set(m.get("play_modes", [])) - PLAY_MODES:
@@ -870,6 +904,9 @@ def check_design_rules(b: Bundle) -> list[str]:
         if c.get("max_players", 0) > spec.get("coop", {}).get("max_players", 0):
             errors.append(f"coop/{c['id']}: 인원이 Q1 명세 max_players 를 넘는다")
     errors += [f"roles/{r['id']}: NPC 가 대신 맡을 수 없다 (INV-9)" for r in g.get("roles", []) if r.get("npc_can_fill") is not True]
+    contributions = [r.get("contribution") for r in g.get("roles", [])]
+    if any(c not in ROLE_CONTRIBUTIONS for c in contributions) or len(set(contributions)) != len(contributions):
+        errors.append(f"roles: 역할 기여는 {sorted(ROLE_CONTRIBUTIONS)} 중 역할마다 다른 하나 (K3 §5 확인 가능한 기여)")
     pacing = g.get("pacing", {})
     errors += [f"pacing/{k}: 강박형 장치는 쓰지 않는다 (INV-14)" for k in ("countdown_fail", "streaks", "autoplay_next_mission") if pacing.get(k) is not False]
     stop = pacing.get("stop_point", {})
@@ -904,6 +941,7 @@ def check_design_rules(b: Bundle) -> list[str]:
         if s.get("variation") not in SCENARIO_VARIATIONS or s.get("play_mode") not in PLAY_MODES or not s.get("expects_events") \
                 or not s.get("path") or (core and s["path"][0] != core[0]["id"]):
             errors.append(f"scenarios/{s.get('id')}: 변형·방식은 정해진 값, 기대 이벤트가 있고 경로는 첫 필수 미션에서 시작해야 한다")
+        errors += scenario_errors(b, s, core_ids)
         seen = set()
         for step in s.get("path", []):
             missing = [r for r in by_id.get(step, {}).get("requires", []) if r not in seen]
@@ -913,6 +951,32 @@ def check_design_rules(b: Bundle) -> list[str]:
     if g.get("market_id") != b.glossary.get("market_id"):
         errors.append("Graph·용어집의 시장이 다르다 (INV-2 원본 시장 하나)")
     return errors
+
+
+def scenario_errors(b: Bundle, s: dict, core_ids: set[str]) -> list[str]:
+    """시나리오의 행동(시도 수·멈춘 시간·쓴 표현·끝난 지점)이 변형 이름과 맞고, 그 행동이 반드시 내는 이벤트를 기대 이벤트가 모두 담는다."""
+    g, by_id, sid = b.graph, missions(b), s.get("id")
+    trigger = cv_dict(b, "cv.hint_ladder").get("first_trigger") or {}
+    path, attempts, idle = s.get("path") or [], s.get("attempts_before_target"), s.get("idle_s")
+    if not (isinstance(attempts, int) and attempts >= 0 and isinstance(idle, int) and idle >= 0) or s.get("expression") not in ("everyday", "label"):
+        return [f"scenarios/{sid}: 시도 수·멈춘 시간은 0 이상의 정수, 쓴 표현은 everyday·label 중 하나"]
+    reuse_optional = any(c.get("mission") in path and not by_id.get(c.get("mission"), {}).get("core", True) for c in g.get("reuse_contexts", []))
+    rules = {"first_try": attempts == 0 and idle == 0, "other_result_x3": attempts >= 3,
+             "idle_hints": idle >= trigger.get("idle_seconds", 10 ** 9) and s.get("stops_after") is not None,
+             "never_uses_label": s.get("expression") == "everyday" and reuse_optional, "uses_label": s.get("expression") == "label" and reuse_optional}
+    errors = [] if rules.get(s.get("variation"), False) else [f"scenarios/{sid}: 행동(시도 {attempts}·멈춤 {idle}초·표현 {s.get('expression')})이 변형 {s.get('variation')} 과 맞지 않는다"]
+    stop = s.get("stops_after")
+    if stop is not None and (not path or path[-1] != stop or core_ids <= set(path)):
+        errors.append(f"scenarios/{sid}: 끝난 지점은 경로의 마지막 미션이고 필수 경로를 다 지나기 전이어야 한다")
+    implied = {"session_start"} | ({"math_attempt", "first_math_success"} if any(by_id.get(p, {}).get("new_term") for p in path) else set())
+    implied |= {"hint_shown"} if attempts >= trigger.get("other_results", 10 ** 9) or idle >= trigger.get("idle_seconds", 10 ** 9) else set()
+    implied |= {"gate_opened"} if any(st.get("kind") == "reward" for p in path for st in by_id.get(p, {}).get("steps", [])) else set()
+    implied |= {"onboarding_complete"} if core_ids <= set(path) else set()
+    implied |= {"co_play_started"} if s.get("play_mode") == "duo" and any(by_id.get(p, {}).get("coop") for p in path) else set()
+    implied |= {"term_reused"} if reuse_optional else set()
+    implied |= {"session_end"} if stop is not None else set()
+    missing = sorted(implied - set(s.get("expects_events") or []))
+    return errors + ([f"scenarios/{sid}: 이 행동이 반드시 내는 이벤트 {missing} 를 기대 이벤트에 담지 않았다"] if missing else [])
 
 
 CHECKS = {

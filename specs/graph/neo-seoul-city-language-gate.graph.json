@@ -104,9 +104,12 @@
         }
       ],
       "hint_ladder": "hl.coordinate",
-      "answer_keys": [
-        "answer.coordinate.signal_cell"
-      ]
+      "target": {
+        "cell": [
+          2,
+          1
+        ]
+      }
     },
     {
       "id": "m.signal_slope",
@@ -159,10 +162,10 @@
         }
       ],
       "hint_ladder": "hl.slope",
-      "answer_keys": [
-        "expr.slope.rise_more"
-      ],
-      "coop": "coop.gate_prisms"
+      "coop": "coop.gate_prisms",
+      "target": {
+        "expression": "expr.slope.rise_more"
+      }
     },
     {
       "id": "m.gate_open",
@@ -268,9 +271,12 @@
         "label"
       ],
       "hint_ladder": "hl.reuse.coordinate",
-      "answer_keys": [
-        "answer.coordinate.slope_anchor"
-      ]
+      "target": {
+        "cell": [
+          1,
+          1
+        ]
+      }
     },
     {
       "id": "ctx.coordinate.portal_map",
@@ -289,9 +295,12 @@
         "label"
       ],
       "hint_ladder": "hl.reuse.coordinate",
-      "answer_keys": [
-        "answer.coordinate.portal_map"
-      ]
+      "target": {
+        "cell": [
+          1,
+          2
+        ]
+      }
     },
     {
       "id": "ctx.coordinate.drone_delivery",
@@ -310,9 +319,12 @@
         "label"
       ],
       "hint_ladder": "hl.reuse.coordinate",
-      "answer_keys": [
-        "answer.coordinate.drone_delivery"
-      ]
+      "target": {
+        "cell": [
+          -1,
+          2
+        ]
+      }
     },
     {
       "id": "ctx.slope.booster_ramp",
@@ -329,9 +341,9 @@
         "label"
       ],
       "hint_ladder": "hl.reuse.slope",
-      "answer_keys": [
-        "expr.slope.rise_more"
-      ]
+      "target": {
+        "expression": "expr.slope.rise_more"
+      }
     },
     {
       "id": "ctx.slope.metro_preview",
@@ -348,9 +360,9 @@
         "label"
       ],
       "hint_ladder": "hl.reuse.slope",
-      "answer_keys": [
-        "expr.slope.rise_more"
-      ]
+      "target": {
+        "expression": "expr.slope.rise_more"
+      }
     },
     {
       "id": "ctx.slope.partner_bridge",
@@ -368,9 +380,9 @@
         "label"
       ],
       "hint_ladder": "hl.reuse.slope",
-      "answer_keys": [
-        "expr.slope.flat"
-      ]
+      "target": {
+        "expression": "expr.slope.flat"
+      }
     }
   ],
   "label_choice_key": "choice.use_label",
@@ -572,11 +584,16 @@
       ],
       "expects_events": [
         "session_start",
+        "math_attempt",
         "first_math_success",
         "gate_opened",
         "explorer_card_earned",
         "onboarding_complete"
-      ]
+      ],
+      "attempts_before_target": 0,
+      "idle_s": 0,
+      "expression": "everyday",
+      "stops_after": null
     },
     {
       "id": "sc.solo_gamepad_other_results",
@@ -591,11 +608,17 @@
         "m.zone_portal"
       ],
       "expects_events": [
+        "session_start",
         "math_attempt",
         "hint_shown",
         "first_math_success",
+        "gate_opened",
         "onboarding_complete"
-      ]
+      ],
+      "attempts_before_target": 3,
+      "idle_s": 0,
+      "expression": "everyday",
+      "stops_after": null
     },
     {
       "id": "sc.duo_keyboard",
@@ -610,11 +633,18 @@
         "m.zone_portal"
       ],
       "expects_events": [
+        "session_start",
+        "math_attempt",
+        "first_math_success",
         "co_play_offered",
         "co_play_started",
         "gate_opened",
         "onboarding_complete"
-      ]
+      ],
+      "attempts_before_target": 0,
+      "idle_s": 0,
+      "expression": "everyday",
+      "stops_after": null
     },
     {
       "id": "sc.solo_touch_idle",
@@ -626,9 +656,16 @@
         "m.signal_coordinate"
       ],
       "expects_events": [
+        "session_start",
         "hint_shown",
+        "math_attempt",
+        "first_math_success",
         "session_end"
-      ]
+      ],
+      "attempts_before_target": 0,
+      "idle_s": 15,
+      "expression": "everyday",
+      "stops_after": "m.signal_coordinate"
     },
     {
       "id": "sc.solo_keyboard_everyday_only",
@@ -645,9 +682,17 @@
         "m.plaza_partner_bridge"
       ],
       "expects_events": [
-        "term_reused",
-        "onboarding_complete"
-      ]
+        "session_start",
+        "math_attempt",
+        "first_math_success",
+        "gate_opened",
+        "onboarding_complete",
+        "term_reused"
+      ],
+      "attempts_before_target": 0,
+      "idle_s": 0,
+      "expression": "everyday",
+      "stops_after": null
     },
     {
       "id": "sc.duo_gamepad_plaza_reuse",
@@ -663,9 +708,18 @@
         "m.plaza_partner_bridge"
       ],
       "expects_events": [
-        "term_reused",
-        "co_play_started"
-      ]
+        "session_start",
+        "math_attempt",
+        "first_math_success",
+        "co_play_started",
+        "gate_opened",
+        "onboarding_complete",
+        "term_reused"
+      ],
+      "attempts_before_target": 0,
+      "idle_s": 0,
+      "expression": "label",
+      "stops_after": null
     }
   ]
 }
