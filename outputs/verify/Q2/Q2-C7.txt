@@ -1,8 +1,8 @@
-criterion: Q2-C7 — 설계 규칙: 보상은 서버만 정하고 기본 보상은 완주한 모두에게 같으며 협동 보너스는 꾸미기만이고 화폐·무작위 보상이 없다(INV-4·INV-12). 수학 미션과 재사용 맥락마다 힌트 사다리가 있고 힌트는 무료이며 한 번 해 본 뒤에만 다음 단계로 가고 힌트 문구가 목표 표현을 말하지 않으며(띄어쓰기 무시), 목표 표현은 그 용어의 일상 표현이고 이름표 대사는 방금 쓴 목표 표현을 담는다(INV-8·INV-15·K6 R3). 필수 미션은 혼자(NPC)로 끝낼 수 있고 매칭 대기 끝은 NPC 다(INV-9). 시간 압박 실패·스트릭·자동 다음 미션이 없고 자동 저장과 같은 크기의 계속·쉬기 정지점이 있다(INV-14·K6 R7). 필수 경로는 한 줄(바로 앞 필수 미션만 기다림)이고 필수 미션마다 현재 목표 문구가 있으며 Q1 시간 안에 들고, 입력 3종마다 혼자 끝까지 가는 시나리오와 2인·재도전·멈춤·일상어만 쓰기 시나리오가 있다
+criterion: Q2-C7 — 설계 규칙: 보상은 서버만 정하고 기본 보상은 완주한 모두에게 같으며 협동 보너스는 꾸미기만이고 화폐·무작위 보상이 없다(INV-4·INV-12). 수학 미션과 재사용 맥락마다 힌트 사다리가 있고 힌트는 무료이며 한 번 해 본 뒤에만 다음 단계로 가고 힌트 문구에 목표 표현의 구성 요소가 모두 들어 있지 않으며(순서·띄어쓰기 무시 — 바꿔 말한 표현의 의미 판단은 사람 검토), 목표 표현은 그 용어의 일상 표현이고 이름표 대사는 방금 쓴 목표 표현을 담는다(INV-8·INV-15·K6 R3). 필수 미션은 혼자(NPC)로 끝낼 수 있고 매칭 대기 끝은 NPC 다(INV-9). 시간 압박 실패·스트릭·자동 다음 미션이 없고 자동 저장과 같은 크기의 계속·쉬기 정지점이 있다(INV-14·K6 R7). 필수 미션이 있고 필수 경로는 한 줄(바로 앞 필수 미션만 기다림)이며 용어를 처음 배우는 미션·게이트 신호 미션은 필수이고 필수 미션마다 현재 목표 문구가 있으며 Q1 시간 안에 들고, 멈춤 변형 밖 시나리오는 필수 경로 전체를 지나며, 입력 3종마다 혼자 끝까지 가는 시나리오와 2인·재도전·멈춤·일상어만 쓰기 시나리오가 있다
 command: python3 -m unittest tests.test_q2_graph.DesignRulesTest -v
 exit: 0
-binding: 712c279a04fce25abf7e4a996c4438c11d4458b6e1d08f95450fc834c7cb7abd
-time: 2026-10-02T03:18:56.819605+00:00
+binding: 753a3a095819441b4c44540b73fff529ff67b02a09b2cc183cb0b1c61de84671
+time: 2026-10-02T04:49:07.336255+00:00
 
 test_base_reward_by_correct_count (tests.test_q2_graph.DesignRulesTest.test_base_reward_by_correct_count) ... ok
 test_base_reward_for_some_players_only (tests.test_q2_graph.DesignRulesTest.test_base_reward_for_some_players_only) ... ok
@@ -29,6 +29,6 @@ test_stop_point_equal_choice (tests.test_q2_graph.DesignRulesTest.test_stop_poin
 test_streak (tests.test_q2_graph.DesignRulesTest.test_streak) ... ok
 
 ----------------------------------------------------------------------
-Ran 23 tests in 0.025s
+Ran 23 tests in 0.028s
 
 OK

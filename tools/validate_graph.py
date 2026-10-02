@@ -29,12 +29,15 @@ ENUM_VALUE_RE = re.compile(r"^[a-z][a-z0-9_.]*$")
 CV_ID_RE = re.compile(r"^cv\.[a-z_]+$")
 # 분석 필드 이름 허용 목록 — 여기에 없는 필드는 쓸 수 없다(INV-10). 늘리려면 이 목록을 고치고 리뷰를 다시 받는다
 ALLOWED_FIELDS = {"mission", "term", "context", "expression_used", "outcome", "attempt", "hint_level", "play_mode", "input", "offer_source"}
-INV10_TOKENS = {"name", "user", "userid", "player", "school", "grade", "class", "phone", "email", "address", "location", "gps",
-                "chat", "message", "text", "voice", "face", "image", "birthday", "age", "ip", "device", "discord", "kakao"}
+# 분석 이벤트 이름 허용 목록 — 여기에 없는 이벤트는 보낼 수 없다(INV-10, K5 §5·K3 §4 를 합친 것). 늘리려면 이 목록을 고치고 리뷰를 다시 받는다
+ALLOWED_EVENTS = {"onboarding_start", "character_spawned", "first_input", "gate_visible", "movement_complete", "first_interaction",
+                  "first_math_action", "first_math_success", "gate_opened", "explorer_card_earned", "zone_portal_entered", "onboarding_complete",
+                  "session_start", "math_attempt", "hint_shown", "label_shown", "term_reused", "co_play_offered", "co_play_started", "session_end"}
+FREQUENCIES = {"once_per_user", "every_session", "per_occurrence", "once_per_context_per_session"}
+SERVER_CONFIRMED = "server_confirmed_world_response"
 STRING_KEY_FIELDS = {"key", "keys", "goal_key", "line_key", "other_result_key", "situation_key", "response_key", "name_key", "npc_line_key",
                      "waiting_key", "ready_key", "object_keys", "label_choice_key", "invite_key", "retry_key", "pings", "answer_keys", "choice_keys"}
 PARAM_FIELDS = {"params", "rule"}
-NORTH_STAR_CONDITIONS = {"server_confirmed_world_response", "optional_mission_only", "label_used", "first_per_context_per_session"}
 NS_NUMERATOR, NS_DENOMINATOR = "term_reused", "session_start"  # intent §1 북극성 지표 — 이벤트를 바꾸려면 이 검사기를 고치고 리뷰를 받는다
 STOP_CHOICES = ["pacing.continue", "pacing.rest"]               # K6 R7 계속·쉬기
 # 금지어 하한 — ko-KR 용어집의 금지어 전부. INV-11(현실 출입국·국적·신분) · INV-8/K5 §7(시험 언어) · INV-14(압박) · 보상형 초대.
@@ -99,10 +102,12 @@ CV_SHAPES = {
     "cv.color_meaning": {"purple": T, "hold_interrupted": LT, "color_only": B},
 }
 RATIO = {"event": T, "aggregation": T, "window_days": I}
+NUMERATOR = dict(RATIO, filter=("map", LT), contexts=T)
 EVENTS_SHAPE = {
-    "schema_version": ONE, "transport": T, "limits": {"max_custom_events": I, "max_fields_per_event": I}, "fields": ("map", LT),
-    "onboarding_funnel": [{"step": I, "name": T, "fields": LT}], "custom_events": [{"name": T, "fields": LT, "when": T}], "platform_metrics": LT,
-    "north_star": {"id": T, "numerator": RATIO, "denominator": RATIO, "counts_only_when": LT, "per_player_storage": B, "secondary": {"id": T, "note": T}},
+    "schema_version": ONE, "transport": T, "sent_by": T, "limits": {"max_custom_events": I, "max_fields_per_event": I}, "fields": ("map", LT),
+    "onboarding_funnel": [{"step": I, "name": T, "fields": LT, "frequency": T}],
+    "custom_events": [{"name": T, "fields": LT, "frequency": T, "?trigger": T, "when": T}], "platform_metrics": LT,
+    "north_star": {"id": T, "numerator": NUMERATOR, "denominator": RATIO, "per_player_storage": B, "secondary": {"id": T, "note": T}},
     "source_mapping": {"k5_funnel": ("map", TL), "k3_allowed": ("map", TL), "other_names": ("map", TL)},
 }
 GLOSSARY_SHAPE = {"schema_version": ONE, "market_id": T, "locale": T, "world_spec": T, "strings": ("map", T),
@@ -492,10 +497,6 @@ def check_reuse(b: Bundle) -> list[str]:
 
 # ---------- Q2-C3 분석 이벤트 ----------
 
-def name_tokens(name: str) -> set[str]:
-    return set(re.sub(r"([a-z])([A-Z])", r"\1_\2", name).lower().replace(".", "_").split("_"))
-
-
 @guarded
 def check_events(b: Bundle) -> list[str]:
     errors, ev = value_shape_errors(b.events, EVENTS_SHAPE, "events"), b.events
@@ -505,17 +506,17 @@ def check_events(b: Bundle) -> list[str]:
     fields, limits = ev.get("fields", {}), ev.get("limits", {})
     if limits.get("max_fields_per_event", 99) > MAX_FIELDS_PER_EVENT or limits.get("max_custom_events", 999) > MAX_CUSTOM_EVENTS:
         errors.append("limits: 플랫폼 한도(필드 3개·이벤트 100개, F10)보다 크다")
-    if ev.get("transport") != TRANSPORT:
+    if ev.get("transport") != TRANSPORT or ev.get("sent_by") != "server":
         errors.append(f"transport: 분석은 {TRANSPORT} 로 서버에서만 보낸다 (F10)")
     errors += [f"platform_metrics: '{m}' 는 platform. 으로 시작하는 이름이어야 한다" for m in ev.get("platform_metrics", []) if not re.fullmatch(r"platform\.[a-z0-9_]+", str(m))]
     names = event_names(b)
     if len(names) != len(set(names)):
         errors.append("이벤트 이름이 중복된다")
-    if len(names) > MAX_CUSTOM_EVENTS:
-        errors.append(f"이벤트가 {len(names)}개다 (100개 이하)")
     steps = [e.get("step") for e in ev.get("onboarding_funnel", [])]
     if steps != list(range(1, len(steps) + 1)):
         errors.append("onboarding_funnel: 단계 번호가 1부터 이어지지 않는다")
+    errors += [f"onboarding_funnel/{e['name']}: 온보딩 퍼널은 사용자당 한 번만 센다 (frequency once_per_user, F11)"
+               for e in ev.get("onboarding_funnel", []) if e.get("frequency") != "once_per_user"]
     for name, values in fields.items():
         if name not in ALLOWED_FIELDS:
             errors.append(f"fields/{name}: 허용 목록에 없는 필드다 (INV-10)")
@@ -524,8 +525,10 @@ def check_events(b: Bundle) -> list[str]:
         elif not all(isinstance(v, str) and ENUM_VALUE_RE.fullmatch(v) for v in values):
             errors.append(f"fields/{name}: 열거형 토큰이 아닌 값이 있다 (자유 텍스트·숫자 금지)")
     for e in ev.get("onboarding_funnel", []) + ev.get("custom_events", []):
-        if name_tokens(e["name"]) & INV10_TOKENS:
-            errors.append(f"{e['name']}: 개인정보를 뜻하는 이름이다 (INV-10)")
+        if e["name"] not in ALLOWED_EVENTS:
+            errors.append(f"{e['name']}: 허용 목록에 없는 이벤트다 (INV-10)")
+        if e.get("frequency") not in FREQUENCIES or e.get("trigger", SERVER_CONFIRMED) != SERVER_CONFIRMED:
+            errors.append(f"{e['name']}: 보내는 빈도는 {sorted(FREQUENCIES)} 중 하나, 발생 조건은 {SERVER_CONFIRMED} 만")
         if len(e.get("fields", [])) > MAX_FIELDS_PER_EVENT:
             errors.append(f"{e['name']}: 필드가 {len(e['fields'])}개다 (3개 이하, F10)")
         errors += [f"{e['name']}: 필드 {f} 가 열거형 사전에 없다" for f in e.get("fields", []) if f not in fields]
@@ -570,9 +573,15 @@ def check_north_star(b: Bundle, by_id: dict[str, dict]) -> list[str]:
         errors.append("north_star: 분모는 매 세션 보내는 다른 사용자 정의 이벤트의 고유 사용자 수여야 한다 (온보딩 퍼널은 한 번만 센다, F11)")
     if num.get("window_days") != 7 or den.get("window_days") != 7:
         errors.append("north_star: 주간 지표다 — 분자·분모 모두 7일")
-    conditions = ns.get("counts_only_when") or []
-    if sorted(conditions) != sorted(NORTH_STAR_CONDITIONS):
-        errors.append(f"north_star: 세는 조건이 정의와 다르다 (빠짐 {sorted(NORTH_STAR_CONDITIONS - set(conditions))} · 더함 {sorted(set(conditions) - NORTH_STAR_CONDITIONS)})")
+    num_event, den_event = custom.get(num.get("event"), {}), custom.get(den.get("event"), {})
+    if num_event.get("trigger") != SERVER_CONFIRMED or num_event.get("frequency") != "once_per_context_per_session":
+        errors.append(f"north_star: 분자 이벤트는 서버가 월드 결과를 확인했을 때만({SERVER_CONFIRMED}), 맥락당 세션 1번만 보낸다")
+    if den_event.get("frequency") != "every_session":
+        errors.append("north_star: 분모 이벤트는 매 세션 보낸다 (frequency every_session)")
+    if num.get("filter") != {"expression_used": ["label"]}:
+        errors.append("north_star: 분자는 수학 이름표로 말한 재사용만 센다 (filter expression_used = [label])")
+    if num.get("contexts") != "optional_missions":
+        errors.append("north_star: 분자는 선택 미션의 맥락만 센다 (contexts optional_missions — 필수 경로는 강제 튜토리얼)")
     if "label" not in ev.get("fields", {}).get("expression_used", []):
         errors.append("north_star: expression_used 에 label 값이 없어 '용어 사용'을 셀 수 없다")
     if ns.get("per_player_storage") is not False:
@@ -764,8 +773,9 @@ def answer_tie_errors(b: Bundle, owner: str, term: str, answers: list[str], ladd
     strings = b.glossary.get("strings", {})
     words = [squash(strings.get(k, "")) for k in goals(b).get(term, {}).get("everyday_expression_keys", []) if strings.get(k)]
     errors = [f"{owner}: 목표 표현 '{a}' 이 {term} 의 일상 표현으로 되어 있지 않다" for a in answers if not any(w and w in squash(a) for w in words)]
-    return errors + [f"hint {k}: {owner} 의 목표 표현 '{a}' 을 그대로 말한다 (INV-8)" for k in ladder.get("keys", []) for a in answers
-                     if squash(a) in squash(strings.get(k, ""))]
+    # 목표 표현의 구성 요소(쉼표로 나눈 조각)를 모두 담은 힌트는 순서를 바꿔도 정답 공개다. 바꿔 말한 표현의 판단은 사람 검토
+    return errors + [f"hint {k}: {owner} 의 목표 표현 '{a}' 의 구성 요소를 모두 말한다 (INV-8)" for k in ladder.get("keys", []) for a in answers
+                     if all(squash(part) in squash(strings.get(k, "")) for part in a.split(",") if part.strip())]
 
 
 @guarded
@@ -825,6 +835,12 @@ def check_design_rules(b: Bundle) -> list[str]:
             errors.append(f"missions/{m['id']}: 필수 미션은 현재 목표 문구(goal_key)가 있어야 한다 (K5 한 번에 하나)")
         if not m.get("core") and m.get("target_end_s") is not None:
             errors.append(f"missions/{m['id']}: 선택 미션에는 목표 시각을 두지 않는다 (시간 압박 없음)")
+    if not core:
+        errors.append("missions: 필수 미션이 없다 — 입장 게이트의 필수 경로가 있어야 한다")
+    core_ids = {m["id"] for m in core}
+    errors += [f"terms/{t['term_id']}: 용어를 처음 배우는 미션 {t.get('first_mission')} 은 필수 경로에 있어야 한다" for t in g.get("terms", [])
+               if t.get("first_mission") not in core_ids]
+    errors += [f"missions/{m['id']}: 게이트 신호 미션은 필수다" for m in by_id.values() if m.get("signal") is not None and not m.get("core")]
     errors += [f"missions/{m['id']}: 필수 미션은 바로 앞 필수 미션 {core[i - 1]['id']} 하나만 기다려야 한다 (필수 경로는 한 줄)"
                for i, m in enumerate(core) if i and m.get("requires") != [core[i - 1]["id"]]]
     for c in g.get("coop", []):
@@ -857,7 +873,9 @@ def check_design_rules(b: Bundle) -> list[str]:
         if stop.get("mission") != core[-1]["id"]:
             errors.append("pacing/stop_point: 필수 경로의 마지막 미션에 정지점이 있어야 한다")
     errors += [f"missions/{m['id']}: 필수 미션이 선택 미션 {r} 를 기다린다" for m in core for r in m.get("requires", []) if not by_id.get(r, {}).get("core")]
-    scenarios, core_ids = g.get("scenarios", []), {m["id"] for m in core}
+    scenarios = g.get("scenarios", [])
+    errors += [f"scenarios/{s.get('id')}: 멈춤 변형이 아니면 필수 경로 전체를 지나야 한다" for s in scenarios
+               if s.get("variation") != "idle_hints" and not core_ids <= set(s.get("path", []))]
     for method in spec.get("input_methods", []):
         if not any(s.get("input") == method and s.get("play_mode") == "solo_npc" and core_ids <= set(s.get("path", [])) for s in scenarios):
             errors.append(f"scenarios: 입력 {method} 로 혼자 필수 경로를 끝까지 가는 시나리오가 없다 (INV-9)")

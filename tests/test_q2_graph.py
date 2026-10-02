@@ -240,7 +240,6 @@ class EventsTest(CheckCase):
     cases = (
         ("limits: 플랫폼 한도", lambda b: setv(b.events["limits"], "max_fields_per_event", 5)),
         ("이벤트 이름이 중복된다", lambda b: dup_first(b.events["custom_events"])),
-        ("(100개 이하)", lambda b: b.events["custom_events"].extend({"name": f"extra_{i}", "fields": [], "when": "w"} for i in range(100))),
         ("단계 번호가 1부터", lambda b: setv(b.events["onboarding_funnel"][1], "step", 5)),
         ("중복 없는 열거형", lambda b: setv(b.events["fields"], "outcome", ["target_reached", "target_reached"])),
         ("필드 ghost 가 열거형 사전에 없다", lambda b: setv(b.events["custom_events"][1], "fields", ["mission", "ghost"])),
@@ -252,8 +251,14 @@ class EventsTest(CheckCase):
                                          setv(next(e for e in b.events["custom_events"] if e["name"] == "label_shown"), "fields", ["term", "context", "expression_used"]))),
         ("분모는 session_start", lambda b: setv(b.events["north_star"]["denominator"], "event", "hint_shown")),
         ("분모는 매 세션 보내는", lambda b: setv(b.events["north_star"]["denominator"], "aggregation", "count")),
-        ("더함 ['any_reason']", lambda b: b.events["north_star"]["counts_only_when"].append("any_reason")),
-        ("events.north_star.numerator: 모르는 항목", lambda b: setv(b.events["north_star"]["numerator"], "filter", "label_only")),
+        ("분자 이벤트는 서버가", lambda b: next(e for e in b.events["custom_events"] if e["name"] == "term_reused").pop("trigger")),
+        ("분자 이벤트는 서버가", lambda b: setv(next(e for e in b.events["custom_events"] if e["name"] == "term_reused"), "frequency", "per_occurrence")),
+        ("분모 이벤트는 매 세션", lambda b: setv(next(e for e in b.events["custom_events"] if e["name"] == "session_start"), "frequency", "once_per_user")),
+        ("온보딩 퍼널은 사용자당 한 번만", lambda b: setv(b.events["onboarding_funnel"][0], "frequency", "every_session")),
+        ("보내는 빈도는", lambda b: setv(b.events["custom_events"][1], "trigger", "client_reported")),
+        ("transport:", lambda b: setv(b.events, "sent_by", "client")),
+        ("student_fullname_logged: 허용 목록에 없는 이벤트", lambda b: b.events["custom_events"].append({"name": "student_fullname_logged", "fields": [], "frequency": "per_occurrence", "when": "w"})),
+        ("events.north_star.numerator: 모르는 항목", lambda b: setv(b.events["north_star"]["numerator"], "sample_rate", 0.5)),
         ("events: 모르는 항목", lambda b: setv(b.events, "extra_events", [])),
         ("events.custom_events[0]: 모르는 항목", lambda b: setv(b.events["custom_events"][0], "sample_rate", 1)),
         ("events.source_mapping.k5_funnel.session_start", lambda b: setv(b.events["source_mapping"]["k5_funnel"], "session_start", {"x": 1})),
@@ -274,9 +279,10 @@ class EventsTest(CheckCase):
             self.assertCaught(b, f"fields/{name}")
 
     def test_pii_event_name(self):
-        b = bundle()
-        b.events["custom_events"][0]["name"] = "userName_logged"
-        self.assertCaught(b, "개인정보")
+        for name in ("userName_logged", "child_nickname", "student_fullname_logged"):
+            b = bundle()
+            b.events["custom_events"][0]["name"] = name
+            self.assertCaught(b, f"{name}: 허용 목록에 없는 이벤트")
 
     def test_numeric_value(self):
         b = bundle()
@@ -301,8 +307,8 @@ class EventsTest(CheckCase):
 
     def test_label_used_condition(self):
         b = bundle()
-        b.events["north_star"]["counts_only_when"].remove("label_used")
-        self.assertCaught(b, "label_used")
+        b.events["north_star"]["numerator"]["filter"] = {"expression_used": ["label", "everyday"]}
+        self.assertCaught(b, "filter expression_used = [label]")
 
     def test_renamed_k5_event_needs_canonical_value(self):
         b = bundle()
@@ -331,8 +337,8 @@ class EventsTest(CheckCase):
 
     def test_north_star_must_exclude_forced_tutorial(self):
         b = bundle()
-        b.events["north_star"]["counts_only_when"].remove("optional_mission_only")
-        self.assertCaught(b, "optional_mission_only")
+        b.events["north_star"]["numerator"]["contexts"] = "all_contexts"
+        self.assertCaught(b, "contexts optional_missions")
 
     def test_enum_must_match_graph_ids(self):
         b = bundle()
@@ -586,7 +592,12 @@ class DesignRulesTest(CheckCase):
         ("ctx.slope.booster_ramp: 힌트 문구 수가", lambda b: b.graph["hint_ladders"][3]["keys"].pop()),
         ("ctx.slope.partner_bridge: 목표 표현(answer_keys)이 없어", lambda b: setv(b.graph["reuse_contexts"][5], "answer_keys", [])),
         ("ctx.slope.metro_preview 의 목표 표현", lambda b: setv(b.glossary["strings"], "hint.reuse.slope.l2", "레일을 더 올라가게 바꿔 봐.")),
-        ("목표 표현 '오른쪽 2, 위 1' 을 그대로", lambda b: setv(b.glossary["strings"], "hint.coordinate.l2", "오른쪽 2,   위 1 일까?")),
+        ("목표 표현 '오른쪽 2, 위 1' 의 구성 요소", lambda b: setv(b.glossary["strings"], "hint.coordinate.l2", "오른쪽 2,   위 1 일까?")),
+        ("목표 표현 '오른쪽 2, 위 1' 의 구성 요소", lambda b: setv(b.glossary["strings"], "hint.coordinate.l2", "위 1, 오른쪽 2로 보내면 돼.")),
+        ("필수 미션이 없다", lambda b: [m.update(core=False, target_end_s=None) for m in b.graph["missions"]]),
+        ("필수 경로에 있어야 한다", lambda b: setv(mission(b, "m.signal_slope"), "core", False)),
+        ("게이트 신호 미션은 필수다", lambda b: mission(b, "m.signal_wake").update(core=False, target_end_s=None)),
+        ("멈춤 변형이 아니면 필수 경로 전체", lambda b: setv(b.graph["scenarios"][0], "path", ["m.signal_wake", "m.signal_coordinate"])),
         ("이 term.coordinate 의 일상 표현으로", lambda b: setv(b.glossary["strings"], "answer.coordinate.portal_map", "지도 입구")),
         ("이름표 대사가 목표 표현", lambda b: setv(b.glossary["strings"], "label.coordinate.line", "방금 쓴 말을 수학에서는 좌표라고 불러.")),
         ("계속·쉬기", lambda b: setv(b.graph["pacing"]["stop_point"], "choice_keys", ["pacing.continue", "pacing.continue"])),

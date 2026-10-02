@@ -1,7 +1,7 @@
-major | tools/validate_graph.py:53-70,256-287,292-298 | Q2-C1의 닫힌 형식이 실제로 닫히지 않았다. `S`가 문자열뿐 아니라 수·불리언·null을 허용하고 `graph.id`는 의미 검사를 하지 않는다. `graph.id=False` 또는 `"garbage"` 변이는 전체 검사에서 통과하며, 잘못된 수치형은 검사기를 충돌시킨다. | 문자열·nullable 문자열 등 타입을 분리하고 모든 필드 타입을 검사하며 해당 변이 테스트를 추가한다.
+major | tools/validate_graph.py:32-33,526-529 | 복합 개인정보 이벤트명(`student_fullname_logged`, `child_nickname`)이 금지 토큰 분할 방식 때문에 통과한다(INV-10). | 해당 이벤트를 추가한 메모리 변이가 Q2-C3 및 전체 검사에서 통과함. | 개인정보 의미를 포괄하는 금지 패턴/명시적 안전 이벤트명 목록을 추가하고 변이 테스트한다.
 
-major | tools/validate_graph.py:520-562 | Q2-C4가 근거 필드의 형식을 검사하지 않는다. `cv.gate_name.rationale=2` 및 `measure_at=1` 변이가 통과한다. 숫자를 근거로 인정해 “근거” 합격 기준을 우회할 수 있다. | 정본 항목 전체 스키마를 검사해 rationale·refs·measure_at·q1_paths를 올바른 문자열/목록/사전으로 제한한다.
+major | tools/validate_graph.py:559-583; specs/analytics/events.yaml:40-44 | 북극성 지표의 “매 세션”, “서버 확인 월드 결과”, `expression_used=label`, 세션당 1회 조건이 자유 문구·조건 토큰에만 있어 실제 이벤트 의미와 연결되지 않는다. | `session_start.when`을 사용자당 1회로, `term_reused.when`을 클라이언트 이벤트로 바꿔도 전체 검사가 통과함. | 이벤트 조건을 구조화된 필드로 만들고 서버 판정·label 필터·세션당 dedupe를 기계적으로 검사한다.
 
-major | tools/validate_graph.py:41-43,617-630; specs/localization/terms/ko-KR.yaml:127-158 | Q2-C5 금지어 하한이 불완전하다. `nationality`가 목록에 없어 해당 단어를 문구에 넣어도 통과하며, `친구를 초대해 보상을 받아!`도 `초대하면`의 정확한 형태가 아니어서 통과한다. | 한·영 국적/신분 금지어와 보상형 초대의 형태·조합 패턴을 명시하고 변이 테스트를 추가한다.
+major | tools/validate_graph.py:762-768; tests/test_q2_graph.py:620-623 | 힌트가 목표 표현의 단어·순서를 바꾸어 사실상 정답을 말해도 exact substring 검사라 통과한다. | `hint.coordinate.l2`를 `위 1, 오른쪽 2로 보내면 돼.`로 바꾸면 Q2-C7 전체 검사가 통과함. | 목표 표현의 구성 요소·동의 표현을 구조화해 힌트 금지 검사를 추가하고 순서 변경 변이를 테스트한다.
 
-major | tools/validate_graph.py:674-687; tests/test_q2_graph.py:571-585 | Q2-C7이 협동 보상의 수령 대상을 검사하지 않는다. `reward.coop_trail.basis=role_contribution`인 상태에서 `granted_to=all_finishers`로 바꿔도 통과해 INV-4의 역할별 기여 기준을 우회한다. | `role_contribution`이면 `granted_to=contributing_players`를 강제하고 변이 테스트를 추가한다.
+major | tools/validate_graph.py:820-863; tests/test_q2_graph.py:565-705 | 모든 미션을 선택 미션으로 바꾸고 `target_end_s`를 null로 만들면 필수 경로가 사라지는데 Q2-C7이 통과한다. | 모든 mission의 `core=false`, `target_end_s=null` 변이에서 Q2-C1~C7이 모두 빈 오류 목록을 반환함. | `core` 필수 미션이 최소 하나이고 용어 도입·시나리오가 그 경로에 포함되는지 강제하는 검사와 변이 테스트를 추가한다.

@@ -7,6 +7,7 @@
 #       사용자 정의 이벤트는 게임당 100개까지. 플레이어별 기록을 따로 저장하지 않는다 — 집계는 Roblox 대시보드가 한다(DEC-12).
 schema_version: 1
 transport: roblox_analytics_service
+sent_by: server                         # 모든 이벤트는 서버가 판정한 뒤 서버에서 보낸다 (F10 · INV-4)
 limits: {max_custom_events: 100, max_fields_per_event: 3}
 
 fields:
@@ -23,28 +24,28 @@ fields:
 
 # 첫 5분 퍼널 — 순서대로 한 줄 (협동처럼 갈라지는 단계는 퍼널에 넣지 않고 아래 이벤트로 둔다)
 onboarding_funnel:
-  - {step: 1, name: onboarding_start, fields: [input]}
-  - {step: 2, name: character_spawned, fields: []}
-  - {step: 3, name: first_input, fields: []}
-  - {step: 4, name: gate_visible, fields: []}
-  - {step: 5, name: movement_complete, fields: []}
-  - {step: 6, name: first_interaction, fields: []}
-  - {step: 7, name: first_math_action, fields: []}
-  - {step: 8, name: first_math_success, fields: [attempt]}
-  - {step: 9, name: gate_opened, fields: [play_mode]}
-  - {step: 10, name: explorer_card_earned, fields: []}
-  - {step: 11, name: zone_portal_entered, fields: []}
-  - {step: 12, name: onboarding_complete, fields: [play_mode]}
+  - {step: 1, name: onboarding_start, fields: [input], frequency: once_per_user}
+  - {step: 2, name: character_spawned, fields: [], frequency: once_per_user}
+  - {step: 3, name: first_input, fields: [], frequency: once_per_user}
+  - {step: 4, name: gate_visible, fields: [], frequency: once_per_user}
+  - {step: 5, name: movement_complete, fields: [], frequency: once_per_user}
+  - {step: 6, name: first_interaction, fields: [], frequency: once_per_user}
+  - {step: 7, name: first_math_action, fields: [], frequency: once_per_user}
+  - {step: 8, name: first_math_success, fields: [attempt], frequency: once_per_user}
+  - {step: 9, name: gate_opened, fields: [play_mode], frequency: once_per_user}
+  - {step: 10, name: explorer_card_earned, fields: [], frequency: once_per_user}
+  - {step: 11, name: zone_portal_entered, fields: [], frequency: once_per_user}
+  - {step: 12, name: onboarding_complete, fields: [play_mode], frequency: once_per_user}
 
 custom_events:
-  - {name: session_start, fields: [input], when: 매 세션 입장 — 북극성 지표의 분모(주간 고유 사용자)}
-  - {name: math_attempt, fields: [mission, outcome, attempt], when: 수학 행동 하나가 월드 결과를 냈을 때(서버 판정)}
-  - {name: hint_shown, fields: [mission, hint_level], when: 힌트 단계가 올라갔을 때}
-  - {name: label_shown, fields: [term], when: 수학 이름표가 처음 보였을 때}
-  - {name: term_reused, fields: [term, context, expression_used], when: 재사용 맥락에서 행동이 월드 결과로 이어졌을 때 — 북극성 지표의 분자(조건은 north_star)}
-  - {name: co_play_offered, fields: [offer_source], when: 빈 프리즘을 비추거나 친구 초대 버튼이 보였을 때}
-  - {name: co_play_started, fields: [play_mode], when: 다른 플레이어와 같은 협동 오브젝트를 처음 함께 썼을 때}
-  - {name: session_end, fields: [mission], when: 플레이어가 나갈 때 마지막으로 진행 중이던 미션}
+  - {name: session_start, fields: [input], frequency: every_session, when: 매 세션 입장 — 북극성 지표의 분모(주간 고유 사용자)}
+  - {name: math_attempt, fields: [mission, outcome, attempt], frequency: per_occurrence, trigger: server_confirmed_world_response, when: 수학 행동 하나가 월드 결과를 냈을 때}
+  - {name: hint_shown, fields: [mission, hint_level], frequency: per_occurrence, when: 힌트 단계가 올라갔을 때}
+  - {name: label_shown, fields: [term], frequency: per_occurrence, when: 수학 이름표가 처음 보였을 때}
+  - {name: term_reused, fields: [term, context, expression_used], frequency: once_per_context_per_session, trigger: server_confirmed_world_response, when: 재사용 맥락에서 행동이 월드 결과로 이어졌을 때 — 북극성 지표의 분자}
+  - {name: co_play_offered, fields: [offer_source], frequency: per_occurrence, when: 빈 프리즘을 비추거나 친구와 함께 가기 버튼이 보였을 때}
+  - {name: co_play_started, fields: [play_mode], frequency: per_occurrence, when: 다른 플레이어와 같은 협동 오브젝트를 처음 함께 썼을 때}
+  - {name: session_end, fields: [mission], frequency: every_session, when: 플레이어가 나갈 때 마지막으로 진행 중이던 미션}
 
 # 플랫폼이 이미 재는 값 — 따로 이벤트를 보내지 않는다
 platform_metrics: [platform.d1_retention, platform.d7_retention, platform.session_length]
@@ -52,13 +53,14 @@ platform_metrics: [platform.d1_retention, platform.d7_retention, platform.sessio
 # 북극성 지표 — 활성 플레이어당 주간 의미 있는 도시 언어 재사용 (intent §1)
 north_star:
   id: ns.weekly_meaningful_reuse
-  numerator: {event: term_reused, aggregation: count, window_days: 7}
-  denominator: {event: session_start, aggregation: count_unique_users, window_days: 7}
-  counts_only_when:
-    - server_confirmed_world_response   # 행동이 월드 결과로 이어졌다고 서버가 판정한 것만
-    - optional_mission_only             # 필수 게이트 경로(강제 튜토리얼) 안의 재사용은 세지 않는다 — 선택 미션의 맥락만
-    - label_used                        # '용어 사용'만 센다 (expression_used = label). 일상어 재사용은 보조 지표
-    - first_per_context_per_session     # 같은 맥락 반복 클릭은 세션당 1번만
+  # 분자 이벤트(term_reused)는 서버가 월드 결과를 확인했을 때만(trigger), 맥락당 세션 1번만(frequency) 보낸다
+  numerator:
+    event: term_reused
+    aggregation: count
+    window_days: 7
+    filter: {expression_used: [label]}  # '용어 사용'만 센다. 일상어 재사용은 보조 지표
+    contexts: optional_missions         # 필수 게이트 경로(강제 튜토리얼) 안의 재사용은 세지 않는다
+  denominator: {event: session_start, aggregation: count_unique_users, window_days: 7}   # 매 세션 이벤트(frequency: every_session)
   per_player_storage: false             # 집계만 쓴다 (DEC-12 결정 전)
   secondary: {id: ns.weekly_everyday_reuse, note: 같은 조건에서 expression_used = everyday — 용어를 몰라도 진행하는지(INV-15) 본다}
 
