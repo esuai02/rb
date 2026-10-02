@@ -160,10 +160,10 @@ def needs_states_text(claim: dict) -> bool:
         return True   # 위에 있다·없다는 말로 표현되므로 수만으로 묶을 수 없다
     if kind == "coordinate":
         try:
-            values = list(_point(claim.get("states" if kind == "coordinate" else "point")))
-            if kind == "line_point":
-                line = claim.get("line") or {}
-                values += [_num(line.get("m")), _num(line.get("b"))]
+            moves = [_num(m.get("n")) for m in (claim.get("moves") or []) if isinstance(m, dict)]
+            if any(v.denominator != 1 for v in moves):
+                return True
+            values = list(_point(claim.get("states")))
             return any(v.denominator != 1 for v in values)
         except ClaimError:
             return False

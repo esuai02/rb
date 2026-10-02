@@ -86,17 +86,28 @@ def _function_spans(tokens) -> list[tuple[int, int]]:
 def reward_authority(tree, rules, config) -> list[str]:
     """보상·저장 권한(leaderstats·DataStore·보상 속성)은 보상 모듈 파일 안에서만 쓴다 — 클라이언트도, 다른 서버 코드도 쓰지 않는다 (INV-4)."""
     names, module, out = set(config["authority_names"]), config["reward_module"], []
+    path, trusted = config["reward_module_path"], _trusted_reward_file(tree, config)
+    if trusted is None:
+        out.append(f"보상 모듈은 {path} 의 ModuleScript 하나여야 한다 — 그 파일만 보상·저장 권한을 쓸 수 있다")
     for f in tree.luau:
-        if f.name == module and f.client_visible:
-            out.append(f"{f.rel}:1 보상 모듈 {module} 이 클라이언트가 볼 수 있는 곳({f.container})에 있다")
-        if f.name == module:
+        if f is trusted:
             continue
+        if f.name == module:
+            reason = f"클라이언트가 볼 수 있는 곳({f.container})에 있다" if f.client_visible else f"정해진 자리({path})의 ModuleScript 가 아니다"
+            out.append(f"{f.rel}:1 보상 모듈과 같은 이름인데 {reason} — 권한을 믿을 수 없다")
         where = "클라이언트 코드" if f.client_visible else "보상 모듈 밖 서버 코드"
         out += [f"{_at(f, t)} {where}가 보상·저장 권한 {t.text} 를 쓴다 — 보상은 {module} 만 정한다" for t in f.tokens
                 if t.text in names and t.kind in (NAME, STRING)]
         out += [f"{_at(f, f.tokens[i])} {where}가 {name} 의 멤버를 값을 알 수 없는 방식으로 고른다 — 보상·저장 권한인지 검사할 수 없다"
                 for i, name in resolve.dynamic_member_calls(f, _player_like(f, config))]
     return out
+
+
+def _trusted_reward_file(tree, config):
+    """보상·저장 권한을 쓸 수 있는 단 하나의 파일 — 정해진 경로의 서버 전용 ModuleScript."""
+    path, module = config["reward_module_path"], config["reward_module"]
+    found = [f for f in tree.luau if f.rel == path and f.kind == "ModuleScript" and f.server_only and f.name == module]
+    return found[0] if len(found) == 1 else None
 
 
 def _player_like(f, config) -> set[str]:
@@ -108,9 +119,10 @@ def _player_like(f, config) -> set[str]:
 def duplicate_reward(tree, rules, config) -> list[str]:
     """보상 모듈의 grant 는 맨 앞에서 claimOnce 로 한 번만 지급을 보장하고, 같은 보상 id 를 주는 호출 자리는 하나뿐이다."""
     module, out, sites = config["reward_module"], [], {}
-    owners = [f for f in tree.luau if f.name == module]
-    if not owners:
-        out.append(f"보상 모듈 {module} 이 없다")
+    trusted = _trusted_reward_file(tree, config)
+    owners = [trusted] if trusted is not None else []
+    if trusted is None:
+        out.append(f"보상 모듈 {module} 이 없다 (정해진 자리 {config['reward_module_path']} 의 ModuleScript 하나여야 한다)")
     for f in owners:
         grants = [(p, body, i) for p, body, i in luau.function_bodies(f.tokens) if _names_grant(f.tokens, i)]
         if not grants:
@@ -148,9 +160,13 @@ def _handlers(f) -> list[tuple[list[str], list, int, str]]:
     """
     toks, bodies, out = f.tokens, luau.function_bodies(f.tokens), []
     for i, tok in enumerate(toks):
-        if tok.kind == NAME and tok.text in ("Connect", "Once", "ConnectParallel") and i and toks[i - 1].text == ":" \
-                and i >= 3 and toks[i - 2].text == "]":
+        if not (tok.kind == NAME and tok.text in ("Connect", "Once", "ConnectParallel") and i and toks[i - 1].text == ":"):
+            continue
+        before = toks[i - 2] if i >= 2 else None
+        if before is not None and before.text == "]":
             out.append(("?", [], [], i, "값을 알 수 없는 멤버에 처리 함수를 이었다 — 어떤 원격인지 검사할 수 없다"))
+        elif before is not None and before.kind == NAME and (i < 4 or toks[i - 3].text != "."):
+            out.append(("?", [], [], i, f"연결 대상 {before.text} 가 멤버 경로가 아니다 — 어떤 신호에 이은 것인지 검사할 수 없다"))
     for i, t in enumerate(toks):
         if t.kind != NAME or t.text not in ("OnServerEvent", "OnServerInvoke"):
             continue

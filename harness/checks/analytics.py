@@ -138,6 +138,8 @@ def _check_module(f, config) -> list[str]:
                 out.append(f"{f.rel}:{f.tokens[i].line} 분석 모듈이 {api} 의 이벤트 이름 자리에 '{shown}' 을 넣는다 — 글자 그대로이거나 받은 값이어야 한다")
             if literals:
                 out.append(f"{f.rel}:{f.tokens[i].line} 분석 모듈이 {api} 에 정해진 값 {literals} 를 넣는다 — 이벤트 이름·필드는 받은 값이어야 한다")
+    out += [f"{f.rel}:1 분석 모듈이 플랫폼 전송 함수 {api} 를 다른 이름({alias})에 담는다 — 모듈 안에서는 직접 불러야 검사할 수 있다"
+            for api in config["platform_apis"] for alias in resolve.names_for(f.resolved, ("AnalyticsService", api)) if alias != "AnalyticsService"]
     out += [f"{f.rel}:{t.line} 분석 모듈이 플레이어 개인정보 속성 {t.text} 를 쓴다 (INV-10)" for k, t in enumerate(f.tokens)
             if t.kind == NAME and t.text in config["player_identity_names"] and k >= 2 and f.tokens[k - 1].text == "."
             and f.tokens[k - 2].kind == NAME and f.tokens[k - 2].text in _player_names(f, config)]

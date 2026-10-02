@@ -124,7 +124,8 @@
     "platform_event_arg": {
       "LogCustomEvent": 1,
       "LogOnboardingFunnelStepEvent": 2
-    }
+    },
+    "reward_module_path": "src/server/RewardService.luau"
   },
   "checks": [
     {
@@ -2248,6 +2249,7 @@
       "id": "D-dynamic-authority-member",
       "class": "동적 멤버로 쓴 보상 권한",
       "expected": [
+        "safety.external_call",
         "server.reward_authority"
       ],
       "edits": [
@@ -2256,7 +2258,8 @@
           "find": "sendCell(2, 1)\n",
           "replace": "sendCell(2, 1)\nlocal player = game:GetService(\"Players\").LocalPlayer\nplayer[pickField()].Value += 1\n"
         }
-      ]
+      ],
+      "note": "서비스 멤버를 값을 알 수 없는 방식으로 고르면 보상 권한인지도, 외부 호출인지도 알 수 없다 — 두 검사가 모두 맞다"
     },
     {
       "id": "D-term-line-without-claim",
@@ -2467,6 +2470,75 @@
           "file": "src/server/Analytics.luau",
           "find": "\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
           "replace": "\tAnalyticsService:LogCustomEvent(player, eventName .. \"_bad\", 1, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-coordinate-fractional-move",
+      "class": "대사에 없는 분수 이동량",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    moves: [{dir: right, n: 2}, {dir: up, n: 1}]\n    states: [2, 1]\n",
+          "replace": "    moves: [{dir: right, n: 1/2}, {dir: left, n: 1/2}]\n    states: [0, 0]\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-platform-alias-inside",
+      "class": "분석 모듈 안의 플랫폼 전송 별칭",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\tAnalyticsService:LogOnboardingFunnelStepEvent(player, FUNNEL_STEPS[stepName], stepName, pack(fields))",
+          "replace": "\tlocal send = AnalyticsService.LogOnboardingFunnelStepEvent\n\tsend(AnalyticsService, player, FUNNEL_STEPS[stepName], stepName, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-remote-receiver-unresolved",
+      "class": "값을 알 수 없는 변수에 건 원격 처리",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
+          "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\nlocal evt = SignalRemote:WaitForChild(\"Extra\")\nevt:Connect(onSignal)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-reward-module-impostor",
+      "class": "이름만 보상 모듈인 Script",
+      "expected": [
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.server.luau",
+          "create": "--!strict\n-- 이름만 보상 모듈인 Script — 권한을 쓰면서 검사를 비켜 간다\nlocal BadgeService = game:GetService(\"BadgeService\")\n\nlocal function give(player: Player)\n\tBadgeService:AwardBadge(player.UserId, 1)\nend\n\ngive(nil)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-dynamic-service-call",
+      "class": "값을 알 수 없는 서비스·메서드 호출",
+      "expected": [
+        "safety.external_call"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\n",
+          "replace": "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\nlocal svc = game:GetService(script.Name)\nsvc[script.ClassName]({})\n"
         }
       ]
     }

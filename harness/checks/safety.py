@@ -79,10 +79,30 @@ def _start_of(tokens, i: int) -> int:
 
 
 def external_call(tree, rules, config) -> list[str]:
-    """런타임 외부 호출·생성형 AI 없음 — HttpService·TextGenerator 계열을 쓰지 않는다 (INV-16 · F15)."""
-    names = set(config["external_call_names"])
-    return [f"{f.rel}:{t.line} 런타임 외부 호출·생성형 AI {t.text} 를 쓴다" for f in tree.luau for t in f.tokens
-            if t.kind in (NAME, STRING) and t.text in names]
+    """런타임 외부 호출·생성형 AI 없음 (INV-16 · F15). 어떤 서비스를 가져오는지 알 수 없으면 거부한다."""
+    names, out = set(config["external_call_names"]), []
+    for f in tree.luau:
+        out += [f"{f.rel}:{t.line} 런타임 외부 호출·생성형 AI {t.text} 를 쓴다" for t in f.tokens
+                if t.kind in (NAME, STRING) and t.text in names]
+        for i in [k for k, t in enumerate(f.tokens) if t.kind == NAME and t.text == "GetService"
+                  and k + 1 < len(f.tokens) and f.tokens[k + 1].text == "("]:
+            args = luau.call_args(f.tokens, i)
+            value, _ = resolve.expression_value(args[0], 0, f.resolved) if args else (resolve.UNRESOLVED, False)
+            if not isinstance(value, str):
+                out.append(f"{f.rel}:{f.tokens[i].line} 어떤 서비스를 가져오는지 알 수 없다 — GetService 인자는 글자 그대로여야 한다")
+        out += [f"{f.rel}:{f.tokens[i].line} 서비스 {name} 의 멤버를 값을 알 수 없는 방식으로 부른다 — 외부 호출인지 검사할 수 없다"
+                for i, name in resolve.dynamic_member_calls(f, _service_names(f))]
+    return out
+
+
+def _service_names(f) -> set[str]:
+    """GetService 의 결과를 담은 이름 — 그 이름의 멤버를 동적으로 부르면 어떤 외부 호출인지 알 수 없다."""
+    toks, out = f.tokens, set()
+    for i in range(len(toks) - 4):
+        if toks[i].kind == NAME and toks[i].text == "local" and toks[i + 1].kind == NAME and toks[i + 2].text == "=" \
+                and any(t.kind == NAME and t.text == "GetService" and t.line == toks[i].line for t in toks[i + 3:i + 8]):
+            out.add(toks[i + 1].text)
+    return out
 
 
 def free_text(tree, rules, config) -> list[str]:
