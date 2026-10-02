@@ -1,0 +1,30 @@
+criterion: Q1-C2 — 도시 언어 게이트 원본 명세가 검사를 통과하고, 성숙도 설문 예상 답이 16세 이상 항목(소셜 행아웃·자유 창작·민감 이슈·확장 AI 상호작용·유료 랜덤·유료 거래)에 모두 '아니오'다 (INV-16) — 금지어 용어집 파일의 존재와 내용은 Q2-C5 에서 검사한다(Q1 은 시장과 맞는 경로만)
+command: python3 -m unittest tests.test_validate_spec.OriginalWorldTest -v
+exit: 0
+binding: 9c3b4caa40a3b4f08cdb56787e18229067c34b5910755b7c01573aeaf81da88f
+time: 2026-10-01T14:32:10.951003+00:00
+
+test_any_age_gating_answer_fails (tests.test_validate_spec.OriginalWorldTest.test_any_age_gating_answer_fails) ... ok
+test_banned_terms_ref_must_be_this_market (tests.test_validate_spec.OriginalWorldTest.test_banned_terms_ref_must_be_this_market)
+Codex 리뷰 R-Q1 minor: 용어집 참조가 아무 경로나 통과했다. ... ok
+test_cli_fails_on_broken_spec (tests.test_validate_spec.OriginalWorldTest.test_cli_fails_on_broken_spec) ... ok
+test_cli_passes_on_original_world (tests.test_validate_spec.OriginalWorldTest.test_cli_passes_on_original_world) ... ok
+test_dec9_audience_and_maturity_are_fixed (tests.test_validate_spec.OriginalWorldTest.test_dec9_audience_and_maturity_are_fixed)
+Codex 리뷰 R-Q1 major: DEC-9(9~14세·Minimal)가 고정되지 않았다. ... ok
+test_do_not_translate_not_literal_and_not_overbroad (tests.test_validate_spec.OriginalWorldTest.test_do_not_translate_not_literal_and_not_overbroad)
+Codex 리뷰 R-Q1 5차 minor 2건: 표본 리터럴 패턴 우회, 'x = today' 과검출. ... ok
+test_do_not_translate_patterns_are_regex (tests.test_validate_spec.OriginalWorldTest.test_do_not_translate_patterns_are_regex)
+Codex 리뷰 R-Q1 minor: 잘못된 정규식이 통과했다. ... ok
+test_do_not_translate_semantics (tests.test_validate_spec.OriginalWorldTest.test_do_not_translate_semantics)
+Codex 리뷰 R-Q1 4차 minor: '.' 패턴·빈 id 가 통과했다. ... ok
+test_enumerated_literals_cannot_pass (tests.test_validate_spec.OriginalWorldTest.test_enumerated_literals_cannot_pass)
+Codex 리뷰 R-Q1 6차 minor: 고정 표본 전체를 리터럴 나열해도 통과했다. ... ok
+test_generated_samples_are_matched_by_original_patterns (tests.test_validate_spec.OriginalWorldTest.test_generated_samples_are_matched_by_original_patterns) ... ok
+test_grade_band_matches_ages (tests.test_validate_spec.OriginalWorldTest.test_grade_band_matches_ages) ... ok
+test_questionnaire_all_false (tests.test_validate_spec.OriginalWorldTest.test_questionnaire_all_false) ... ok
+test_safety_flags_cannot_be_enabled (tests.test_validate_spec.OriginalWorldTest.test_safety_flags_cannot_be_enabled) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.255s
+
+OK

@@ -1,0 +1,16 @@
+criterion: Q1-C1 — 명세 형식이 필수 항목을 모두 요구한다
+command: python3 -m unittest tests.test_validate_spec.BaselineTest tests.test_validate_spec.RequiredFieldsTest -v
+exit: 0
+binding: 9c3b4caa40a3b4f08cdb56787e18229067c34b5910755b7c01573aeaf81da88f
+time: 2026-10-01T14:32:10.561155+00:00
+
+test_original_spec_is_valid (tests.test_validate_spec.BaselineTest.test_original_spec_is_valid) ... ok
+test_each_required_field_is_enforced (tests.test_validate_spec.RequiredFieldsTest.test_each_required_field_is_enforced) ... ok
+test_schema_matches_declared_expectations (tests.test_validate_spec.RequiredFieldsTest.test_schema_matches_declared_expectations) ... ok
+test_unknown_fields_are_rejected (tests.test_validate_spec.RequiredFieldsTest.test_unknown_fields_are_rejected) ... ok
+test_world_role_input_methods_and_session_limits (tests.test_validate_spec.RequiredFieldsTest.test_world_role_input_methods_and_session_limits) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.039s
+
+OK

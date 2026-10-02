@@ -1,0 +1,21 @@
+criterion: Q1-C3 — 언어·시장·교육과정 키가 나뉜다: locale 은 BCP-47, market 은 지역 포함, 엔진은 시장 중립 grade_band 만 쓴다 (INV-3)
+command: python3 -m unittest tests.test_validate_spec.KeySeparationTest -v
+exit: 0
+binding: 9c3b4caa40a3b4f08cdb56787e18229067c34b5910755b7c01573aeaf81da88f
+time: 2026-10-01T14:32:11.100179+00:00
+
+test_curriculum_must_match_market (tests.test_validate_spec.KeySeparationTest.test_curriculum_must_match_market)
+Codex 리뷰 R-Q1 major: market en-US + curriculum ko-KR 가 통과했다. ... ok
+test_engine_grade_band_is_market_neutral (tests.test_validate_spec.KeySeparationTest.test_engine_grade_band_is_market_neutral) ... ok
+test_locale_is_language_only (tests.test_validate_spec.KeySeparationTest.test_locale_is_language_only) ... ok
+test_locale_subset_boundaries (tests.test_validate_spec.KeySeparationTest.test_locale_subset_boundaries)
+Codex 리뷰 R-Q1 4차 minor: 언어 전용 BCP-47 부분집합의 경계. ... ok
+test_market_coded_grade_band_rejected (tests.test_validate_spec.KeySeparationTest.test_market_coded_grade_band_rejected)
+Codex 리뷰 R-Q1 major: gb_ko_kr_middle_2 가 통과했다. ... ok
+test_market_needs_region_and_curriculum_is_market_scoped (tests.test_validate_spec.KeySeparationTest.test_market_needs_region_and_curriculum_is_market_scoped) ... ok
+test_source_locale_must_be_planned (tests.test_validate_spec.KeySeparationTest.test_source_locale_must_be_planned) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.016s
+
+OK

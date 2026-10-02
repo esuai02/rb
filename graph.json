@@ -2,30 +2,31 @@
   "schema_version": 1,
   "kind": "execution_graph",
   "run_id": "rb-mission",
-  "revision": 1,
+  "revision": 6,
   "locale": "ko",
   "intent_file": "intent.md",
   "intent_sha256": "615140fbb8634268268ad0def1e932bbc4fcded7c0241f46316ee85ceeed3616",
   "mission": "Neo Seoul 의 도시 언어 게이트에서 시작하는, 수학을 잘하지 않아도 수학적 언어로 친구와 도시를 움직이는 글로벌 소셜 어드벤처 (DEC-10 B안·DEC-1)",
-  "focus": "Q1",
+  "focus": "Q2",
   "nodes": [
     {
       "id": "Q1",
       "label": "의도 명세 고정",
       "outcome": "월드 하나의 의도(월드 역할·대상 연령·성숙도 설문 예상 답·시장 결정 방식·번역 금지 구간 포함)가 기계가 읽는 명세로 고정되고 원본 월드 1개가 채워진다.",
       "depends_on": [],
-      "review_question": "Q1 명세 형식에 꼭 들어가야 할 항목이 더 있습니까? (시작 전 DEC-13: 위키 재구성 채택 여부)",
+      "review_question": "Q1 명세 형식에 꼭 들어가야 할 항목이 더 있습니까?",
       "artifacts": [
         "specs/templates/world-intent.schema.json",
         "specs/worlds/neo-seoul-city-language-gate.yaml",
-        "tools/validate_spec.py"
+        "tools/validate_spec.py",
+        "tests/test_validate_spec.py"
       ],
       "maker": "claude-code main session",
       "review": "independent",
       "human_holds": [
-        "DEC-13"
+        "LOCK-Q1"
       ],
-      "minor_limit": 0,
+      "minor_limit": 1,
       "criteria": [
         {
           "id": "Q1-C1",
@@ -36,18 +37,39 @@
             "test"
           ],
           "benchmark_required": false,
-          "benchmark_ids": []
+          "benchmark_ids": [],
+          "check": {
+            "type": "command",
+            "argv": [
+              "python3",
+              "-m",
+              "unittest",
+              "tests.test_validate_spec.BaselineTest",
+              "tests.test_validate_spec.RequiredFieldsTest",
+              "-v"
+            ]
+          }
         },
         {
           "id": "Q1-C2",
-          "statement": "도시 언어 게이트 원본 명세가 검사를 통과하고, 성숙도 설문 예상 답이 16세 이상 항목(소셜 행아웃·자유 창작·민감 이슈·확장 AI 상호작용·유료 랜덤·유료 거래)에 모두 '아니오'다 (INV-16)",
+          "statement": "도시 언어 게이트 원본 명세가 검사를 통과하고, 성숙도 설문 예상 답이 16세 이상 항목(소셜 행아웃·자유 창작·민감 이슈·확장 AI 상호작용·유료 랜덤·유료 거래)에 모두 '아니오'다 (INV-16) — 금지어 용어집 파일의 존재와 내용은 Q2-C5 에서 검사한다(Q1 은 시장과 맞는 경로만)",
           "method": "검사기 실행 + 설문 칸 값 확인",
           "target": "통과, 6항목 모두 아니오",
           "evidence_types": [
             "test"
           ],
           "benchmark_required": false,
-          "benchmark_ids": []
+          "benchmark_ids": [],
+          "check": {
+            "type": "command",
+            "argv": [
+              "python3",
+              "-m",
+              "unittest",
+              "tests.test_validate_spec.OriginalWorldTest",
+              "-v"
+            ]
+          }
         },
         {
           "id": "Q1-C3",
@@ -58,7 +80,17 @@
             "test"
           ],
           "benchmark_required": false,
-          "benchmark_ids": []
+          "benchmark_ids": [],
+          "check": {
+            "type": "command",
+            "argv": [
+              "python3",
+              "-m",
+              "unittest",
+              "tests.test_validate_spec.KeySeparationTest",
+              "-v"
+            ]
+          }
         },
         {
           "id": "Q1-C4",
@@ -69,21 +101,50 @@
             "test"
           ],
           "benchmark_required": false,
-          "benchmark_ids": []
+          "benchmark_ids": [],
+          "check": {
+            "type": "command",
+            "argv": [
+              "python3",
+              "-m",
+              "unittest",
+              "tests.test_validate_spec.LanguageFirstTest",
+              "-v"
+            ]
+          }
         },
         {
           "id": "Q1-6V",
           "statement": "이 단계를 잠그기 전에 6방향(전방·후방·위·아래·좌·우) 검토가 이 단계를 대상으로 기록된다 (intent §11)",
-          "method": "evidence.jsonl 에서 stage=Q1 인 vector_review 를 방향별로 센다",
+          "method": "evidence.jsonl 에서 stage=Q1 이고 지금 binding 에 묶인 vector_review 를 방향별로 센다(관찰·제안·다음 할 일·출처가 채워진 것만)",
           "target": "6방향 각 1건 이상",
           "evidence_types": [
             "observation"
           ],
           "benchmark_required": false,
-          "benchmark_ids": []
+          "benchmark_ids": [],
+          "check": {
+            "type": "vectors"
+          }
         }
       ],
-      "focus_gap": "명세 형식이 아직 없다. 목표: 필수 항목(월드 역할·대상 연령 9~14·성숙도 Minimal 과 설문 예상 답·locale/market/curriculum_id 분리·번역 금지 구간·시장 결정 방식 자리·용어와 일상 표현·세션 길이·협동과 NPC 대체·입력 방식)을 기계가 검사한다"
+      "focus_gap": "명세 형식이 아직 없다. 목표: 필수 항목(월드 역할·대상 연령 9~14·성숙도 Minimal 과 설문 예상 답·locale/market/curriculum_id 분리·번역 금지 구간·시장 결정 방식 자리·용어와 일상 표현·세션 길이·협동과 NPC 대체·입력 방식)을 기계가 검사한다",
+      "invariant_scope": {
+        "owned": [
+          "INV-3 키 분리",
+          "INV-9 협동 선택·입력 3종(명세 칸)",
+          "INV-15 언어 우선 순서(명세 칸)",
+          "INV-16 성숙도 설문·안전 플래그",
+          "DEC-9 대상·성숙도"
+        ],
+        "later": {
+          "INV-10 개인정보·분석 이벤트": "Q2-C3 · Q3-C1",
+          "INV-11 금지어 용어집 파일·내용": "Q2-C5",
+          "INV-15 재사용 맥락 3개 이상": "Q2-C2",
+          "INV-4·INV-12 서버 권위·무작위 보상(코드)": "Q3-C1",
+          "INV-16 코드 수준(런타임 LLM·URL·필터 없는 텍스트)": "Q3-C1"
+        }
+      }
     },
     {
       "id": "Q2",
@@ -100,8 +161,10 @@
       ],
       "maker": "claude-code main session",
       "review": "independent",
-      "human_holds": [],
-      "minor_limit": 0,
+      "human_holds": [
+        "LOCK-Q2"
+      ],
+      "minor_limit": 1,
       "criteria": [
         {
           "id": "Q2-C1",
@@ -167,9 +230,13 @@
             "observation"
           ],
           "benchmark_required": false,
-          "benchmark_ids": []
+          "benchmark_ids": [],
+          "check": {
+            "type": "vectors"
+          }
         }
-      ]
+      ],
+      "focus_gap": "Q1 명세(용어 2개: 좌표·기울기)를 받아 Graph 를 만든다: 용어마다 재사용 맥락 3개 이상, 미션 상태와 힌트 사다리, 역할·협동·보상(기본 보상 동일), ko-KR 용어집(정본 이름·금지어·expr 문구), 분석 이벤트 허용 목록과 북극성 지표, 원천 문서 간 충돌 값(K0 §3) 정본화. 넘겨받은 것: DEFER-Q1-9c3b4caa-1(번역 금지 패턴의 큰 수·경계), LocalizationTable locale 코드 대조"
     },
     {
       "id": "Q3",
@@ -180,15 +247,16 @@
       ],
       "review_question": "소스 정본을 Studio Place 로 둘까요, Git 파일로 둘까요? (DEC-8)",
       "artifacts": [
-        "harness/",
-        "tests/harness/"
+        "harness/manifest.json",
+        "tests/test_harness.py"
       ],
       "maker": "claude-code main session",
       "review": "independent",
       "human_holds": [
-        "DEC-8"
+        "DEC-8",
+        "LOCK-Q3"
       ],
-      "minor_limit": 0,
+      "minor_limit": 1,
       "criteria": [
         {
           "id": "Q3-C1",
@@ -232,7 +300,10 @@
             "observation"
           ],
           "benchmark_required": false,
-          "benchmark_ids": []
+          "benchmark_ids": [],
+          "check": {
+            "type": "vectors"
+          }
         }
       ]
     },
@@ -245,15 +316,16 @@
       ],
       "review_question": "플레이어별 진단·용어 사용 기록을 어디까지 저장할까요? (DEC-12)",
       "artifacts": [
-        "src/"
+        "src/manifest.json"
       ],
       "maker": "claude-code main session",
       "review": "independent",
       "human_holds": [
         "DEC-2",
-        "DEC-12"
+        "DEC-12",
+        "LOCK-Q4"
       ],
-      "minor_limit": 0,
+      "minor_limit": 1,
       "criteria": [
         {
           "id": "Q4-C1",
@@ -298,7 +370,10 @@
             "observation"
           ],
           "benchmark_required": false,
-          "benchmark_ids": []
+          "benchmark_ids": [],
+          "check": {
+            "type": "vectors"
+          }
         }
       ]
     },
@@ -311,14 +386,15 @@
       ],
       "review_question": "파일럿 규모·동의·목표치, 16세 미만 참가 경로는? (DEC-7)",
       "artifacts": [
-        "reports/pilot/"
+        "reports/pilot/summary.md"
       ],
       "maker": "claude-code main session",
       "review": "independent",
       "human_holds": [
-        "DEC-7"
+        "DEC-7",
+        "LOCK-Q5"
       ],
-      "minor_limit": 0,
+      "minor_limit": 1,
       "criteria": [
         {
           "id": "Q5-C1",
@@ -351,7 +427,10 @@
             "observation"
           ],
           "benchmark_required": false,
-          "benchmark_ids": []
+          "benchmark_ids": [],
+          "check": {
+            "type": "vectors"
+          }
         }
       ]
     },
@@ -369,9 +448,10 @@
       "maker": "claude-code main session",
       "review": "independent",
       "human_holds": [
-        "DEC-5"
+        "DEC-5",
+        "LOCK-Q6"
       ],
-      "minor_limit": 0,
+      "minor_limit": 1,
       "criteria": [
         {
           "id": "Q6-C1",
@@ -405,7 +485,10 @@
             "observation"
           ],
           "benchmark_required": false,
-          "benchmark_ids": []
+          "benchmark_ids": [],
+          "check": {
+            "type": "vectors"
+          }
         }
       ]
     },
@@ -418,15 +501,16 @@
       ],
       "review_question": "어떤 수치를 넘으면 그 언어권 팩에 투자할까요? (DEC-4)",
       "artifacts": [
-        "reports/language/"
+        "reports/language/summary.md"
       ],
       "maker": "claude-code main session",
       "review": "independent",
       "human_holds": [
         "DEC-4",
-        "DEC-11"
+        "DEC-11",
+        "LOCK-Q7"
       ],
-      "minor_limit": 0,
+      "minor_limit": 1,
       "criteria": [
         {
           "id": "Q7-C1",
@@ -459,7 +543,10 @@
             "observation"
           ],
           "benchmark_required": false,
-          "benchmark_ids": []
+          "benchmark_ids": [],
+          "check": {
+            "type": "vectors"
+          }
         }
       ]
     },
@@ -472,14 +559,15 @@
       ],
       "review_question": "현지 검수자·비용·성공 기준은? (DEC-6)",
       "artifacts": [
-        "reports/market/"
+        "reports/market/summary.md"
       ],
       "maker": "claude-code main session",
       "review": "independent",
       "human_holds": [
-        "DEC-6"
+        "DEC-6",
+        "LOCK-Q8"
       ],
-      "minor_limit": 0,
+      "minor_limit": 1,
       "criteria": [
         {
           "id": "Q8-C1",
@@ -512,7 +600,10 @@
             "observation"
           ],
           "benchmark_required": false,
-          "benchmark_ids": []
+          "benchmark_ids": [],
+          "check": {
+            "type": "vectors"
+          }
         }
       ]
     }

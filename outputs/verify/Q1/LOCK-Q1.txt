@@ -1,0 +1,5 @@
+hold: LOCK-Q1
+node: Q1
+binding: 9c3b4caa40a3b4f08cdb56787e18229067c34b5910755b7c01573aeaf81da88f
+time: 2026-10-01T23:20:46.551092+00:00
+source: 사용자 메시지 2026-10-02 "Q1 잠금 승인" (PR #2, 버전 9c3b4caa40a3 확인 후)
