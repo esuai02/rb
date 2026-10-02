@@ -90,6 +90,8 @@ def extra_rules(spec: dict) -> list[str]:
         if not isinstance(goal, dict):
             continue
         term = goal.get("term_id")
+        if not isinstance(term, str):
+            continue  # Schema validation already reports invalid identifier types.
         if term in seen:
             errors.append(f"language_goals/{i}: term_id {term} 가 중복된다")
         seen.add(term)
@@ -109,7 +111,8 @@ def extra_rules(spec: dict) -> list[str]:
     for i, rule in enumerate(rules if isinstance(rules, list) else []):
         if not isinstance(rule, dict):
             continue
-        ids.append(rule.get("id"))
+        if isinstance(rule.get("id"), str):
+            ids.append(rule["id"])
         if isinstance(rule.get("pattern"), str):
             try:
                 compiled.append(re.compile(rule["pattern"]))
