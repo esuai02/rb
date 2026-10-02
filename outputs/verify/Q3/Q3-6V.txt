@@ -1,11 +1,10 @@
 criterion: Q3-6V — 이 단계를 잠그기 전에 6방향(전방·후방·위·아래·좌·우) 검토가 이 단계를 대상으로 기록된다 (intent §11)
-binding: 580d2ebcdf61cdd3ac8969b9200e7a7f87fdb87f8673f621097467f70c138ce1
-time: 2026-10-02T09:40:32.910092+00:00
+binding: b06dcd4390fc60a413a51b3adb00dea67eb662fe604631cd5984f2828369d2ed
+time: 2026-10-02T11:47:00.140513+00:00
 
-V-BWD: 없음
-V-DOWN: 없음
-V-FWD: 없음
-V-LEFT: 없음
-V-RIGHT: 없음
-V-UP: 없음
-빠진 방향: V-BWD, V-DOWN, V-FWD, V-LEFT, V-RIGHT, V-UP
+V-BWD: VR-BWD-Q3-b06dcd43
+V-DOWN: VR-DOWN-Q3-b06dcd43
+V-FWD: VR-FWD-Q3-b06dcd43
+V-LEFT: VR-LEFT-Q3-b06dcd43
+V-RIGHT: VR-RIGHT-Q3-b06dcd43
+V-UP: VR-UP-Q3-b06dcd43
