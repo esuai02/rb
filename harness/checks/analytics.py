@@ -78,13 +78,8 @@ def sender_names(config) -> str:
 
 
 def _method_aliases(f, module_names: set[str], sender: str) -> set[str]:
-    """`local send = Analytics.log` 처럼 전송 함수를 담은 이름."""
-    toks, out = f.tokens, set()
-    for i in range(len(toks) - 4):
-        if (toks[i].kind == NAME and toks[i + 1].text == "=" and toks[i + 2].kind == NAME and toks[i + 2].text in module_names
-                and toks[i + 3].text == "." and toks[i + 4].text == sender):
-            out.add(toks[i].text)
-    return out
+    """전송 함수를 담은 이름 — 몇 단계를 거쳐 담아도 따라간다."""
+    return {alias for name in module_names for alias in resolve.names_for(f.resolved, (name, sender)) if alias != name}
 
 
 def _player_names(f, config) -> set[str]:

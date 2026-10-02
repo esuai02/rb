@@ -30,17 +30,31 @@ def grant_calls(f, module: str) -> list[int]:
 
 
 def reward_reaching(tree, module: str) -> set[str]:
-    """보상에 닿는 함수 이름 — 본문에서 grant 를 부르는 함수(M.openGate 의 openGate)."""
+    """보상에 닿는 함수 이름 — 직접 grant 를 부르는 함수와, 그런 함수를 부르는 함수까지 끝까지(전이 폐포)."""
+    bodies = []   # (이름, 본문 토큰 번호 구간, 파일)
     names = set()
     for f in tree.luau:
         calls, spans = set(grant_calls(f, module)), _function_spans(f.tokens)
         for start, end in spans:
+            named = _declared_name(f.tokens, start)
+            if not named and start >= 2 and f.tokens[start - 1].text == "=" and f.tokens[start - 2].kind == NAME:
+                named = f.tokens[start - 2].text
+            if not named:
+                continue
+            bodies.append((named, start, end, f))
             if any(start <= i < end for i in calls):
-                named = _declared_name(f.tokens, start)
-                if named:
-                    names.add(named)
-                elif start >= 2 and f.tokens[start - 1].text == "=" and f.tokens[start - 2].kind == NAME:
-                    names.add(f.tokens[start - 2].text)   # local award = function() … grant … end
+                names.add(named)
+    for _round in range(6):
+        before = set(names)
+        for named, start, end, f in bodies:
+            if named in names:
+                continue
+            body = f.tokens[start:end]
+            if any(tok.kind == NAME and tok.text in names and k + 1 < len(body) and body[k + 1].text == "(" for k, tok in enumerate(body)) \
+                    or any(tok.kind == NAME and tok.text in names and k and body[k - 1].text == "." for k, tok in enumerate(body)):
+                names.add(named)
+        if names == before:
+            break
     return names
 
 
@@ -122,6 +136,10 @@ def _handlers(f) -> list[tuple[list[str], list, int, str]]:
     보는 꼴: X.OnServerEvent:Connect(function…) · :Connect(이름) · X.OnServerInvoke = function… · = 이름
     """
     toks, bodies, out = f.tokens, luau.function_bodies(f.tokens), []
+    for i, tok in enumerate(toks):
+        if tok.kind == NAME and tok.text in ("Connect", "Once", "ConnectParallel") and i and toks[i - 1].text == ":" \
+                and i >= 3 and toks[i - 2].text == "]":
+            out.append(("?", [], [], i, "값을 알 수 없는 멤버에 처리 함수를 이었다 — 어떤 원격인지 검사할 수 없다"))
     for i, t in enumerate(toks):
         if t.kind != NAME or t.text not in ("OnServerEvent", "OnServerInvoke"):
             continue
@@ -473,10 +491,23 @@ def _is_sole_cooldown_guard(body, start: int, stop: int, path: tuple[str, ...]) 
     return not any(x.kind == NAME and x.text in ("and", "or") for x in cond)
 
 
+def self_verdicting(tree, verdicts) -> set[str]:
+    """스스로 서버 판정을 거쳐 보상하는 함수 — 이런 함수를 부르는 쪽은 판정을 또 할 필요가 없다."""
+    names = set()
+    for f in tree.luau:
+        for start, end in _function_spans(f.tokens):
+            named = _declared_name(f.tokens, start)
+            if not named and start >= 2 and f.tokens[start - 1].text == "=" and f.tokens[start - 2].kind == NAME:
+                named = f.tokens[start - 2].text
+            if named and any(luau.find_calls(f.tokens[start:end], v) for v in verdicts):
+                names.add(named)
+    return names
+
+
 def reward_after_verdict(tree, rules, config) -> list[str]:
     """원격 처리에서 보상에 닿는 호출은 서버 판정의 결과 안에서만 — 클라이언트가 '다 했다'고 알린다고 보상하지 않는다 (INV-4)."""
     module, verdicts, out = config["reward_module"], [tuple(v) for v in config["verdict_calls"]], []
-    reaching = reward_reaching(tree, module)
+    reaching = reward_reaching(tree, module) - self_verdicting(tree, verdicts)
     for f in tree.luau:
         for remote, _params, body, i, problem in _handlers(f):
             if problem:

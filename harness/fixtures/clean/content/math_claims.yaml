@@ -28,4 +28,5 @@ claims:
     line: {m: 2, b: 1}
     point: [2, 5]
     states: true
+    states_text: 위에 있어
     conditions: {domain: real}

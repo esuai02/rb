@@ -1,6 +1,6 @@
 {
   "files": {
-    "clean/content/math_claims.yaml": "191d3bb9456d0f0b3a20bff45d5b604232782c77473216f8f88dcffccdb44b18",
+    "clean/content/math_claims.yaml": "78036a3ec6dcfc2c7d421b6786d86898c58ea04271cf912c7c69dd2d36f29153",
     "clean/content/remote_contracts.yaml": "350257e0ef96e62d9490da833759f602cd512f4b13091b8dd7cf065f7d85d46d",
     "clean/default.project.json": "96402fbb8b57565dcff6c035c6d1f42fdbb62c3953e79e8af70248496b8523fc",
     "clean/src/client/Hud.client.luau": "a0602a46cb0ccdc20f295a3aa2caf5846e2224bf08250553d0f0ca802fcc32e9",

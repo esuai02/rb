@@ -131,6 +131,28 @@ def _ui_text_literals(f, config) -> list:
     return out
 
 
+def _ui_assignments(f, config) -> list:
+    """UI 글자 속성 대입의 (속성, 오른쪽 시작 토큰 번호)."""
+    toks, out = f.tokens, []
+    for i in range(len(toks) - 3):
+        if toks[i].text == "." and toks[i + 1].kind == NAME and toks[i + 1].text in config["ui_text_properties"] and toks[i + 2].text == "=":
+            out.append((toks[i + 1].text, i + 3))
+    return out
+
+
+def unresolved_ui_text(f, config) -> list[str]:
+    """UI 에 들어가는 값은 문구 키 호출이거나 풀 수 있는 값이어야 한다 — 알 수 없는 조립은 검사할 수 없으므로 거부한다."""
+    out, key_calls = [], {i for i, _args in _key_calls(f, config)}
+    for prop, start in _ui_assignments(f, config):
+        rhs = f.tokens[start:start + 12]
+        if any(k in key_calls for k in range(start, start + 12)):
+            continue
+        if not any(t.kind == STRING for t in rhs) and not any(isinstance(f.resolved.get(t.text), str) for t in rhs if t.kind == NAME):
+            if any(t.kind == SYMBOL and t.text == ".." for t in rhs):
+                out.append(f"{f.rel}:{f.tokens[start].line} UI 글자 속성 .{prop} 에 값을 알 수 없는 조립 글자를 넣는다 — 문구 키를 거쳐야 한다")
+    return out
+
+
 def hardcoded_text(tree, rules, config) -> list[str]:
     """엔진 코드·데이터 파일에 화면 문구를 쓰지 않는다 — LocalizationTable 을 거친다 (INV-3)."""
     out = []
@@ -140,6 +162,8 @@ def hardcoded_text(tree, rules, config) -> list[str]:
                 for prop, t in _ui_text_literals(f, config)]
         out += [f"{f.rel}:{t.line} 코드에 화면 문구 '{t.text[:20]}' 가 있다 — 문구 키로 바꿔야 한다" for t in f.tokens
                 if t.kind == STRING and id(t) not in dev and LETTER.search(t.text) and not IDENTIFIER.fullmatch(t.text)]
+    for f in tree.luau:
+        out += unresolved_ui_text(f, config)
     out += [f"{d.rel} 데이터 파일에 화면 문구 '{text[:20]}' 가 있다 — 문구 키로 바꿔야 한다" for d in tree.data for text in d.strings
             if LETTER.search(text) and not IDENTIFIER.fullmatch(text)]
     return out

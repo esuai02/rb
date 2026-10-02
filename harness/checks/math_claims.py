@@ -151,7 +151,9 @@ def needs_states_text(claim: dict) -> bool:
             return _num(claim.get("states")).denominator != 1
         except ClaimError:
             return False
-    if kind in ("coordinate", "line_point"):
+    if kind == "line_point":
+        return True   # 위에 있다·없다는 말로 표현되므로 수만으로 묶을 수 없다
+    if kind == "coordinate":
         try:
             values = list(_point(claim.get("states" if kind == "coordinate" else "point")))
             if kind == "line_point":

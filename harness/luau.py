@@ -116,18 +116,19 @@ def require_aliases(tokens: list[Token], module: str) -> set[str]:
     return names
 
 
-def normalize_index(tokens: list[Token]) -> list[Token]:
-    """값에 붙은 상수 대괄호 접근을 점 접근으로 바꾼다 — R["OnServerEvent"] 를 R.OnServerEvent 로.
+def normalize_index(tokens: list[Token], resolved: dict | None = None) -> list[Token]:
+    """값에 붙은 대괄호 접근을 점 접근으로 바꾼다 — R["OnServerEvent"] 와 `local e = "OnServerEvent"; R[e]` 를 R.OnServerEvent 로.
     표를 만들 때 쓰는 { ["a"] = 1 } 은 건드리지 않는다."""
-    out: list[Token] = []
-    i = 0
+    resolved, out, i = resolved or {}, [], 0
     while i < len(tokens):
         tok = tokens[i]
+        inner = tokens[i + 1] if i + 2 < len(tokens) else None
+        value = inner.text if inner is not None and inner.kind == STRING else (
+            resolved.get(inner.text) if inner is not None and inner.kind == NAME else None)
         if (tok.kind == SYMBOL and tok.text == "[" and out and (out[-1].kind == NAME or out[-1].text in (")", "]", "}"))
-                and i + 2 < len(tokens) and tokens[i + 1].kind == STRING and tokens[i + 2].text == "]"
-                and _NAME.fullmatch(tokens[i + 1].text)):
+                and inner is not None and tokens[i + 2].text == "]" and isinstance(value, str) and _NAME.fullmatch(value)):
             out.append(Token(SYMBOL, ".", tok.line))
-            out.append(Token(NAME, tokens[i + 1].text, tokens[i + 1].line))
+            out.append(Token(NAME, value, inner.line))
             i += 3
             continue
         out.append(tok)

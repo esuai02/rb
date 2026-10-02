@@ -39,6 +39,7 @@ EXPECTED_DEFECTS = {
     "D-analytics-module-literal": ("분석 모듈이 글자 그대로 보내는 이벤트", ("analytics.calls",)),
     "D-analytics-module-pii": ("분석 모듈 안의 개인정보", ("analytics.calls",)),
     "D-analytics-pii": ("커스텀 필드 개인정보", ("analytics.calls",)),
+    "D-analytics-two-step-alias": ("두 단계로 넘긴 분석 전송 함수", ("analytics.calls",)),
     "D-analytics-unknown-event": ("허용 밖 분석 이벤트", ("analytics.calls",)),
     "D-anonymous-reward-helper": ("익명 함수에 담은 보상 도우미", ("server.reward_after_verdict",)),
     "D-badge-bypass": ("보상 모듈을 거치지 않은 자격 발급", ("server.reward_authority",)),
@@ -60,6 +61,8 @@ EXPECTED_DEFECTS = {
     "D-cooldown-with-extra-condition": ("다른 조건과 섞인 쿨다운", ("server.remote_cooldown",)),
     "D-double-mapped-file": ("같은 파일을 두 곳에 싣는 매핑", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
     "D-duplicate-reward": ("중복 보상", ("server.duplicate_reward", "server.reward_after_verdict")),
+    "D-dynamic-remote-member": ("변수로 만든 대괄호 원격 등록", ("server.remote_cooldown", "server.remote_validation")),
+    "D-dynamic-text-member": ("변수로 고른 문구 함수", ("i18n.missing_key",)),
     "D-else-reward": ("판정의 else 가지에서 보상", ("server.reward_after_verdict",)),
     "D-equals-false-verdict": ("판정이 거짓(== false)인 가지에서 보상", ("server.reward_after_verdict",)),
     "D-free-text": ("필터 없는 자유 입력", ("safety.free_text",)),
@@ -69,6 +72,7 @@ EXPECTED_DEFECTS = {
     "D-ignored-cooldown": ("결과를 버리는 쿨다운", ("server.remote_cooldown",)),
     "D-impossible-range": ("성립할 수 없는 범위 조건", ("server.remote_validation",)),
     "D-inclusive-bound": ("경계를 하나 더 거르는 범위 가드", ("server.remote_validation",)),
+    "D-indirect-reward-helper": ("간접 도우미를 거친 보상", ("server.reward_after_verdict",)),
     "D-inverted-cooldown": ("뒤집힌 쿨다운 조건", ("server.remote_cooldown",)),
     "D-late-cooldown": ("처리 뒤에 하는 쿨다운", ("server.remote_cooldown",)),
     "D-late-guard": ("입력을 쓴 뒤에 하는 검증", ("server.remote_validation",)),
@@ -91,6 +95,7 @@ EXPECTED_DEFECTS = {
     "D-remotefunction": ("검증 없는 RemoteFunction", ("server.remote_cooldown", "server.remote_validation")),
     "D-reward-alias": ("별칭으로 부른 중복 보상", ("server.duplicate_reward",)),
     "D-reward-bypass": ("보상 모듈을 거치지 않은 지급", ("server.reward_authority",)),
+    "D-same-service-double-map": ("같은 서비스 안의 중복 매핑", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
     "D-text-alias": ("별칭으로 부른 끊긴 번역 키", ("i18n.missing_key",)),
     "D-text-alias-chain": ("두 단계로 넘긴 문구 함수", ("i18n.missing_key",)),
     "D-text-function-alias": ("문구 함수를 담은 이름으로 쓴 끊긴 키", ("i18n.missing_key",)),
@@ -100,8 +105,11 @@ EXPECTED_DEFECTS = {
     "D-ui-text-literal": ("UI 글자 속성에 바로 넣은 문구", ("i18n.hardcoded_text",)),
     "D-ui-text-variable": ("변수로 넣은 UI 문구", ("i18n.hardcoded_text",)),
     "D-unknown-analytics-function": ("분석 모듈의 모르는 함수", ("analytics.calls",)),
+    "D-unknown-remote-member": ("값을 알 수 없는 멤버에 건 원격 처리", ("server.remote_validation",)),
     "D-unranged-remote": ("범위를 검사하지 않는 원격 입력", ("server.remote_validation",)),
     "D-unreadable-model": ("검사할 수 없는 이진 모델", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
+    "D-unresolved-ui-text": ("UI 로 흘러가는 알 수 없는 조립 글자", ("i18n.hardcoded_text",)),
+    "D-untied-boolean-claim": ("대사와 묶이지 않은 참·거짓 명제", ("math.truth",)),
     "D-untied-comparison": ("대사와 묶이지 않은 비교 명제", ("math.truth",)),
     "D-untied-fraction": ("대사와 묶이지 않은 분수 값", ("math.truth",)),
     "D-untied-math-line": ("명제 없는 수학 대사", ("math.truth",)),
@@ -279,8 +287,8 @@ class MathClaimTest(TreeCase):
                  ("    conditions: {origin: [0, 0], axes: x_right_y_up}\n", "    conditions: {origin: [1, 0], axes: x_right_y_up}\n", "기준점"),
                  ("    conditions: {origin: [0, 0], axes: x_right_y_up}\n", "    conditions: {origin: [0, 0], axes: x_right_y_down}\n", "축 방향"),
                  ("    conditions: {domain: real}\n", "    conditions: {domain: complex}\n", "정의역"),
-                 ("    line: {m: 2, b: 1}\n    point: [2, 5]\n    states: true\n    conditions: {domain: real}\n",
-                  "    line: {m: '1/2', b: 1}\n    point: [2, 2]\n    states: true\n    conditions: {domain: grid_integer}\n", "격자 정수"),
+                 ("    line: {m: 2, b: 1}\n    point: [2, 5]\n    states: true\n    states_text: 위에 있어\n    conditions: {domain: real}\n",
+                  "    line: {m: '1/2', b: 1}\n    point: [2, 2]\n    states: true\n    states_text: 위에 있어\n    conditions: {domain: grid_integer}\n", "격자 정수"),
                  ("    this: {rise: 3, run: 1}\n", "    this: {rise: 3, run: 0}\n", "가로 변화가 0"),
                  ("    states_text: 더 가팔라\n    conditions: {run_nonzero: true, same_unit: grid_cell}\n",
                   "    states_text: 더 가팔라\n    conditions: {run_nonzero: true, same_unit: meter}\n", "단위"),
@@ -619,6 +627,16 @@ class CheckBranchTest(TreeCase):
     def test_rojo_mapping_must_stay_in_src(self):
         tree = self.make_tree("D-mapped-outside-src")
         self.assertTrue(all(any("소스 폴더" in x for x in v) for v in run.run_checks(tree, MANIFEST, RULES).values()))
+
+    def test_indirect_reward_path_needs_a_verdict(self):
+        """간접 도우미를 거쳐도 보상은 서버 판정 뒤에만 — 스스로 판정하는 함수를 부르는 것은 괜찮다."""
+        self.assertCaught(self.make_tree("D-indirect-reward-helper"), "server.reward_after_verdict", "서버 판정")
+        self.assertEqual(run.run_checks(self.make_tree(), MANIFEST, RULES)["server.reward_after_verdict"], [])
+
+    def test_dynamic_members_are_resolved_or_refused(self):
+        self.assertCaught(self.make_tree("D-dynamic-remote-member"), "server.remote_validation", "막는 형태의 typeof")
+        self.assertCaught(self.make_tree("D-unknown-remote-member"), "server.remote_validation", "값을 알 수 없는 멤버")
+        self.assertCaught(self.make_tree("D-dynamic-text-member"), "i18n.missing_key", "goal.missing")
 
     def test_values_moved_through_variables_are_resolved(self):
         """값을 변수로 한 단계 더 돌려도 잡는다 — 그리고 끝까지 풀리지 않으면 거부한다."""

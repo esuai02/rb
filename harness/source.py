@@ -128,6 +128,7 @@ def load_tree(root: Path) -> Tree:
         tree.problems.append(f"{PROJECT_FILE} 을 읽지 못했다 ({type(exc).__name__})")
         return tree
     owners: dict[Path, str] = {}
+    places: dict[Path, tuple[str, ...]] = {}
     for rel_path, chain in mappings:
         shown = "/".join(chain) if Path(str(rel_path)).is_absolute() else rel_path
         if Path(str(rel_path)).is_absolute():
@@ -143,9 +144,10 @@ def load_tree(root: Path) -> Tree:
         for path in sorted(target.rglob("*")) if target.is_dir() else [target]:
             if not path.is_file():
                 continue
-            if path.resolve() in owners and owners[path.resolve()] != chain[0]:
+            if path.resolve() in places:
                 rel = path.relative_to(root).as_posix()
-                tree.problems.append(f"{rel}: 같은 파일을 {owners[path.resolve()]} 와 {chain[0]} 두 곳에 싣는다 — 서버 전용인지 알 수 없다")
+                tree.problems.append(f"{rel}: 같은 파일을 {'/'.join(places[path.resolve()])} 와 {'/'.join(chain)} 두 곳에 싣는다 — 어디에 있는지 하나여야 한다")
+            places.setdefault(path.resolve(), chain)
             owners.setdefault(path.resolve(), chain[0])
     for path in sorted(p for p in root.rglob("*") if p.is_file()):
         rel = path.relative_to(root).as_posix()
@@ -169,7 +171,8 @@ def _load_file(tree: Tree, path: Path, rel: str, owner: str) -> None:
     kind = _kind(path.name)
     try:
         if kind:
-            tokens = luau.normalize_index(luau.fold_strings(luau.tokenize(path.read_text(encoding="utf-8"))))
+            folded = luau.fold_strings(luau.tokenize(path.read_text(encoding="utf-8")))
+            tokens = luau.normalize_index(folded, resolve.resolve_names(folded))   # 이름이 가리키는 값을 먼저 풀어야 대괄호를 바꿀 수 있다
             tree.luau.append(LuauFile(rel, owner, kind, tokens, resolve.resolve_names(tokens)))
         elif path.suffix == ".csv":
             _load_csv(tree, path, rel)

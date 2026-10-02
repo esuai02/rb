@@ -1,12 +1,13 @@
-major | harness/checks/math_claims.py:189 | 숫자만 있는 수학 대사는 명제가 없어도 통과한다 | `has_math`가 등록 용어 또는 `do_not_translate` 조각이 있을 때만 검사한다. 예: `2 + 2 = 4`는 `math.truth`에서 무검출 | 수학식·수치 패턴을 확장하고 명제 연결 회귀 테스트 추가
-major | harness/checks/server.py:341 | 입력을 변수 계산·대입으로 사용한 뒤 타입·범위 검사를 해도 통과한다 | `_first_work`가 호출·멤버호출만 작업으로 세므로 `local z = x + y` 뒤 가드가 검출되지 않음 | 데이터 의존 읽기·대입·속성 쓰기도 첫 작업으로 추적
-major | harness/checks/server.py:276 | `<=`·`>=` 범위가 `<`·`>`와 같은 것으로 판정된다 | `_comparisons`가 비교 연산자를 방향만으로 축약해 경계값을 잘못 거부하는 가드도 계약 범위와 같다고 통과시킴 | 연산자 포함 여부까지 보존해 허용 구간을 검증
-major | harness/checks/server.py:508 | 판정식에 `or true`·`and true`가 섞여도 참 판정 뒤 보상으로 인정한다 | `_inside_verdict`가 판정 호출 존재와 단순 부정 여부만 확인함 | 판정식의 논리식을 분석해 보상이 실제 참 결과에만 도달하는지 검증
-major | harness/checks/server.py:19 | 보상 함수 별칭을 두 단계 이상 넘기면 중복·무판정 보상이 통과한다 | `_grant_aliases`는 `local g = RewardService.grant` 한 단계만 추적하고 `local h = g; h(...)`는 누락 | 별칭을 고정점까지 전파하거나 해석 불가 호출을 실패 처리
-major | harness/checks/analytics.py:94 | 분석 모듈이 점 표기 API로 임의의 이벤트 문자열을 보내도 통과한다 | 플랫폼 호출 탐지가 `find_calls`에서 `:`만 보조 처리하고 `AnalyticsService.LogCustomEvent(...)`의 `.` 호출은 검사하지 않음 | 점·콜론 양쪽 호출 형태를 동일하게 검사
-major | harness/checks/analytics.py:100 | 플레이어 별칭을 통한 개인정보 필드가 통과한다 | `p = player; fields.who = p.Name`에서 개인정보 검사는 수신자 이름을 `player/plr/target/user`로 제한함 | 플레이어 별칭의 데이터 흐름을 추적하거나 별칭 속성 접근을 금지
-major | harness/checks/i18n.py:39 | 문구 함수 별칭을 재별칭하면 끊긴 키가 통과한다 | `Text.get → get` 한 단계만 수집하며 `use = get; use("missing")`는 `_key_calls`에 없음 | 함수 별칭을 전이적으로 추적하거나 UI 문구 호출의 미해석 키를 실패 처리
-major | harness/checks/i18n.py:140 | 함수가 반환한 식별자형 하드코딩 문구가 UI에 들어가도 통과한다 | `label() -> "Open"; goal.Text = label()`은 UI RHS에 문자열 토큰이 없고 `"Open"`은 `IDENTIFIER`로 제외됨 | 문자열 반환 함수와 UI 대입을 연결하거나 미해석 UI 문자열을 보수적으로 실패 처리
-major | harness/checks/safety.py:49 | 변수로 쪼갠 `TextBox` 생성이 자유 입력 검사에서 빠진다 | `a = "Text"; b = "Box"; Instance.new(a .. b)`는 `fold_strings` 대상이 아니며 토큰에 `TextBox`가 없음 | 상수 전파를 추가하거나 동적 `Instance.new` 클래스명을 실패 처리
-major | harness/checks/safety.py:34 | URL을 변수 조각으로 조합하면 외부 링크 검사를 우회한다 | URL 정규식은 각 문자열 토큰을 따로 검사하므로 `"https" .. "://example" .. ".com"`을 탐지하지 못함 | 상수 문자열 전파 후 전체 식을 검사하고 미해석 URL 조각도 차단
-major | harness/source.py:144 | 같은 소스 파일을 서버·클라이언트 양쪽에 매핑해도 클라이언트 노출이 누락된다 | `owners.setdefault`가 첫 매핑만 보존해 후속 client-visible 매핑을 무시함 | 다중 소유 매핑을 오류로 기록하고 모든 매핑의 노출성을 검증
+critical | harness/checks/server.py:32-44,476-490 | 보상 도달 경로를 직접 보상 함수만 따라가 간접 헬퍼를 놓친다 | `handler → finish() → MissionService.openGate() → RewardService.grant()` 구조에서 verdict 없이 보상해도 `reward_after_verdict` 결과가 빈 목록 | 보상 도달 함수의 전이 폐포를 계산하거나 미해석 호출을 실패 처리
+
+critical | harness/checks/server.py:125-150,359-388 | 변수로 만든 `RemoteEvent[eventName]:Connect(...)`를 원격 처리로 인식하지 않는다 | `eventName = "OnServerEvent"`인 동적 대괄호 등록은 `remote_validation`·`remote_cooldown` 모두 빈 결과 | 상수 해석을 확장하고 미해석 원격 멤버 등록은 보수적으로 실패 처리
+
+major | harness/checks/analytics.py:64-87 | 분석 전송 함수의 2단계 별칭을 검사하지 않는다 | `send = Analytics.log; send2 = send; send2(player, ...)`가 허용 이벤트·필드 검사를 우회하고 결과가 빈 목록 | 별칭 해석을 끝까지 따라가거나 미해석 함수 호출을 거부
+
+major | harness/checks/i18n.py:33-45, harness/luau.py:119-135 | 변수로 선택한 문구 함수 호출을 놓쳐 끊긴 키가 통과한다 | `method = "get"; Text[method]("goal.missing")`에서 `i18n.missing_key`가 빈 결과 | 상수 인덱스를 해석하고 동적 문구 함수 호출은 검사 불가로 실패 처리
+
+major | harness/checks/math_claims.py:104-137,166-188 | `line_point`의 참·거짓 결과가 대사에 표현됐는지 검사하지 않는다 | `states: false`인 `(2,4), y=2x+1` 명제가 “위에 있어”라고 말해도 점·식만 일치하면 통과 | boolean 명제에도 데이터의 `states_text`를 요구하고 원문 존재를 검사
+
+major | harness/source.py:130-149 | 같은 최상위 서비스 안에서 동일 파일을 두 위치에 매핑해도 중복 매핑으로 거부하지 않는다 | 중복 판단이 `owners[path] != chain[0]`만 비교하므로 두 매핑의 `chain[0]`이 같으면 통과 | 전체 매핑 경로를 저장·비교해 최상위 서비스가 같아도 중복 거부
+
+major | harness/checks/safety.py:34-52 | 해석할 수 없는 외부 링크 조립을 실패 처리하지 않는다 | `scheme = getScheme(); host = getHost(); link = scheme .. host; goal.Text = link`는 URL 검사와 하드코딩 검사를 모두 통과 | UI·전송 sink로 흐르는 미해석 문자열 조립은 보수적으로 거부하거나 외부 링크 가능성을 추적

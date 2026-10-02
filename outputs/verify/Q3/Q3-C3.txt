@@ -1,8 +1,8 @@
 criterion: Q3-C3 — 실행기가 검사마다 기록(명령·결과·시각·대상 데이터 지문)을 하나씩 남기고 기록에 로컬 경로가 없다
 command: python3 -m unittest tests.test_harness.RecordTest -v
 exit: 0
-binding: f83a5b20e3d74f8876be28b4d60e23a4ce37712365be385841c87c0285857ceb
-time: 2026-10-02T12:52:10.728958+00:00
+binding: c675efa8be44c44d0ef267e011e64cfa813c67539424c04112d5ac5654d0cad0
+time: 2026-10-02T13:05:29.321744+00:00
 
 test_broken_check_is_recorded_as_failure (tests.test_harness.RecordTest.test_broken_check_is_recorded_as_failure) ... ok
 test_cli_exit_codes (tests.test_harness.RecordTest.test_cli_exit_codes) ... ok
@@ -11,6 +11,6 @@ test_one_record_per_check_without_local_paths (tests.test_harness.RecordTest.tes
 test_records_written_through_main_have_no_local_paths (tests.test_harness.RecordTest.test_records_written_through_main_have_no_local_paths) ... ok
 
 ----------------------------------------------------------------------
-Ran 5 tests in 0.664s
+Ran 5 tests in 0.657s
 
 OK
