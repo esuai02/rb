@@ -1,0 +1,30 @@
+criterion: Q3-C4 — 매니페스트가 수학 6종(E1~E6)·UI 14종(U1~U14)·안전 불변식 항목을 빠짐없이 담고 항목마다 방식(정적 Q3 · 실행 Q4 · 사람 Q5/Q8 · 잠긴 Q2 기준으로 덮음)과 이유를 가진다. 정적 항목은 실제 검사 함수가 있고, 고정 데이터 색인의 지문이 파일과 같다
+command: python3 -m unittest tests.test_harness.ManifestTest -v
+exit: 1
+binding: 580d2ebcdf61cdd3ac8969b9200e7a7f87fdb87f8673f621097467f70c138ce1
+time: 2026-10-02T09:40:32.882415+00:00
+
+test_each_item_has_mode_stage_and_reason_or_checks (tests.test_harness.ManifestTest.test_each_item_has_mode_stage_and_reason_or_checks) ... ok
+test_fixture_index_detects_change (tests.test_harness.ManifestTest.test_fixture_index_detects_change) ... ERROR
+test_fixture_index_matches_files (tests.test_harness.ManifestTest.test_fixture_index_matches_files) ... ok
+test_items_cover_math_and_ui_lists (tests.test_harness.ManifestTest.test_items_cover_math_and_ui_lists) ... ok
+test_registry_and_manifest_checks_match (tests.test_harness.ManifestTest.test_registry_and_manifest_checks_match) ... ok
+test_safety_invariants_have_static_checks (tests.test_harness.ManifestTest.test_safety_invariants_have_static_checks) ... ok
+
+======================================================================
+ERROR: test_fixture_index_detects_change (tests.test_harness.ManifestTest.test_fixture_index_detects_change)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repo>/tests/test_harness.py", line 236, in test_fixture_index_detects_change
+    shutil.copytree(FIXTURES, tmp, dirs_exist_ok=True)
+  File "/usr/lib/python3.12/shutil.py", line 600, in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 554, in _copytree
+    raise Error(errors)
+shutil.Error: [('<repo>/harness/fixtures/clean/src/client', '/tmp/tmpubg1aqsd/clean/src/client', "[Errno 12] Cannot allocate memory: '<repo>/harness/fixtures/clean/src/client'"), ('<repo>/harness/fixtures/defects/D-client-reward/src/client', '/tmp/tmpubg1aqsd/defects/D-client-reward/src/client', "[Errno 12] Cannot allocate memory: '<repo>/harness/fixtures/defects/D-client-reward/src/client'")]
+
+----------------------------------------------------------------------
+Ran 6 tests in 1.832s
+
+FAILED (errors=1)

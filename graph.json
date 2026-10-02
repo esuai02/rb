@@ -2,7 +2,7 @@
   "schema_version": 1,
   "kind": "execution_graph",
   "run_id": "rb-mission",
-  "revision": 8,
+  "revision": 9,
   "locale": "ko",
   "intent_file": "intent.md",
   "intent_sha256": "615140fbb8634268268ad0def1e932bbc4fcded7c0241f46316ee85ceeed3616",
@@ -364,6 +364,16 @@
       "review_question": "소스 정본을 Studio Place 로 둘까요, Git 파일로 둘까요? (DEC-8)",
       "artifacts": [
         "harness/manifest.json",
+        "harness/luau.py",
+        "harness/source.py",
+        "harness/checks/__init__.py",
+        "harness/checks/server.py",
+        "harness/checks/i18n.py",
+        "harness/checks/math_claims.py",
+        "harness/checks/safety.py",
+        "harness/checks/analytics.py",
+        "harness/run.py",
+        "harness/fixtures/index.json",
         "tests/test_harness.py"
       ],
       "maker": "claude-code main session",
@@ -376,41 +386,93 @@
       "criteria": [
         {
           "id": "Q3-C1",
-          "statement": "고정 데이터에 심은 결함을 모두 잡는다: 클라이언트 보상 결정·중복 보상·끊긴 번역 키·넘치는 긴 번역문·틀린 수학 대사·금지어·무작위 보상 코드·URL 문자열·런타임 LLM 호출·필터 없는 텍스트·커스텀 필드 PII",
-          "method": "Harness 실행 후 결함별 검출 여부 기록",
-          "target": "심은 결함 전부 검출",
+          "statement": "깨끗한 고정 데이터(Rojo 구조의 Luau·LocalizationTable CSV·수학 명제)는 모든 정적 검사를 통과하고, 일부러 심은 결함은 각각 정해진 검사가 잡는다: 클라이언트가 보상을 정하는 코드·중복 보상·검증 없는 원격 입력·끊긴 번역 키·넘치는 긴 번역문·번역된 수식·코드 속 하드코딩 문구·틀린 수학 대사·조건이 빠진 수학 명제·어려운 문장·금지어·무작위/유료 보상 코드·URL 문자열·런타임 외부 호출(LLM 등)·필터 없는 자유 입력·커스텀 필드 개인정보·허용 밖 분석 이벤트·클라이언트 분석 전송",
+          "method": "python3 -m unittest tests.test_harness.PlantedDefectTest",
+          "target": "깨끗한 데이터 위반 0, 심은 결함 전부 정해진 검사가 검출",
           "evidence_types": [
             "test"
           ],
           "benchmark_required": false,
-          "benchmark_ids": []
+          "benchmark_ids": [],
+          "check": {
+            "type": "command",
+            "argv": [
+              "python3",
+              "-m",
+              "unittest",
+              "tests.test_harness.PlantedDefectTest",
+              "-v"
+            ]
+          }
         },
         {
           "id": "Q3-C2",
-          "statement": "수학 검사 E1(참/거짓)·E2(조건 완전성)는 결정론(기호 계산) 관문이다 (INV-7)",
-          "method": "틀린 명제·조건 누락 고정 데이터로 실행",
-          "target": "모두 실패 판정",
+          "statement": "수학 검사 E1(참/거짓)·E2(조건 완전성)는 모델 없이 정확한 유리수 계산으로 판정하는 결정론 관문이다 — 같은 입력은 같은 결과, 틀린 명제·빠진 조건(기준점·단위·가로 변화 0 아님)은 실패, 맞는 명제는 통과 (INV-7)",
+          "method": "python3 -m unittest tests.test_harness.MathClaimTest",
+          "target": "틀린 명제·조건 누락 고정 데이터 모두 실패 판정, 맞는 명제 통과",
           "evidence_types": [
             "test"
           ],
           "benchmark_required": false,
-          "benchmark_ids": []
+          "benchmark_ids": [],
+          "check": {
+            "type": "command",
+            "argv": [
+              "python3",
+              "-m",
+              "unittest",
+              "tests.test_harness.MathClaimTest",
+              "-v"
+            ]
+          }
         },
         {
           "id": "Q3-C3",
-          "statement": "검사마다 실행 기록(명령·결과·시각)이 남는다",
-          "method": "기록 파일 확인",
-          "target": "검사 수 = 기록 수",
+          "statement": "실행기가 검사마다 기록(명령·결과·시각·대상 데이터 지문)을 하나씩 남기고 기록에 로컬 경로가 없다",
+          "method": "python3 -m unittest tests.test_harness.RecordTest",
+          "target": "검사 수 = 기록 수, 로컬 경로 0",
           "evidence_types": [
+            "test",
             "observation"
           ],
           "benchmark_required": false,
-          "benchmark_ids": []
+          "benchmark_ids": [],
+          "check": {
+            "type": "command",
+            "argv": [
+              "python3",
+              "-m",
+              "unittest",
+              "tests.test_harness.RecordTest",
+              "-v"
+            ]
+          }
+        },
+        {
+          "id": "Q3-C4",
+          "statement": "매니페스트가 수학 6종(E1~E6)·UI 14종(U1~U14)·안전 불변식 항목을 빠짐없이 담고 항목마다 방식(정적 Q3 · 실행 Q4 · 사람 Q5/Q8 · 잠긴 Q2 기준으로 덮음)과 이유를 가진다. 정적 항목은 실제 검사 함수가 있고, 고정 데이터 색인의 지문이 파일과 같다",
+          "method": "python3 -m unittest tests.test_harness.ManifestTest",
+          "target": "빠진 항목 0, 구현 없는 정적 항목 0, 지문 불일치 0",
+          "evidence_types": [
+            "test"
+          ],
+          "benchmark_required": false,
+          "benchmark_ids": [],
+          "check": {
+            "type": "command",
+            "argv": [
+              "python3",
+              "-m",
+              "unittest",
+              "tests.test_harness.ManifestTest",
+              "-v"
+            ]
+          }
         },
         {
           "id": "Q3-6V",
           "statement": "이 단계를 잠그기 전에 6방향(전방·후방·위·아래·좌·우) 검토가 이 단계를 대상으로 기록된다 (intent §11)",
-          "method": "evidence.jsonl 에서 stage=Q3 인 vector_review 를 방향별로 센다",
+          "method": "evidence.jsonl 에서 stage=Q3 이고 지금 binding 에 묶인 vector_review 를 방향별로 센다(관찰·제안·다음 할 일·출처가 채워진 것만)",
           "target": "6방향 각 1건 이상",
           "evidence_types": [
             "observation"
@@ -422,7 +484,25 @@
           }
         }
       ],
-      "focus_gap": "Q2 잠금(2026-10-02, binding cc23c1f19ef7)을 받아 생성·검수 Harness 를 만든다: 고정 시험 데이터에 결함을 심고 검사가 모두 잡는다. 시작 조건: DEC-8(소스 정본) 결정 — Harness 가 무엇(저장소 파일·Studio Place)을 검사할지 정한다(F12·F13). 넘겨받은 것: Q2 시나리오 6개(기대 이벤트 계산 규칙 포함)·금지어 하한·분석 이벤트 허용 목록·가설 정본 값 중 Q3 측정 항목(cv.server_cooldown), Q2 invariant_scope.later 의 INV-4·INV-12·INV-16 코드 수준 검사, 리팩터 후보 tools/validate_graph.py(1,037줄)"
+      "focus_gap": "Q2 잠금(2026-10-02, binding cc23c1f19ef7)을 받아 생성·검수 Harness 를 만든다: 고정 시험 데이터에 결함을 심고 검사가 모두 잡는다. 시작 조건: DEC-8(소스 정본) 결정 — Harness 가 무엇(저장소 파일·Studio Place)을 검사할지 정한다(F12·F13). 넘겨받은 것: Q2 시나리오 6개(기대 이벤트 계산 규칙 포함)·금지어 하한·분석 이벤트 허용 목록·가설 정본 값 중 Q3 측정 항목(cv.server_cooldown), Q2 invariant_scope.later 의 INV-4·INV-12·INV-16 코드 수준 검사, 리팩터 후보 tools/validate_graph.py(1,037줄) · 계약 r9: 산출물 12개 파일, 기준 C1~C4",
+      "invariant_scope": {
+        "owned": [
+          "INV-3 엔진 코드에 화면 문구를 쓰지 않음(정적)",
+          "INV-4 서버 권위·중복 보상·원격 입력 검증(정적)",
+          "INV-10 분석 호출의 이벤트·필드(정적)",
+          "INV-11 금지어(정적)",
+          "INV-12 무작위·유료 보상 코드(정적)",
+          "INV-16 URL·런타임 외부 호출·자유 입력(정적)",
+          "INV-7 수학 E1·E2 결정론 관문"
+        ],
+        "later": {
+          "UI 실행 검사(U1~U5·U7~U12·U14 — 화면 폭·겹침·안전영역·포커스·자막·시간)": "Q4 스테이징 Play 시험(DEC-2 뒤)",
+          "E3 교육과정 적합성": "Q8 현지 교사 승인(INV-7)",
+          "E4 오개념 대응(선택지 → 오개념 표)": "Q4 선택지를 만들 때 정적 검사 추가",
+          "서버 쿨다운 값 실측(cv.server_cooldown measure_at Q3)": "Q4 Play 시험 — 정적 검사는 쿨다운 호출 존재만 본다",
+          "rojo build 로 실제 Place 생성 확인": "Q4(Rojo 설치·DEC-2 뒤)"
+        }
+      }
     },
     {
       "id": "Q4",

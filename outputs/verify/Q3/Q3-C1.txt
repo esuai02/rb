@@ -1,0 +1,99 @@
+criterion: Q3-C1 — 깨끗한 고정 데이터(Rojo 구조의 Luau·LocalizationTable CSV·수학 명제)는 모든 정적 검사를 통과하고, 일부러 심은 결함은 각각 정해진 검사가 잡는다: 클라이언트가 보상을 정하는 코드·중복 보상·검증 없는 원격 입력·끊긴 번역 키·넘치는 긴 번역문·번역된 수식·코드 속 하드코딩 문구·틀린 수학 대사·조건이 빠진 수학 명제·어려운 문장·금지어·무작위/유료 보상 코드·URL 문자열·런타임 외부 호출(LLM 등)·필터 없는 자유 입력·커스텀 필드 개인정보·허용 밖 분석 이벤트·클라이언트 분석 전송
+command: python3 -m unittest tests.test_harness.PlantedDefectTest -v
+exit: 1
+binding: 580d2ebcdf61cdd3ac8969b9200e7a7f87fdb87f8673f621097467f70c138ce1
+time: 2026-10-02T09:40:19.320217+00:00
+
+test_clean_fixture_passes_every_static_check (tests.test_harness.PlantedDefectTest.test_clean_fixture_passes_every_static_check) ... ok
+test_each_planted_defect_is_caught_by_exactly_its_checks (tests.test_harness.PlantedDefectTest.test_each_planted_defect_is_caught_by_exactly_its_checks) ... 
+  test_each_planted_defect_is_caught_by_exactly_its_checks (tests.test_harness.PlantedDefectTest.test_each_planted_defect_is_caught_by_exactly_its_checks) (defect='D-remote-no-cooldown') ... ERROR
+  test_each_planted_defect_is_caught_by_exactly_its_checks (tests.test_harness.PlantedDefectTest.test_each_planted_defect_is_caught_by_exactly_its_checks) (defect='D-broken-key') ... ERROR
+  test_each_planted_defect_is_caught_by_exactly_its_checks (tests.test_harness.PlantedDefectTest.test_each_planted_defect_is_caught_by_exactly_its_checks) (defect='D-wrong-math') ... ERROR
+  test_each_planted_defect_is_caught_by_exactly_its_checks (tests.test_harness.PlantedDefectTest.test_each_planted_defect_is_caught_by_exactly_its_checks) (defect='D-hard-sentence') ... ERROR
+  test_each_planted_defect_is_caught_by_exactly_its_checks (tests.test_harness.PlantedDefectTest.test_each_planted_defect_is_caught_by_exactly_its_checks) (defect='D-random-reward') ... ERROR
+test_every_defect_has_overlay_and_every_overlay_is_listed (tests.test_harness.PlantedDefectTest.test_every_defect_has_overlay_and_every_overlay_is_listed) ... ok
+test_every_static_check_has_a_planted_defect (tests.test_harness.PlantedDefectTest.test_every_static_check_has_a_planted_defect) ... ok
+test_required_defect_classes_are_planted (tests.test_harness.PlantedDefectTest.test_required_defect_classes_are_planted) ... ok
+
+======================================================================
+ERROR: test_each_planted_defect_is_caught_by_exactly_its_checks (tests.test_harness.PlantedDefectTest.test_each_planted_defect_is_caught_by_exactly_its_checks) (defect='D-remote-no-cooldown')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repo>/tests/test_harness.py", line 67, in test_each_planted_defect_is_caught_by_exactly_its_checks
+    failing = self.failing(self.make_tree(defect["id"]))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<repo>/tests/test_harness.py", line 41, in make_tree
+    shutil.copytree(FIXTURES / "defects" / overlay, tmp, dirs_exist_ok=True)
+  File "/usr/lib/python3.12/shutil.py", line 599, in copytree
+    entries = list(itr)
+              ^^^^^^^^^
+OSError: [Errno 12] Cannot allocate memory: '<repo>/harness/fixtures/defects/D-remote-no-cooldown'
+
+======================================================================
+ERROR: test_each_planted_defect_is_caught_by_exactly_its_checks (tests.test_harness.PlantedDefectTest.test_each_planted_defect_is_caught_by_exactly_its_checks) (defect='D-broken-key')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repo>/tests/test_harness.py", line 67, in test_each_planted_defect_is_caught_by_exactly_its_checks
+    failing = self.failing(self.make_tree(defect["id"]))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<repo>/tests/test_harness.py", line 39, in make_tree
+    shutil.copytree(CLEAN, tmp, dirs_exist_ok=True)
+  File "/usr/lib/python3.12/shutil.py", line 600, in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 554, in _copytree
+    raise Error(errors)
+shutil.Error: [('<repo>/harness/fixtures/clean/content', '/tmp/tmp00pgayui/content', "[Errno 12] Cannot allocate memory: '<repo>/harness/fixtures/clean/content'")]
+
+======================================================================
+ERROR: test_each_planted_defect_is_caught_by_exactly_its_checks (tests.test_harness.PlantedDefectTest.test_each_planted_defect_is_caught_by_exactly_its_checks) (defect='D-wrong-math')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repo>/tests/test_harness.py", line 67, in test_each_planted_defect_is_caught_by_exactly_its_checks
+    failing = self.failing(self.make_tree(defect["id"]))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<repo>/tests/test_harness.py", line 41, in make_tree
+    shutil.copytree(FIXTURES / "defects" / overlay, tmp, dirs_exist_ok=True)
+  File "/usr/lib/python3.12/shutil.py", line 600, in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 554, in _copytree
+    raise Error(errors)
+shutil.Error: [('<repo>/harness/fixtures/defects/D-wrong-math/src/shared', '/tmp/tmp76t1qa9v/src/shared', "[Errno 12] Cannot allocate memory: '<repo>/harness/fixtures/defects/D-wrong-math/src/shared'")]
+
+======================================================================
+ERROR: test_each_planted_defect_is_caught_by_exactly_its_checks (tests.test_harness.PlantedDefectTest.test_each_planted_defect_is_caught_by_exactly_its_checks) (defect='D-hard-sentence')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repo>/tests/test_harness.py", line 67, in test_each_planted_defect_is_caught_by_exactly_its_checks
+    failing = self.failing(self.make_tree(defect["id"]))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<repo>/tests/test_harness.py", line 39, in make_tree
+    shutil.copytree(CLEAN, tmp, dirs_exist_ok=True)
+  File "/usr/lib/python3.12/shutil.py", line 600, in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 554, in _copytree
+    raise Error(errors)
+shutil.Error: [('<repo>/harness/fixtures/clean/src/server', '/tmp/tmp90plwv07/src/server', "[Errno 12] Cannot allocate memory: '<repo>/harness/fixtures/clean/src/server'")]
+
+======================================================================
+ERROR: test_each_planted_defect_is_caught_by_exactly_its_checks (tests.test_harness.PlantedDefectTest.test_each_planted_defect_is_caught_by_exactly_its_checks) (defect='D-random-reward')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repo>/tests/test_harness.py", line 67, in test_each_planted_defect_is_caught_by_exactly_its_checks
+    failing = self.failing(self.make_tree(defect["id"]))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<repo>/tests/test_harness.py", line 39, in make_tree
+    shutil.copytree(CLEAN, tmp, dirs_exist_ok=True)
+  File "/usr/lib/python3.12/shutil.py", line 600, in copytree
+    return _copytree(entries=entries, src=src, dst=dst, symlinks=symlinks,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/shutil.py", line 554, in _copytree
+    raise Error(errors)
+shutil.Error: [('<repo>/harness/fixtures/clean/src/server', '/tmp/tmpyrdn6azv/src/server', "[Errno 12] Cannot allocate memory: '<repo>/harness/fixtures/clean/src/server'"), ('<repo>/harness/fixtures/clean/src/shared', '/tmp/tmpyrdn6azv/src/shared', "[Errno 12] Cannot allocate memory: '<repo>/harness/fixtures/clean/src/shared'")]
+
+----------------------------------------------------------------------
+Ran 5 tests in 8.918s
+
+FAILED (errors=5)
