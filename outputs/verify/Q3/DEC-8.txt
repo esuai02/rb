@@ -1,0 +1,5 @@
+hold: DEC-8
+node: Q3
+binding: dc6904c1cde9ec283869429e296e7cbd30570f8fbfd3a7881b162f6453f86b2f
+time: 2026-10-02T13:35:16.415144+00:00
+source: 사용자 선택 2026-10-02 "Git 파일 + Rojo (Recommended)" (DEC-8 소스 정본 결정, AskUserQuestion 선택지 3개 중)
