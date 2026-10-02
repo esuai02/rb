@@ -27,6 +27,7 @@ REPO = Path(__file__).resolve().parent.parent
 SERVER_ONLY = {"ServerScriptService", "ServerStorage"}
 LOCALIZATION_HEADERS = ("Key", "Source", "Context", "Example")
 HARNESS_INPUT = ("content",)        # Rojo 가 싣지 않는 검사 입력 폴더
+SOURCE_DIR = "src"                  # Rojo 매핑은 이 폴더 안만 가리킨다
 PROJECT_FILE = "default.project.json"
 DATA_SUFFIXES = (".model.json", ".meta.json", ".json", ".txt")
 UNREADABLE_SUFFIXES = (".rbxm", ".rbxmx")
@@ -128,6 +129,9 @@ def load_tree(root: Path) -> Tree:
         shown = "/".join(chain) if Path(str(rel_path)).is_absolute() else rel_path
         if Path(str(rel_path)).is_absolute():
             tree.problems.append(f"Rojo 경로({shown})는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다")
+            continue
+        if not (rel_path == SOURCE_DIR or str(rel_path).startswith(SOURCE_DIR + "/")):
+            tree.problems.append(f"Rojo 경로 {shown} 는 소스 폴더({SOURCE_DIR}/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다")
             continue
         target = (root / rel_path).resolve()
         if not target.exists() or (root.resolve() not in target.parents and target != root.resolve()):

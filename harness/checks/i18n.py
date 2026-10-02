@@ -34,9 +34,12 @@ def _key_calls(f, config) -> list[tuple[int, list]]:
     """문구 키를 쓰는 호출 — <문구 모듈>.get("키") 와 translator:FormatByKey("키")."""
     if f.name == config["text_module"]:
         return []   # 문구 모듈 자신은 받은 키를 그대로 넘긴다 — 그 모듈을 부르는 쪽을 검사한다
-    out = []
-    for name in _aliases(f, config["text_module"]):
-        out += [(i, luau.call_args(f.tokens, i)) for i in luau.find_calls(f.tokens, (name, "get"))]
+    out, toks = [], f.tokens
+    modules = _aliases(f, config["text_module"])
+    direct = {toks[i].text for i in range(len(toks) - 4) if toks[i].kind == NAME and toks[i + 1].text == "="
+              and toks[i + 2].kind == NAME and toks[i + 2].text in modules and toks[i + 3].text == "." and toks[i + 4].text == "get"}
+    for path in [(name, "get") for name in modules] + [(name,) for name in direct]:
+        out += [(i, luau.call_args(toks, i)) for i in luau.find_calls(toks, path)]
     for i, t in enumerate(f.tokens):
         if t.kind == NAME and t.text in config["text_key_methods"] and i and f.tokens[i - 1].text == ":":
             out.append((i, luau.call_args(f.tokens, i)))

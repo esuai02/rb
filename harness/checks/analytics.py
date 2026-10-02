@@ -56,6 +56,7 @@ def calls(tree, rules, config) -> list[str]:
                 out.append(f"{f.rel}:1 분석 모듈이 클라이언트가 볼 수 있는 곳({f.container})에 있다 — 분석은 서버에서만 보낸다(F10)")
             out += [f"{f.rel}:1 분석 모듈이 플랫폼 전송 함수 {api} 를 쓰지 않는다 (퍼널·사용자 정의를 모두 보내야 한다, F11)"
                     for api in config["platform_apis"] if not any(t.kind == NAME and t.text == api for t in f.tokens)]
+            out += _check_module(f, config)
             continue
         out += [f"{f.rel}:{t.line} 분석 모듈을 거치지 않고 AnalyticsService 를 쓴다" for t in f.tokens
                 if t.text in ("AnalyticsService", *config["platform_apis"]) and t.kind in (NAME, STRING)]
@@ -83,6 +84,22 @@ def _method_aliases(f, module_names: set[str], sender: str) -> set[str]:
         if (toks[i].kind == NAME and toks[i + 1].text == "=" and toks[i + 2].kind == NAME and toks[i + 2].text in module_names
                 and toks[i + 3].text == "." and toks[i + 4].text == sender):
             out.add(toks[i].text)
+    return out
+
+
+def _check_module(f, config) -> list[str]:
+    """분석 모듈 자신도 믿지 않는다 — 이벤트 이름은 받은 값이어야 하고, 플레이어 개인정보 속성을 쓰지 않는다 (INV-10)."""
+    out = []
+    for api in config["platform_apis"]:
+        for i in luau.find_calls(f.tokens, (api,)) + [k for k in range(len(f.tokens) - 1)
+                                                      if f.tokens[k].kind == NAME and f.tokens[k].text == api and f.tokens[k - 1].text == ":"]:
+            args = luau.call_args(f.tokens, i)
+            literals = [a[0].text for a in args if len(a) == 1 and a[0].kind == STRING]
+            if literals:
+                out.append(f"{f.rel}:{f.tokens[i].line} 분석 모듈이 {api} 에 글자 그대로의 값 {literals} 를 넣는다 — 이벤트 이름·필드는 받은 값이어야 한다")
+    out += [f"{f.rel}:{t.line} 분석 모듈이 플레이어 개인정보 속성 {t.text} 를 쓴다 (INV-10)" for k, t in enumerate(f.tokens)
+            if t.kind == NAME and t.text in config["player_identity_names"] and k >= 2 and f.tokens[k - 1].text == "."
+            and f.tokens[k - 2].kind == NAME and f.tokens[k - 2].text in config["player_variable_names"]]
     return out
 
 

@@ -42,6 +42,8 @@ def reward_reaching(tree, module: str) -> set[str]:
                 named = _declared_name(f.tokens, start)
                 if named:
                     names.add(named)
+                elif start >= 2 and f.tokens[start - 1].text == "=" and f.tokens[start - 2].kind == NAME:
+                    names.add(f.tokens[start - 2].text)   # local award = function() … grant … end
     return names
 
 
@@ -166,55 +168,63 @@ def _typeof_pairs(toks) -> list[tuple[str, str, str]]:
     return pairs
 
 
-def _guards(body) -> dict[str, str]:
-    """막는 형태의 typeof 검사로 보호되는 이름 → 요구한 종류.
+def _fields_used(body, name: str) -> set[str]:
+    return {f"{name}.{body[k + 2].text}" for k in range(len(body) - 2)
+            if body[k].kind == NAME and body[k].text == name and body[k + 1].text == "." and body[k + 2].kind == NAME}
 
-    `if typeof(p) ~= "T" [or …] then return/error` 와 `assert(typeof(p) == "T" [and …])` 만 센다.
-    and 로 이어진 부정 검사(하나만 틀려도 통과)는 세지 않는다.
-    """
-    guarded, i = {}, 0
+
+def _if_spans(body, top_level_only: bool = True) -> list[tuple[int, int]]:
+    """if 문의 (시작, 조건 끝=then). 기본은 처리 함수 맨 바깥의 if 만 — 어떤 경로로 와도 거치는 가드만 센다."""
+    spans, depth, i = [], 0, 0
     while i < len(body):
         tok = body[i]
         if tok.kind == NAME and tok.text == "if":
             j = i + 1
             while j < len(body) and not (body[j].kind == NAME and body[j].text == "then"):
                 j += 1
-            cond, after = body[i + 1:j], body[j + 1:j + 2]
-            blocks = bool(after) and after[0].kind == NAME and after[0].text in BLOCKING
-            has_and = any(t.kind == NAME and t.text == "and" for t in cond)
-            pairs = _typeof_pairs(cond)
-            if blocks and pairs and not has_and and all(op == "~=" for _n, _k, op in pairs):
-                guarded.update({name: kind for name, kind, _op in pairs})
-            i = j
-        elif tok.kind == NAME and tok.text == "assert" and i + 1 < len(body) and body[i + 1].text == "(":
-            args = luau.balanced(body, i + 1)
-            if any(t.kind == NAME and t.text == "or" for t in args):
-                i += 1
-                continue   # or 로 이어진 긍정 검사는 하나만 맞아도 통과한다
-            guarded.update({name: kind for name, kind, op in _typeof_pairs(args) if op == "=="})
-            i += 1
-        else:
-            i += 1
-    return guarded
-
-
-def _fields_used(body, name: str) -> set[str]:
-    return {f"{name}.{body[k + 2].text}" for k in range(len(body) - 2)
-            if body[k].kind == NAME and body[k].text == name and body[k + 1].text == "." and body[k + 2].kind == NAME}
-
-
-def _if_spans(body) -> list[tuple[int, int]]:
-    """if 문의 (시작, 조건 끝=then) — 가드 조건 구간."""
-    spans, i = [], 0
-    while i < len(body):
-        if body[i].kind == NAME and body[i].text == "if":
-            j = i + 1
-            while j < len(body) and not (body[j].kind == NAME and body[j].text == "then"):
-                j += 1
-            spans.append((i, j))
-            i = j
+            if depth == 0 or not top_level_only:
+                spans.append((i, j))
+            depth += 1
+            i = j + 1
+            continue
+        if tok.kind == NAME and tok.text in ("do", "function", "repeat"):
+            depth += 1
+        elif tok.kind == NAME and tok.text in ("end", "until"):
+            depth = max(0, depth - 1)
         i += 1
     return spans
+
+
+def _top_level_asserts(body) -> list[int]:
+    """처리 함수 맨 바깥의 assert( 위치."""
+    out, depth = [], 0
+    for i, tok in enumerate(body):
+        if tok.kind == NAME and tok.text in ("if", "do", "function", "repeat"):
+            depth += 1
+        elif tok.kind == NAME and tok.text in ("end", "until"):
+            depth = max(0, depth - 1)
+        elif depth == 0 and tok.kind == NAME and tok.text == "assert" and i + 1 < len(body) and body[i + 1].text == "(":
+            out.append(i)
+    return out
+
+
+def _guards(body) -> dict[str, str]:
+    """막는 형태의 typeof 가드로 보호되는 이름 → 요구한 종류. 처리 함수 맨 바깥의 가드만 센다(어떤 경로로 와도 거친다).
+
+    `if typeof(p) ~= "T" [or …] then return/error` 와 `assert(typeof(p) == "T" [and …])` 만 인정한다.
+    """
+    guarded = {}
+    for start, stop in _if_spans(body):
+        cond, after = body[start + 1:stop], body[stop + 1:stop + 2]
+        blocks = bool(after) and after[0].kind == NAME and after[0].text in BLOCKING
+        pairs = _typeof_pairs(cond)
+        if blocks and pairs and not any(x.kind == NAME and x.text == "and" for x in cond) and all(op == "~=" for _n, _k, op in pairs):
+            guarded.update({name: kind for name, kind, _op in pairs})
+    for i in _top_level_asserts(body):
+        args = luau.balanced(body, i + 1)
+        if not any(x.kind == NAME and x.text == "or" for x in args):
+            guarded.update({name: kind for name, kind, op in _typeof_pairs(args) if op == "=="})
+    return guarded
 
 
 def _guard_positions(body) -> dict[str, int]:
@@ -228,13 +238,12 @@ def _guard_positions(body) -> dict[str, int]:
         if blocks and pairs and not any(x.kind == NAME and x.text == "and" for x in cond) and all(op == "~=" for _n, _k, op in pairs):
             for name, _kind, _op in pairs:
                 out.setdefault(name, start)
-    for i, tok in enumerate(body):
-        if tok.kind == NAME and tok.text == "assert" and i + 1 < len(body) and body[i + 1].text == "(":
-            args = luau.balanced(body, i + 1)
-            if not any(x.kind == NAME and x.text == "or" for x in args):
-                for name, _kind, op in _typeof_pairs(args):
-                    if op == "==":
-                        out.setdefault(name, i)
+    for i in _top_level_asserts(body):
+        args = luau.balanced(body, i + 1)
+        if not any(x.kind == NAME and x.text == "or" for x in args):
+            for name, _kind, op in _typeof_pairs(args):
+                if op == "==":
+                    out.setdefault(name, i)
     return out
 
 
@@ -401,6 +410,8 @@ def _inside_verdict(body, index: int, verdicts) -> bool:
                 depth += 1
             elif body[k].kind == NAME and body[k].text in ("end", "until"):
                 depth -= 1
+            elif depth == 1 and body[k].kind == NAME and body[k].text in ("else", "elseif"):
+                break   # 판정이 참일 때 들어가는 가지(then)만 보상 자리다
             if depth and k == index:
                 return True
             k += 1

@@ -1,18 +1,19 @@
-criterion: Q3-C1 — 깨끗한 고정 데이터(Rojo 구조의 Luau·LocalizationTable CSV·데이터 파일·수학 명제)는 모든 정적 검사를 통과하고, 일부러 심은 결함은 각각 정해진 검사가 잡는다: 클라이언트가 보상을 정하는 코드·중복 보상·보상 모듈을 거치지 않은 지급·클라이언트 완료 신고로 보상·검증 없는 원격 입력·범위를 검사하지 않는 원격 입력·입력을 쓴 뒤에 하는 검증·결과를 버리는 쿨다운·끊긴 번역 키·넘치는 긴 번역문·번역된 수식·코드 속 하드코딩 문구·대괄호로 넣은 UI 문구·틀린 수학 대사·조건이 빠진 수학 명제·명제 없는 수학 대사·어려운 문장·금지어·폭 0 문자를 끼운 금지어·무작위 보상 코드·유료 보상 코드·구독 회원 전용 보상·URL 문자열·런타임 외부 호출(LLM)·필터 없는 자유 입력·커스텀 필드 개인정보·허용 밖 분석 이벤트·클라이언트 분석 전송·퍼널 단계를 사용자 정의로 전송·문자열을 쪼개 숨긴 우회·Rojo 가 src 밖에서 싣는 결함 코드·검사할 수 없는 이진 모델·망가진 명제 파일·절대 경로를 쓴 Rojo 프로젝트·성립할 수 없는 범위 조건·한쪽만 보는 범위 조건·뒤집힌 쿨다운 조건·대괄호로 등록한 원격 처리·판정이 거짓인 가지에서 보상·대괄호로 부른 보상·대사와 묶이지 않은 비교 명제·대사와 묶이지 않은 분수 값·전송 함수를 담은 이름으로 보낸 분석·분석 모듈의 모르는 함수·변수로 넣은 UI 문구·검사 입력 폴더를 Rojo 에 실음
+criterion: Q3-C1 — 깨끗한 고정 데이터(Rojo 구조의 Luau·LocalizationTable CSV·데이터 파일·수학 명제)는 모든 정적 검사를 통과하고, 일부러 심은 결함은 각각 정해진 검사가 잡는다: 클라이언트가 보상을 정하는 코드·중복 보상·보상 모듈을 거치지 않은 지급·클라이언트 완료 신고로 보상·검증 없는 원격 입력·범위를 검사하지 않는 원격 입력·입력을 쓴 뒤에 하는 검증·결과를 버리는 쿨다운·끊긴 번역 키·넘치는 긴 번역문·번역된 수식·코드 속 하드코딩 문구·대괄호로 넣은 UI 문구·틀린 수학 대사·조건이 빠진 수학 명제·명제 없는 수학 대사·어려운 문장·금지어·폭 0 문자를 끼운 금지어·무작위 보상 코드·유료 보상 코드·구독 회원 전용 보상·URL 문자열·런타임 외부 호출(LLM)·필터 없는 자유 입력·커스텀 필드 개인정보·허용 밖 분석 이벤트·클라이언트 분석 전송·퍼널 단계를 사용자 정의로 전송·문자열을 쪼개 숨긴 우회·Rojo 가 src 밖을 가리키는 매핑·검사할 수 없는 이진 모델·망가진 명제 파일·절대 경로를 쓴 Rojo 프로젝트·성립할 수 없는 범위 조건·한쪽만 보는 범위 조건·뒤집힌 쿨다운 조건·대괄호로 등록한 원격 처리·판정이 거짓인 가지에서 보상·대괄호로 부른 보상·대사와 묶이지 않은 비교 명제·대사와 묶이지 않은 분수 값·전송 함수를 담은 이름으로 보낸 분석·분석 모듈의 모르는 함수·변수로 넣은 UI 문구·검사 입력 폴더를 Rojo 에 실음·판정의 else 가지에서 보상·익명 함수에 담은 보상 도우미·중첩 조건 안에서만 하는 검증·보상 모듈을 거치지 않은 자격 발급·분석 모듈이 글자 그대로 보내는 이벤트·분석 모듈 안의 개인정보·문구 함수를 담은 이름으로 쓴 끊긴 키
 command: python3 -m unittest tests.test_harness.PlantedDefectTest -v
 exit: 0
-binding: bcd27803c4d0e77ae3f912dbf4f6028d6e5d0f348b18e68247a44b670a322187
-time: 2026-10-02T12:11:57.699575+00:00
+binding: 537f92dc8bf8a68ebf4744400721cd7e9e5fa05a524b0de3b57e28e79254b8be
+time: 2026-10-02T12:24:37.994950+00:00
 
 test_clean_fixture_passes_every_static_check (tests.test_harness.PlantedDefectTest.test_clean_fixture_passes_every_static_check) ... ok
 test_criterion_names_every_required_class (tests.test_harness.PlantedDefectTest.test_criterion_names_every_required_class) ... ok
 test_defect_edits_must_match_exactly_once (tests.test_harness.PlantedDefectTest.test_defect_edits_must_match_exactly_once) ... ok
+test_defect_list_matches_the_independent_list (tests.test_harness.PlantedDefectTest.test_defect_list_matches_the_independent_list) ... ok
 test_each_planted_defect_is_caught_by_exactly_its_checks (tests.test_harness.PlantedDefectTest.test_each_planted_defect_is_caught_by_exactly_its_checks) ... ok
 test_every_static_check_has_a_planted_defect (tests.test_harness.PlantedDefectTest.test_every_static_check_has_a_planted_defect) ... ok
 test_required_defect_classes_are_planted (tests.test_harness.PlantedDefectTest.test_required_defect_classes_are_planted)
 기준 Q3-C1 이 이름으로 든 결함 종류마다 실제 고정 데이터가 있고, 그 데이터가 검사에 잡힌다. ... ok
 
 ----------------------------------------------------------------------
-Ran 6 tests in 6.964s
+Ran 7 tests in 7.764s
 
 OK
