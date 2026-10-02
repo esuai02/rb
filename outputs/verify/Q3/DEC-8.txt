@@ -1,5 +1,5 @@
 hold: DEC-8
 node: Q3
-binding: dc6904c1cde9ec283869429e296e7cbd30570f8fbfd3a7881b162f6453f86b2f
-time: 2026-10-02T13:35:16.415144+00:00
-source: 사용자 선택 2026-10-02 "Git 파일 + Rojo (Recommended)" (DEC-8 소스 정본 결정, AskUserQuestion 선택지 3개 중)
+binding: b649f2ed03fa22d5f6087b9fd611561feff457a4b5e43e915daa3586603f22df
+time: 2026-10-02T16:31:57.183475+00:00
+source: 사용자 선택 2026-10-02 "Git 파일 + Rojo (Recommended)" (AskUserQuestion, 선택지 3개 중) — 산출물이 바뀌어 같은 결정을 현재 binding 에 다시 묶음(새 승인이 아님)
