@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 
 from harness import luau
 from harness.luau import NAME, STRING
@@ -12,7 +13,9 @@ RANDOM_METHODS = {"NextInteger", "NextNumber", "NextUnitVector"}
 
 
 def _squash(text: str) -> str:
-    return re.sub(r"\s+", "", text).lower()
+    """띄어쓰기·대소문자·보이지 않는 서식 문자를 지우고 정규화해 비교한다 — 글자 사이에 폭 0 문자를 끼워 넣는 우회를 막는다."""
+    plain = "".join(c for c in unicodedata.normalize("NFKC", text) if unicodedata.category(c) != "Cf")
+    return re.sub(r"\s+", "", plain).lower()
 
 
 def banned_terms(tree, rules, config) -> list[str]:
@@ -30,7 +33,8 @@ def banned_terms(tree, rules, config) -> list[str]:
 
 def url(tree, rules, config) -> list[str]:
     """게임 안 외부 링크 없음 — 문구·코드·데이터에 URL·도메인이 없다 (INV-16)."""
-    return [f"{where} URL 이나 도메인 '{m.group()}' 이 있다" for where, text in tree.texts() for m in [URL.search(text)] if m]
+    return [f"{where} URL 이나 도메인 '{m.group()}' 이 있다" for where, text in tree.texts()
+            for m in [URL.search(unicodedata.normalize("NFKC", text))] if m]
 
 
 def external_call(tree, rules, config) -> list[str]:

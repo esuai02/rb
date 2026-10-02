@@ -126,7 +126,7 @@
       "invariants": [
         "INV-4"
       ],
-      "question": "원격 입력의 형식을 검사하는가"
+      "question": "원격 입력의 형식과 범위를 처리 전에 막는 형태로 검사하는가(상태는 server.reward_after_verdict)"
     },
     {
       "id": "server.remote_cooldown",
@@ -134,7 +134,7 @@
       "invariants": [
         "INV-4"
       ],
-      "question": "원격 입력이 쿨다운을 거치는가(cv.server_cooldown)"
+      "question": "원격 처리가 쿨다운 결과로 처리 전에 멈추는가"
     },
     {
       "id": "server.reward_after_verdict",
@@ -262,7 +262,7 @@
       "checks": [
         "math.truth"
       ],
-      "note": "대사-명제 연결은 명제가 말하는 값(이동·결과 칸·기울기 값·점)이 원문에 있는지까지 본다. 비교 방향(더 가파르다 등)은 말로 표현되어 정적으로 묶지 않는다 — 사람 검토(Q8)"
+      "reason": "대사-명제 연결은 명제가 말하는 값(이동·결과 칸·기울기 값·점)이 원문에 있는지까지 본다. 비교 방향(더 가파르다 등)은 말로 표현되어 정적으로 묶지 않는다 — 사람 검토(Q8)"
     },
     {
       "id": "E2",
@@ -272,7 +272,8 @@
       "stage": "Q3",
       "checks": [
         "math.conditions"
-      ]
+      ],
+      "reason": "저장소 파일만 보고 판정할 수 있다 — 검사 math.conditions"
     },
     {
       "id": "E3",
@@ -301,7 +302,7 @@
       "checks": [
         "text.readability"
       ],
-      "note": "정적 검사는 문장 폭·문장 수만 본다. 학년에 맞는 어휘·시험식 어미는 현지 교사 승인(Q8)"
+      "reason": "정적 검사는 문장 폭·문장 수만 본다. 학년에 맞는 어휘·시험식 어미는 현지 교사 승인(Q8)"
     },
     {
       "id": "E6",
@@ -460,7 +461,8 @@
         "i18n.missing_key",
         "i18n.hardcoded_text",
         "i18n.do_not_translate"
-      ]
+      ],
+      "reason": "저장소 파일만 보고 판정할 수 있다 — 검사 i18n.missing_key, i18n.hardcoded_text, i18n.do_not_translate"
     },
     {
       "id": "INV-4",
@@ -474,7 +476,8 @@
         "server.remote_validation",
         "server.remote_cooldown",
         "server.reward_after_verdict"
-      ]
+      ],
+      "reason": "저장소 파일만 보고 판정할 수 있다 — 검사 server.reward_authority, server.duplicate_reward, server.remote_validation, server.remote_cooldown, server.reward_after_verdict"
     },
     {
       "id": "INV-10",
@@ -485,7 +488,8 @@
       "checks": [
         "analytics.calls",
         "safety.free_text"
-      ]
+      ],
+      "reason": "저장소 파일만 보고 판정할 수 있다 — 검사 analytics.calls, safety.free_text"
     },
     {
       "id": "INV-11",
@@ -495,7 +499,8 @@
       "stage": "Q3",
       "checks": [
         "safety.banned_terms"
-      ]
+      ],
+      "reason": "저장소 파일만 보고 판정할 수 있다 — 검사 safety.banned_terms"
     },
     {
       "id": "INV-12",
@@ -505,7 +510,8 @@
       "stage": "Q3",
       "checks": [
         "safety.random_or_paid_reward"
-      ]
+      ],
+      "reason": "저장소 파일만 보고 판정할 수 있다 — 검사 safety.random_or_paid_reward"
     },
     {
       "id": "INV-16",
@@ -517,7 +523,8 @@
         "safety.url",
         "safety.external_call",
         "safety.free_text"
-      ]
+      ],
+      "reason": "저장소 파일만 보고 판정할 수 있다 — 검사 safety.url, safety.external_call, safety.free_text"
     }
   ],
   "defects": [
@@ -1123,6 +1130,175 @@
           "file": "src/server/MissionService.luau",
           "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
           "replace": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})\n\ttracker.log(player, \"player_profile\", {play_mode = \"solo_npc\"})"
+        }
+      ]
+    },
+    {
+      "id": "D-unranged-remote",
+      "class": "범위를 검사하지 않는 원격 입력",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n",
+          "replace": ""
+        }
+      ]
+    },
+    {
+      "id": "D-late-guard",
+      "class": "입력을 쓴 뒤에 하는 검증",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n\tif not Cooldown.allow(player, \"signal\") then return end\n",
+          "replace": "\tif not Cooldown.allow(player, \"signal\") then return end\n"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-ignored-cooldown",
+      "class": "결과를 버리는 쿨다운",
+      "expected": [
+        "server.remote_cooldown"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif not Cooldown.allow(player, \"signal\") then return end\n",
+          "replace": "\tCooldown.allow(player, \"signal\")\n"
+        }
+      ]
+    },
+    {
+      "id": "D-late-cooldown",
+      "class": "처리 뒤에 하는 쿨다운",
+      "expected": [
+        "server.remote_cooldown"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif not Cooldown.allow(player, \"signal\") then return end\n",
+          "replace": ""
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\t\tMissionService.openGate(player)\n",
+          "replace": "\t\tMissionService.openGate(player)\n\t\tif not Cooldown.allow(player, \"signal\") then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-concat-authority",
+      "class": "문자열을 쪼개 숨긴 보상 권한",
+      "expected": [
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "sendCell(2, 1)\nlocal player = game:GetService(\"Players\").LocalPlayer\nplayer[\"leader\" .. \"stats\"].Stars.Value += 1\n"
+        }
+      ]
+    },
+    {
+      "id": "D-concat-free-text",
+      "class": "문자열을 쪼개 숨긴 자유 입력",
+      "expected": [
+        "safety.free_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Parent = script.Parent\n",
+          "replace": "goal.Parent = script.Parent\n\nlocal answer = Instance.new(\"Text\" .. \"Box\")\nanswer.Parent = script.Parent\n"
+        }
+      ]
+    },
+    {
+      "id": "D-concat-url",
+      "class": "문자열을 쪼개 숨긴 외부 링크",
+      "expected": [
+        "i18n.hardcoded_text",
+        "safety.url"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "sendCell(2, 1)\nlocal link = \"https\" .. \"://example\" .. \".com/join\"\n"
+        }
+      ],
+      "note": "코드에 적은 URL 은 문구 키를 거치지 않은 문자열이기도 하다 — 두 검사가 모두 잡는 것이 맞다"
+    },
+    {
+      "id": "D-zero-width-banned",
+      "class": "폭 0 문자를 끼운 금지어",
+      "expected": [
+        "safety.banned_terms"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "도시 언어 게이트가 열렸어!,",
+          "replace": "도시 언어 게이트 입​국심사 통과!,"
+        }
+      ]
+    },
+    {
+      "id": "D-bracket-ui-text",
+      "class": "대괄호로 넣은 UI 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal[\"Text\"] = \"Ready\""
+        }
+      ]
+    },
+    {
+      "id": "D-absolute-path",
+      "class": "절대 경로를 쓴 Rojo 프로젝트",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "default.project.json",
+          "find": "\"$path\": \"src/client\"",
+          "replace": "\"$path\": \"/tmp/gate-ui\""
         }
       ]
     }

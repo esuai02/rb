@@ -24,9 +24,11 @@ MANIFEST = run.load_manifest()
 RULES = source.load_rules(ROOT)
 GRAPH = json.loads((ROOT / "graph.json").read_text(encoding="utf-8"))
 DEFECTS = {d["id"]: d for d in MANIFEST["defects"]}
-# intent §3 Q3 와 작업 Graph Q3-C1 이 이름으로 요구하는 결함 종류 — 매니페스트의 결함이 이것을 모두 덮어야 한다
-REQUIRED_CLASSES = {"클라이언트가 보상을 정하는 코드", "중복 보상", "끊긴 번역 키", "넘치는 긴 번역문", "틀린 수학 대사", "금지어",
-                    "무작위 보상 코드", "URL 문자열", "런타임 외부 호출(LLM)", "필터 없는 자유 입력", "커스텀 필드 개인정보"}
+# 작업 Graph Q3-C1 이 이름으로 든 결함 종류 전부 — 매니페스트의 결함이 하나도 빠짐없이 덮어야 한다
+REQUIRED_CLASSES = {"클라이언트가 보상을 정하는 코드", "중복 보상", "검증 없는 원격 입력", "끊긴 번역 키", "넘치는 긴 번역문", "번역된 수식",
+                    "코드 속 하드코딩 문구", "틀린 수학 대사", "조건이 빠진 수학 명제", "어려운 문장", "금지어", "무작위 보상 코드",
+                    "유료 보상 코드", "URL 문자열", "런타임 외부 호출(LLM)", "필터 없는 자유 입력", "커스텀 필드 개인정보",
+                    "허용 밖 분석 이벤트", "클라이언트 분석 전송"}
 ITEM_IDS = {f"E{i}" for i in range(1, 7)} | {f"U{i}" for i in range(1, 15)}
 MODES = {"static", "runtime", "human", "covered", "static_later"}
 
@@ -73,7 +75,19 @@ class PlantedDefectTest(TreeCase):
                 self.assertEqual(sorted(self.failing(self.make_tree(defect["id"]))), sorted(defect["expected"]))
 
     def test_required_defect_classes_are_planted(self):
-        self.assertEqual(REQUIRED_CLASSES - {d["class"] for d in MANIFEST["defects"]}, set())
+        """기준 Q3-C1 이 이름으로 든 결함 종류마다 실제 고정 데이터가 있고, 그 데이터가 검사에 잡힌다."""
+        by_class = {}
+        for d in MANIFEST["defects"]:
+            by_class.setdefault(d["class"], []).append(d)
+        self.assertEqual(REQUIRED_CLASSES - set(by_class), set())
+        for name in sorted(REQUIRED_CLASSES):
+            with self.subTest(defect_class=name):
+                for d in by_class[name]:
+                    self.assertTrue(self.failing(self.make_tree(d["id"])))
+
+    def test_criterion_names_every_required_class(self):
+        statement = next(c["statement"] for n in GRAPH["nodes"] if n["id"] == "Q3" for c in n["criteria"] if c["id"] == "Q3-C1")
+        self.assertEqual({name for name in REQUIRED_CLASSES if name not in statement}, set())
 
     def test_every_static_check_has_a_planted_defect(self):
         self.assertEqual(set(REGISTRY) - {c for d in MANIFEST["defects"] for c in d["expected"]}, set())
@@ -246,6 +260,11 @@ class ManifestTest(unittest.TestCase):
     def test_items_cover_math_and_ui_lists(self):
         self.assertEqual(ITEM_IDS - {i["id"] for i in MANIFEST["items"]}, set())
 
+    def test_every_item_has_a_reason(self):
+        for item in MANIFEST["items"]:
+            with self.subTest(item=item["id"]):
+                self.assertTrue(item.get("reason", "").strip(), "항목마다 왜 그 방식·단계인지 적어야 한다")
+
     def test_each_item_has_mode_stage_and_reason_or_checks(self):
         q2 = {c["id"] for n in GRAPH["nodes"] if n["id"] == "Q2" for c in n["criteria"]}
         for item in MANIFEST["items"]:
@@ -354,6 +373,8 @@ class CheckBranchTest(TreeCase):
              "server.remote_validation", "Connect(함수)·= 함수 가 아닌 방식"),
             ("src/server/Main.server.luau", '\tif typeof(x) ~= "number" or typeof(y) ~= "number" then return end\n',
              '\tif typeof(x) ~= "number" and typeof(y) ~= "number" then return end\n', "server.remote_validation", "막는 형태의 typeof"),
+            ("src/server/Main.server.luau", '\tif typeof(x) ~= "number" or typeof(y) ~= "number" then return end\n',
+             '\tassert(typeof(x) == "number" or typeof(y) == "number", "bad")\n', "server.remote_validation", "막는 형태의 typeof"),
             ("src/server/Main.server.luau", "local function onSignal(player: Player, x: unknown, y: unknown)\n"
              '\tif typeof(x) ~= "number" or typeof(y) ~= "number" then return end\n',
              "local function onSignal(player: Player, payload: unknown)\n\tif typeof(payload) ~= \"table\" then return end\n\tlocal x, y = payload.x, payload.y\n",
@@ -370,6 +391,18 @@ class CheckBranchTest(TreeCase):
         self.edit(tree, "src/server/Main.server.luau", '\tif typeof(x) ~= "number" or typeof(y) ~= "number" then return end\n',
                   '\tassert(typeof(x) == "number" and typeof(y) == "number", "bad input")\n')
         self.assertEqual(run.run_checks(tree, MANIFEST, RULES)["server.remote_validation"], [])
+
+    def test_table_payload_fields_need_type_and_range(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/server/Main.server.luau",
+                  'local function onSignal(player: Player, x: unknown, y: unknown)\n'
+                  '\tif typeof(x) ~= "number" or typeof(y) ~= "number" then return end\n'
+                  '\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n',
+                  'local function onSignal(player: Player, payload: unknown)\n'
+                  '\tif typeof(payload) ~= "table" then return end\n'
+                  '\tif typeof(payload.x) ~= "number" or typeof(payload.y) ~= "number" then return end\n'
+                  '\tlocal x, y = payload.x, payload.y\n')
+        self.assertCaught(tree, "server.remote_validation", "표로 받은 payload.x 의 범위를 처리 전에")
 
     def test_reward_module_placement(self):
         tree = self.make_tree()
@@ -446,6 +479,12 @@ class CheckBranchTest(TreeCase):
         self.edit(tree, "src/server/Analytics.luau", "AnalyticsService:LogOnboardingFunnelStepEvent(player, FUNNEL_STEPS[stepName], stepName, pack(fields))",
                   "AnalyticsService:LogCustomEvent(player, stepName, 1, pack(fields))")
         self.assertCaught(tree, "analytics.calls", "플랫폼 전송 함수 LogOnboardingFunnelStepEvent")
+
+    def test_absolute_rojo_path_is_refused_without_echoing_it(self):
+        tree = self.make_tree("D-absolute-path")
+        found = run.run_checks(tree, MANIFEST, RULES)["safety.url"]
+        self.assertTrue(any("상대 경로여야 한다" in x for x in found), found)
+        self.assertFalse(any("/tmp/gate-ui" in x for x in found), found)
 
     def test_safety_branches(self):
         tree = self.make_tree()

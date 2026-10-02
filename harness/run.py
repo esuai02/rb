@@ -81,6 +81,13 @@ def run_checks(root: Path, manifest: dict | None = None, rules: source.Rules | N
     return results
 
 
+def scrub(root: Path, text: str) -> str:
+    """기록(공개 저장소)에 로컬 경로가 남지 않게 대상 트리·홈 경로를 바꿔 쓴다 (INV-6)."""
+    for local, alias in ((str(root.resolve()), "<tree>"), (str(root), "<tree>"), (str(Path.home()), "~")):
+        text = text.replace(local, alias)
+    return text
+
+
 def write_records(root: Path, results: dict[str, list[str]], out: Path, label: str) -> list[Path]:
     out.mkdir(parents=True, exist_ok=True)
     when, tree_sha = datetime.now(timezone.utc).isoformat(), fingerprint(root)
@@ -89,7 +96,7 @@ def write_records(root: Path, results: dict[str, list[str]], out: Path, label: s
         record = out / f"{check_id}.txt"
         body = [f"check: {check_id}", f"command: python3 -m harness.run {label}", f"result: {'FAIL' if found else 'PASS'}",
                 f"time: {when}", f"target_sha256: {tree_sha}", f"findings: {len(found)}", ""] + [f"- {x}" for x in found]
-        record.write_text("\n".join(body) + "\n", encoding="utf-8")
+        record.write_text(scrub(root, "\n".join(body)) + "\n", encoding="utf-8")
         paths.append(record)
     return paths
 

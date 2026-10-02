@@ -1,0 +1,23 @@
+GOAL: rb 저장소 작업 Graph 단계 Q3(생성·검수 Harness)의 산출물이 합격 기준과 Intent 불변식을 실제로 만족하는지 독립적으로 검토한다. 단계 결과: 고정 시험 데이터에 심은 결함을 수학 6종·서버 권위·UI 14종·금지어 검사가 모두 잡고 기록을 남긴다.
+SCOPE: 산출물 파일 harness/manifest.json, harness/luau.py, harness/source.py, harness/checks/__init__.py, harness/checks/server.py, harness/checks/i18n.py, harness/checks/math_claims.py, harness/checks/safety.py, harness/checks/analytics.py, harness/run.py, harness/fixtures/index.json, tests/test_harness.py (저장소 루트 기준). 계약은 graph.json 의 Q3 노드, 불변식은 intent.md §5(INV-1~16), 용어는 intent.md §0.
+INVARIANTS: 수정하지 말 것(읽기 전용). 합격 기준:
+- Q3-C1: 깨끗한 고정 데이터(Rojo 구조의 Luau·LocalizationTable CSV·수학 명제)는 모든 정적 검사를 통과하고, 일부러 심은 결함은 각각 정해진 검사가 잡는다: 클라이언트가 보상을 정하는 코드·중복 보상·검증 없는 원격 입력·끊긴 번역 키·넘치는 긴 번역문·번역된 수식·코드 속 하드코딩 문구·틀린 수학 대사·조건이 빠진 수학 명제·어려운 문장·금지어·무작위/유료 보상 코드·URL 문자열·런타임 외부 호출(LLM 등)·필터 없는 자유 입력·커스텀 필드 개인정보·허용 밖 분석 이벤트·클라이언트 분석 전송 (목표: 깨끗한 데이터 위반 0, 심은 결함 전부 정해진 검사가 검출)
+- Q3-C2: 수학 검사 E1(참/거짓)·E2(조건 완전성)는 모델 없이 정확한 유리수 계산으로 판정하는 결정론 관문이다 — 같은 입력은 같은 결과, 틀린 명제·빠진 조건(기준점·단위·가로 변화 0 아님)은 실패, 맞는 명제는 통과 (INV-7) (목표: 틀린 명제·조건 누락 고정 데이터 모두 실패 판정, 맞는 명제 통과)
+- Q3-C3: 실행기가 검사마다 기록(명령·결과·시각·대상 데이터 지문)을 하나씩 남기고 기록에 로컬 경로가 없다 (목표: 검사 수 = 기록 수, 로컬 경로 0)
+- Q3-C4: 매니페스트가 수학 6종(E1~E6)·UI 14종(U1~U14)·안전 불변식 항목을 빠짐없이 담고 항목마다 방식(정적 Q3 · 실행 Q4 · 사람 Q5/Q8 · 잠긴 Q2 기준으로 덮음)과 이유를 가진다. 정적 항목은 실제 검사 함수가 있고, 고정 데이터 색인의 지문이 파일과 같다 (목표: 빠진 항목 0, 구현 없는 정적 항목 0, 지문 불일치 0)
+- Q3-6V: 이 단계를 잠그기 전에 6방향(전방·후방·위·아래·좌·우) 검토가 이 단계를 대상으로 기록된다 (intent §11) (목표: 6방향 각 1건 이상)
+EVIDENCE: 자동 검사 결과(binding b06dcd4390fc):
+- Q3-C1: PASS — exit 0; OK
+- Q3-C2: PASS — exit 0; OK
+- Q3-C3: PASS — exit 0; OK
+- Q3-C4: PASS — exit 0; OK
+- Q3-6V: PASS — 6방향 모두 기록됨
+STAGE SCOPE: 이 단계가 맡는 불변식: INV-3 엔진 코드에 화면 문구를 쓰지 않음(정적), INV-4 서버 권위·중복 보상·원격 입력 검증(정적), INV-10 분석 호출의 이벤트·필드(정적), INV-11 금지어(정적), INV-12 무작위·유료 보상 코드(정적), INV-16 URL·런타임 외부 호출·자유 입력(정적), INV-7 수학 E1·E2 결정론 관문
+다음 단계로 넘긴 것(이 단계의 결함이 아니다 — 넘긴 단계의 기준이 검사한다):
+- UI 실행 검사(U1~U5·U7~U12·U14 — 화면 폭·겹침·안전영역·포커스·자막·시간) → Q4 스테이징 Play 시험(DEC-2 뒤)
+- E3 교육과정 적합성 → Q8 현지 교사 승인(INV-7)
+- E4 오개념 대응(선택지 → 오개념 표) → Q4 선택지를 만들 때 정적 검사 추가
+- 서버 쿨다운 값 실측(cv.server_cooldown measure_at Q3) → Q4 Play 시험 — 정적 검사는 쿨다운 호출 존재만 본다
+- rojo build 로 실제 Place 생성 확인 → Q4(Rojo 설치·DEC-2 뒤)
+ASK: 각 합격 기준이 실제로 참인지, 테스트가 기준이 말하는 것을 정말로 검사하는지(빈 검사·우회 가능한 검사 포함), 이 단계가 맡는 불변식을 산출물이 어기는지 찾아라. 넘긴 항목은 지적하지 말고, 넘긴 단계의 기준으로 덮이지 않는 빈틈만 지적하라. 추측은 근거와 함께만.
+RETURN: lines of `severity | file:line | claim | evidence | minimal fix` (severity = critical|major|minor), or exactly NO_FINDINGS

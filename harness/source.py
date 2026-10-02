@@ -125,9 +125,13 @@ def load_tree(root: Path) -> Tree:
         return tree
     owners: dict[Path, str] = {}
     for rel_path, chain in mappings:
+        shown = "/".join(chain) if Path(str(rel_path)).is_absolute() else rel_path
+        if Path(str(rel_path)).is_absolute():
+            tree.problems.append(f"Rojo 경로({shown})는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다")
+            continue
         target = (root / rel_path).resolve()
         if not target.exists() or (root.resolve() not in target.parents and target != root.resolve()):
-            tree.problems.append(f"Rojo 경로 {rel_path} 가 트리 안에 없다")
+            tree.problems.append(f"Rojo 경로 {shown} 가 트리 안에 없다")
             continue
         for path in sorted(target.rglob("*")) if target.is_dir() else [target]:
             if path.is_file():
@@ -149,7 +153,7 @@ def _load_file(tree: Tree, path: Path, rel: str, owner: str) -> None:
     kind = _kind(path.name)
     try:
         if kind:
-            tree.luau.append(LuauFile(rel, owner, kind, luau.tokenize(path.read_text(encoding="utf-8"))))
+            tree.luau.append(LuauFile(rel, owner, kind, luau.fold_strings(luau.tokenize(path.read_text(encoding="utf-8")))))
         elif path.suffix == ".csv":
             _load_csv(tree, path, rel)
         elif path.name.endswith(DATA_SUFFIXES):

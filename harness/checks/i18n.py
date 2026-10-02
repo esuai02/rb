@@ -101,9 +101,12 @@ def _ui_text_literals(f, config) -> list:
     """UI 글자 속성에 바로 넣은 문자열 — 내용과 관계없이 문구 키를 거쳐야 한다."""
     toks, out = f.tokens, []
     for i in range(len(toks) - 2):
-        if not (toks[i].text == "." and toks[i + 1].kind == NAME and toks[i + 1].text in config["ui_text_properties"] and toks[i + 2].text == "="):
+        dotted = toks[i].text == "." and toks[i + 1].kind == NAME and toks[i + 1].text in config["ui_text_properties"] and toks[i + 2].text == "="
+        bracket = (toks[i].text == "[" and toks[i + 1].kind == STRING and toks[i + 1].text in config["ui_text_properties"]
+                   and i + 3 < len(toks) and toks[i + 2].text == "]" and toks[i + 3].text == "=")
+        if not (dotted or bracket):
             continue
-        depth, j = 0, i + 3
+        depth, j = 0, i + 3 + (1 if bracket else 0)
         while j < len(toks) and not (toks[j].kind == NAME and toks[j].text in ("local", "function", "end", "return")):
             if toks[j].kind == luau.SYMBOL and toks[j].text in ("(", "{", "["):
                 depth += 1

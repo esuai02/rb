@@ -211,9 +211,78 @@ def _fields_used(body, name: str) -> set[str]:
             if body[k].kind == NAME and body[k].text == name and body[k + 1].text == "." and body[k + 2].kind == NAME}
 
 
+def _if_spans(body) -> list[tuple[int, int]]:
+    """if 문의 (시작, 조건 끝=then) — 가드 조건 구간."""
+    spans, i = [], 0
+    while i < len(body):
+        if body[i].kind == NAME and body[i].text == "if":
+            j = i + 1
+            while j < len(body) and not (body[j].kind == NAME and body[j].text == "then"):
+                j += 1
+            spans.append((i, j))
+            i = j
+        i += 1
+    return spans
+
+
+def _guard_positions(body) -> dict[str, int]:
+    """막는 형태의 typeof 가드가 시작하는 자리 — 이름 → if 토큰 번호."""
+    out = {}
+    for start, stop in _if_spans(body):
+        cond = body[start + 1:stop]
+        after = body[stop + 1:stop + 2]
+        blocks = bool(after) and after[0].kind == NAME and after[0].text in BLOCKING
+        pairs = _typeof_pairs(cond)
+        if blocks and pairs and not any(x.kind == NAME and x.text == "and" for x in cond) and all(op == "~=" for _n, _k, op in pairs):
+            for name, _kind, _op in pairs:
+                out.setdefault(name, start)
+    for i, tok in enumerate(body):
+        if tok.kind == NAME and tok.text == "assert" and i + 1 < len(body) and body[i + 1].text == "(":
+            args = luau.balanced(body, i + 1)
+            if not any(x.kind == NAME and x.text == "or" for x in args):
+                for name, _kind, op in _typeof_pairs(args):
+                    if op == "==":
+                        out.setdefault(name, i)
+    return out
+
+
+def _range_positions(body) -> dict[str, int]:
+    """막는 형태의 범위 가드가 시작하는 자리 — `if x < A or x > B then return end` 처럼 크기를 견주어 멈추는 곳."""
+    out = {}
+    for start, stop in _if_spans(body):
+        cond, after = body[start + 1:stop], body[stop + 1:stop + 2]
+        if not (after and after[0].kind == NAME and after[0].text in BLOCKING):
+            continue
+        for k, tok in enumerate(cond):
+            if tok.kind == NAME and k + 1 < len(cond) and cond[k + 1].text in ("<", ">", "<=", ">="):
+                out.setdefault(tok.text, start)
+            elif tok.text in ("<", ">", "<=", ">=") and k + 1 < len(cond) and cond[k + 1].kind == NAME:
+                out.setdefault(cond[k + 1].text, start)
+    return out
+
+
+def _first_work(body, cooldown: tuple[str, ...]) -> int:
+    """처리를 시작하는 첫 호출 — 가드 조건 밖에 있는, 검증·쿨다운이 아닌 호출."""
+    guard_ranges = _if_spans(body)
+    skip = {"typeof", "assert", "warn", "print", "error", cooldown[0]}   # 검증·쿨다운·로그는 '처리' 가 아니다
+    for i, tok in enumerate(body):
+        if tok.kind != NAME or i + 1 >= len(body) or body[i + 1].text not in ("(", ".", ":"):
+            continue
+        if tok.text in skip or any(start <= i <= stop for start, stop in guard_ranges):
+            continue
+        if body[i + 1].text in (".", ":"):
+            if not (i + 2 < len(body) and body[i + 2].kind == NAME and i + 3 < len(body) and body[i + 3].text == "("):
+                continue
+        return i
+    return len(body)
+
+
 def remote_validation(tree, rules, config) -> list[str]:
-    """원격 처리 함수는 player 다음 인자마다 막는 형태의 typeof 검사를 거친다. 표로 받으면 쓰는 필드까지 검사한다."""
-    out = []
+    """원격 처리 함수는 player 다음 인자마다 형식(typeof)과 수의 범위를 막는 형태로, 처리를 시작하기 전에 거른다 (INV-4).
+
+    상태 검증은 보상에 닿는 경로에서 server.reward_after_verdict 가 맡는다.
+    """
+    out, cooldown = [], tuple(config["cooldown_call"])
     for f in tree.luau:
         for params, body, i, problem in _handlers(f):
             where = _at(f, f.tokens[i])
@@ -224,24 +293,44 @@ def remote_validation(tree, rules, config) -> list[str]:
                 out.append(f"{where} 원격 이벤트 처리가 클라이언트가 볼 수 있는 코드에 있다")
             if "..." in params:
                 out.append(f"{where} 가변 인자(...)는 형식을 검사할 수 없다 — 받는 값을 이름으로 적어야 한다")
-            guarded = _guards(body)
+            guarded, positions = _guards(body), _guard_positions(body)
+            ranges, work = _range_positions(body), _first_work(body, cooldown)
             for p in params[1:]:
                 if p == "...":
                     continue
                 if p not in guarded:
                     out.append(f"{where} 원격 입력 {p} 를 막는 형태의 typeof 검사로 거르지 않는다")
-                elif guarded[p] == "table":
-                    out += [f"{where} 표로 받은 {field} 의 형식을 검사하지 않는다" for field in sorted(_fields_used(body, p)) if field not in guarded]
+                    continue
+                if positions.get(p, len(body)) > work:
+                    out.append(f"{where} 원격 입력 {p} 의 형식 검사가 처리를 시작한 뒤에 있다 — 쓰기 전에 걸러야 한다")
+                if guarded[p] == "number" and ranges.get(p, len(body)) > work:
+                    out.append(f"{where} 원격 입력 {p} 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)")
+                if guarded[p] == "table":
+                    for field in sorted(_fields_used(body, p)):
+                        if field not in guarded:
+                            out.append(f"{where} 표로 받은 {field} 의 형식을 검사하지 않는다")
+                        elif guarded[field] == "number" and ranges.get(field, len(body)) > work:
+                            out.append(f"{where} 표로 받은 {field} 의 범위를 처리 전에 검사하지 않는다")
     return out
 
 
 def remote_cooldown(tree, rules, config) -> list[str]:
-    """원격 처리 함수는 쿨다운(cv.server_cooldown) 모듈을 거친다 — 값의 실측은 Q4."""
+    """원격 처리 함수는 처리를 시작하기 전에 쿨다운(cv.server_cooldown)의 결과로 멈춘다 — 값의 실측은 Q4."""
     path, out = tuple(config["cooldown_call"]), []
     for f in tree.luau:
-        for params, body, i, problem in _handlers(f):
-            if not problem and not luau.find_calls(body, path):
-                out.append(f"{_at(f, f.tokens[i])} 원격 이벤트 처리가 {'.'.join(path)} 를 거치지 않는다 (연타·자동 반복 방지)")
+        for _params, body, i, problem in _handlers(f):
+            if problem:
+                continue
+            where, work = _at(f, f.tokens[i]), _first_work(body, path)
+            blocking = [start for start, stop in _if_spans(body)
+                        if luau.find_calls(body[start:stop], path) and body[stop + 1:stop + 2]
+                        and body[stop + 1].kind == NAME and body[stop + 1].text in BLOCKING]
+            if not luau.find_calls(body, path):
+                out.append(f"{where} 원격 이벤트 처리가 {'.'.join(path)} 를 거치지 않는다 (연타·자동 반복 방지)")
+            elif not blocking:
+                out.append(f"{where} 쿨다운 결과로 멈추지 않는다 — if not {'.'.join(path)}(…) then return end 꼴이어야 한다")
+            elif min(blocking) > work:
+                out.append(f"{where} 쿨다운 검사가 처리를 시작한 뒤에 있다")
     return out
 
 

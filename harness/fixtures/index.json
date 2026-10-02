@@ -5,7 +5,7 @@
     "clean/src/client/Hud.client.luau": "a0602a46cb0ccdc20f295a3aa2caf5846e2224bf08250553d0f0ca802fcc32e9",
     "clean/src/server/Analytics.luau": "d96f0562d21704ecbce551e9b6abdc702fa01bb2ff6e75c9dad6a2a6de2a5763",
     "clean/src/server/Cooldown.luau": "df6b0687725303957b8d150e1f56802d48c6cacfbbd219f73782d60a587875bd",
-    "clean/src/server/Main.server.luau": "c03a321a94e55cd905e402361a7462008ccc999ffab8301fd77a9e06fd2bb3f0",
+    "clean/src/server/Main.server.luau": "a7f684462a5ec35fde60873ea5a42926cfbeb10dc16fb7e7e0632bbdb5e382ec",
     "clean/src/server/MissionService.luau": "087bc7179b7212e9d7636678e735d0af538167c29a9957928232a8a864afbee2",
     "clean/src/server/RewardService.luau": "733d78bba50b4913b02719bbe69c399d2f84c26ab230559e6b1a3508579e6d57",
     "clean/src/shared/Localization.csv": "487e913a0bfdcc259fa1951d40c3c4ef6e3ef72ec035de58b6033f780b94619a",

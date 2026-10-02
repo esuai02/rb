@@ -89,6 +89,17 @@ def tokenize(src: str) -> list[Token]:
     return tokens
 
 
+def fold_strings(tokens: list[Token]) -> list[Token]:
+    """상수 문자열 결합을 하나로 접는다 — "Text" .. "Box" 를 "TextBox" 로. 이름을 쪼개 검사를 비켜 가지 못하게 한다."""
+    out: list[Token] = []
+    for tok in tokens:
+        if tok.kind == STRING and len(out) >= 2 and out[-1].kind == SYMBOL and out[-1].text == ".." and out[-2].kind == STRING:
+            out[-2:] = [Token(STRING, out[-2].text + tok.text, out[-2].line)]
+        else:
+            out.append(tok)
+    return out
+
+
 def find_calls(tokens: list[Token], path: tuple[str, ...]) -> list[int]:
     """이름 경로(예: ("RewardService", "grant"))로 시작하는 호출 위치(첫 토큰 번호). 구분자는 . 또는 :"""
     hits = []
