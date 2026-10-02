@@ -1,8 +1,8 @@
-criterion: Q2-C1 — Graph 는 검사기의 닫힌 형식(항목 이름과 형식 — 참거짓·정수·목록)만 쓰고(모르는 항목 0 — 가격·확률·타이머 같은 항목으로 규칙을 비켜 가지 못한다), 모든 참조(용어·일상 표현·행동·미션·맥락·힌트 사다리·협동·NPC·보상·시나리오·이벤트·문구 키·정본 값)가 Q1 명세·용어집·이벤트 목록·정본 값으로 해석된다. 용어 중복·미션 선행·선수 용어 순환이 없다
+criterion: Q2-C1 — Graph 는 검사기의 닫힌 형식(항목 이름과 형식 — 참거짓·정수·목록)만 쓰고(모르는 항목 0 — 가격·확률·타이머 같은 항목으로 규칙을 비켜 가지 못한다), 모든 참조(용어·일상 표현·행동·미션·맥락·힌트 사다리·협동·NPC·보상·시나리오·이벤트·문구 키·정본 값)가 Q1 명세·용어집·이벤트 목록·정본 값으로 해석된다. id 를 가진 모든 목록의 id 가 형식에 맞고 겹치지 않으며, 글자 목록에 겹치는 값이 없고, 가리키는 파일(Q1 명세·정본 값)이 정해진 경로다. 미션 선행·선수 용어 순환이 없다
 command: python3 -m unittest tests.test_q2_graph.ReferenceTest -v
 exit: 0
-binding: 753a3a095819441b4c44540b73fff529ff67b02a09b2cc183cb0b1c61de84671
-time: 2026-10-02T04:49:05.650261+00:00
+binding: 546dbc57ebaafea2810a7b7686b2bf26a8d3dd90b29a0c02b0aa8f4f6ab85a59
+time: 2026-10-02T06:17:22.566776+00:00
 
 test_action_key_outside_q1_spec (tests.test_q2_graph.ReferenceTest.test_action_key_outside_q1_spec) ... ok
 test_baseline_passes (tests.test_q2_graph.ReferenceTest.test_baseline_passes) ... ok
@@ -21,6 +21,6 @@ test_unknown_term_in_reuse_context (tests.test_q2_graph.ReferenceTest.test_unkno
 test_world_identity_must_match_q1 (tests.test_q2_graph.ReferenceTest.test_world_identity_must_match_q1) ... ok
 
 ----------------------------------------------------------------------
-Ran 15 tests in 0.050s
+Ran 15 tests in 0.065s
 
 OK

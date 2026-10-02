@@ -47,7 +47,12 @@ REQUIRED_BANNED = {"입국", "출입국", "심사", "여권", "비자", "국적"
                    "불합격", "낙제", "오답", "정답", "틀렸", "틀린", "실패", "시험", "테스트", "진단", "순위", "연속", "매일", "서둘러", "남은 시간", "초대"}
 # 사람 결정(DEC)을 근거로 decided 가 될 수 있는 정본 값과, 그 결정 행에 글자 그대로 들어 있어야 하는 값 항목
 DECIDED_BY = {"cv.gate_name": ("DEC-1", "ko")}
-STEP_KINDS = {"situation", "everyday_expression", "player_action", "world_response", "math_label", "interaction", "reward"}
+# 단계 종류마다 반드시 있는 항목과 있어도 되는 항목 — 퀴즈·정의 카드 같은 다른 종류는 쓸 수 없다(INV-8·INV-15)
+STEP_FIELDS = {"situation": ({"key"}, set()), "interaction": ({"key"}, set()), "world_response": ({"key"}, {"other_result_key"}),
+               "everyday_expression": ({"keys"}, set()), "player_action": ({"keys"}, set()), "math_label": ({"key", "line_key"}, set()),
+               "reward": ({"ids"}, set())}
+CANONICAL_PATH = "specs/graph/canonical-values.yaml"
+STRING_KEY_RE = re.compile(r"^[a-z0-9_]+(\.[a-z0-9_]+)+$")
 HINT_KINDS = ["world_signal", "strategy_question", "similar_example"]
 STATUSES = {"decided", "proposed", "hypothesis"}
 LATER_STAGES = {"Q3", "Q4", "Q5", "Q6", "Q7", "Q8"}
@@ -303,7 +308,7 @@ def value_shape_errors(value, shape, where: str) -> list[str]:
         N: (lambda x: x is None or (isinstance(x, int) and not isinstance(x, bool)), "정수나 null 이어야 한다"),
         I: (lambda x: isinstance(x, int) and not isinstance(x, bool) and x > 0, "양의 정수여야 한다"),
         P: (lambda x: number(x) and x > 0, "양수여야 한다"), ONE: (lambda x: x == 1 and not isinstance(x, bool), "형식 판(schema_version)은 1 이어야 한다"),
-        LT: (lambda x: isinstance(x, list) and all(text(i) for i in x), "글자 목록이어야 한다"),
+        LT: (lambda x: isinstance(x, list) and all(text(i) for i in x) and len(set(x)) == len(x), "글자 목록이어야 한다 (겹치지 않게)"),
         LN: (lambda x: isinstance(x, list) and all(number(i) for i in x), "수 목록이어야 한다"),
         TL: (lambda x: text(x) or (isinstance(x, list) and all(text(i) for i in x)), "글자나 글자 목록이어야 한다"),
         ANY: (lambda x: True, ""),
@@ -349,6 +354,13 @@ def check_references(b: Bundle) -> list[str]:
     for group, (field, pattern) in ID_PATTERNS.items():
         errors += [f"{group}: id '{x.get(field)}' 가 '{pattern}' 형식이 아니다" for x in g.get(group, [])
                    if isinstance(x, dict) and not re.fullmatch(pattern, str(x.get(field)))]
+        ids = [x.get(field) for x in g.get(group, []) if isinstance(x, dict)]
+        if len(ids) != len(set(map(str, ids))):
+            errors.append(f"{group}: id 가 중복된다")
+    expected_spec = f"specs/worlds/{str(g.get('world_id')).replace('_', '-')}.yaml"
+    for field, want in (("world_spec", expected_spec), ("canonical_values", CANONICAL_PATH)):
+        if g.get(field) != want:
+            errors.append(f"{field}: {want} 이어야 한다 ({g.get(field)})")
     errors += [f"reuse_contexts/{c['id']}: id 가 용어 이름(ctx.{str(c.get('term_id')).split('.')[-1]}.…)으로 시작하지 않는다" for c in g.get("reuse_contexts", [])
                if not str(c.get("id")).startswith(f"ctx.{str(c.get('term_id')).split('.')[-1]}.")]
     if g.get("id") != f"{g.get('world_id')}.graph":
@@ -361,11 +373,7 @@ def check_references(b: Bundle) -> list[str]:
     terms = {t["term_id"]: t for t in g.get("terms", [])}
     if set(terms) != set(q1):
         errors.append(f"terms: Q1 명세의 용어와 다르다 (Graph {sorted(terms)} · Q1 {sorted(q1)})")
-    if len(terms) != len(g.get("terms", [])):
-        errors.append("terms: 같은 용어가 두 번 있다")
     by_id = missions(b)
-    if len(by_id) != len(g.get("missions", [])):
-        errors.append("missions: id 가 중복된다")
     for t in terms.values():
         errors += [f"terms/{t['term_id']}: 선수 용어 {p} 가 없다" for p in t.get("prerequisites", []) if p not in terms]
         if t.get("first_mission") not in by_id:
@@ -394,8 +402,6 @@ def check_references(b: Bundle) -> list[str]:
         if m.get("coop") and coops.get(m["coop"], {}).get("mission") != m["id"]:
             errors.append(f"missions/{m['id']}: 협동 {m['coop']} 가 없거나 다른 미션의 것이다")
     contexts = g.get("reuse_contexts", [])
-    if len({c["id"] for c in contexts}) != len(contexts):
-        errors.append("reuse_contexts: id 가 중복된다")
     for c in contexts:
         if c.get("term_id") not in terms:
             errors.append(f"reuse_contexts/{c['id']}: 용어 {c.get('term_id')} 가 없다")
@@ -451,7 +457,12 @@ def check_reuse(b: Bundle) -> list[str]:
     errors, by_id, q1 = [], missions(b), goals(b)
     for m in by_id.values():
         kinds = [s.get("kind") for s in m.get("steps", [])]
-        errors += [f"missions/{m['id']}: 단계 종류 {k} 는 쓸 수 없다 (퀴즈·정의 카드 금지, INV-8·INV-15)" for k in kinds if k not in STEP_KINDS]
+        errors += [f"missions/{m['id']}: 단계 종류 {k} 는 쓸 수 없다 (퀴즈·정의 카드 금지, INV-8·INV-15)" for k in kinds if k not in STEP_FIELDS]
+        for s in m.get("steps", []):
+            need, extra = STEP_FIELDS.get(s.get("kind"), (set(), set()))
+            have = set(s) - {"kind"}
+            if s.get("kind") in STEP_FIELDS and (not need <= have or have - need - extra or any(s.get(k) in ([], "", None) for k in need)):
+                errors.append(f"missions/{m['id']}: {s.get('kind')} 단계는 {sorted(need)} 가 꼭 있어야 하고 {sorted(need | extra)} 밖의 항목은 쓸 수 없다")
         if kinds.count("math_label") > 1:
             errors.append(f"missions/{m['id']}: 한 미션에 새 이름표가 {kinds.count('math_label')}개다 (INV-15 하나만)")
         if "math_label" in kinds and not m.get("new_term"):
@@ -598,6 +609,8 @@ def check_north_star(b: Bundle, by_id: dict[str, dict]) -> list[str]:
 def check_canonical(b: Bundle) -> list[str]:
     errors, entries, values = [], b.values.get("values", []), cv(b)
     errors += value_shape_errors(b.values, CANONICAL_SHAPE, "canonical")
+    if b.values.get("source") != K0_PATH:
+        errors.append(f"canonical: source 는 충돌 표가 있는 {K0_PATH} 이어야 한다")
     items = k0_items(b.k0_text)
     if not items:
         errors.append(f"{K0_PATH} §3 표를 읽지 못했다")
@@ -640,6 +653,8 @@ def check_canonical(b: Bundle) -> list[str]:
                 errors.append(f"{eid}: 참조 {ref} 가 intent.md 에 없다")
             elif ref.startswith("F") and ref not in b.evidence_ids:
                 errors.append(f"{eid}: 참조 {ref} 가 evidence.jsonl 에 없다")
+        if e.get("status") != "hypothesis" and "measure_at" in e:
+            errors.append(f"{eid}: measure_at 은 가설 값에만 둔다")
         if e.get("status") == "hypothesis" and e.get("measure_at") not in LATER_STAGES:
             errors.append(f"{eid}: 가설 값은 실측할 뒤 단계(measure_at: Q3~Q8)가 있어야 한다")
     g, spec = b.graph, b.spec
@@ -710,6 +725,7 @@ def check_glossary(b: Bundle) -> list[str]:
     for goal in spec.get("language_goals", []):
         q1_keys += [goal.get("label_key")] + goal.get("everyday_expression_keys", []) + goal.get("everyday_action_keys", [])
     errors += [f"Q1 문구 키 {k} 가 용어집에 없다" for k in q1_keys if k not in strings]
+    errors += [f"strings/{k}: 문구 키는 점으로 나눈 소문자 이름이어야 한다" for k in strings if not STRING_KEY_RE.fullmatch(str(k))]
     values = cv(b)
     names = {spec.get("setting", {}).get("world_name_key"): cv_dict(b, "cv.world_title").get("world"),
              spec.get("title_key"): cv_dict(b, "cv.gate_name").get("ko")}

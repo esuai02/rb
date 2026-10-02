@@ -83,7 +83,15 @@ class ReferenceTest(CheckCase):
         ("rewards/reward.explorer_card: 미션 m.ghost", lambda b: setv(b.graph["rewards"][0], "mission", "m.ghost")),
         ("sc.solo_touch_first_try: 미션 m.ghost", lambda b: b.graph["scenarios"][0]["path"].append("m.ghost")),
         ("입력 vr_headset 가 Q1", lambda b: setv(b.graph["scenarios"][0], "input", "vr_headset")),
-        ("terms: 같은 용어가 두 번 있다", lambda b: dup_first(b.graph["terms"])),
+        ("terms: id 가 중복된다", lambda b: dup_first(b.graph["terms"])),
+        ("rewards: id 가 중복된다", lambda b: dup_first(b.graph["rewards"])),
+        ("hint_ladders: id 가 중복된다", lambda b: dup_first(b.graph["hint_ladders"])),
+        ("roles: id 가 중복된다", lambda b: dup_first(b.graph["roles"])),
+        ("scenarios: id 가 중복된다", lambda b: dup_first(b.graph["scenarios"])),
+        ("coop: id 가 중복된다", lambda b: dup_first(b.graph["coop"])),
+        ("world_spec: specs/worlds/", lambda b: setv(b.graph, "world_spec", "specs/worlds/other.yaml")),
+        ("canonical_values: specs/graph/canonical-values.yaml", lambda b: setv(b.graph, "canonical_values", "garbage.yaml")),
+        ("겹치지 않게", lambda b: setv(b.graph["hint_ladders"][0], "keys", ["hint.coordinate.l1"] * 3)),
         ("id 'garbage' 가", lambda b: setv(b.graph["scenarios"][0], "id", "garbage")),
         ("id 가 용어 이름(ctx.coordinate.", lambda b: setv(b.graph["reuse_contexts"][0], "id", "ctx.slope.anchor_x")),
         ("Graph id 는 world_id", lambda b: setv(b.graph, "id", "garbage")),
@@ -178,6 +186,10 @@ class ReuseTest(CheckCase):
         ("에 행동이 없다", lambda b: setv(b.graph["reuse_contexts"][0], "action_keys", [])),
         ("일상어와 수학 이름 둘 다", lambda b: b.graph["reuse_contexts"][0]["accepts"].append("quiz")),
         ("앞에서 먼저 배운 용어", lambda b: setv(b.graph["terms"][1], "prerequisites", [])),
+        ("situation 단계는 ['key'] 가 꼭", lambda b: mission(b, "m.signal_wake")["steps"][0].pop("key")),
+        ("interaction 단계는 ['key'] 가 꼭", lambda b: setv(mission(b, "m.signal_wake")["steps"][1], "keys", ["prompt.signal_panel.activate"])),
+        ("everyday_expression 단계는 ['keys'] 가 꼭", lambda b: setv(mission(b, "m.signal_coordinate")["steps"][1], "keys", [])),
+        ("math_label 단계는 ['key', 'line_key'] 가 꼭", lambda b: mission(b, "m.signal_slope")["steps"][4].pop("line_key")),
     )
 
     def test_two_reuse_contexts_are_not_enough(self):
@@ -365,6 +377,8 @@ class CanonicalValuesTest(CheckCase):
     check = staticmethod(vg.check_canonical)
     cases = (
         ("§3 표를 읽지 못했다", lambda b: setattr(b, "k0_text", "")),
+        ("source 는 충돌 표", lambda b: setv(b.values, "source", "anything.md")),
+        ("measure_at 은 가설 값에만", lambda b: setv(value(b, "cv.hold_cancel"), "measure_at", "Q4")),
         ("서버 판정 거리가", lambda b: setv(value(b, "cv.server_distance")["value"], "server_check_studs", 8)),
         ("cv.match_wait.then: npc_fallback", lambda b: setv(value(b, "cv.match_wait")["value"], "then", "keep_waiting")),
         ("cv.rule_source.authority: server_config", lambda b: setv(value(b, "cv.rule_source")["value"], "authority", "client")),
@@ -468,6 +482,7 @@ class GlossaryTest(CheckCase):
         ("금지어가 겹친다", lambda b: dup_first(b.glossary["banned_terms"])),
         ("banned_terms[0].reason: 비지 않은 글자", lambda b: setv(b.glossary["banned_terms"][0], "reason", "")),
         ("glossary: 모르는 항목", lambda b: setv(b.glossary, "allow_terms", [])),
+        ("점으로 나눈 소문자 이름", lambda b: setv(b.glossary["strings"], "Bad Key", "문구")),
         ("glossary.strings: 글자 키 사전이어야", lambda b: setv(b.glossary, "strings", [])),
         ("glossary.banned_terms[0]: 모르는 항목", lambda b: setv(b.glossary["banned_terms"][0], "severity", "low")),
     )
