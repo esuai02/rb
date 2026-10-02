@@ -351,8 +351,8 @@ class EventsTest(CheckCase):
 
     def test_north_star_must_exclude_forced_tutorial(self):
         b = bundle()
-        b.events["north_star"]["numerator"]["contexts"] = "all_contexts"
-        self.assertCaught(b, "contexts optional_missions")
+        b.events["north_star"]["numerator"]["contexts"] = [c["id"] for c in b.graph["reuse_contexts"]]
+        self.assertCaught(b, "분자가 세는 맥락은 선택 미션의 맥락")
 
     def test_enum_must_match_graph_ids(self):
         b = bundle()
@@ -655,7 +655,11 @@ class DesignRulesTest(CheckCase):
         ("반드시 내는 이벤트 ['term_reused']", lambda b: b.graph["scenarios"][4]["expects_events"].remove("term_reused")),
         ("반드시 내는 이벤트 ['gate_opened']", lambda b: b.graph["scenarios"][0]["expects_events"].remove("gate_opened")),
         ("반드시 내는 이벤트 ['onboarding_complete']", lambda b: b.graph["scenarios"][0]["expects_events"].remove("onboarding_complete")),
-        ("반드시 내는 이벤트 ['first_math_success', 'math_attempt']", lambda b: setv(b.graph["scenarios"][0], "expects_events", ["session_start", "gate_opened", "onboarding_complete"])),
+        ("반드시 내는 이벤트 ['first_math_action', 'first_math_success', 'math_attempt']", lambda b: setv(b.graph["scenarios"][0], "expects_events",
+            [e for e in b.graph["scenarios"][0]["expects_events"] if e not in ("first_math_action", "first_math_success", "math_attempt")])),
+        ("반드시 내는 이벤트 ['explorer_card_earned']", lambda b: b.graph["scenarios"][0]["expects_events"].remove("explorer_card_earned")),
+        ("반드시 내는 이벤트 ['co_play_offered']", lambda b: b.graph["scenarios"][2]["expects_events"].remove("co_play_offered")),
+        ("생기지 않는 이벤트 ['session_end']", lambda b: b.graph["scenarios"][0]["expects_events"].append("session_end")),
         ("반드시 내는 이벤트 ['session_start']", lambda b: b.graph["scenarios"][0]["expects_events"].remove("session_start")),
         ("필수 미션이 없다", lambda b: [m.update(core=False, target_end_s=None) for m in b.graph["missions"]]),
         ("필수 경로에 있어야 한다", lambda b: setv(mission(b, "m.signal_slope"), "core", False)),
@@ -737,6 +741,22 @@ class DesignRulesTest(CheckCase):
         b = bundle()
         b.graph["scenarios"] = [s for s in b.graph["scenarios"] if s["variation"] != "idle_hints"]
         self.assertCaught(b, "멈춤")
+
+    def test_every_event_rule_is_pinned_by_a_scenario(self):
+        """허용 이벤트마다 그 이벤트를 내는 시나리오가 있고, 기대 이벤트에서 빼거나 생기지 않는 이벤트를 더하면 잡힌다."""
+        covered = {e for s in BASE.graph["scenarios"] for e in s["expects_events"]}
+        self.assertEqual(covered, vg.ALLOWED_EVENTS)
+        for i, s in enumerate(BASE.graph["scenarios"]):
+            for event in sorted(vg.ALLOWED_EVENTS):
+                with self.subTest(scenario=s["id"], event=event):
+                    b = bundle()
+                    events = b.graph["scenarios"][i]["expects_events"]
+                    if event in events:
+                        events.remove(event)
+                        self.assertCaught(b, f"{s['id']}: 이 행동이 반드시 내는 이벤트 ['{event}']")
+                    else:
+                        events.append(event)
+                        self.assertCaught(b, f"{s['id']}: 이 행동으로는 생기지 않는 이벤트 ['{event}']")
 
     def test_hint_reveals_answer(self):
         b = bundle()

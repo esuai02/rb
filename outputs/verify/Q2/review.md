@@ -1,7 +1,3 @@
-major | tools/validate_graph.py:75,441 | role.contribution이 임의 문자열이어도 Q1 행동 참조로 검증되지 않는다 | Graph의 ping_anchor_cell을 does_not_exist로 바꿔도 전체 검사가 PASS | contribution을 Q1 action key 또는 별도 폐쇄 열거형으로 제한하고 변이 테스트 추가
-
-major | tools/validate_graph.py:788-795 | 목표 표현이 일상 표현의 일부 단어만 포함해도 통과한다 | answer.coordinate.signal_cell을 오른쪽으로 바꾸고 이름표도 맞춰도 전체 검사가 PASS | 목표 표현의 필수 구성요소·월드 결과 연결을 구조화해 검증하고 부분 표현 변이 추가
-
-major | tools/validate_graph.py:901-906 | 시나리오가 실제 재도전·멈춤·일상어 사용을 검증하지 않고 variation 문자열만 검사한다 | 시나리오의 기대 이벤트를 임의 축소해도 variation/path 조건만 만족하면 PASS; 실제 입력·표현 사용 필드가 없음 | 시나리오에 검증 가능한 행동·표현·시도·정지 상태를 추가하고 의미 변이 테스트
-
-minor | tools/validate_graph.py:518,143-147 | 모든 검사 줄에 대응하는 변이 테스트가 없다 | max_custom_events와 coop_sync_window·server_cooldown·label/hint 범위 변이가 tests/test_q2_graph.py에 없음 | 각 분기·범위 항목별 실패 변이 테스트 추가
+major | specs/analytics/events.yaml:16,45,62; tools/validate_graph.py:551-555,598-606 | 북극성 분자가 선택 미션 맥락만 센다는 연결이 구조적으로 보장되지 않는다 | context 열거형에 필수·선택 맥락이 모두 있고 검사기는 `optional_missions` 문자열과 용어별 선택 맥락 1개 존재만 확인한다 | 선택 맥락 ID 집합을 정본으로 구조화하고 분자 집합과 정확히 비교한다
+major | tools/validate_graph.py:971-978; tests/test_q2_graph.py:652-658 | 시나리오 필수 이벤트 검사가 불완전하다 | `m.gate_open`의 `explorer_card_earned`를 기대 목록에서 삭제해도 `check_events`·`check_design_rules`가 모두 통과한다. 카드 보상은 graph:190-195, 이벤트는 events.yaml:34-37에 정의되어 있다 | 경로·보상·협동 상태에서 필수 이벤트를 모두 계산하고 카드·협동 제안 변이를 추가한다
+major | tools/validate_graph.py:642-650; tests/test_q2_graph.py:419-423 | `decided` 정본 값의 `q1_paths`가 실제 잠긴 Q1 명세를 가리키는지 검사하지 않는다 | 현재 코드는 경로 존재와 값 일치만 확인하며 `LOCK-Q1` 바인딩·해시를 읽지 않는다 | Q1 잠금 증거와 현재 명세 바인딩을 검증한 뒤에만 `q1_paths`를 결정 근거로 인정한다

@@ -59,7 +59,7 @@ north_star:
     aggregation: count
     window_days: 7
     filter: {expression_used: [label]}  # '용어 사용'만 센다. 일상어 재사용은 보조 지표
-    contexts: optional_missions         # 필수 게이트 경로(강제 튜토리얼) 안의 재사용은 세지 않는다
+    contexts: [ctx.coordinate.drone_delivery, ctx.slope.partner_bridge]   # 선택 미션의 맥락만 — 필수 게이트 경로(강제 튜토리얼) 안의 재사용은 세지 않는다
   denominator: {event: session_start, aggregation: count_unique_users, window_days: 7}   # 매 세션 이벤트(frequency: every_session)
   per_player_storage: false             # 집계만 쓴다 (DEC-12 결정 전)
   secondary: {id: ns.weekly_everyday_reuse, note: 같은 조건에서 expression_used = everyday — 용어를 몰라도 진행하는지(INV-15) 본다}

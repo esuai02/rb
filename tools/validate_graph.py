@@ -30,6 +30,7 @@ CV_ID_RE = re.compile(r"^cv\.[a-z_]+$")
 # 분석 필드 이름 허용 목록 — 여기에 없는 필드는 쓸 수 없다(INV-10). 늘리려면 이 목록을 고치고 리뷰를 다시 받는다
 ALLOWED_FIELDS = {"mission", "term", "context", "expression_used", "outcome", "attempt", "hint_level", "play_mode", "input", "offer_source"}
 # 분석 이벤트 이름 허용 목록 — 여기에 없는 이벤트는 보낼 수 없다(INV-10, K5 §5·K3 §4 를 합친 것). 늘리려면 이 목록을 고치고 리뷰를 다시 받는다
+# 시나리오 기대 이벤트는 implied_events 가 이 목록 전부의 발생 규칙으로 계산한다
 ALLOWED_EVENTS = {"onboarding_start", "character_spawned", "first_input", "gate_visible", "movement_complete", "first_interaction",
                   "first_math_action", "first_math_success", "gate_opened", "explorer_card_earned", "zone_portal_entered", "onboarding_complete",
                   "session_start", "math_attempt", "hint_shown", "label_shown", "term_reused", "co_play_offered", "co_play_started", "session_end"}
@@ -109,7 +110,7 @@ CV_SHAPES = {
     "cv.color_meaning": {"purple": T, "hold_interrupted": LT, "color_only": B},
 }
 RATIO = {"event": T, "aggregation": T, "window_days": I}
-NUMERATOR = dict(RATIO, filter=("map", LT), contexts=T)
+NUMERATOR = dict(RATIO, filter=("map", LT), contexts=LT)
 EVENTS_SHAPE = {
     "schema_version": ONE, "transport": T, "sent_by": T, "limits": {"max_custom_events": I, "max_fields_per_event": I}, "fields": ("map", LT),
     "onboarding_funnel": [{"step": I, "name": T, "fields": LT, "frequency": T}],
@@ -595,8 +596,9 @@ def check_north_star(b: Bundle, by_id: dict[str, dict]) -> list[str]:
         errors.append("north_star: 분모 이벤트는 매 세션 보낸다 (frequency every_session)")
     if num.get("filter") != {"expression_used": ["label"]}:
         errors.append("north_star: 분자는 수학 이름표로 말한 재사용만 센다 (filter expression_used = [label])")
-    if num.get("contexts") != "optional_missions":
-        errors.append("north_star: 분자는 선택 미션의 맥락만 센다 (contexts optional_missions — 필수 경로는 강제 튜토리얼)")
+    optional = {c.get("id") for c in b.graph.get("reuse_contexts", []) if not by_id.get(c.get("mission"), {}).get("core", True)}
+    if set(num.get("contexts") or []) != optional:
+        errors.append(f"north_star: 분자가 세는 맥락은 선택 미션의 맥락 {sorted(optional)} 과 정확히 같아야 한다 (필수 경로는 강제 튜토리얼)")
     if "label" not in ev.get("fields", {}).get("expression_used", []):
         errors.append("north_star: expression_used 에 label 값이 없어 '용어 사용'을 셀 수 없다")
     if ns.get("per_player_storage") is not False:
@@ -968,15 +970,40 @@ def scenario_errors(b: Bundle, s: dict, core_ids: set[str]) -> list[str]:
     stop = s.get("stops_after")
     if stop is not None and (not path or path[-1] != stop or core_ids <= set(path)):
         errors.append(f"scenarios/{sid}: 끝난 지점은 경로의 마지막 미션이고 필수 경로를 다 지나기 전이어야 한다")
-    implied = {"session_start"} | ({"math_attempt", "first_math_success"} if any(by_id.get(p, {}).get("new_term") for p in path) else set())
-    implied |= {"hint_shown"} if attempts >= trigger.get("other_results", 10 ** 9) or idle >= trigger.get("idle_seconds", 10 ** 9) else set()
-    implied |= {"gate_opened"} if any(st.get("kind") == "reward" for p in path for st in by_id.get(p, {}).get("steps", [])) else set()
-    implied |= {"onboarding_complete"} if core_ids <= set(path) else set()
-    implied |= {"co_play_started"} if s.get("play_mode") == "duo" and any(by_id.get(p, {}).get("coop") for p in path) else set()
-    implied |= {"term_reused"} if reuse_optional else set()
-    implied |= {"session_end"} if stop is not None else set()
-    missing = sorted(implied - set(s.get("expects_events") or []))
-    return errors + ([f"scenarios/{sid}: 이 행동이 반드시 내는 이벤트 {missing} 를 기대 이벤트에 담지 않았다"] if missing else [])
+    expected = implied_events(b, s, core_ids)
+    got = set(s.get("expects_events") or [])
+    if expected - got:
+        errors.append(f"scenarios/{sid}: 이 행동이 반드시 내는 이벤트 {sorted(expected - got)} 를 기대 이벤트에 담지 않았다")
+    if got - expected:
+        errors.append(f"scenarios/{sid}: 이 행동으로는 생기지 않는 이벤트 {sorted(got - expected)} 를 기대 이벤트에 담았다")
+    return errors
+
+
+def implied_events(b: Bundle, s: dict, core_ids: set[str]) -> set[str]:
+    """시나리오(첫 세션)의 경로·행동이 반드시 내는 이벤트 — 허용 이벤트(ALLOWED_EVENTS) 전부의 발생 규칙."""
+    g, by_id = b.graph, missions(b)
+    path, steps = s.get("path") or [], [st for p in (s.get("path") or []) for st in by_id.get(p, {}).get("steps", [])]
+    trigger = cv_dict(b, "cv.hint_ladder").get("first_trigger") or {}
+    kinds = {st.get("kind") for st in steps}
+    granted = {r.get("kind") for r in g.get("rewards", []) if r.get("mission") in path and r.get("basis") == "completion"}
+    core = [m["id"] for m in g.get("missions", []) if m.get("core")]
+    together = s.get("play_mode") == "duo" and any(by_id.get(p, {}).get("coop") for p in path)
+    rules = {
+        "session_start": True, "onboarding_start": True, "character_spawned": True, "first_input": True, "gate_visible": True,
+        "movement_complete": "interaction" in kinds, "first_interaction": "interaction" in kinds,
+        "first_math_action": any(by_id.get(p, {}).get("new_term") for p in path),
+        "math_attempt": any(by_id.get(p, {}).get("new_term") for p in path),
+        "first_math_success": any(by_id.get(p, {}).get("new_term") for p in path),
+        "label_shown": "math_label" in kinds,
+        "hint_shown": s.get("attempts_before_target", 0) >= trigger.get("other_results", 10 ** 9) or s.get("idle_s", 0) >= trigger.get("idle_seconds", 10 ** 9),
+        "gate_opened": "reward" in kinds, "explorer_card_earned": "card" in granted,
+        "zone_portal_entered": bool(core) and core[-1] in path, "onboarding_complete": bool(core_ids) and core_ids <= set(path),
+        "co_play_offered": together or ("reward" in kinds and cv_dict(b, "cv.coop_offer_timing").get("invite_prompt") == "after_gate_open"),
+        "co_play_started": together,
+        "term_reused": any(c.get("mission") in path for c in g.get("reuse_contexts", [])),
+        "session_end": s.get("stops_after") is not None,
+    }
+    return {name for name, happens in rules.items() if happens}
 
 
 CHECKS = {

@@ -104,6 +104,19 @@ class GateFlowTest(unittest.TestCase):
         self.fake_reviewer("리뷰어가 형식을 지키지 않음")
         self.assertEqual(verify.cmd_review(self.root, "Q1"), 2)
 
+    def test_packet_shows_only_the_latest_result_per_criterion(self):
+        verify.cmd_run(self.root, "Q1")  # Q1-C1 PASS, Q1-6V FAIL
+        binding = self.gate()["binding"]
+        verify.append(self.root, {"id": "V-stale", "kind": "verification", "node_id": "Q1", "binding": binding,
+                                  "criterion_id": "Q1-C1", "result": "FAIL", "observed": "일시적 오류"})
+        verify.cmd_run(self.root, "Q1")  # 같은 binding 을 다시 검사
+        graph = verify.load_graph(self.root)
+        packet = verify.review_packet(self.root, graph, verify.node_of(graph, "Q1"), binding)
+        section = packet.split("EVIDENCE:", 1)[1].split("STAGE SCOPE:", 1)[0]
+        lines = [l for l in section.splitlines() if l.startswith("- Q1-C1:")]
+        self.assertEqual(lines, ["- Q1-C1: PASS — exit 0; OK"])
+        self.assertNotIn("일시적 오류", packet)
+
     def test_claude_fallback_is_fresh_context_not_external(self):
         self.fake_reviewer("NO_FINDINGS", tool="claude")
         verify.cmd_review(self.root, "Q1")
@@ -125,6 +138,25 @@ class GateFlowTest(unittest.TestCase):
         after = self.gate()
         self.assertNotEqual(after["verdict"], "PASS")
         self.assertTrue(any("no verification for this artifact" in m for m in after["missing"]))
+
+    def test_dependent_stage_needs_prerequisite_locked_at_current_version(self):
+        # Q2 검사기가 쓰는 Q1 명세 값(q1_paths)이 잠긴 판인지는 게이트가 보장한다 — Q1 산출물이 바뀌면 Q2 게이트가 막힌다
+        self.add_vectors("V-FWD", "V-LEFT")
+        verify.cmd_run(self.root, "Q1")
+        self.fake_reviewer("NO_FINDINGS")
+        verify.cmd_review(self.root, "Q1")
+        verify.cmd_approve(self.root, "Q1", "사용자 메시지 테스트 '잠금 승인'", None)
+        self.assertTrue(verify.helper_gate(self.root, "Q1", lock=True)["locked"])
+        graph = json.loads((self.root / "graph.json").read_text(encoding="utf-8"))
+        q2 = json.loads(json.dumps(graph["nodes"][0]).replace("Q1", "Q2"))
+        q2.update(depends_on=["Q1"], artifacts=["b.txt"])
+        graph["nodes"].append(q2)
+        (self.root / "b.txt").write_text("stage 2", encoding="utf-8")
+        (self.root / "graph.json").write_text(json.dumps(graph, ensure_ascii=False), encoding="utf-8")
+        blocked = "Dependency Q1 is not currently locked"
+        self.assertNotIn(blocked, verify.helper_gate(self.root, "Q2")["missing"])
+        (self.root / "a.txt").write_text("artifact v2", encoding="utf-8")
+        self.assertIn(blocked, verify.helper_gate(self.root, "Q2")["missing"])
 
     def test_empty_vector_reviews_do_not_count(self):
         for v in ("V-FWD", "V-LEFT"):
