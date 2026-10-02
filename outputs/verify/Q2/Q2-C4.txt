@@ -1,8 +1,8 @@
 criterion: Q2-C4 — 정본 값 파일의 출처는 K0 문서이고, 원천 문서 간 충돌 값(K0 §3)의 모든 행이 정본 값 하나와 근거, 상태(proposed · hypothesis 는 실측 단계 · decided 는 decisions.md 에서 결정됨이고 값이 그 결정 행에 있는 관련 DEC, 또는 Q1 명세 경로 값과 일치하는 q1_paths — 그 Q1 명세가 잠긴 판인지는 검사기가 아니라 3층 게이트가 보장한다(Q1 산출물이 바뀌면 Q2 게이트가 '선행 Q1 잠금 없음'으로 막힘, tools 회귀 테스트))를 가진다. 정본 값 안쪽 항목도 검사기의 닫힌 형식만 쓰고(가격·확률 같은 모르는 항목 0), Graph·Q1 이 쓰는 실제 값과 일치한다. 근거 참조는 intent·근거 원장에 실제로 있는 ID 이고, 불변식에 묶인 값(서버 권위·NPC 대체·강제 실패 없음 등)은 고정, 가설 수치는 원천 문서들이 낸 값의 범위 안이다(K0 §3, 리듬 규칙은 K6)
 command: python3 -m unittest tests.test_q2_graph.CanonicalValuesTest -v
 exit: 0
-binding: 06598c4d7c2c365f8664842d54c7393ae454d6d9026515cf1b127cd85d02148c
-time: 2026-10-02T08:39:48.327172+00:00
+binding: cc23c1f19ef785965c830f074322a1bb0c57f79963caa8af63f913e53a97f88c
+time: 2026-10-02T08:52:04.235911+00:00
 
 test_baseline_passes (tests.test_q2_graph.CanonicalValuesTest.test_baseline_passes) ... ok
 test_decided_needs_human_decision_or_q1 (tests.test_q2_graph.CanonicalValuesTest.test_decided_needs_human_decision_or_q1) ... ok
@@ -20,6 +20,6 @@ test_unknown_status (tests.test_q2_graph.CanonicalValuesTest.test_unknown_status
 test_value_must_match_graph (tests.test_q2_graph.CanonicalValuesTest.test_value_must_match_graph) ... ok
 
 ----------------------------------------------------------------------
-Ran 14 tests in 0.107s
+Ran 14 tests in 0.111s
 
 OK

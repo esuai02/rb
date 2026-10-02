@@ -944,6 +944,8 @@ def check_design_rules(b: Bundle) -> list[str]:
                 or not s.get("path") or (core and s["path"][0] != core[0]["id"]):
             errors.append(f"scenarios/{s.get('id')}: 변형·방식은 정해진 값, 기대 이벤트가 있고 경로는 첫 필수 미션에서 시작해야 한다")
         errors += scenario_errors(b, s, core_ids)
+        errors += [f"scenarios/{s.get('id')}: 경로의 미션 {p} 가 플레이 방식 {s.get('play_mode')} 를 지원하지 않는다" for p in s.get("path", [])
+                   if p in by_id and s.get("play_mode") not in by_id[p].get("play_modes", [])]
         seen = set()
         for step in s.get("path", []):
             missing = [r for r in by_id.get(step, {}).get("requires", []) if r not in seen]

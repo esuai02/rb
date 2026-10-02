@@ -660,6 +660,7 @@ class DesignRulesTest(CheckCase):
         ("반드시 내는 이벤트 ['explorer_card_earned']", lambda b: b.graph["scenarios"][0]["expects_events"].remove("explorer_card_earned")),
         ("반드시 내는 이벤트 ['co_play_offered']", lambda b: b.graph["scenarios"][2]["expects_events"].remove("co_play_offered")),
         ("생기지 않는 이벤트 ['session_end']", lambda b: b.graph["scenarios"][0]["expects_events"].append("session_end")),
+        ("경로의 미션 m.signal_slope 가 플레이 방식 duo", lambda b: setv(mission(b, "m.signal_slope"), "play_modes", ["solo_npc"])),
         ("반드시 내는 이벤트 ['session_start']", lambda b: b.graph["scenarios"][0]["expects_events"].remove("session_start")),
         ("필수 미션이 없다", lambda b: [m.update(core=False, target_end_s=None) for m in b.graph["missions"]]),
         ("필수 경로에 있어야 한다", lambda b: setv(mission(b, "m.signal_slope"), "core", False)),
