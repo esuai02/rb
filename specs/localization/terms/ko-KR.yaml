@@ -95,6 +95,15 @@ strings:
   sit.reuse.slope.partner_bridge: 두 탑 사이 다리가 기울어서 건널 수 없어. 다리를 어떻게 놓을까?
   resp.reuse.slope.bridge_flat: 다리가 평평해져서 건널 수 있어!
   choice.use_label: 수학 이름으로 말하기
+  answer.coordinate.slope_anchor: 오른쪽 1, 위 1
+  answer.coordinate.portal_map: 오른쪽 1, 위 2
+  answer.coordinate.drone_delivery: 왼쪽 1, 위 2
+  hint.reuse.coordinate.l1: 출발점에서 가로줄과 세로줄에 빛이 켜졌어. 빛줄을 따라 세어 봐.
+  hint.reuse.coordinate.l2: 출발점에서 목표까지, 옆으로 몇 칸이고 위아래로 몇 칸일까?
+  hint.reuse.coordinate.l3: 옆 드론은 출발점에서 오른쪽 2, 아래 2로 날아가 자기 자리에 닿았어. 같은 방법으로 세어 보자.
+  hint.reuse.slope.l1: 목표 높이에 빛줄이 켜졌어. 레일 끝과 견주어 봐.
+  hint.reuse.slope.l2: 레일 끝과 목표 중에 어느 쪽이 더 높아?
+  hint.reuse.slope.l3: 옆 작은 레일은 끝이 너무 높았는데, 덜 올라가게 바꾸니 닿았어. 네 레일 끝은 어때?
 
   # 다음 목표 — 한 곳만 강하게 추천
   zone.metro_district.name: Metro District

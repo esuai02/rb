@@ -1,6 +1,7 @@
 # 정본 값 — 원천 문서 간 충돌(docs/knowledge/K0-docs-index.md §3)을 값 하나로 정한다 (작업 Graph Q2-C4)
 # 검사: python3 tools/validate_graph.py
-# status: decided   = 사람 결정(DEC-*) 또는 잠긴 Q1 명세가 이미 정한 값. 불변식(INV-*)에서 AI 가 끌어낸 값은 decided 가 아니다
+# status: decided   = decisions.md 에서 결정됨인 사람 결정(DEC-*), 또는 잠긴 Q1 명세의 값(q1_paths 로 명세 경로를 적고 값이 같아야 한다).
+#                      불변식(INV-*)에서 AI 가 끌어낸 값은 decided 가 아니다
 #         proposed  = AI 제안. Q2 잠금 승인(LOCK-Q2)으로 확정된다
 #         hypothesis = 시작 수치. measure_at 단계에서 실측으로 고친다 (라이브 반영은 사람 승인 뒤 — INV-13)
 # Graph 는 수치를 다시 적지 않고 id(cv.*)로 참조한다. 수치의 정본은 이 파일 하나다.
@@ -40,6 +41,7 @@ values:
     value: {target_minutes: [3, 5]}
     status: decided
     refs: [Q1]
+    q1_paths: {target_minutes: session.target_minutes}
     rationale: 잠긴 Q1 명세 session.target_minutes. 원천 문서의 '7분 넘으면 경고'는 실측 임계라 Q4 에서 정한다
 
   - id: cv.match_wait
@@ -151,6 +153,7 @@ values:
     value: {id: npc.signal_drone, name_key: npc.signal_drone.name}
     status: proposed
     refs: [Q1, INV-9]
+    q1_paths: {id: coop.npc_fallback}
     rationale: 잠긴 Q1 명세의 NPC 하나(신호 드론). 이름은 원천 문서 다수가 쓴 '루미'. 라인 드론·보조 드론은 같은 NPC 의 다른 이름이라 쓰지 않는다
 
   - id: cv.coop_offer_timing

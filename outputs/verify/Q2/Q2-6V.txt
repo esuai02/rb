@@ -1,10 +1,11 @@
 criterion: Q2-6V — 이 단계를 잠그기 전에 6방향(전방·후방·위·아래·좌·우) 검토가 이 단계를 대상으로 기록된다 (intent §11)
-binding: a09229fc8cf32d7472a54a1ea61101f6bd0c62d9f868e121d6542b7f0f81ea69
-time: 2026-10-02T02:00:51.222755+00:00
+binding: 8dd66411f8e5c4f29c97c60bc2238f312476b2f7e198a1d5daf2acf335de26d7
+time: 2026-10-02T02:31:11.169323+00:00
 
-V-BWD: VR-BWD-Q2-a09229fc
-V-DOWN: VR-DOWN-Q2-a09229fc
-V-FWD: VR-FWD-Q2-a09229fc
-V-LEFT: VR-LEFT-Q2-a09229fc
-V-RIGHT: VR-RIGHT-Q2-a09229fc
-V-UP: VR-UP-Q2-a09229fc
+V-BWD: VR-BWD-Q2-8dd66411
+V-DOWN: VR-DOWN-Q2-8dd66411
+V-FWD: VR-FWD-Q2-8dd66411
+V-LEFT: VR-LEFT-Q2-8dd66411
+V-RIGHT: VR-RIGHT-Q2-8dd66411
+V-UP: VR-UP-Q2-8dd66411
+세지 않은 기록(다른 버전이거나 내용이 빠짐): VR-FWD-Q2-a09229fc, VR-BWD-Q2-a09229fc, VR-UP-Q2-a09229fc, VR-DOWN-Q2-a09229fc, VR-LEFT-Q2-a09229fc, VR-RIGHT-Q2-a09229fc (필수: 지금 binding, observed, proposal, next, sources)
