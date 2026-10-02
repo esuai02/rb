@@ -38,6 +38,9 @@ def resolve_names(tokens: list[Token]) -> dict[str, object]:
     for name, rhs in _statements(tokens):
         assigned.setdefault(name, []).append(rhs)
     known: dict[str, object] = {name: UNRESOLVED for name, rhs in assigned.items() if len(rhs) > 1}
+    for name in _reassigned(tokens):
+        known[name] = UNRESOLVED   # 나중에 다시 묶이는 이름은 값을 하나로 볼 수 없다
+        assigned.pop(name, None)
     for _round in range(4):   # 몇 단계를 거쳐도 끝까지 따라간다
         before = dict(known)
         for name, rhs_list in assigned.items():
@@ -139,4 +142,14 @@ def dynamic_member_calls(f, module_names: set[str]) -> list[tuple[int, str]]:
     for i, tok in enumerate(toks):
         if tok.kind == NAME and tok.text in module_names and i + 1 < len(toks) and toks[i + 1].text == "[":
             out.append((i, tok.text))
+    return out
+
+
+def _reassigned(tokens: list[Token]) -> set[str]:
+    """`local` 없이 다시 묶이는 이름 — 값이 바뀔 수 있으므로 상수로 보지 않는다."""
+    out = set()
+    for i in range(1, len(tokens) - 1):
+        if tokens[i].kind == NAME and tokens[i + 1].kind == SYMBOL and tokens[i + 1].text == "=" \
+                and tokens[i - 1].text not in ("local", ".", ",") and tokens[i - 1].kind != NAME:
+            out.add(tokens[i].text)
     return out

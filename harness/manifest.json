@@ -2209,6 +2209,148 @@
           "replace": "도시 언어 게이트가 열렸어! ftp://example.xyz 에서 더 보기,"
         }
       ]
+    },
+    {
+      "id": "D-double-negated-cooldown",
+      "class": "두 번 뒤집은 쿨다운",
+      "expected": [
+        "server.remote_cooldown"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif not Cooldown.allow(player, \"signal\") then return end\n",
+          "replace": "\tif not not Cooldown.allow(player, \"signal\") then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-reassigned-grid",
+      "class": "다시 묶인 범위 상수",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local GRID = 2",
+          "replace": "local GRID = 2\nGRID = 9999"
+        }
+      ]
+    },
+    {
+      "id": "D-dynamic-authority-member",
+      "class": "동적 멤버로 쓴 보상 권한",
+      "expected": [
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "sendCell(2, 1)\nlocal player = game:GetService(\"Players\").LocalPlayer\nplayer[pickField()].Value += 1\n"
+        }
+      ]
+    },
+    {
+      "id": "D-term-line-without-claim",
+      "class": "숫자 없는 용어 대사에 명제 없음",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "resp.gate_open,",
+          "replace": "hint.slope.extra,기울기가 더 가팔라.,힌트,,[Ŝţēēƥēŕ.]\nresp.gate_open,"
+        }
+      ]
+    },
+    {
+      "id": "D-fraction-line-untied",
+      "class": "대사와 묶이지 않은 분수 계수",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    line: {m: 2, b: 1}\n",
+          "replace": "    line: {m: '1/2', b: 4}\n"
+        },
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    point: [2, 5]\n",
+          "replace": "    point: [2, 5]\n"
+        }
+      ]
+    },
+    {
+      "id": "D-interpolated-string",
+      "class": "보간 문자열 안의 코드",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\t\towned:SetAttribute(rewardId, true)\n",
+          "replace": "\t\towned:SetAttribute(rewardId, true)\n\t\tprint(`gave {rewardId}`)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-project-tree-not-object",
+      "class": "구조가 틀린 Rojo 프로젝트",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "default.project.json",
+          "find": "\"tree\": {\n    \"$className\": \"DataModel\",",
+          "replace": "\"tree\": [{\n    \"$className\": \"DataModel\","
+        },
+        {
+          "file": "default.project.json",
+          "find": "{\"Gate\": {\"$path\": \"src/client\"}}}\n  }\n}",
+          "replace": "{\"Gate\": {\"$path\": \"src/client\"}}}\n  }]\n}"
+        }
+      ]
     }
   ]
 }

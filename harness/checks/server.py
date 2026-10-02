@@ -94,6 +94,8 @@ def reward_authority(tree, rules, config) -> list[str]:
         where = "클라이언트 코드" if f.client_visible else "보상 모듈 밖 서버 코드"
         out += [f"{_at(f, t)} {where}가 보상·저장 권한 {t.text} 를 쓴다 — 보상은 {module} 만 정한다" for t in f.tokens
                 if t.text in names and t.kind in (NAME, STRING)]
+        out += [f"{_at(f, f.tokens[i])} {where}가 {name} 의 멤버를 값을 알 수 없는 방식으로 고른다 — 보상·저장 권한인지 검사할 수 없다"
+                for i, name in resolve.dynamic_member_calls(f, set(config["player_variable_names"]) | {"game", "workspace"})]
     return out
 
 
@@ -385,7 +387,7 @@ def remote_validation(tree, rules, config) -> list[str]:
     out, cooldown = [], tuple(config["cooldown_call"])
     out += _contract_errors(tree, rules)
     for f in tree.luau:
-        constants = number_constants(f.tokens)
+        constants = {k: v for k, v in f.resolved.items() if isinstance(v, float)}
         for remote, params, body, i, problem in _handlers(f):
             where = _at(f, f.tokens[i])
             if problem:
@@ -491,9 +493,10 @@ def _is_sole_cooldown_guard(body, start: int, stop: int, path: tuple[str, ...]) 
     cond, after = body[start + 1:stop], body[stop + 1:stop + 2]
     if not (after and after[0].kind == NAME and after[0].text in BLOCKING):
         return False
-    if not cond or not (cond[0].kind == NAME and cond[0].text == "not") or not luau.find_calls(cond, path):
+    if not cond or not (cond[0].kind == NAME and cond[0].text == "not") or luau.find_calls(cond, path) != [1]:
         return False
-    return not any(x.kind == NAME and x.text in ("and", "or") for x in cond)
+    call = luau.balanced(cond, 1 + len(path) * 2 - 1) if len(cond) > len(path) * 2 else []
+    return bool(call) and len(cond) == 1 + len(path) * 2 - 1 + len(call)   # not <호출 하나> 뿐이어야 한다
 
 
 def self_verdicting(tree, verdicts, module: str, reaching: set[str]) -> set[str]:

@@ -123,9 +123,16 @@ def load_tree(root: Path) -> Tree:
     tree = Tree(root)
     try:
         project = json.loads((root / PROJECT_FILE).read_text(encoding="utf-8"))
-        mappings = _mappings(project["tree"], ())
-    except (OSError, ValueError, KeyError, TypeError) as exc:
+    except (OSError, ValueError, UnicodeDecodeError) as exc:
         tree.problems.append(f"{PROJECT_FILE} 을 읽지 못했다 ({type(exc).__name__})")
+        return tree
+    if not isinstance(project, dict) or not isinstance(project.get("tree"), dict):
+        tree.problems.append(f"{PROJECT_FILE}: tree 는 객체여야 한다")
+        return tree
+    try:
+        mappings = _mappings(project["tree"], ())
+    except (KeyError, TypeError, AttributeError) as exc:
+        tree.problems.append(f"{PROJECT_FILE}: 구조를 읽지 못했다 ({type(exc).__name__})")
         return tree
     owners: dict[Path, str] = {}
     places: dict[Path, tuple[str, ...]] = {}
@@ -174,6 +181,7 @@ def _load_file(tree: Tree, path: Path, rel: str, owner: str) -> None:
             folded = luau.fold_strings(luau.tokenize(path.read_text(encoding="utf-8")))
             tokens = luau.normalize_index(folded, resolve.resolve_names(folded))   # 이름이 가리키는 값을 먼저 풀어야 대괄호를 바꿀 수 있다
             tree.luau.append(LuauFile(rel, owner, kind, tokens, resolve.resolve_names(tokens)))
+            tree.problems += [f"{rel}:{x.line} 보간 문자열(`…{{…}}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다" for x in tokens if x.kind == luau.INTERP]
         elif path.suffix == ".csv":
             _load_csv(tree, path, rel)
         elif path.name.endswith(DATA_SUFFIXES):

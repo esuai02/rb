@@ -8,7 +8,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-NAME, STRING, NUMBER, SYMBOL = "name", "string", "number", "symbol"
+NAME, STRING, NUMBER, SYMBOL, INTERP = "name", "string", "number", "symbol", "interp"
 _LONG_OPEN = re.compile(r"\[(=*)\[")
 _NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 _NUMBER = re.compile(r"0[xX][0-9a-fA-F_]+|0[bB][01_]+|(?:\d[\d_]*\.?[\d_]*|\.\d[\d_]*)(?:[eE][+-]?\d+)?")
@@ -68,7 +68,9 @@ def tokenize(src: str) -> list[Token]:
                 j += 1
             if j >= n:
                 raise LuauSyntaxError(f"닫히지 않은 문자열 ({line}행)")
-            tokens.append(Token(STRING, "".join(buf), line))
+            text = "".join(buf)
+            kind = INTERP if ch == "`" and "{" in text else STRING   # 보간 문자열 안의 코드는 검사할 수 없다
+            tokens.append(Token(kind, text, line))
             line += src.count("\n", i, j)
             i = j + 1
         elif ch == "[" and _LONG_OPEN.match(src, i):

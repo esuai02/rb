@@ -61,14 +61,17 @@ EXPECTED_DEFECTS = {
     "D-contract-off-canonical": ("정본 값과 다른 입력 계약", ("server.remote_validation",)),
     "D-cooldown-with-extra-condition": ("다른 조건과 섞인 쿨다운", ("server.remote_cooldown",)),
     "D-double-mapped-file": ("같은 파일을 두 곳에 싣는 매핑", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
+    "D-double-negated-cooldown": ("두 번 뒤집은 쿨다운", ("server.remote_cooldown",)),
     "D-duplicate-reward": ("중복 보상", ("server.duplicate_reward", "server.reward_after_verdict")),
     "D-dynamic-analytics-member": ("값을 알 수 없는 분석 멤버", ("analytics.calls",)),
+    "D-dynamic-authority-member": ("동적 멤버로 쓴 보상 권한", ("server.reward_authority",)),
     "D-dynamic-remote-member": ("변수로 만든 대괄호 원격 등록", ("server.remote_cooldown", "server.remote_validation")),
     "D-dynamic-reward-member": ("값을 알 수 없는 보상 멤버", ("server.duplicate_reward",)),
     "D-dynamic-text-member": ("변수로 고른 문구 함수", ("i18n.missing_key",)),
     "D-dynamic-text-member-unresolved": ("값을 알 수 없는 문구 멤버", ("i18n.missing_key",)),
     "D-else-reward": ("판정의 else 가지에서 보상", ("server.reward_after_verdict",)),
     "D-equals-false-verdict": ("판정이 거짓(== false)인 가지에서 보상", ("server.reward_after_verdict",)),
+    "D-fraction-line-untied": ("대사와 묶이지 않은 분수 계수", ("math.truth",)),
     "D-free-text": ("필터 없는 자유 입력", ("safety.free_text",)),
     "D-ftp-url": ("다른 스킴의 외부 링크", ("safety.url",)),
     "D-funnel-as-custom": ("퍼널 단계를 사용자 정의로 전송", ("analytics.calls",)),
@@ -78,6 +81,7 @@ EXPECTED_DEFECTS = {
     "D-impossible-range": ("성립할 수 없는 범위 조건", ("server.remote_validation",)),
     "D-inclusive-bound": ("경계를 하나 더 거르는 범위 가드", ("server.remote_validation",)),
     "D-indirect-reward-helper": ("간접 도우미를 거친 보상", ("server.reward_after_verdict",)),
+    "D-interpolated-string": ("보간 문자열 안의 코드", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
     "D-inverted-cooldown": ("뒤집힌 쿨다운 조건", ("server.remote_cooldown",)),
     "D-late-cooldown": ("처리 뒤에 하는 쿨다운", ("server.remote_cooldown",)),
     "D-late-guard": ("입력을 쓴 뒤에 하는 검증", ("server.remote_validation",)),
@@ -95,14 +99,17 @@ EXPECTED_DEFECTS = {
     "D-platform-api-alias": ("플랫폼 전송 함수를 담은 이름", ("analytics.calls",)),
     "D-player-alias-pii": ("플레이어 별칭으로 넣은 개인정보", ("analytics.calls",)),
     "D-premium-gate": ("구독 회원 전용 보상", ("safety.random_or_paid_reward",)),
+    "D-project-tree-not-object": ("구조가 틀린 Rojo 프로젝트", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
     "D-random-helper": ("도우미 모듈로 옮긴 무작위 보상", ("safety.random_or_paid_reward",)),
     "D-random-reward": ("무작위 보상 코드", ("safety.random_or_paid_reward",)),
     "D-range-before-type": ("타입보다 앞선 범위 검사", ("server.remote_validation",)),
+    "D-reassigned-grid": ("다시 묶인 범위 상수", ("server.remote_validation",)),
     "D-remote-no-cooldown": ("쿨다운 없는 원격 입력", ("server.remote_cooldown",)),
     "D-remotefunction": ("검증 없는 RemoteFunction", ("server.remote_cooldown", "server.remote_validation")),
     "D-reward-alias": ("별칭으로 부른 중복 보상", ("server.duplicate_reward",)),
     "D-reward-bypass": ("보상 모듈을 거치지 않은 지급", ("server.reward_authority",)),
     "D-same-service-double-map": ("같은 서비스 안의 중복 매핑", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
+    "D-term-line-without-claim": ("숫자 없는 용어 대사에 명제 없음", ("math.truth",)),
     "D-text-alias": ("별칭으로 부른 끊긴 번역 키", ("i18n.missing_key",)),
     "D-text-alias-chain": ("두 단계로 넘긴 문구 함수", ("i18n.missing_key",)),
     "D-text-function-alias": ("문구 함수를 담은 이름으로 쓴 끊긴 키", ("i18n.missing_key",)),
@@ -439,20 +446,20 @@ function M.grant(player: Player, rewardId: string, opts: {x: number}?)
   repeat local x = 1 until true
   if a then if b then c() end elseif d then e() else f() end
   local g = function(y) return y end
-  return `hi {player}`
+  return "hi"
 end
 return M
 '''
 
     def test_comments_dropped_strings_kept(self):
         toks = luau.tokenize(self.SRC)
-        self.assertEqual([t.text for t in toks if t.kind == luau.STRING], ["a -- not comment", " long\nstring ", "hi {player}"])
+        self.assertEqual([t.text for t in toks if t.kind == luau.STRING], ["a -- not comment", " long\nstring ", "hi"])
         self.assertFalse(any(t.text == "RewardService" for t in toks))
 
     def test_function_bodies_and_typed_params(self):
         bodies = luau.function_bodies(luau.tokenize(self.SRC))
         self.assertEqual([b[0] for b in bodies], [["player", "rewardId", "opts"], ["y"]])
-        self.assertEqual([t.text for t in bodies[0][1][-2:]], ["return", "hi {player}"])
+        self.assertEqual([t.text for t in bodies[0][1][-2:]], ["return", "hi"])
 
     def test_varargs_are_a_parameter(self):
         self.assertEqual(luau.function_bodies(luau.tokenize("function f(a, ...) end"))[0][0], ["a", "..."])
@@ -635,6 +642,16 @@ class CheckBranchTest(TreeCase):
     def test_rojo_mapping_must_stay_in_src(self):
         tree = self.make_tree("D-mapped-outside-src")
         self.assertTrue(all(any("소스 폴더" in x for x in v) for v in run.run_checks(tree, MANIFEST, RULES).values()))
+
+    def test_interpolated_strings_are_refused(self):
+        tree = self.make_tree("D-interpolated-string")
+        self.assertTrue(all(any("보간 문자열" in x for x in v) for v in run.run_checks(tree, MANIFEST, RULES).values()))
+
+    def test_broken_project_structure_still_records(self):
+        tree = self.make_tree("D-project-tree-not-object")
+        results = run.run_checks(tree, MANIFEST, RULES)
+        self.assertEqual(len(results), len(MANIFEST["checks"]))
+        self.assertTrue(all(any("tree 는 객체여야" in x for x in v) for v in results.values()))
 
     def test_unresolved_module_members_are_refused(self):
         """모듈의 멤버를 값으로 고르면 풀어서 보고, 끝내 풀리지 않으면 거부한다 — 검사기가 읽을 수 있는 코드만 쓴다."""

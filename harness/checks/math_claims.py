@@ -130,10 +130,15 @@ def stated_patterns(claim: dict, rules) -> list[tuple[str, str]]:
         x, y = _point(claim.get("point"))
         if x.denominator == y.denominator == 1:
             out.append((f"({x}, {y})", rf"\(\s*{x.numerator}\s*,\s*{y.numerator}\s*\)"))
+        line = claim.get("line") or {}
         for name in ("m", "b"):
-            value = _number_re(_num((claim.get("line") or {}).get(name)))
+            value = _number_re(_num(line.get(name)))
             if value:
-                out.append((f"{name}={(claim.get('line') or {}).get(name)}", value))
+                out.append((f"{name}={line.get(name)}", value))
+        if any(_num(line.get(n)).denominator != 1 for n in ("m", "b")):
+            stated = claim.get("line_text")
+            if isinstance(stated, str) and stated.strip():
+                out.append((stated, re.escape(stated)))
     return out
 
 
@@ -165,6 +170,16 @@ def needs_states_text(claim: dict) -> bool:
     return False
 
 
+def _fractional_line(claim: dict) -> bool:
+    if claim.get("kind") != "line_point":
+        return False
+    line = claim.get("line") or {}
+    try:
+        return any(_num(line.get(n)).denominator != 1 for n in ("m", "b"))
+    except ClaimError:
+        return False
+
+
 def truth(tree, rules, config) -> list[str]:
     """E1 — 수학 대사의 명제가 실제로 맞고, 대사가 그 명제를 말한다. 수학이 든 대사는 모두 명제를 가진다."""
     if not tree.claims:
@@ -186,12 +201,14 @@ def truth(tree, rules, config) -> list[str]:
         source = row.get("Source", "")
         if needs_states_text(claim) and not str(claim.get("states_text") or "").strip():
             out.append(f"{cid}: 수만으로는 대사와 묶을 수 없는 명제다 — states_text 에 대사가 반드시 말해야 할 말을 적어야 한다 (E1)")
+        if _fractional_line(claim) and not str(claim.get("line_text") or "").strip():
+            out.append(f"{cid}: 분수 계수는 수로 대사와 묶을 수 없다 — line_text 에 대사가 말하는 식을 적어야 한다 (E1)")
         out += [f"{cid}: 대사 {claim.get('line_key')} 가 명제의 '{shown}' 을 말하지 않는다 — 명제와 대사가 따로 논다"
                 for shown, pattern in stated_patterns(claim, rules) if not re.search(pattern, source)]
     terms = _math_terms(rules)
     for key, row in sorted(tree.strings.items()):
         source = row.get("Source", "")
-        has_math = bool(_fragments(source, rules)) or (re.search(r"\d", source) and (any(t in source for t in terms) or re.search(MATH_SHAPE, source)))
+        has_math = bool(_fragments(source, rules)) or any(t in source for t in terms) or bool(re.search(MATH_SHAPE, source))
         if has_math and key not in tied:
             out.append(f"{key}: 수학이 든 대사인데 명제가 없다 — content/math_claims.yaml 에 적어야 검사할 수 있다 (E1)")
     return out
