@@ -1,1 +1,1 @@
-major | tools/validate_graph.py:942-952 | 2인 시나리오 경로의 각 미션이 `duo`를 지원하는지 검사하지 않는다 | `m.signal_slope.play_modes`를 `["solo_npc"]`로 바꿔도 `sc.duo_keyboard`·`sc.duo_gamepad_plaza_reuse`가 이를 지나며 전체 CHECKS가 통과한다 | 시나리오 경로의 모든 미션에 해당 `play_mode`가 포함되는지 검사하고 회귀 테스트를 추가한다
+NO_FINDINGS
