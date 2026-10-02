@@ -34,6 +34,7 @@ EXPECTED_DEFECTS = {
     "D-absolute-path": ("절대 경로를 쓴 Rojo 프로젝트", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
     "D-alias-grant-in-handler": ("처리 함수 안의 별칭 보상", ("server.duplicate_reward", "server.reward_after_verdict")),
     "D-analytics-alias": ("별칭으로 부른 허용 밖 분석 이벤트", ("analytics.calls",)),
+    "D-analytics-dot-call": ("점 표기로 부른 플랫폼 분석 API", ("analytics.calls",)),
     "D-analytics-method-alias": ("전송 함수를 담은 이름으로 보낸 분석", ("analytics.calls",)),
     "D-analytics-module-literal": ("분석 모듈이 글자 그대로 보내는 이벤트", ("analytics.calls",)),
     "D-analytics-module-pii": ("분석 모듈 안의 개인정보", ("analytics.calls",)),
@@ -42,6 +43,7 @@ EXPECTED_DEFECTS = {
     "D-anonymous-reward-helper": ("익명 함수에 담은 보상 도우미", ("server.reward_after_verdict",)),
     "D-badge-bypass": ("보상 모듈을 거치지 않은 자격 발급", ("server.reward_authority",)),
     "D-banned-term": ("금지어", ("safety.banned_terms",)),
+    "D-bare-number-math": ("명제 없는 숫자 수학 대사", ("math.truth",)),
     "D-bracket-grant": ("대괄호로 부른 보상", ("server.duplicate_reward",)),
     "D-bracket-remote": ("대괄호로 등록한 원격 처리", ("server.remote_cooldown", "server.remote_validation")),
     "D-bracket-ui-text": ("대괄호로 넣은 UI 문구", ("i18n.hardcoded_text",)),
@@ -56,6 +58,7 @@ EXPECTED_DEFECTS = {
     "D-content-mapped": ("검사 입력 폴더를 Rojo 에 실음", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
     "D-contract-off-canonical": ("정본 값과 다른 입력 계약", ("server.remote_validation",)),
     "D-cooldown-with-extra-condition": ("다른 조건과 섞인 쿨다운", ("server.remote_cooldown",)),
+    "D-double-mapped-file": ("같은 파일을 두 곳에 싣는 매핑", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
     "D-duplicate-reward": ("중복 보상", ("server.duplicate_reward", "server.reward_after_verdict")),
     "D-else-reward": ("판정의 else 가지에서 보상", ("server.reward_after_verdict",)),
     "D-equals-false-verdict": ("판정이 거짓(== false)인 가지에서 보상", ("server.reward_after_verdict",)),
@@ -65,6 +68,7 @@ EXPECTED_DEFECTS = {
     "D-hardcoded-text": ("코드 속 하드코딩 문구", ("i18n.hardcoded_text",)),
     "D-ignored-cooldown": ("결과를 버리는 쿨다운", ("server.remote_cooldown",)),
     "D-impossible-range": ("성립할 수 없는 범위 조건", ("server.remote_validation",)),
+    "D-inclusive-bound": ("경계를 하나 더 거르는 범위 가드", ("server.remote_validation",)),
     "D-inverted-cooldown": ("뒤집힌 쿨다운 조건", ("server.remote_cooldown",)),
     "D-late-cooldown": ("처리 뒤에 하는 쿨다운", ("server.remote_cooldown",)),
     "D-late-guard": ("입력을 쓴 뒤에 하는 검증", ("server.remote_validation",)),
@@ -79,6 +83,7 @@ EXPECTED_DEFECTS = {
     "D-nonblocking-typeof": ("막지 않는 typeof 검사", ("server.remote_validation",)),
     "D-one-sided-range": ("한쪽만 보는 범위 조건", ("server.remote_validation",)),
     "D-paid-item": ("유료 보상 코드", ("safety.random_or_paid_reward",)),
+    "D-player-alias-pii": ("플레이어 별칭으로 넣은 개인정보", ("analytics.calls",)),
     "D-premium-gate": ("구독 회원 전용 보상", ("safety.random_or_paid_reward",)),
     "D-random-helper": ("도우미 모듈로 옮긴 무작위 보상", ("safety.random_or_paid_reward",)),
     "D-random-reward": ("무작위 보상 코드", ("safety.random_or_paid_reward",)),
@@ -87,9 +92,11 @@ EXPECTED_DEFECTS = {
     "D-reward-alias": ("별칭으로 부른 중복 보상", ("server.duplicate_reward",)),
     "D-reward-bypass": ("보상 모듈을 거치지 않은 지급", ("server.reward_authority",)),
     "D-text-alias": ("별칭으로 부른 끊긴 번역 키", ("i18n.missing_key",)),
+    "D-text-alias-chain": ("두 단계로 넘긴 문구 함수", ("i18n.missing_key",)),
     "D-text-function-alias": ("문구 함수를 담은 이름으로 쓴 끊긴 키", ("i18n.missing_key",)),
     "D-textgenerator": ("런타임 생성형 AI 대화(TextGenerator)", ("safety.external_call",)),
     "D-translated-math": ("번역된 수식", ("i18n.do_not_translate",)),
+    "D-two-step-grant-alias": ("두 단계로 넘긴 보상 별칭", ("server.duplicate_reward", "server.reward_after_verdict")),
     "D-ui-text-literal": ("UI 글자 속성에 바로 넣은 문구", ("i18n.hardcoded_text",)),
     "D-ui-text-variable": ("변수로 넣은 UI 문구", ("i18n.hardcoded_text",)),
     "D-unknown-analytics-function": ("분석 모듈의 모르는 함수", ("analytics.calls",)),
@@ -101,7 +108,11 @@ EXPECTED_DEFECTS = {
     "D-unvalidated-remote": ("검증 없는 원격 입력", ("server.remote_validation",)),
     "D-url": ("URL 문자열", ("safety.url",)),
     "D-vararg-handler": ("가변 인자 원격 처리", ("server.remote_validation",)),
+    "D-variable-class-name": ("변수로 조립한 인스턴스 이름", ("safety.free_text",)),
+    "D-variable-url": ("변수로 조립한 외부 링크", ("i18n.hardcoded_text", "safety.url")),
+    "D-verdict-or-true": ("다른 조건과 섞인 판정", ("server.reward_after_verdict",)),
     "D-wide-range": ("계약보다 넓은 범위 가드", ("server.remote_validation",)),
+    "D-work-before-guard": ("받은 값을 담은 뒤에 하는 검증", ("server.remote_cooldown", "server.remote_validation")),
     "D-wrong-math": ("틀린 수학 대사", ("math.truth",)),
     "D-wrong-type-guard": ("계약과 다른 종류로 한 검사", ("server.remote_validation",)),
     "D-zero-width-banned": ("폭 0 문자를 끼운 금지어", ("safety.banned_terms",)),
@@ -608,6 +619,23 @@ class CheckBranchTest(TreeCase):
     def test_rojo_mapping_must_stay_in_src(self):
         tree = self.make_tree("D-mapped-outside-src")
         self.assertTrue(all(any("소스 폴더" in x for x in v) for v in run.run_checks(tree, MANIFEST, RULES).values()))
+
+    def test_values_moved_through_variables_are_resolved(self):
+        """값을 변수로 한 단계 더 돌려도 잡는다 — 그리고 끝까지 풀리지 않으면 거부한다."""
+        for defect, check in (("D-variable-class-name", "safety.free_text"), ("D-variable-url", "safety.url"),
+                              ("D-two-step-grant-alias", "server.duplicate_reward"), ("D-text-alias-chain", "i18n.missing_key"),
+                              ("D-player-alias-pii", "analytics.calls"), ("D-analytics-dot-call", "analytics.calls")):
+            with self.subTest(defect=defect):
+                self.assertTrue(run.run_checks(self.make_tree(defect), MANIFEST, RULES)[check])
+        tree = self.make_tree()
+        self.edit(tree, "src/client/Hud.client.luau", "sendCell(2, 1)", 'sendCell(2, 1)\nlocal c = Instance.new(className)')
+        self.assertCaught(tree, "safety.free_text", "글자 그대로 알 수 없다")
+
+    def test_ordinary_string_building_is_not_refused(self):
+        """키를 만드는 평범한 문자열 조립은 막지 않는다 — URL 조각이 섞였을 때만 거부한다."""
+        tree = self.make_tree()
+        self.edit(tree, "src/client/Hud.client.luau", "sendCell(2, 1)", 'sendCell(2, 1)\nlocal key = "goal." .. tostring(1)')
+        self.assertEqual(run.run_checks(tree, MANIFEST, RULES)["safety.url"], [])
 
     def test_remote_contract_rules(self):
         self.assertCaught(self.make_tree("D-wrong-type-guard"), "server.remote_validation", "계약은 number 다")

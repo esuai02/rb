@@ -4,8 +4,8 @@ from __future__ import annotations
 import re
 import unicodedata
 
-from harness import luau
-from harness.luau import NAME, STRING
+from harness import luau, resolve
+from harness.luau import NAME, NUMBER, STRING, SYMBOL
 
 URL = re.compile(r"(?i)\b(?:https?://|www\.)|\b[a-z0-9-]+\.(?:com|net|org|gg|io|kr|ly|me|co)\b")
 RANDOM_PATHS = (("math", "random"), ("Random", "new"))
@@ -32,9 +32,50 @@ def banned_terms(tree, rules, config) -> list[str]:
 
 
 def url(tree, rules, config) -> list[str]:
-    """게임 안 외부 링크 없음 — 문구·코드·데이터에 URL·도메인이 없다 (INV-16)."""
-    return [f"{where} URL 이나 도메인 '{m.group()}' 이 있다" for where, text in tree.texts()
-            for m in [URL.search(unicodedata.normalize("NFKC", text))] if m]
+    """게임 안 외부 링크 없음 (INV-16). 글자를 이어 붙여 만든 값도 풀어서 보고, 풀 수 없으면 거부한다."""
+    out = [f"{where} URL 이나 도메인 '{m.group()}' 이 있다" for where, text in tree.texts()
+           for m in [URL.search(unicodedata.normalize("NFKC", text))] if m]
+    for f in tree.luau:
+        for name, value in sorted(f.resolved.items()):
+            if isinstance(value, str) and URL.search(unicodedata.normalize("NFKC", value)):
+                out.append(f"{f.rel} 이름 {name} 가 가리키는 글자에 URL 이 있다 ('{value[:40]}')")
+        for i, tok in enumerate(f.tokens):
+            if not (tok.kind == SYMBOL and tok.text == ".." and i):
+                continue
+            start = _start_of(f.tokens, i)
+            value, _has_text = resolve.expression_value(f.tokens, start, f.resolved)
+            if isinstance(value, str):
+                if URL.search(unicodedata.normalize("NFKC", value)):
+                    out.append(f"{f.rel}:{tok.line} 이어 붙인 글자가 URL 이 된다 ('{value[:40]}')")
+            elif _url_like_part(f, start, i):
+                out.append(f"{f.rel}:{tok.line} URL 조각을 이어 붙이는데 값을 알 수 없다 — 외부 링크인지 검사할 수 없으므로 쓰지 않는다")
+    return sorted(set(out))
+
+
+URL_PART = re.compile(r"(?i)https?|://|www\.|\.(?:com|net|org|gg|io|kr|ly|me|co)\b")
+
+
+def _url_like_part(f, start: int, stop: int) -> bool:
+    """이어 붙이는 조각 가운데 URL 의 일부처럼 보이는 글자가 있는가 — 평범한 키 조립과 가르기 위해."""
+    pieces = [t.text for t in f.tokens[start:stop + 3] if t.kind == STRING]
+    pieces += [v for t in f.tokens[start:stop + 3] if t.kind == NAME and isinstance(v := f.resolved.get(t.text), str)]
+    return any(URL_PART.search(p) for p in pieces)
+
+
+def _start_of(tokens, i: int) -> int:
+    """.. 가 있는 식의 시작 — 앞으로 거슬러 피연산자들을 모은다."""
+    k = i - 1
+    while k > 0:
+        prev = tokens[k - 1]
+        if prev.kind == SYMBOL and prev.text in ("..", "."):
+            k -= 2
+            continue
+        if tokens[k].kind in (STRING, NAME, NUMBER) and prev.kind == SYMBOL and prev.text in ("=", "(", ",", "{"):
+            break
+        if tokens[k].kind in (STRING, NAME, NUMBER):
+            break
+        k -= 1
+    return max(0, k)
 
 
 def external_call(tree, rules, config) -> list[str]:
@@ -45,9 +86,19 @@ def external_call(tree, rules, config) -> list[str]:
 
 
 def free_text(tree, rules, config) -> list[str]:
-    """필터 없는 자유 입력 없음 — 코드에서도 데이터 파일에서도 TextBox 를 만들지 않는다 (INV-10·INV-16)."""
-    names = set(config["free_text_names"])
-    out = [f"{f.rel}:{t.line} 자유 입력 {t.text} 를 쓴다" for f in tree.luau for t in f.tokens if t.kind in (NAME, STRING) and t.text in names]
+    """필터 없는 자유 입력 없음 (INV-10·INV-16). 만들 인스턴스 이름은 글자 그대로여야 한다 — 조립한 이름은 검사할 수 없으므로 거부한다."""
+    names, out = set(config["free_text_names"]), []
+    for f in tree.luau:
+        out += [f"{f.rel}:{t.line} 자유 입력 {t.text} 를 쓴다" for t in f.tokens if t.kind in (NAME, STRING) and t.text in names]
+        for i in luau.find_calls(f.tokens, ("Instance", "new")):
+            args = luau.call_args(f.tokens, i)
+            if not args:
+                continue
+            value, _ = resolve.expression_value(args[0], 0, f.resolved)
+            if value is resolve.UNRESOLVED or not isinstance(value, str):
+                out.append(f"{f.rel}:{f.tokens[i].line} Instance.new 의 클래스 이름을 글자 그대로 알 수 없다 — 조립한 이름은 쓰지 않는다")
+            elif value in names:
+                out.append(f"{f.rel}:{f.tokens[i].line} 자유 입력 {value} 를 만든다")
     return out + [f"{d.rel} 데이터 파일이 자유 입력 {c} 인스턴스를 만든다" for d in tree.data for c in d.class_names if c in names]
 
 

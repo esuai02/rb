@@ -1761,6 +1761,192 @@
           "replace": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) == false then\n\t\tMissionService.openGate(player)\n\tend\n"
         }
       ]
+    },
+    {
+      "id": "D-bare-number-math",
+      "class": "명제 없는 숫자 수학 대사",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "resp.gate_open,",
+          "replace": "label.extra.sum,신호 2 + 2 = 4 가 되면 문이 열려.,이름표 대사,,[2 + 2 = 4 öƥēñŝ.]\nresp.gate_open,"
+        }
+      ]
+    },
+    {
+      "id": "D-work-before-guard",
+      "class": "받은 값을 담은 뒤에 하는 검증",
+      "expected": [
+        "server.remote_cooldown",
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n",
+          "replace": "\tlocal sum = x + y\n\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n"
+        }
+      ],
+      "note": "받은 값을 담는 것이 처리의 시작이므로 쿨다운도 '처리 뒤'가 된다 — 두 검사가 모두 잡는 것이 맞다"
+    },
+    {
+      "id": "D-inclusive-bound",
+      "class": "경계를 하나 더 거르는 범위 가드",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n",
+          "replace": "\tif x <= -GRID or x >= GRID or y <= -GRID or y >= GRID then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-verdict-or-true",
+      "class": "다른 조건과 섞인 판정",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) or true then\n\t\tMissionService.openGate(player)\n\tend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-two-step-grant-alias",
+      "class": "두 단계로 넘긴 보상 별칭",
+      "expected": [
+        "server.duplicate_reward",
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local MissionService = require(script.Parent.MissionService)\n",
+          "replace": "local MissionService = require(script.Parent.MissionService)\nlocal R = require(script.Parent.RewardService)\nlocal g = R.grant\nlocal h = g\n"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n\th(player, \"reward.explorer_card\", \"m.gate_open\")\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-dot-call",
+      "class": "점 표기로 부른 플랫폼 분석 API",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
+          "replace": "\tAnalyticsService.LogCustomEvent(AnalyticsService, player, \"player_profile\", 1, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-player-alias-pii",
+      "class": "플레이어 별칭으로 넣은 개인정보",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
+          "replace": "\tlocal p = player\n\tfields.who = p.Name\n\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-text-alias-chain",
+      "class": "두 단계로 넘긴 문구 함수",
+      "expected": [
+        "i18n.missing_key"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "local Text = require(ReplicatedStorage.Shared.Text)\n",
+          "replace": "local Text = require(ReplicatedStorage.Shared.Text)\nlocal get = Text.get\nlocal use = get\n"
+        },
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Parent = script.Parent\n",
+          "replace": "goal.Parent = script.Parent\n\nlocal extra = Instance.new(\"TextLabel\")\nextra.Text = use(\"goal.missing\")\nextra.Parent = script.Parent\n"
+        }
+      ]
+    },
+    {
+      "id": "D-variable-class-name",
+      "class": "변수로 조립한 인스턴스 이름",
+      "expected": [
+        "safety.free_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Parent = script.Parent\n",
+          "replace": "goal.Parent = script.Parent\n\nlocal head = \"Text\"\nlocal tail = \"Box\"\nlocal answer = Instance.new(head .. tail)\nanswer.Parent = script.Parent\n"
+        }
+      ]
+    },
+    {
+      "id": "D-variable-url",
+      "class": "변수로 조립한 외부 링크",
+      "expected": [
+        "i18n.hardcoded_text",
+        "safety.url"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "sendCell(2, 1)\nlocal scheme = \"https\"\nlocal host = \"://example.com\"\nlocal link = scheme .. host\n"
+        }
+      ],
+      "note": "코드에 적은 URL 조각은 문구 키를 거치지 않은 문자열이기도 하다"
+    },
+    {
+      "id": "D-double-mapped-file",
+      "class": "같은 파일을 두 곳에 싣는 매핑",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "default.project.json",
+          "find": "\"StarterPlayer\"",
+          "replace": "\"StarterGui\": {\"Shared\": {\"$path\": \"src/shared\"}},\n    \"StarterPlayer\""
+        }
+      ]
     }
   ]
 }

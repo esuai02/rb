@@ -2,7 +2,7 @@
 온보딩 퍼널 단계와 사용자 정의 이벤트를 각각 맞는 전송 함수로 보낸다."""
 from __future__ import annotations
 
-from harness import luau
+from harness import luau, resolve
 from harness.luau import NAME, STRING
 
 FUNNEL, CUSTOM = "funnel", "custom"
@@ -17,7 +17,7 @@ def _allowed(rules) -> dict[str, tuple[str, list[str]]]:
 
 
 def _aliases(f, module: str) -> set[str]:
-    return luau.require_aliases(f.tokens, module)
+    return luau.require_aliases(f.tokens, module) | resolve.names_for(f.resolved, (module,))
 
 
 def _table_fields(arg: list) -> tuple[dict, list[str]]:
@@ -87,19 +87,25 @@ def _method_aliases(f, module_names: set[str], sender: str) -> set[str]:
     return out
 
 
+def _player_names(f, config) -> set[str]:
+    """플레이어를 가리키는 이름 — 설정의 이름과 거기에 담긴 다른 이름(`local p = player`)."""
+    base = set(config["player_variable_names"])
+    return base | {name for name, value in f.resolved.items() if isinstance(value, tuple) and len(value) == 1 and value[0] in base}
+
+
 def _check_module(f, config) -> list[str]:
     """분석 모듈 자신도 믿지 않는다 — 이벤트 이름은 받은 값이어야 하고, 플레이어 개인정보 속성을 쓰지 않는다 (INV-10)."""
     out = []
     for api in config["platform_apis"]:
-        for i in luau.find_calls(f.tokens, (api,)) + [k for k in range(len(f.tokens) - 1)
-                                                      if f.tokens[k].kind == NAME and f.tokens[k].text == api and f.tokens[k - 1].text == ":"]:
+        for i in [k for k in range(len(f.tokens) - 1) if f.tokens[k].kind == NAME and f.tokens[k].text == api
+                  and f.tokens[k + 1].text == "(" and (k == 0 or f.tokens[k - 1].text in (":", "."))]:
             args = luau.call_args(f.tokens, i)
             literals = [a[0].text for a in args if len(a) == 1 and a[0].kind == STRING]
             if literals:
                 out.append(f"{f.rel}:{f.tokens[i].line} 분석 모듈이 {api} 에 글자 그대로의 값 {literals} 를 넣는다 — 이벤트 이름·필드는 받은 값이어야 한다")
     out += [f"{f.rel}:{t.line} 분석 모듈이 플레이어 개인정보 속성 {t.text} 를 쓴다 (INV-10)" for k, t in enumerate(f.tokens)
             if t.kind == NAME and t.text in config["player_identity_names"] and k >= 2 and f.tokens[k - 1].text == "."
-            and f.tokens[k - 2].kind == NAME and f.tokens[k - 2].text in config["player_variable_names"]]
+            and f.tokens[k - 2].kind == NAME and f.tokens[k - 2].text in _player_names(f, config)]
     return out
 
 

@@ -1,13 +1,12 @@
-major | tests/test_harness.py:142 | Q3-C1의 “정해진 검사만”을 독립적으로 검증하지 않는다 | 기대 검사 목록을 같은 manifest의 `defect["expected"]`에서 읽고, 독립 목록은 ID·분류만 검증한다 | 독립된 결함-검사 기대표를 테스트에 고정한다
-
-major | harness/checks/server.py:341 | 원격 입력의 기대 타입을 검증하지 않는다 | `typeof(x) ~= "string"`도 단순히 `guarded`에 있으면 통과하며 숫자 입력인지 확인하지 않는다 | 핸들러별 기대 타입을 명세하고 `guarded[p] == "number"` 등을 강제한다
-
-major | harness/checks/server.py:288 | 범위의 양쪽 비교만 보고 실제 허용 범위를 검증하지 않는다 | `-BIG <= x <= BIG`처럼 게임 격자보다 큰 임의의 경계도 통과한다 | 정본 범위값과 비교하고 경계의 방향·값을 검증한다
-
-major | harness/checks/server.py:365 | 쿨다운 결과가 실제로 모든 경로를 차단하는지 검사하지 않는다 | `if not Cooldown.allow(...) and player.UserId == 0 then return end`도 `not` 존재만으로 통과한다 | 쿨다운 호출이 단독 조건이고 실패 시 무조건 차단되는지 구문적으로 검증한다
-
-major | harness/checks/server.py:386 | 원격 처리의 별칭 보상 호출을 판정 없이 통과시킨다 | 핸들러 내부 `local R = RewardService; R.grant(...)`는 직접 모듈 경로·도달 함수명 어느 쪽에도 잡히지 않는다 | 핸들러 본문에도 RewardService 별칭을 해석해 모든 grant 호출을 판정 검증한다
-
-major | harness/checks/server.py:396 | 판정의 거짓 가지를 `not` 토큰만으로 판별한다 | `if MissionService.coordinateMove(...) == false then MissionService.openGate(...) end`가 참인 판정 가지로 오인되어 통과한다 | 비교식의 불리언 극성을 파싱해 거짓 결과 경로를 거부한다
-
-minor | harness/run.py:84 | 기록의 로컬 경로 차단이 불완전하다 | `root`와 홈 경로만 치환하고, 발견 문구에 포함된 다른 절대 경로는 98행에서 그대로 기록한다 | 기록 전 절대 경로 패턴과 미지의 경로형 문자열을 일괄 비식별화한다
+major | harness/checks/math_claims.py:189 | 숫자만 있는 수학 대사는 명제가 없어도 통과한다 | `has_math`가 등록 용어 또는 `do_not_translate` 조각이 있을 때만 검사한다. 예: `2 + 2 = 4`는 `math.truth`에서 무검출 | 수학식·수치 패턴을 확장하고 명제 연결 회귀 테스트 추가
+major | harness/checks/server.py:341 | 입력을 변수 계산·대입으로 사용한 뒤 타입·범위 검사를 해도 통과한다 | `_first_work`가 호출·멤버호출만 작업으로 세므로 `local z = x + y` 뒤 가드가 검출되지 않음 | 데이터 의존 읽기·대입·속성 쓰기도 첫 작업으로 추적
+major | harness/checks/server.py:276 | `<=`·`>=` 범위가 `<`·`>`와 같은 것으로 판정된다 | `_comparisons`가 비교 연산자를 방향만으로 축약해 경계값을 잘못 거부하는 가드도 계약 범위와 같다고 통과시킴 | 연산자 포함 여부까지 보존해 허용 구간을 검증
+major | harness/checks/server.py:508 | 판정식에 `or true`·`and true`가 섞여도 참 판정 뒤 보상으로 인정한다 | `_inside_verdict`가 판정 호출 존재와 단순 부정 여부만 확인함 | 판정식의 논리식을 분석해 보상이 실제 참 결과에만 도달하는지 검증
+major | harness/checks/server.py:19 | 보상 함수 별칭을 두 단계 이상 넘기면 중복·무판정 보상이 통과한다 | `_grant_aliases`는 `local g = RewardService.grant` 한 단계만 추적하고 `local h = g; h(...)`는 누락 | 별칭을 고정점까지 전파하거나 해석 불가 호출을 실패 처리
+major | harness/checks/analytics.py:94 | 분석 모듈이 점 표기 API로 임의의 이벤트 문자열을 보내도 통과한다 | 플랫폼 호출 탐지가 `find_calls`에서 `:`만 보조 처리하고 `AnalyticsService.LogCustomEvent(...)`의 `.` 호출은 검사하지 않음 | 점·콜론 양쪽 호출 형태를 동일하게 검사
+major | harness/checks/analytics.py:100 | 플레이어 별칭을 통한 개인정보 필드가 통과한다 | `p = player; fields.who = p.Name`에서 개인정보 검사는 수신자 이름을 `player/plr/target/user`로 제한함 | 플레이어 별칭의 데이터 흐름을 추적하거나 별칭 속성 접근을 금지
+major | harness/checks/i18n.py:39 | 문구 함수 별칭을 재별칭하면 끊긴 키가 통과한다 | `Text.get → get` 한 단계만 수집하며 `use = get; use("missing")`는 `_key_calls`에 없음 | 함수 별칭을 전이적으로 추적하거나 UI 문구 호출의 미해석 키를 실패 처리
+major | harness/checks/i18n.py:140 | 함수가 반환한 식별자형 하드코딩 문구가 UI에 들어가도 통과한다 | `label() -> "Open"; goal.Text = label()`은 UI RHS에 문자열 토큰이 없고 `"Open"`은 `IDENTIFIER`로 제외됨 | 문자열 반환 함수와 UI 대입을 연결하거나 미해석 UI 문자열을 보수적으로 실패 처리
+major | harness/checks/safety.py:49 | 변수로 쪼갠 `TextBox` 생성이 자유 입력 검사에서 빠진다 | `a = "Text"; b = "Box"; Instance.new(a .. b)`는 `fold_strings` 대상이 아니며 토큰에 `TextBox`가 없음 | 상수 전파를 추가하거나 동적 `Instance.new` 클래스명을 실패 처리
+major | harness/checks/safety.py:34 | URL을 변수 조각으로 조합하면 외부 링크 검사를 우회한다 | URL 정규식은 각 문자열 토큰을 따로 검사하므로 `"https" .. "://example" .. ".com"`을 탐지하지 못함 | 상수 문자열 전파 후 전체 식을 검사하고 미해석 URL 조각도 차단
+major | harness/source.py:144 | 같은 소스 파일을 서버·클라이언트 양쪽에 매핑해도 클라이언트 노출이 누락된다 | `owners.setdefault`가 첫 매핑만 보존해 후속 client-visible 매핑을 무시함 | 다중 소유 매핑을 오류로 기록하고 모든 매핑의 노출성을 검증

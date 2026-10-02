@@ -8,7 +8,7 @@ from __future__ import annotations
 import re
 import unicodedata
 
-from harness import luau
+from harness import luau, resolve
 from harness.luau import NAME, STRING
 
 IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]*$")      # 키·열거형 토큰 — 화면 문구가 아니다
@@ -27,7 +27,7 @@ def _text_columns(row: dict) -> dict[str, str]:
 
 
 def _aliases(f, module: str) -> set[str]:
-    return luau.require_aliases(f.tokens, module)
+    return luau.require_aliases(f.tokens, module) | resolve.names_for(f.resolved, (module,))
 
 
 def _key_calls(f, config) -> list[tuple[int, list]]:
@@ -36,8 +36,7 @@ def _key_calls(f, config) -> list[tuple[int, list]]:
         return []   # 문구 모듈 자신은 받은 키를 그대로 넘긴다 — 그 모듈을 부르는 쪽을 검사한다
     out, toks = [], f.tokens
     modules = _aliases(f, config["text_module"])
-    direct = {toks[i].text for i in range(len(toks) - 4) if toks[i].kind == NAME and toks[i + 1].text == "="
-              and toks[i + 2].kind == NAME and toks[i + 2].text in modules and toks[i + 3].text == "." and toks[i + 4].text == "get"}
+    direct = {alias for name in modules for alias in resolve.names_for(f.resolved, (name, "get")) if alias != name}
     for path in [(name, "get") for name in modules] + [(name,) for name in direct]:
         out += [(i, luau.call_args(toks, i)) for i in luau.find_calls(toks, path)]
     for i, t in enumerate(f.tokens):
@@ -124,6 +123,8 @@ def _ui_text_literals(f, config) -> list:
                 out.append((prop, toks[j]))
             elif toks[j].kind == NAME and depth == 0 and toks[j].text in constants:
                 out.append((prop, constants[toks[j].text]))
+            elif toks[j].kind == NAME and depth == 0 and isinstance(f.resolved.get(toks[j].text), str):
+                out.append((prop, luau.Token(STRING, f.resolved[toks[j].text], toks[j].line)))
             elif toks[j].line > toks[i].line and depth == 0:
                 break
             j += 1

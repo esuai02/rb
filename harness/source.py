@@ -20,7 +20,7 @@ from pathlib import Path
 
 import yaml
 
-from harness import luau
+from harness import luau, resolve
 
 REPO = Path(__file__).resolve().parent.parent
 # 서버에서만 보이는 서비스. 나머지(ReplicatedStorage·StarterPlayer·StarterGui·Workspace 등)는 클라이언트가 읽거나 require 할 수 있다
@@ -41,6 +41,7 @@ class LuauFile:
     container: str      # 최상위 서비스 이름
     kind: str           # Script · LocalScript · ModuleScript
     tokens: list
+    resolved: dict      # 이름 → 값 (harness.resolve)
 
     @property
     def name(self) -> str:
@@ -140,8 +141,12 @@ def load_tree(root: Path) -> Tree:
             tree.problems.append(f"Rojo 경로 {shown} 가 트리 안에 없다")
             continue
         for path in sorted(target.rglob("*")) if target.is_dir() else [target]:
-            if path.is_file():
-                owners.setdefault(path.resolve(), chain[0])
+            if not path.is_file():
+                continue
+            if path.resolve() in owners and owners[path.resolve()] != chain[0]:
+                rel = path.relative_to(root).as_posix()
+                tree.problems.append(f"{rel}: 같은 파일을 {owners[path.resolve()]} 와 {chain[0]} 두 곳에 싣는다 — 서버 전용인지 알 수 없다")
+            owners.setdefault(path.resolve(), chain[0])
     for path in sorted(p for p in root.rglob("*") if p.is_file()):
         rel = path.relative_to(root).as_posix()
         if rel == PROJECT_FILE:
@@ -165,7 +170,7 @@ def _load_file(tree: Tree, path: Path, rel: str, owner: str) -> None:
     try:
         if kind:
             tokens = luau.normalize_index(luau.fold_strings(luau.tokenize(path.read_text(encoding="utf-8"))))
-            tree.luau.append(LuauFile(rel, owner, kind, tokens))
+            tree.luau.append(LuauFile(rel, owner, kind, tokens, resolve.resolve_names(tokens)))
         elif path.suffix == ".csv":
             _load_csv(tree, path, rel)
         elif path.name.endswith(DATA_SUFFIXES):
