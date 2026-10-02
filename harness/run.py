@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import shutil
 import sys
 from datetime import datetime, timezone
@@ -81,11 +82,14 @@ def run_checks(root: Path, manifest: dict | None = None, rules: source.Rules | N
     return results
 
 
+ABSOLUTE_PATH = re.compile(r"(?<![\w<])/(?:[\w.\-]+/)+[\w.\-]*")
+
+
 def scrub(root: Path, text: str) -> str:
-    """기록(공개 저장소)에 로컬 경로가 남지 않게 대상 트리·홈 경로를 바꿔 쓴다 (INV-6)."""
+    """기록(공개 저장소)에 로컬 경로가 남지 않게 한다 — 대상 트리·홈·그 밖의 절대 경로 모양을 모두 바꿔 쓴다 (INV-6)."""
     for local, alias in ((str(root.resolve()), "<tree>"), (str(root), "<tree>"), (str(Path.home()), "~")):
         text = text.replace(local, alias)
-    return text
+    return ABSOLUTE_PATH.sub("<path>", text)
 
 
 def write_records(root: Path, results: dict[str, list[str]], out: Path, label: str) -> list[Path]:

@@ -981,6 +981,11 @@
           "file": "src/server/Main.server.luau",
           "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
           "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\n\nlocal AnswerRemote = Instance.new(\"RemoteFunction\")\nAnswerRemote.Name = \"AnswerRemote\"\nAnswerRemote.Parent = ReplicatedStorage\n\nAnswerRemote.OnServerInvoke = function(player: Player, x, y)\n\treturn MissionService.coordinateMove(player, {x = x, y = y})\nend\n"
+        },
+        {
+          "file": "content/remote_contracts.yaml",
+          "find": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n",
+          "replace": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n  AnswerRemote:\n    - {name: x, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.x}\n    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n"
         }
       ]
     },
@@ -1023,6 +1028,11 @@
           "file": "src/server/Main.server.luau",
           "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
           "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\n\nlocal GateRemote = Instance.new(\"RemoteEvent\")\nGateRemote.Name = \"GateRemote\"\nGateRemote.Parent = ReplicatedStorage\n\nGateRemote.OnServerEvent:Connect(function(player: Player)\n\tif not Cooldown.allow(player, \"gate\") then return end\n\tMissionService.openGate(player)\nend)\n"
+        },
+        {
+          "file": "content/remote_contracts.yaml",
+          "find": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n",
+          "replace": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n  GateRemote: []\n"
         }
       ]
     },
@@ -1393,6 +1403,11 @@
           "file": "src/server/Main.server.luau",
           "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
           "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\n\nlocal Extra = Instance.new(\"RemoteEvent\")\nExtra.Name = \"ExtraRemote\"\nExtra.Parent = ReplicatedStorage\nExtra[\"OnServerEvent\"]:Connect(function(player: Player, n)\n\tMissionService.coordinateMove(player, {x = n, y = n})\nend)\n"
+        },
+        {
+          "file": "content/remote_contracts.yaml",
+          "find": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n",
+          "replace": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n  Extra:\n    - {name: n, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.x}\n"
         }
       ]
     },
@@ -1640,6 +1655,110 @@
           "file": "src/client/Hud.client.luau",
           "find": "goal.Parent = script.Parent\n",
           "replace": "goal.Parent = script.Parent\n\nlocal extra = Instance.new(\"TextLabel\")\nextra.Text = get(\"goal.missing\")\nextra.Parent = script.Parent\n"
+        }
+      ]
+    },
+    {
+      "id": "D-wrong-type-guard",
+      "class": "계약과 다른 종류로 한 검사",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n",
+          "replace": "\tif typeof(x) ~= \"string\" or typeof(y) ~= \"string\" then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-wide-range",
+      "class": "계약보다 넓은 범위 가드",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local GRID = 2",
+          "replace": "local GRID = 9999"
+        }
+      ]
+    },
+    {
+      "id": "D-contract-off-canonical",
+      "class": "정본 값과 다른 입력 계약",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "content/remote_contracts.yaml",
+          "find": "min: -2, max: 2, canonical: cv.coordinate_expression.grid.x",
+          "replace": "min: -9, max: 9, canonical: cv.coordinate_expression.grid.x"
+        }
+      ]
+    },
+    {
+      "id": "D-missing-contract",
+      "class": "계약 없는 원격 입력",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "content/remote_contracts.yaml",
+          "find": "  SignalRemote:\n",
+          "replace": "  OtherRemote:\n"
+        }
+      ]
+    },
+    {
+      "id": "D-cooldown-with-extra-condition",
+      "class": "다른 조건과 섞인 쿨다운",
+      "expected": [
+        "server.remote_cooldown"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif not Cooldown.allow(player, \"signal\") then return end\n",
+          "replace": "\tif not Cooldown.allow(player, \"signal\") and player.UserId == 0 then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-alias-grant-in-handler",
+      "class": "처리 함수 안의 별칭 보상",
+      "expected": [
+        "server.reward_after_verdict",
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local MissionService = require(script.Parent.MissionService)\n",
+          "replace": "local MissionService = require(script.Parent.MissionService)\nlocal R = require(script.Parent.RewardService)\n"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n\tR.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n"
+        }
+      ]
+    },
+    {
+      "id": "D-equals-false-verdict",
+      "class": "판정이 거짓(== false)인 가지에서 보상",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) == false then\n\t\tMissionService.openGate(player)\n\tend\n"
         }
       ]
     }

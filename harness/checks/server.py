@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from harness import luau
-from harness.luau import NAME, STRING, SYMBOL
+from harness.luau import NAME, NUMBER, STRING, SYMBOL
 
 BLOCKING = ("return", "error")   # 조건이 맞지 않을 때 멈추는 말
 
@@ -120,7 +120,7 @@ def _names_grant(tokens, i: int) -> bool:
 
 
 def _handlers(f) -> list[tuple[list[str], list, int, str]]:
-    """원격 입력 처리 함수 — (매개변수, 본문, 알림 위치 토큰 번호, 문제). 못 찾으면 문제를 적어 보수적으로 실패시킨다.
+    """원격 입력 처리 함수 — (원격 이름, 매개변수, 본문, 알림 위치 토큰 번호, 문제). 못 찾으면 문제를 적어 보수적으로 실패시킨다.
 
     보는 꼴: X.OnServerEvent:Connect(function…) · :Connect(이름) · X.OnServerInvoke = function… · = 이름
     """
@@ -128,6 +128,7 @@ def _handlers(f) -> list[tuple[list[str], list, int, str]]:
     for i, t in enumerate(toks):
         if t.kind != NAME or t.text not in ("OnServerEvent", "OnServerInvoke"):
             continue
+        remote = toks[i - 2].text if i >= 2 and toks[i - 1].text == "." and toks[i - 2].kind == NAME else "?"
         after = toks[i + 1:i + 4]
         shape = [x.text for x in after]
         target = None
@@ -136,7 +137,7 @@ def _handlers(f) -> list[tuple[list[str], list, int, str]]:
         elif t.text == "OnServerInvoke" and shape[:1] == ["="]:
             target = i + 2
         if target is None or target >= len(toks):
-            out.append(([], [], i, f"{t.text} 를 Connect(함수)·= 함수 가 아닌 방식({' '.join(shape[:2])})으로 이었다 — 처리 함수를 검사할 수 없다"))
+            out.append((remote, [], [], i, f"{t.text} 를 Connect(함수)·= 함수 가 아닌 방식({' '.join(shape[:2])})으로 이었다 — 처리 함수를 검사할 수 없다"))
             continue
         arg = toks[target + 1] if toks[target].text == "(" else toks[target]
         if arg.kind == NAME and arg.text == "function":
@@ -146,9 +147,9 @@ def _handlers(f) -> list[tuple[list[str], list, int, str]]:
         else:
             found = []
         if not found:
-            out.append(([], [], i, "처리 함수를 찾지 못했다"))
+            out.append((remote, [], [], i, "처리 함수를 찾지 못했다"))
         else:
-            out += [(params, body, i, "") for params, body, _ in found]
+            out += [(remote, params, body, i, "") for params, body, _ in found]
     return out
 
 
@@ -285,20 +286,51 @@ def _comparisons(part: list) -> list[tuple[str, str]]:
     return out
 
 
-def _range_positions(body) -> dict[str, int]:
+def _range_positions(body, constants: dict | None = None) -> dict[str, tuple[int, float | None, float | None]]:
     """막는 형태의 범위 가드 — `if x < A or x > B then return end` 처럼 하한·상한을 or 로 걸러야 센다.
 
     `x < A and x > B` 처럼 둘 다여야 멈추는 조건은 성립할 수 없으므로 세지 않는다.
     """
-    found: dict[str, dict[str, int]] = {}
+    constants, found = constants or {}, {}
     for start, stop in _if_spans(body):
         cond, after = body[start + 1:stop], body[stop + 1:stop + 2]
         if not (after and after[0].kind == NAME and after[0].text in BLOCKING):
             continue
         for part in _split_or(cond):
             for name, side in _comparisons(part):
-                found.setdefault(name, {}).setdefault(side, start)
-    return {name: max(sides.values()) for name, sides in found.items() if len(sides) == 2}
+                found.setdefault(name, {}).setdefault(side, (start, _bound_value(part, constants)))
+    out = {}
+    for name, sides in found.items():
+        if len(sides) == 2:
+            out[name] = (max(pos for pos, _v in sides.values()), sides["low"][1], sides["high"][1])
+    return out
+
+
+def number_constants(tokens) -> dict[str, float]:
+    """`local GRID = 2` 처럼 수에 묶인 이름 → 값. 가드의 경계를 계약과 견주려면 이 값이 필요하다."""
+    out = {}
+    for i in range(len(tokens) - 3):
+        if tokens[i].kind == NAME and tokens[i].text == "local" and tokens[i + 1].kind == NAME and tokens[i + 2].text == "=":
+            sign, k = 1, i + 3
+            if tokens[k].text == "-":
+                sign, k = -1, k + 1
+            if tokens[k].kind == NUMBER:
+                out[tokens[i + 1].text] = sign * float(tokens[k].text)
+    return out
+
+
+def _bound_value(part, constants) -> float | None:
+    """비교 조각의 경계 수 — -GRID · 2 · -2 처럼 적은 값."""
+    sign, toks = 1, [x for x in part if not (x.kind == SYMBOL and x.text in LOW + HIGH)]
+    out = None
+    for tok in toks:
+        if tok.kind == SYMBOL and tok.text == "-":
+            sign = -sign
+        elif tok.kind == NUMBER:
+            out = sign * float(tok.text)
+        elif tok.kind == NAME and tok.text in constants:
+            out = sign * constants[tok.text]
+    return out
 
 
 def _first_work(body, cooldown: tuple[str, ...]) -> int:
@@ -318,13 +350,15 @@ def _first_work(body, cooldown: tuple[str, ...]) -> int:
 
 
 def remote_validation(tree, rules, config) -> list[str]:
-    """원격 처리 함수는 player 다음 인자마다 형식(typeof)과 수의 범위를 막는 형태로, 처리를 시작하기 전에 거른다 (INV-4).
+    """원격 처리 함수는 계약(content/remote_contracts.yaml)대로 형식·범위를 처리 전에 막는 형태로 거른다 (INV-4).
 
-    상태 검증은 보상에 닿는 경로에서 server.reward_after_verdict 가 맡는다.
+    계약의 범위는 잠긴 Q2 정본 값과 같아야 하고, 코드의 경계 수는 계약과 같아야 한다. 상태 검증은 server.reward_after_verdict 가 맡는다.
     """
     out, cooldown = [], tuple(config["cooldown_call"])
+    out += _contract_errors(tree, rules)
     for f in tree.luau:
-        for params, body, i, problem in _handlers(f):
+        constants = number_constants(f.tokens)
+        for remote, params, body, i, problem in _handlers(f):
             where = _at(f, f.tokens[i])
             if problem:
                 out.append(f"{where} {problem}")
@@ -333,39 +367,86 @@ def remote_validation(tree, rules, config) -> list[str]:
                 out.append(f"{where} 원격 이벤트 처리가 클라이언트가 볼 수 있는 코드에 있다")
             if "..." in params:
                 out.append(f"{where} 가변 인자(...)는 형식을 검사할 수 없다 — 받는 값을 이름으로 적어야 한다")
+            contract = tree.contracts.get(remote)
+            if contract is None:
+                out.append(f"{where} 원격 {remote} 의 입력 계약이 content/remote_contracts.yaml 에 없다")
+                contract = []
+            elif len(contract) != len([p for p in params[1:] if p != "..."]):
+                out.append(f"{where} 원격 {remote} 가 받는 값의 수가 계약({len(contract)})과 다르다")
             guarded, positions = _guards(body), _guard_positions(body)
-            ranges, work = _range_positions(body), _first_work(body, cooldown)
-            for p in params[1:]:
-                if p == "...":
-                    continue
-                if p not in guarded:
-                    out.append(f"{where} 원격 입력 {p} 를 막는 형태의 typeof 검사로 거르지 않는다")
-                    continue
-                if positions.get(p, len(body)) > work:
-                    out.append(f"{where} 원격 입력 {p} 의 형식 검사가 처리를 시작한 뒤에 있다 — 쓰기 전에 걸러야 한다")
-                if guarded[p] == "number" and ranges.get(p, len(body)) > work:
-                    out.append(f"{where} 원격 입력 {p} 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)")
-                if guarded[p] == "table":
-                    for field in sorted(_fields_used(body, p)):
-                        if field not in guarded:
-                            out.append(f"{where} 표로 받은 {field} 의 형식을 검사하지 않는다")
-                        elif guarded[field] == "number" and ranges.get(field, len(body)) > work:
-                            out.append(f"{where} 표로 받은 {field} 의 범위를 처리 전에 검사하지 않는다")
+            ranges, work = _range_positions(body, constants), _first_work(body, cooldown)
+            for n, p in enumerate([p for p in params[1:] if p != "..."]):
+                want = contract[n] if n < len(contract) else {}
+                out += _param_errors(where, p, want, guarded, positions, ranges, work, body, constants)
     return out
+
+
+def _param_errors(where, name, want, guarded, positions, ranges, work, body, constants) -> list[str]:
+    out, kind = [], want.get("type")
+    if name not in guarded:
+        return [f"{where} 원격 입력 {name} 를 막는 형태의 typeof 검사로 거르지 않는다"]
+    if kind and guarded[name] != kind:
+        out.append(f"{where} 원격 입력 {name} 를 {guarded[name]} 로 검사하지만 계약은 {kind} 다")
+    if positions.get(name, len(body)) > work:
+        out.append(f"{where} 원격 입력 {name} 의 형식 검사가 처리를 시작한 뒤에 있다 — 쓰기 전에 걸러야 한다")
+    if guarded[name] == "number":
+        got = ranges.get(name)
+        if got is None or got[0] > work:
+            out.append(f"{where} 원격 입력 {name} 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)")
+        elif (got[1], got[2]) != (want.get("min"), want.get("max")):
+            out.append(f"{where} 원격 입력 {name} 의 범위 가드({got[1]}~{got[2]})가 계약({want.get('min')}~{want.get('max')})과 다르다")
+    if guarded[name] == "table":
+        for field in sorted(_fields_used(body, name)):
+            if field not in guarded:
+                out.append(f"{where} 표로 받은 {field} 의 형식을 검사하지 않는다")
+            elif guarded[field] == "number" and (ranges.get(field) is None or ranges[field][0] > work):
+                out.append(f"{where} 표로 받은 {field} 의 범위를 처리 전에 검사하지 않는다")
+    return out
+
+
+def _contract_errors(tree, rules) -> list[str]:
+    """계약의 범위가 잠긴 Q2 정본 값과 같은지 — 게임 격자를 벗어난 임의의 경계를 쓰지 못하게."""
+    values = {v["id"]: v.get("value") for v in rules.canonical.get("values", []) if isinstance(v, dict)}
+    out = []
+    for remote, params in sorted(tree.contracts.items()):
+        if not isinstance(params, list):
+            out.append(f"원격 계약 {remote}: 받는 값 목록이어야 한다")
+            continue
+        for want in params:
+            if not isinstance(want, dict) or not want.get("name") or not want.get("type"):
+                out.append(f"원격 계약 {remote}: 받는 값마다 이름과 종류를 적어야 한다")
+                continue
+            if want["type"] != "number":
+                continue
+            ref = want.get("canonical")
+            bounds = _dotted(values, ref) if ref else None
+            if not (isinstance(bounds, list) and len(bounds) == 2):
+                out.append(f"원격 계약 {remote}.{want['name']}: 수 입력은 정본 값(canonical)의 범위를 가리켜야 한다")
+            elif [want.get("min"), want.get("max")] != list(bounds):
+                out.append(f"원격 계약 {remote}.{want['name']}: 범위({want.get('min')}~{want.get('max')})가 정본 값 {ref}({bounds})와 다르다")
+    return out
+
+
+def _dotted(values: dict, path: str):
+    parts = str(path).split(".")
+    node = values.get(".".join(parts[:2]))
+    for part in parts[2:]:
+        if not isinstance(node, dict) or part not in node:
+            return None
+        node = node[part]
+    return node
 
 
 def remote_cooldown(tree, rules, config) -> list[str]:
     """원격 처리 함수는 처리를 시작하기 전에 쿨다운(cv.server_cooldown)의 결과로 멈춘다 — 값의 실측은 Q4."""
     path, out = tuple(config["cooldown_call"]), []
     for f in tree.luau:
-        for _params, body, i, problem in _handlers(f):
+        for remote, _params, body, i, problem in _handlers(f):
             if problem:
                 continue
             where, work = _at(f, f.tokens[i]), _first_work(body, path)
             blocking = [start for start, stop in _if_spans(body)
-                        if luau.find_calls(body[start:stop], path) and body[stop + 1:stop + 2]
-                        and body[stop + 1].kind == NAME and body[stop + 1].text in BLOCKING
-                        and any(x.kind == NAME and x.text == "not" for x in body[start:stop])]
+                        if _is_sole_cooldown_guard(body, start, stop, path)]
             if not luau.find_calls(body, path):
                 out.append(f"{where} 원격 이벤트 처리가 {'.'.join(path)} 를 거치지 않는다 (연타·자동 반복 방지)")
             elif not blocking:
@@ -375,15 +456,25 @@ def remote_cooldown(tree, rules, config) -> list[str]:
     return out
 
 
+def _is_sole_cooldown_guard(body, start: int, stop: int, path: tuple[str, ...]) -> bool:
+    """조건이 `not <쿨다운 호출>` 하나뿐이고 실패하면 바로 멈추는가 — 다른 조건과 and/or 로 섞이면 모든 경로를 막지 못한다."""
+    cond, after = body[start + 1:stop], body[stop + 1:stop + 2]
+    if not (after and after[0].kind == NAME and after[0].text in BLOCKING):
+        return False
+    if not cond or not (cond[0].kind == NAME and cond[0].text == "not") or not luau.find_calls(cond, path):
+        return False
+    return not any(x.kind == NAME and x.text in ("and", "or") for x in cond)
+
+
 def reward_after_verdict(tree, rules, config) -> list[str]:
     """원격 처리에서 보상에 닿는 호출은 서버 판정의 결과 안에서만 — 클라이언트가 '다 했다'고 알린다고 보상하지 않는다 (INV-4)."""
     module, verdicts, out = config["reward_module"], [tuple(v) for v in config["verdict_calls"]], []
     reaching = reward_reaching(tree, module)
     for f in tree.luau:
-        for _params, body, i, problem in _handlers(f):
+        for remote, _params, body, i, problem in _handlers(f):
             if problem:
                 continue
-            calls = set(luau.find_calls(body, (module, "grant"))) | {k for k in range(len(body))
+            calls = {k for alias in _grant_aliases(f, _module_names(f, module)) for k in luau.find_calls(body, alias)} | {k for k in range(len(body))
                        if body[k].kind == NAME and body[k].text in reaching and k + 1 < len(body) and body[k + 1].text == "("}
             calls |= {k for k in range(len(body) - 2) if body[k + 2].kind == NAME and body[k + 2].text in reaching and body[k + 1].text == "."}
             for k in sorted(calls):
@@ -391,6 +482,18 @@ def reward_after_verdict(tree, rules, config) -> list[str]:
                     out.append(f"{_at(f, f.tokens[i])} 원격 처리가 서버 판정({' · '.join('.'.join(v) for v in verdicts)}) 없이 보상에 닿는다 "
                                f"— 클라이언트가 완료를 정하면 안 된다")
     return out
+
+
+def _negated(cond) -> bool:
+    """판정 결과를 뒤집는 조건인가 — not · == false · ~= true."""
+    if any(x.kind == NAME and x.text == "not" for x in cond):
+        return True
+    for k in range(len(cond) - 1):
+        if cond[k].text == "==" and cond[k + 1].kind == NAME and cond[k + 1].text == "false":
+            return True
+        if cond[k].text == "~=" and cond[k + 1].kind == NAME and cond[k + 1].text == "true":
+            return True
+    return False
 
 
 def _inside_verdict(body, index: int, verdicts) -> bool:
@@ -402,7 +505,7 @@ def _inside_verdict(body, index: int, verdicts) -> bool:
         while j < len(body) and not (body[j].kind == NAME and body[j].text == "then"):
             j += 1
         cond = body[start:j]
-        if not any(luau.find_calls(cond, v) for v in verdicts) or any(x.kind == NAME and x.text == "not" for x in cond):
+        if not any(luau.find_calls(cond, v) for v in verdicts) or _negated(cond):
             continue   # 판정이 거짓일 때 들어가는 가지는 보상 자리가 아니다
         depth, k = 1, j + 1
         while k < len(body) and depth:

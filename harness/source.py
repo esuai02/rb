@@ -72,6 +72,7 @@ class Tree:
     strings: dict[str, dict[str, str]] = field(default_factory=dict)   # 키 → {열 이름: 문구}
     csv_files: list[str] = field(default_factory=list)
     claims: list[dict] = field(default_factory=list)
+    contracts: dict = field(default_factory=dict)      # 원격 이벤트 이름 → 받는 값의 계약
     problems: list[str] = field(default_factory=list)   # 읽다가 생긴 문제 — 검사 실패로 다룬다
 
     def texts(self):
@@ -93,12 +94,13 @@ class Rules:
     events: dict
     glossary: dict
     world_spec: dict
+    canonical: dict
 
 
 def load_rules(repo: Path = REPO) -> Rules:
     read = lambda rel: yaml.safe_load((repo / rel).read_text(encoding="utf-8"))  # noqa: E731
     graph = json.loads((repo / "specs/graph/neo-seoul-city-language-gate.graph.json").read_text(encoding="utf-8"))
-    return Rules(read(graph["events"]), read(graph["glossary"]), read(graph["world_spec"]))
+    return Rules(read(graph["events"]), read(graph["glossary"]), read(graph["world_spec"]), read(graph["canonical_values"]))
 
 
 def _mappings(node: dict, chain: tuple[str, ...]) -> list[tuple[str, tuple[str, ...]]]:
@@ -154,6 +156,7 @@ def load_tree(root: Path) -> Tree:
             continue
         _load_file(tree, path, rel, owner)
     _load_claims(tree, root)
+    _load_contracts(tree, root)
     return tree
 
 
@@ -207,6 +210,23 @@ def _load_claims(tree: Tree, root: Path) -> None:
         tree.problems.append("content/math_claims.yaml: claims 는 목록이어야 한다")
         return
     tree.claims = data.get("claims", [])
+
+
+def _load_contracts(tree: Tree, root: Path) -> None:
+    path = root / "content" / "remote_contracts.yaml"
+    if not path.is_file():
+        tree.problems.append("content/remote_contracts.yaml 이 없다 — 원격 입력이 무엇을 받는지 적어야 검사할 수 있다")
+        return
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except (OSError, UnicodeDecodeError, yaml.YAMLError) as exc:
+        tree.problems.append(f"content/remote_contracts.yaml: 읽지 못했다 ({type(exc).__name__})")
+        return
+    remotes = data.get("remotes") if isinstance(data, dict) else None
+    if not isinstance(remotes, dict):
+        tree.problems.append("content/remote_contracts.yaml: remotes 는 이름 → 받는 값 목록이어야 한다")
+        return
+    tree.contracts = remotes
 
 
 def _load_csv(tree: Tree, path: Path, rel: str) -> None:
