@@ -120,7 +120,11 @@
       "plr",
       "target",
       "user"
-    ]
+    ],
+    "platform_event_arg": {
+      "LogCustomEvent": 1,
+      "LogOnboardingFunnelStepEvent": 2
+    }
   },
   "checks": [
     {
@@ -2153,6 +2157,7 @@
       "id": "D-dynamic-text-member-unresolved",
       "class": "값을 알 수 없는 문구 멤버",
       "expected": [
+        "i18n.hardcoded_text",
         "i18n.missing_key"
       ],
       "edits": [
@@ -2161,7 +2166,8 @@
           "find": "goal.Text = Text.get(\"goal.signal_2\")",
           "replace": "goal.Text = Text[pickMethod()](\"goal.signal_2\")"
         }
-      ]
+      ],
+      "note": "값을 알 수 없는 멤버 호출이므로 어떤 키인지도, 허용된 문구 키 호출인지도 알 수 없다 — 두 검사가 모두 잡는 것이 맞다"
     },
     {
       "id": "D-dynamic-analytics-member",
@@ -2433,6 +2439,34 @@
           "file": "src/server/Main.server.luau",
           "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
           "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\nGRID = 9999\n"
+        }
+      ]
+    },
+    {
+      "id": "D-ui-text-from-other-function",
+      "class": "허용 밖 함수가 만든 UI 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal.Text = getText(\"label\")"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-concat-event",
+      "class": "이어 붙인 분석 이벤트 이름",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
+          "replace": "\tAnalyticsService:LogCustomEvent(player, eventName .. \"_bad\", 1, pack(fields))"
         }
       ]
     }

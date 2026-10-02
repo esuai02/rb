@@ -87,9 +87,13 @@ def _method_aliases(f, module_names: set[str], sender: str) -> set[str]:
     return {alias for name in module_names for alias in resolve.names_for(f.resolved, (name, sender)) if alias != name}
 
 
-def _computed(arg: list) -> bool:
-    """인자가 다른 함수를 불러 만든 값인가 — 상수 표를 받은 값으로 조회하는 것은 아니다."""
-    return any(x.kind == NAME and k + 1 < len(arg) and arg[k + 1].text == "(" for k, x in enumerate(arg))
+def _plain_name(f, arg: list, params: set[str]) -> bool:
+    """이벤트 이름 자리에 쓸 수 있는 값인가 — 글자 그대로, 받은 매개변수, 또는 풀리는 글자뿐."""
+    if len(arg) == 1 and arg[0].kind == STRING:
+        return True
+    if len(arg) == 1 and arg[0].kind == NAME:
+        return arg[0].text in params or isinstance(f.resolved.get(arg[0].text), str)
+    return False
 
 
 def _resolvable(f, arg: list) -> bool:
@@ -127,11 +131,11 @@ def _check_module(f, config) -> list[str]:
             args = luau.call_args(f.tokens, i)
             literals = [a[0].text for a in args if len(a) == 1 and a[0].kind == STRING]
             literals += [f.resolved[a[0].text] for a in args if len(a) == 1 and a[0].kind == NAME and isinstance(f.resolved.get(a[0].text), str)]
-            params = _function_params(f, i)
-            unknown = [" ".join(x.text for x in a)[:24] for a in args[1:3]
-                       if _computed(a) and not (len(a) == 1 and a[0].kind == NAME and a[0].text in params) and not _resolvable(f, a)]
-            if unknown:
-                out.append(f"{f.rel}:{f.tokens[i].line} 분석 모듈이 {api} 에 어디서 왔는지 알 수 없는 값 {unknown} 을 넣는다 — 받은 값이거나 풀리는 값이어야 한다")
+            params, slot = _function_params(f, i), config["platform_event_arg"].get(api)
+            name_arg = args[slot] if slot is not None and slot < len(args) else None
+            if name_arg is not None and not _plain_name(f, name_arg, params):
+                shown = " ".join(x.text for x in name_arg)[:24]
+                out.append(f"{f.rel}:{f.tokens[i].line} 분석 모듈이 {api} 의 이벤트 이름 자리에 '{shown}' 을 넣는다 — 글자 그대로이거나 받은 값이어야 한다")
             if literals:
                 out.append(f"{f.rel}:{f.tokens[i].line} 분석 모듈이 {api} 에 정해진 값 {literals} 를 넣는다 — 이벤트 이름·필드는 받은 값이어야 한다")
     out += [f"{f.rel}:{t.line} 분석 모듈이 플레이어 개인정보 속성 {t.text} 를 쓴다 (INV-10)" for k, t in enumerate(f.tokens)

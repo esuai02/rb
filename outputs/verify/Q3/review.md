@@ -1,7 +1,9 @@
-major | harness/checks/analytics.py:105 | 분석 모듈의 해석 불가능한 이벤트명이 통과한다 | `local event = getEvent()`을 플랫폼 API에 전달해도 `literals`가 비어 오류가 없다. 허용 이벤트인지 판정할 수 없다 | 이벤트·단계·필드를 정적으로 해석하지 못하면 거부한다
+major | harness/checks/i18n.py:145-153 | 승인된 문구 함수가 아닌 함수가 만든 UI 문구를 통과시킨다 | `goal.Text = getText("label")`은 문자열이 식별자형이라 `hardcoded_text`와 `unresolved_ui_text` 모두 빈 결과가 된다 | UI 대입 RHS는 `Text.get` 등 허용된 키 호출·해석 가능한 상수 외 호출을 거부
 
-major | harness/checks/i18n.py:153 | 알 수 없는 UI 문자열 조립이 통과한다 | `local msg = getA() .. getB(); label.Text = msg`가 `i18n.hardcoded_text` 0건이다. 현재는 대입 RHS에 `..`가 있을 때만 거부한다 | UI 대입값이 Localization 호출 또는 해석 가능한 값이 아니면 점·대괄호 모두 거부한다
+major | harness/checks/analytics.py:90-105,131-136 | 분석 모듈이 조립한 이벤트명을 통과시킨다 | `eventName .. "_bad"`를 `LogCustomEvent`에 넣어도 `_computed`가 함수 호출만 인식해 결과가 빈 목록이다 | 이벤트 인자는 허용된 리터럴·매개변수 외 모든 식을 미해석으로 거부
 
-major | harness/checks/server.py:97 | 플레이어 별칭의 동적 보상 권한 접근이 통과한다 | `local p = player; local key = getKey(); p[key] = value`가 `server.reward_authority` 0건이다. 동적 멤버 검사가 원래 변수명만 본다 | 해석 가능한 플레이어 별칭까지 동적 멤버 검사 대상에 포함한다
+major | harness/run.py:106-120 | 재실행 시 검사 수와 기록 파일 수가 달라질 수 있다 | 기존 `out`의 오래된 기록을 제거·검증하지 않고 현재 검사 파일만 덮어쓴다 | 실행별 새 기록 디렉터리를 사용하거나 현재 검사 ID 밖의 기존 기록을 실패 처리·정리하고 이를 테스트
 
-major | harness/checks/server.py:390 | 재할당된 범위 상수를 정본 값으로 오인한다 | 함수 뒤 `GRID = 9999`로 재할당해도 `f.resolved`의 `GRID=2`를 사용해 계약 범위 검사가 통과한다 | 재할당을 정확히 추적해 범위 경계를 해석 불가로 거부하거나 실제 최종 바인딩을 검증한다
+major | tests/test_harness.py:189-192,220-223 | Q3-C1의 “의도한 진단 문구”를 검증하지 않는다 | 테스트는 결함별 검사 ID 집합만 비교하며 메시지 내용은 일부 별도 분기 테스트에만 있다 | 각 결함에 기대 진단 fragment/코드와 금지 진단을 매니페스트·독립 표에 두고 결함 114종 모두 검증
+
+minor | tests/test_harness.py:28-31,213-215 | Q3-C1 기준과의 결함 종류 연결 검사가 114종 전체가 아니라 20종만 확인한다 | `REQUIRED_CLASSES`만 그래프 문장에 포함됐는지 검사하며 나머지 94종은 기준 문장과의 연결을 검증하지 않는다 | 114개 결함 class/ID 전체를 기준 데이터로 고정해 Q3-C1 문장 또는 별도 기준표와 전수 대조

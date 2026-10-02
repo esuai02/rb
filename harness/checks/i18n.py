@@ -149,7 +149,11 @@ def unresolved_ui_text(f, config) -> list[str]:
         rhs = f.tokens[start:start + 12]
         if any(k in key_calls for k in range(start, start + 12)):
             continue
-        if not any(t.kind == STRING for t in rhs) and not any(isinstance(f.resolved.get(t.text), str) for t in rhs if t.kind == NAME):
+        calls = [k for k in range(start, min(start + 12, len(f.tokens)))
+                 if f.tokens[k].kind == NAME and k + 1 < len(f.tokens) and f.tokens[k + 1].text == "("]
+        if calls:
+            out.append(f"{f.rel}:{f.tokens[start].line} UI 글자 속성 .{prop} 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다 — 문구 키를 거쳐야 한다")
+        elif not any(t.kind == STRING for t in rhs) and not any(isinstance(f.resolved.get(t.text), str) for t in rhs if t.kind == NAME):
             out.append(f"{f.rel}:{f.tokens[start].line} UI 글자 속성 .{prop} 에 값을 알 수 없는 글자를 넣는다 — 문구 키를 거치거나 풀리는 값이어야 한다")
     return out
 

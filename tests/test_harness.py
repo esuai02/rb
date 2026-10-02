@@ -29,122 +29,125 @@ REQUIRED_CLASSES = {"클라이언트가 보상을 정하는 코드", "중복 보
                     "코드 속 하드코딩 문구", "틀린 수학 대사", "조건이 빠진 수학 명제", "어려운 문장", "금지어", "무작위 보상 코드",
                     "유료 보상 코드", "URL 문자열", "런타임 외부 호출(LLM)", "필터 없는 자유 입력", "커스텀 필드 개인정보",
                     "허용 밖 분석 이벤트", "클라이언트 분석 전송"}
-# 매니페스트와 따로 적은 결함표 — id → (종류, 잡아야 할 검사). 결함을 지우거나 기대 검사를 바꾸면 테스트가 실패한다 (리뷰 R-Q3 3·4차)
+# 매니페스트와 따로 적은 결함표 — id → (종류, 잡아야 할 검사, 기대 진단 문구 조각).
+# 결함을 지우거나 기대 검사·진단을 바꾸면 테스트가 실패한다 (리뷰 R-Q3 3·4·11차)
 EXPECTED_DEFECTS = {
-    "D-absolute-path": ("절대 경로를 쓴 Rojo 프로젝트", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
-    "D-alias-grant-in-handler": ("처리 함수 안의 별칭 보상", ("server.duplicate_reward", "server.reward_after_verdict")),
-    "D-analytics-alias": ("별칭으로 부른 허용 밖 분석 이벤트", ("analytics.calls",)),
-    "D-analytics-computed-event": ("어디서 왔는지 알 수 없는 분석 이벤트", ("analytics.calls",)),
-    "D-analytics-dot-call": ("점 표기로 부른 플랫폼 분석 API", ("analytics.calls",)),
-    "D-analytics-method-alias": ("전송 함수를 담은 이름으로 보낸 분석", ("analytics.calls",)),
-    "D-analytics-module-constant-event": ("분석 모듈이 상수 변수로 보낸 이벤트", ("analytics.calls",)),
-    "D-analytics-module-literal": ("분석 모듈이 글자 그대로 보내는 이벤트", ("analytics.calls",)),
-    "D-analytics-module-pii": ("분석 모듈 안의 개인정보", ("analytics.calls",)),
-    "D-analytics-pii": ("커스텀 필드 개인정보", ("analytics.calls",)),
-    "D-analytics-two-step-alias": ("두 단계로 넘긴 분석 전송 함수", ("analytics.calls",)),
-    "D-analytics-unknown-event": ("허용 밖 분석 이벤트", ("analytics.calls",)),
-    "D-anonymous-reward-helper": ("익명 함수에 담은 보상 도우미", ("server.reward_after_verdict",)),
-    "D-badge-bypass": ("보상 모듈을 거치지 않은 자격 발급", ("server.reward_authority",)),
-    "D-banned-term": ("금지어", ("safety.banned_terms",)),
-    "D-bare-number-math": ("명제 없는 숫자 수학 대사", ("math.truth",)),
-    "D-bracket-grant": ("대괄호로 부른 보상", ("server.duplicate_reward",)),
-    "D-bracket-remote": ("대괄호로 등록한 원격 처리", ("server.remote_cooldown", "server.remote_validation")),
-    "D-bracket-ui-text": ("대괄호로 넣은 UI 문구", ("i18n.hardcoded_text",)),
-    "D-broken-claims": ("망가진 명제 파일", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
-    "D-broken-key": ("끊긴 번역 키", ("i18n.missing_key",)),
-    "D-claimonce-not-called": ("호출하지 않은 중복 방지", ("server.duplicate_reward",)),
-    "D-client-analytics": ("클라이언트 분석 전송", ("analytics.calls",)),
-    "D-client-completion": ("클라이언트 완료 신고로 보상", ("server.reward_after_verdict",)),
-    "D-client-reward": ("클라이언트가 보상을 정하는 코드", ("server.reward_authority",)),
-    "D-concat-authority": ("문자열을 쪼개 숨긴 보상 권한", ("server.reward_authority",)),
-    "D-concat-free-text": ("문자열을 쪼개 숨긴 자유 입력", ("safety.free_text",)),
-    "D-concat-url": ("문자열을 쪼개 숨긴 외부 링크", ("i18n.hardcoded_text", "safety.url")),
-    "D-content-mapped": ("검사 입력 폴더를 Rojo 에 실음", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
-    "D-contract-off-canonical": ("정본 값과 다른 입력 계약", ("server.remote_validation",)),
-    "D-cooldown-with-extra-condition": ("다른 조건과 섞인 쿨다운", ("server.remote_cooldown",)),
-    "D-double-mapped-file": ("같은 파일을 두 곳에 싣는 매핑", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
-    "D-double-negated-cooldown": ("두 번 뒤집은 쿨다운", ("server.remote_cooldown",)),
-    "D-duplicate-reward": ("중복 보상", ("server.duplicate_reward", "server.reward_after_verdict")),
-    "D-dynamic-analytics-member": ("값을 알 수 없는 분석 멤버", ("analytics.calls",)),
-    "D-dynamic-authority-member": ("동적 멤버로 쓴 보상 권한", ("server.reward_authority",)),
-    "D-dynamic-remote-member": ("변수로 만든 대괄호 원격 등록", ("server.remote_cooldown", "server.remote_validation")),
-    "D-dynamic-reward-member": ("값을 알 수 없는 보상 멤버", ("server.duplicate_reward",)),
-    "D-dynamic-text-member": ("변수로 고른 문구 함수", ("i18n.missing_key",)),
-    "D-dynamic-text-member-unresolved": ("값을 알 수 없는 문구 멤버", ("i18n.missing_key",)),
-    "D-else-reward": ("판정의 else 가지에서 보상", ("server.reward_after_verdict",)),
-    "D-equals-false-verdict": ("판정이 거짓(== false)인 가지에서 보상", ("server.reward_after_verdict",)),
-    "D-fraction-line-untied": ("대사와 묶이지 않은 분수 계수", ("math.truth",)),
-    "D-free-text": ("필터 없는 자유 입력", ("safety.free_text",)),
-    "D-ftp-url": ("다른 스킴의 외부 링크", ("safety.url",)),
-    "D-funnel-as-custom": ("퍼널 단계를 사용자 정의로 전송", ("analytics.calls",)),
-    "D-hard-sentence": ("어려운 문장", ("text.readability",)),
-    "D-hardcoded-text": ("코드 속 하드코딩 문구", ("i18n.hardcoded_text",)),
-    "D-ignored-cooldown": ("결과를 버리는 쿨다운", ("server.remote_cooldown",)),
-    "D-impossible-range": ("성립할 수 없는 범위 조건", ("server.remote_validation",)),
-    "D-inclusive-bound": ("경계를 하나 더 거르는 범위 가드", ("server.remote_validation",)),
-    "D-indirect-reward-helper": ("간접 도우미를 거친 보상", ("server.reward_after_verdict",)),
-    "D-interpolated-string": ("보간 문자열 안의 코드", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
-    "D-inverted-cooldown": ("뒤집힌 쿨다운 조건", ("server.remote_cooldown",)),
-    "D-late-cooldown": ("처리 뒤에 하는 쿨다운", ("server.remote_cooldown",)),
-    "D-late-guard": ("입력을 쓴 뒤에 하는 검증", ("server.remote_validation",)),
-    "D-llm-call": ("런타임 외부 호출(LLM)", ("safety.external_call",)),
-    "D-long-translation": ("넘치는 긴 번역문", ("i18n.length_budget",)),
-    "D-mapped-outside-src": ("Rojo 가 src 밖을 가리키는 매핑", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
-    "D-missing-condition": ("조건이 빠진 수학 명제", ("math.conditions",)),
-    "D-missing-contract": ("계약 없는 원격 입력", ("server.remote_validation",)),
-    "D-model-textbox": ("데이터 파일로 만든 자유 입력", ("safety.free_text",)),
-    "D-negated-verdict": ("판정이 거짓인 가지에서 보상", ("server.reward_after_verdict",)),
-    "D-nested-guard": ("중첩 조건 안에서만 하는 검증", ("server.remote_validation",)),
-    "D-nonblocking-typeof": ("막지 않는 typeof 검사", ("server.remote_validation",)),
-    "D-one-sided-range": ("한쪽만 보는 범위 조건", ("server.remote_validation",)),
-    "D-paid-item": ("유료 보상 코드", ("safety.random_or_paid_reward",)),
-    "D-platform-api-alias": ("플랫폼 전송 함수를 담은 이름", ("analytics.calls",)),
-    "D-player-alias-dynamic-authority": ("플레이어 별칭의 동적 권한 접근", ("server.reward_authority",)),
-    "D-player-alias-pii": ("플레이어 별칭으로 넣은 개인정보", ("analytics.calls",)),
-    "D-premium-gate": ("구독 회원 전용 보상", ("safety.random_or_paid_reward",)),
-    "D-project-tree-not-object": ("구조가 틀린 Rojo 프로젝트", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
-    "D-random-alias-chain": ("별칭으로 부른 난수", ("safety.random_or_paid_reward",)),
-    "D-random-helper": ("도우미 모듈로 옮긴 무작위 보상", ("safety.random_or_paid_reward",)),
-    "D-random-reward": ("무작위 보상 코드", ("safety.random_or_paid_reward",)),
-    "D-range-before-type": ("타입보다 앞선 범위 검사", ("server.remote_validation",)),
-    "D-reassigned-grid": ("다시 묶인 범위 상수", ("server.remote_validation",)),
-    "D-reassigned-grid-after-block": ("블록 끝 뒤에 다시 묶인 상수", ("server.remote_validation",)),
-    "D-remote-no-cooldown": ("쿨다운 없는 원격 입력", ("server.remote_cooldown",)),
-    "D-remotefunction": ("검증 없는 RemoteFunction", ("server.remote_cooldown", "server.remote_validation")),
-    "D-reward-alias": ("별칭으로 부른 중복 보상", ("server.duplicate_reward",)),
-    "D-reward-bypass": ("보상 모듈을 거치지 않은 지급", ("server.reward_authority",)),
-    "D-same-service-double-map": ("같은 서비스 안의 중복 매핑", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
-    "D-term-line-without-claim": ("숫자 없는 용어 대사에 명제 없음", ("math.truth",)),
-    "D-text-alias": ("별칭으로 부른 끊긴 번역 키", ("i18n.missing_key",)),
-    "D-text-alias-chain": ("두 단계로 넘긴 문구 함수", ("i18n.missing_key",)),
-    "D-text-function-alias": ("문구 함수를 담은 이름으로 쓴 끊긴 키", ("i18n.missing_key",)),
-    "D-textgenerator": ("런타임 생성형 AI 대화(TextGenerator)", ("safety.external_call",)),
-    "D-translated-math": ("번역된 수식", ("i18n.do_not_translate",)),
-    "D-two-step-grant-alias": ("두 단계로 넘긴 보상 별칭", ("server.duplicate_reward", "server.reward_after_verdict")),
-    "D-ui-text-from-function": ("함수가 만든 UI 문구", ("i18n.hardcoded_text",)),
-    "D-ui-text-literal": ("UI 글자 속성에 바로 넣은 문구", ("i18n.hardcoded_text",)),
-    "D-ui-text-variable": ("변수로 넣은 UI 문구", ("i18n.hardcoded_text",)),
-    "D-unknown-analytics-function": ("분석 모듈의 모르는 함수", ("analytics.calls",)),
-    "D-unknown-remote-member": ("값을 알 수 없는 멤버에 건 원격 처리", ("server.remote_validation",)),
-    "D-unranged-remote": ("범위를 검사하지 않는 원격 입력", ("server.remote_validation",)),
-    "D-unreadable-model": ("검사할 수 없는 이진 모델", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability")),
-    "D-unresolved-ui-text": ("UI 로 흘러가는 알 수 없는 조립 글자", ("i18n.hardcoded_text",)),
-    "D-untied-boolean-claim": ("대사와 묶이지 않은 참·거짓 명제", ("math.truth",)),
-    "D-untied-comparison": ("대사와 묶이지 않은 비교 명제", ("math.truth",)),
-    "D-untied-fraction": ("대사와 묶이지 않은 분수 값", ("math.truth",)),
-    "D-untied-math-line": ("명제 없는 수학 대사", ("math.truth",)),
-    "D-unvalidated-remote": ("검증 없는 원격 입력", ("server.remote_validation",)),
-    "D-url": ("URL 문자열", ("safety.url",)),
-    "D-vararg-handler": ("가변 인자 원격 처리", ("server.remote_validation",)),
-    "D-variable-class-name": ("변수로 조립한 인스턴스 이름", ("safety.free_text",)),
-    "D-variable-url": ("변수로 조립한 외부 링크", ("i18n.hardcoded_text", "safety.url")),
-    "D-verdict-or-true": ("다른 조건과 섞인 판정", ("server.reward_after_verdict",)),
-    "D-verdict-then-grant-outside": ("판정을 부르고 바깥에서 보상", ("server.reward_after_verdict",)),
-    "D-wide-range": ("계약보다 넓은 범위 가드", ("server.remote_validation",)),
-    "D-work-before-guard": ("받은 값을 담은 뒤에 하는 검증", ("server.remote_cooldown", "server.remote_validation")),
-    "D-wrong-math": ("틀린 수학 대사", ("math.truth",)),
-    "D-wrong-type-guard": ("계약과 다른 종류로 한 검사", ("server.remote_validation",)),
-    "D-zero-width-banned": ("폭 0 문자를 끼운 금지어", ("safety.banned_terms",)),
+    "D-absolute-path": ("절대 경로를 쓴 Rojo 프로젝트", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "Rojo 경로(StarterPlayer/StarterPlayerScripts/G"),
+    "D-alias-grant-in-handler": ("처리 함수 안의 별칭 보상", ("server.duplicate_reward", "server.reward_after_verdict"), "보상 reward.explorer_card(m.gate_open)를 주는 호출이"),
+    "D-analytics-alias": ("별칭으로 부른 허용 밖 분석 이벤트", ("analytics.calls",), "이벤트 player_profile 가 허용 목록(specs/analytics/e"),
+    "D-analytics-computed-event": ("어디서 왔는지 알 수 없는 분석 이벤트", ("analytics.calls",), "분석 모듈이 LogCustomEvent 의 이벤트 이름 자리에 'getEvent"),
+    "D-analytics-concat-event": ("이어 붙인 분석 이벤트 이름", ("analytics.calls",), "분석 모듈이 LogCustomEvent 의 이벤트 이름 자리에 'eventNam"),
+    "D-analytics-dot-call": ("점 표기로 부른 플랫폼 분석 API", ("analytics.calls",), "분석 모듈이 LogCustomEvent 에 정해진 값 ['player_profi"),
+    "D-analytics-method-alias": ("전송 함수를 담은 이름으로 보낸 분석", ("analytics.calls",), "이벤트 player_profile 가 허용 목록(specs/analytics/e"),
+    "D-analytics-module-constant-event": ("분석 모듈이 상수 변수로 보낸 이벤트", ("analytics.calls",), "분석 모듈이 LogCustomEvent 에 정해진 값 ['not_allowed'"),
+    "D-analytics-module-literal": ("분석 모듈이 글자 그대로 보내는 이벤트", ("analytics.calls",), "분석 모듈이 LogCustomEvent 에 정해진 값 ['player_profi"),
+    "D-analytics-module-pii": ("분석 모듈 안의 개인정보", ("analytics.calls",), "분석 모듈이 플레이어 개인정보 속성 Name 를 쓴다 (INV-10)"),
+    "D-analytics-pii": ("커스텀 필드 개인정보", ("analytics.calls",), "필드 play_mode 의 값 'player . Name' 이 열거형 글자 그대"),
+    "D-analytics-two-step-alias": ("두 단계로 넘긴 분석 전송 함수", ("analytics.calls",), "이벤트 player_profile 가 허용 목록(specs/analytics/e"),
+    "D-analytics-unknown-event": ("허용 밖 분석 이벤트", ("analytics.calls",), "이벤트 player_profile 가 허용 목록(specs/analytics/e"),
+    "D-anonymous-reward-helper": ("익명 함수에 담은 보상 도우미", ("server.reward_after_verdict",), "원격 처리가 서버 판정(MissionService.coordinateMove ·"),
+    "D-badge-bypass": ("보상 모듈을 거치지 않은 자격 발급", ("server.reward_authority",), "보상 모듈 밖 서버 코드가 보상·저장 권한 BadgeService 를 쓴다"),
+    "D-banned-term": ("금지어", ("safety.banned_terms",), "resp.gate_open[Source] 금지어 ['입국', '심사']"),
+    "D-bare-number-math": ("명제 없는 숫자 수학 대사", ("math.truth",), "label.extra.sum: 수학이 든 대사인데 명제가 없다"),
+    "D-bracket-grant": ("대괄호로 부른 보상", ("server.duplicate_reward",), "보상 reward.explorer_card(m.gate_open)를 주는 호출이"),
+    "D-bracket-remote": ("대괄호로 등록한 원격 처리", ("server.remote_cooldown", "server.remote_validation"), "원격 이벤트 처리가 Cooldown.allow 를 거치지 않는다 (연타·자동 반"),
+    "D-bracket-ui-text": ("대괄호로 넣은 UI 문구", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 문구 'Ready' 를 바로 넣었다"),
+    "D-broken-claims": ("망가진 명제 파일", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "content/math_claims.yaml: 읽지 못했다 (ScannerErr"),
+    "D-broken-key": ("끊긴 번역 키", ("i18n.missing_key",), "문구 키 goal.signal_two 가 LocalizationTable 에 없"),
+    "D-claimonce-not-called": ("호출하지 않은 중복 방지", ("server.duplicate_reward",), "grant 가 맨 앞에서 'if not claimOnce(…) then retu"),
+    "D-client-analytics": ("클라이언트 분석 전송", ("analytics.calls",), "분석 모듈을 거치지 않고 AnalyticsService 를 쓴다"),
+    "D-client-completion": ("클라이언트 완료 신고로 보상", ("server.reward_after_verdict",), "원격 처리가 서버 판정(MissionService.coordinateMove ·"),
+    "D-client-reward": ("클라이언트가 보상을 정하는 코드", ("server.reward_authority",), "클라이언트 코드가 보상·저장 권한 leaderstats 를 쓴다"),
+    "D-concat-authority": ("문자열을 쪼개 숨긴 보상 권한", ("server.reward_authority",), "클라이언트 코드가 보상·저장 권한 leaderstats 를 쓴다"),
+    "D-concat-free-text": ("문자열을 쪼개 숨긴 자유 입력", ("safety.free_text",), "자유 입력 TextBox 를 쓴다"),
+    "D-concat-url": ("문자열을 쪼개 숨긴 외부 링크", ("i18n.hardcoded_text", "safety.url"), "코드에 화면 문구 'https://example.com/' 가 있다"),
+    "D-content-mapped": ("검사 입력 폴더를 Rojo 에 실음", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다"),
+    "D-contract-off-canonical": ("정본 값과 다른 입력 계약", ("server.remote_validation",), "원격 계약 SignalRemote.x: 범위(-9~9)가 정본 값 cv.coor"),
+    "D-cooldown-with-extra-condition": ("다른 조건과 섞인 쿨다운", ("server.remote_cooldown",), "쿨다운 결과로 멈추지 않는다"),
+    "D-double-mapped-file": ("같은 파일을 두 곳에 싣는 매핑", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "src/shared/Localization.csv: 같은 파일을 Replicat"),
+    "D-double-negated-cooldown": ("두 번 뒤집은 쿨다운", ("server.remote_cooldown",), "쿨다운 결과로 멈추지 않는다"),
+    "D-duplicate-reward": ("중복 보상", ("server.duplicate_reward", "server.reward_after_verdict"), "보상 reward.explorer_card(m.gate_open)를 주는 호출이"),
+    "D-dynamic-analytics-member": ("값을 알 수 없는 분석 멤버", ("analytics.calls",), "분석 모듈 Analytics 의 멤버를 값을 알 수 없는 방식으로 고른다"),
+    "D-dynamic-authority-member": ("동적 멤버로 쓴 보상 권한", ("server.reward_authority",), "클라이언트 코드가 player 의 멤버를 값을 알 수 없는 방식으로 고른다"),
+    "D-dynamic-remote-member": ("변수로 만든 대괄호 원격 등록", ("server.remote_cooldown", "server.remote_validation"), "원격 이벤트 처리가 Cooldown.allow 를 거치지 않는다 (연타·자동 반"),
+    "D-dynamic-reward-member": ("값을 알 수 없는 보상 멤버", ("server.duplicate_reward",), "보상 모듈 RewardService 의 멤버를 값을 알 수 없는 방식으로 고른다"),
+    "D-dynamic-text-member": ("변수로 고른 문구 함수", ("i18n.missing_key",), "문구 키 goal.missing 가 LocalizationTable 에 없다"),
+    "D-dynamic-text-member-unresolved": ("값을 알 수 없는 문구 멤버", ("i18n.hardcoded_text", "i18n.missing_key"), "UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다"),
+    "D-else-reward": ("판정의 else 가지에서 보상", ("server.reward_after_verdict",), "원격 처리가 서버 판정(MissionService.coordinateMove ·"),
+    "D-equals-false-verdict": ("판정이 거짓(== false)인 가지에서 보상", ("server.reward_after_verdict",), "원격 처리가 서버 판정(MissionService.coordinateMove ·"),
+    "D-fraction-line-untied": ("대사와 묶이지 않은 분수 계수", ("math.truth",), "claim.line.point: 분수 계수는 수로 대사와 묶을 수 없다"),
+    "D-free-text": ("필터 없는 자유 입력", ("safety.free_text",), "자유 입력 TextBox 를 쓴다"),
+    "D-ftp-url": ("다른 스킴의 외부 링크", ("safety.url",), "resp.gate_open[Source] URL 이나 도메인 'ftp://' 이"),
+    "D-funnel-as-custom": ("퍼널 단계를 사용자 정의로 전송", ("analytics.calls",), "gate_opened 는 온보딩 퍼널 단계인데 다른 전송 함수(log)로 보낸다"),
+    "D-hard-sentence": ("어려운 문장", ("text.readability",), "hint.slope.compare[Source] 문장 폭이 110 다"),
+    "D-hardcoded-text": ("코드 속 하드코딩 문구", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 문구 '루미를 신호 칸으로 보내자' 를 바로 넣었"),
+    "D-ignored-cooldown": ("결과를 버리는 쿨다운", ("server.remote_cooldown",), "쿨다운 결과로 멈추지 않는다"),
+    "D-impossible-range": ("성립할 수 없는 범위 조건", ("server.remote_validation",), "원격 입력 x 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)"),
+    "D-inclusive-bound": ("경계를 하나 더 거르는 범위 가드", ("server.remote_validation",), "원격 입력 x 의 범위 가드(-1.0~1.0)가 계약(-2~2)과 다르다"),
+    "D-indirect-reward-helper": ("간접 도우미를 거친 보상", ("server.reward_after_verdict",), "원격 처리가 서버 판정(MissionService.coordinateMove ·"),
+    "D-interpolated-string": ("보간 문자열 안의 코드", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다"),
+    "D-inverted-cooldown": ("뒤집힌 쿨다운 조건", ("server.remote_cooldown",), "쿨다운 결과로 멈추지 않는다"),
+    "D-late-cooldown": ("처리 뒤에 하는 쿨다운", ("server.remote_cooldown",), "쿨다운 결과로 멈추지 않는다"),
+    "D-late-guard": ("입력을 쓴 뒤에 하는 검증", ("server.remote_validation",), "원격 입력 x 의 형식 검사가 처리를 시작한 뒤에 있다"),
+    "D-llm-call": ("런타임 외부 호출(LLM)", ("safety.external_call",), "런타임 외부 호출·생성형 AI HttpService 를 쓴다"),
+    "D-long-translation": ("넘치는 긴 번역문", ("i18n.length_budget",), "goal.signal_2[qps-ploc] 폭 52"),
+    "D-mapped-outside-src": ("Rojo 가 src 밖을 가리키는 매핑", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다"),
+    "D-missing-condition": ("조건이 빠진 수학 명제", ("math.conditions",), "claim.slope.example: 조건 run_nonzero 가 빠졌다 (E"),
+    "D-missing-contract": ("계약 없는 원격 입력", ("server.remote_validation",), "원격 SignalRemote 의 입력 계약이 content/remote_cont"),
+    "D-model-textbox": ("데이터 파일로 만든 자유 입력", ("safety.free_text",), "src/client/Answer.model.json 데이터 파일이 자유 입력 T"),
+    "D-negated-verdict": ("판정이 거짓인 가지에서 보상", ("server.reward_after_verdict",), "원격 처리가 서버 판정(MissionService.coordinateMove ·"),
+    "D-nested-guard": ("중첩 조건 안에서만 하는 검증", ("server.remote_validation",), "원격 입력 x 를 막는 형태의 typeof 검사로 거르지 않는다"),
+    "D-nonblocking-typeof": ("막지 않는 typeof 검사", ("server.remote_validation",), "원격 입력 x 를 막는 형태의 typeof 검사로 거르지 않는다"),
+    "D-one-sided-range": ("한쪽만 보는 범위 조건", ("server.remote_validation",), "원격 입력 x 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)"),
+    "D-paid-item": ("유료 보상 코드", ("safety.random_or_paid_reward",), "결제·구독 조건 MarketplaceService 를 쓴다 (DEC-5 결정 전"),
+    "D-platform-api-alias": ("플랫폼 전송 함수를 담은 이름", ("analytics.calls",), "분석 모듈을 거치지 않고 AnalyticsService 를 쓴다"),
+    "D-player-alias-dynamic-authority": ("플레이어 별칭의 동적 권한 접근", ("server.reward_authority",), "클라이언트 코드가 p 의 멤버를 값을 알 수 없는 방식으로 고른다"),
+    "D-player-alias-pii": ("플레이어 별칭으로 넣은 개인정보", ("analytics.calls",), "분석 모듈이 플레이어 개인정보 속성 Name 를 쓴다 (INV-10)"),
+    "D-premium-gate": ("구독 회원 전용 보상", ("safety.random_or_paid_reward",), "결제·구독 조건 HasRobloxSubscription 를 쓴다 (DEC-5 결"),
+    "D-project-tree-not-object": ("구조가 틀린 Rojo 프로젝트", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "default.project.json: tree 는 객체여야 한다"),
+    "D-random-alias-chain": ("별칭으로 부른 난수", ("safety.random_or_paid_reward",), "난수를 쓴다"),
+    "D-random-helper": ("도우미 모듈로 옮긴 무작위 보상", ("safety.random_or_paid_reward",), "난수를 쓴다"),
+    "D-random-reward": ("무작위 보상 코드", ("safety.random_or_paid_reward",), "난수를 쓴다"),
+    "D-range-before-type": ("타입보다 앞선 범위 검사", ("server.remote_validation",), "원격 입력 x 의 형식 검사가 범위 검사보다 뒤에 있다"),
+    "D-reassigned-grid": ("다시 묶인 범위 상수", ("server.remote_validation",), "원격 입력 x 의 범위 가드(None~None)가 계약(-2~2)과 다르다"),
+    "D-reassigned-grid-after-block": ("블록 끝 뒤에 다시 묶인 상수", ("server.remote_validation",), "원격 입력 x 의 범위 가드(None~None)가 계약(-2~2)과 다르다"),
+    "D-remote-no-cooldown": ("쿨다운 없는 원격 입력", ("server.remote_cooldown",), "원격 이벤트 처리가 Cooldown.allow 를 거치지 않는다 (연타·자동 반"),
+    "D-remotefunction": ("검증 없는 RemoteFunction", ("server.remote_cooldown", "server.remote_validation"), "원격 이벤트 처리가 Cooldown.allow 를 거치지 않는다 (연타·자동 반"),
+    "D-reward-alias": ("별칭으로 부른 중복 보상", ("server.duplicate_reward",), "보상 reward.explorer_card(m.gate_open)를 주는 호출이"),
+    "D-reward-bypass": ("보상 모듈을 거치지 않은 지급", ("server.reward_authority",), "보상 모듈 밖 서버 코드가 보상·저장 권한 leaderstats 를 쓴다"),
+    "D-same-service-double-map": ("같은 서비스 안의 중복 매핑", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "src/shared/Localization.csv: 같은 파일을 Replicat"),
+    "D-term-line-without-claim": ("숫자 없는 용어 대사에 명제 없음", ("math.truth",), "hint.slope.extra: 수학이 든 대사인데 명제가 없다"),
+    "D-text-alias": ("별칭으로 부른 끊긴 번역 키", ("i18n.missing_key",), "문구 키 goal.missing 가 LocalizationTable 에 없다"),
+    "D-text-alias-chain": ("두 단계로 넘긴 문구 함수", ("i18n.missing_key",), "문구 키 goal.missing 가 LocalizationTable 에 없다"),
+    "D-text-function-alias": ("문구 함수를 담은 이름으로 쓴 끊긴 키", ("i18n.missing_key",), "문구 키 goal.missing 가 LocalizationTable 에 없다"),
+    "D-textgenerator": ("런타임 생성형 AI 대화(TextGenerator)", ("safety.external_call",), "런타임 외부 호출·생성형 AI TextGenerator 를 쓴다"),
+    "D-translated-math": ("번역된 수식", ("i18n.do_not_translate",), "label.coordinate.line[qps-ploc] 번역 금지 조각이 원문"),
+    "D-two-step-grant-alias": ("두 단계로 넘긴 보상 별칭", ("server.duplicate_reward", "server.reward_after_verdict"), "보상 reward.explorer_card(m.gate_open)를 주는 호출이"),
+    "D-ui-text-from-function": ("함수가 만든 UI 문구", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다"),
+    "D-ui-text-from-other-function": ("허용 밖 함수가 만든 UI 문구", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다"),
+    "D-ui-text-literal": ("UI 글자 속성에 바로 넣은 문구", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 문구 'Start' 를 바로 넣었다"),
+    "D-ui-text-variable": ("변수로 넣은 UI 문구", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 문구 'Open_Gate' 를 바로 넣었다"),
+    "D-unknown-analytics-function": ("분석 모듈의 모르는 함수", ("analytics.calls",), "분석 모듈의 모르는 함수 raw 를 부른다"),
+    "D-unknown-remote-member": ("값을 알 수 없는 멤버에 건 원격 처리", ("server.remote_validation",), "값을 알 수 없는 멤버에 처리 함수를 이었다"),
+    "D-unranged-remote": ("범위를 검사하지 않는 원격 입력", ("server.remote_validation",), "원격 입력 x 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)"),
+    "D-unreadable-model": ("검사할 수 없는 이진 모델", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사"),
+    "D-unresolved-ui-text": ("UI 로 흘러가는 알 수 없는 조립 글자", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다"),
+    "D-untied-boolean-claim": ("대사와 묶이지 않은 참·거짓 명제", ("math.truth",), "claim.line.point: 수만으로는 대사와 묶을 수 없는 명제다"),
+    "D-untied-comparison": ("대사와 묶이지 않은 비교 명제", ("math.truth",), "claim.slope.compare: 수만으로는 대사와 묶을 수 없는 명제다"),
+    "D-untied-fraction": ("대사와 묶이지 않은 분수 값", ("math.truth",), "claim.slope.example: 수만으로는 대사와 묶을 수 없는 명제다"),
+    "D-untied-math-line": ("명제 없는 수학 대사", ("math.truth",), "label.extra.line: 수학이 든 대사인데 명제가 없다"),
+    "D-unvalidated-remote": ("검증 없는 원격 입력", ("server.remote_validation",), "원격 입력 x 를 막는 형태의 typeof 검사로 거르지 않는다"),
+    "D-url": ("URL 문자열", ("safety.url",), "resp.gate_open[Source] URL 이나 도메인 'roblox.co"),
+    "D-vararg-handler": ("가변 인자 원격 처리", ("server.remote_validation",), "가변 인자(...)는 형식을 검사할 수 없다"),
+    "D-variable-class-name": ("변수로 조립한 인스턴스 이름", ("safety.free_text",), "자유 입력 TextBox 를 만든다"),
+    "D-variable-url": ("변수로 조립한 외부 링크", ("i18n.hardcoded_text", "safety.url"), "코드에 화면 문구 '://example.com' 가 있다"),
+    "D-verdict-or-true": ("다른 조건과 섞인 판정", ("server.reward_after_verdict",), "원격 처리가 서버 판정(MissionService.coordinateMove ·"),
+    "D-verdict-then-grant-outside": ("판정을 부르고 바깥에서 보상", ("server.reward_after_verdict",), "원격 처리가 서버 판정(MissionService.coordinateMove ·"),
+    "D-wide-range": ("계약보다 넓은 범위 가드", ("server.remote_validation",), "원격 입력 x 의 범위 가드(-9999.0~9999.0)가 계약(-2~2)과 다"),
+    "D-work-before-guard": ("받은 값을 담은 뒤에 하는 검증", ("server.remote_cooldown", "server.remote_validation"), "쿨다운 검사가 처리를 시작한 뒤에 있다"),
+    "D-wrong-math": ("틀린 수학 대사", ("math.truth",), "claim.coordinate.label: 명제가 거짓이다 (E1)"),
+    "D-wrong-type-guard": ("계약과 다른 종류로 한 검사", ("server.remote_validation",), "원격 입력 x 를 string 로 검사하지만 계약은 number 다"),
+    "D-zero-width-banned": ("폭 0 문자를 끼운 금지어", ("safety.banned_terms",), "resp.gate_open[Source] 금지어 ['입국', '심사']"),
 }
 ITEM_IDS = {f"E{i}" for i in range(1, 7)} | {f"U{i}" for i in range(1, 15)}
 MODES = {"static", "runtime", "human", "covered", "static_later"}
@@ -210,17 +213,25 @@ class PlantedDefectTest(TreeCase):
                 for d in by_class[name]:
                     self.assertTrue(self.failing(self.make_tree(d["id"])))
 
-    def test_criterion_names_every_required_class(self):
-        statement = next(c["statement"] for n in GRAPH["nodes"] if n["id"] == "Q3" for c in n["criteria"] if c["id"] == "Q3-C1")
-        self.assertEqual({name for name in REQUIRED_CLASSES if name not in statement}, set())
+
 
     def test_defect_table_matches_the_independent_table(self):
-        self.assertEqual({d["id"]: (d["class"], tuple(sorted(d["expected"]))) for d in MANIFEST["defects"]}, EXPECTED_DEFECTS)
+        self.assertEqual({d["id"]: (d["class"], tuple(sorted(d["expected"]))) for d in MANIFEST["defects"]},
+                         {i: (name, checks) for i, (name, checks, _frag) in EXPECTED_DEFECTS.items()})
 
-    def test_each_defect_is_caught_by_the_independently_listed_checks(self):
-        for defect_id, (_name, expected) in sorted(EXPECTED_DEFECTS.items()):
+    def test_each_defect_is_caught_by_the_listed_checks_with_the_intended_diagnosis(self):
+        """결함마다 정해진 검사만 잡고, 그 이유(진단 문구)도 의도한 것이어야 한다 (리뷰 R-Q3 11차)."""
+        for defect_id, (_name, expected, fragment) in sorted(EXPECTED_DEFECTS.items()):
             with self.subTest(defect=defect_id):
-                self.assertEqual(tuple(sorted(self.failing(self.make_tree(defect_id)))), expected)
+                found = self.failing(self.make_tree(defect_id))
+                self.assertEqual(tuple(sorted(found)), expected)
+                self.assertTrue(any(fragment in x for x in found[expected[0]]),
+                                f"{defect_id}: '{fragment}' 가 진단에 없다 — {found[expected[0]][:2]}")
+
+    def test_every_defect_class_is_named_in_the_criterion(self):
+        """기준 Q3-C1 문장이 결함 종류를 하나도 빠짐없이 이름으로 든다 (리뷰 R-Q3 11차)."""
+        statement = next(c["statement"] for n in GRAPH["nodes"] if n["id"] == "Q3" for c in n["criteria"] if c["id"] == "Q3-C1")
+        self.assertEqual(sorted({name for name, _checks, _frag in EXPECTED_DEFECTS.values() if name not in statement}), [])
 
     def test_every_static_check_has_a_planted_defect(self):
         self.assertEqual(set(REGISTRY) - {c for d in MANIFEST["defects"] for c in d["expected"]}, set())
@@ -655,7 +666,7 @@ class CheckBranchTest(TreeCase):
 
     def test_unresolved_ui_assembly_has_its_own_diagnosis(self):
         found = run.run_checks(self.make_tree("D-unresolved-ui-text"), MANIFEST, RULES)["i18n.hardcoded_text"]
-        self.assertTrue(any("값을 알 수 없는 글자" in x for x in found), found)
+        self.assertTrue(any("문구 키 호출이 아닌 함수" in x for x in found), found)
 
     def test_rojo_mapping_must_stay_in_src(self):
         tree = self.make_tree("D-mapped-outside-src")
@@ -693,6 +704,15 @@ class CheckBranchTest(TreeCase):
         self.assertCaught(self.make_tree("D-unknown-remote-member"), "server.remote_validation", "값을 알 수 없는 멤버")
         self.assertCaught(self.make_tree("D-dynamic-text-member"), "i18n.missing_key", "goal.missing")
 
+    def test_records_do_not_keep_stale_files(self):
+        """지난 실행의 기록이 남아 검사 수와 기록 수가 어긋나지 않는다 (리뷰 R-Q3 11차)."""
+        tree, out = self.make_tree(), Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, out, True)
+        (out / "old.check.txt").write_text("지난 실행", encoding="utf-8")
+        results = run.run_checks(tree, MANIFEST, RULES)
+        run.write_records(tree, results, out, "harness/fixtures/clean")
+        self.assertEqual(sorted(p.stem for p in out.glob("*.txt")), sorted(results))
+
     def test_values_moved_through_variables_are_resolved(self):
         """값을 변수로 한 단계 더 돌려도 잡는다 — 그리고 끝까지 풀리지 않으면 거부한다."""
         for defect, check in (("D-variable-class-name", "safety.free_text"), ("D-variable-url", "safety.url"),
@@ -706,8 +726,8 @@ class CheckBranchTest(TreeCase):
 
     def test_decision_values_must_be_known_or_refused(self):
         """값을 쓰는 판단 지점마다 — 글자 그대로이거나 풀리는 값이어야 하고, 아니면 거부한다 (전수 점검, 리뷰 R-Q3 10차)."""
-        for defect, check, fragment in (("D-analytics-computed-event", "analytics.calls", "어디서 왔는지 알 수 없는"),
-                                        ("D-ui-text-from-function", "i18n.hardcoded_text", "값을 알 수 없는 글자"),
+        for defect, check, fragment in (("D-analytics-computed-event", "analytics.calls", "이벤트 이름 자리에"),
+                                        ("D-ui-text-from-function", "i18n.hardcoded_text", "문구 키 호출이 아닌 함수"),
                                         ("D-player-alias-dynamic-authority", "server.reward_authority", "값을 알 수 없는 방식"),
                                         ("D-reassigned-grid-after-block", "server.remote_validation", "범위")):
             with self.subTest(defect=defect):

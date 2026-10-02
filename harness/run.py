@@ -94,6 +94,9 @@ def scrub(root: Path, text: str) -> str:
 
 def write_records(root: Path, results: dict[str, list[str]], out: Path, label: str) -> list[Path]:
     out.mkdir(parents=True, exist_ok=True)
+    for old_record in out.glob("*.txt"):
+        if old_record.stem not in results:
+            old_record.unlink()   # 지난 실행의 기록이 남아 검사 수와 기록 수가 어긋나지 않게
     when, tree_sha = datetime.now(timezone.utc).isoformat(), fingerprint(root)
     paths = []
     for check_id, found in results.items():
