@@ -1,89 +1,1130 @@
 {
   "schema_version": 1,
-  "note": "검수 Harness 지도 (작업 Graph Q3). 검사 id 는 harness/checks/__init__.py REGISTRY 와 같다. 실행: python3 -m harness.run <소스 트리>",
+  "note": "검수 Harness 지도 (작업 Graph Q3). 검사 id 는 harness/checks/__init__.py REGISTRY 와 같다. 결함은 깨끗한 고정 데이터(harness/fixtures/clean)에 edits 를 그대로 적용해 만든다 — 각 edits 의 find 는 꼭 한 번만 나와야 한다. 실행: python3 -m harness.run <소스 트리>",
   "config": {
     "reward_module": "RewardService",
     "analytics_module": "Analytics",
-    "authority_names": ["RewardService", "DataStoreService", "GetDataStore", "GetOrderedDataStore", "leaderstats", "SetAsync", "UpdateAsync", "IncrementAsync"],
-    "cooldown_call": ["Cooldown", "allow"],
     "text_module": "Text",
-    "text_key_calls": [["Text", "get"]],
-    "text_key_methods": ["FormatByKey", "GetString"],
-    "external_call_names": ["HttpService", "RequestAsync", "PostAsync", "GetAsync"],
-    "free_text_names": ["TextBox"],
-    "paid_names": ["MarketplaceService", "ProcessReceipt", "PromptProductPurchase", "PromptGamePassPurchase"],
-    "length_budget": {"*": 90, "action.": 12, "prompt.": 12, "choice.": 12, "expr.": 10, "ping.": 6, "pacing.": 8, "role.": 10, "goal.": 20,
-                      "coop.": 24, "term.": 16, "reward.": 16, "unlock.": 16, "npc.": 16, "world.": 16, "zone.": 40, "retry.": 24},
-    "readability": {"max_sentence_chars": 50, "max_sentences": 3},
-    "budget_status": "가설 — ko-KR 용어집 실측(버튼 최대 12자·목표 17자·문장 최대 49자·대사 최대 81자)에 맞춘 상한. 360px 화면 실측은 Q4, 언어별 상한은 Q7"
+    "authority_names": [
+      "DataStoreService",
+      "GetDataStore",
+      "GetOrderedDataStore",
+      "leaderstats",
+      "SetAsync",
+      "UpdateAsync",
+      "IncrementAsync",
+      "OwnedRewards"
+    ],
+    "cooldown_call": [
+      "Cooldown",
+      "allow"
+    ],
+    "verdict_calls": [
+      [
+        "MissionService",
+        "coordinateMove"
+      ],
+      [
+        "MissionService",
+        "slopeSet"
+      ]
+    ],
+    "text_key_calls": [
+      [
+        "Text",
+        "get"
+      ]
+    ],
+    "text_key_methods": [
+      "FormatByKey",
+      "GetString"
+    ],
+    "ui_text_properties": [
+      "Text",
+      "PlaceholderText",
+      "Title",
+      "ContentText",
+      "ObjectText",
+      "ActionText",
+      "PromptText"
+    ],
+    "external_call_names": [
+      "HttpService",
+      "RequestAsync",
+      "PostAsync",
+      "TextGenerator",
+      "GenerateTextAsync",
+      "GenerationService"
+    ],
+    "free_text_names": [
+      "TextBox"
+    ],
+    "paid_names": [
+      "MarketplaceService",
+      "ProcessReceipt",
+      "PromptProductPurchase",
+      "PromptGamePassPurchase",
+      "HasRobloxSubscription",
+      "MembershipType"
+    ],
+    "random_allowed_modules": [],
+    "funnel_call": "funnel",
+    "custom_call": "log",
+    "platform_apis": [
+      "LogCustomEvent",
+      "LogOnboardingFunnelStepEvent"
+    ],
+    "width_budget": {
+      "*": 175,
+      "action.": 30,
+      "prompt.": 20,
+      "choice.": 25,
+      "expr.": 15,
+      "ping.": 10,
+      "pacing.": 10,
+      "role.": 20,
+      "goal.": 40,
+      "coop.": 50,
+      "term.": 10,
+      "reward.": 30,
+      "unlock.": 20,
+      "npc.": 10,
+      "world.": 20,
+      "zone.": 60,
+      "retry.": 35,
+      "hint.": 115,
+      "resp.": 80,
+      "sit.": 120,
+      "label.": 175
+    },
+    "readability": {
+      "max_sentence_width": 90,
+      "max_sentences": 3
+    },
+    "budget_status": "가설 — 화면 폭 단위(한글·전각 2, 그 밖 1)로 센다. 잠긴 ko-KR 용어집과 고정 데이터의 실측 최댓값에 약 25% 여유를 둔 값(예: label. 실측 138 → 175). 실제 화면(360px)에서의 폭 실측은 Q4, 언어별 상한은 Q7"
   },
   "checks": [
-    {"id": "server.client_reward", "area": "server", "invariants": ["INV-4"], "question": "클라이언트가 보상·저장 권한을 쓰는가"},
-    {"id": "server.duplicate_reward", "area": "server", "invariants": ["INV-4"], "question": "보상이 한 번만 지급되는가(claimOnce·호출 자리 하나)"},
-    {"id": "server.remote_validation", "area": "server", "invariants": ["INV-4"], "question": "원격 입력의 형식을 검사하는가"},
-    {"id": "server.remote_cooldown", "area": "server", "invariants": ["INV-4"], "question": "원격 입력이 쿨다운을 거치는가(cv.server_cooldown)"},
-    {"id": "i18n.missing_key", "area": "i18n", "invariants": ["INV-3"], "question": "코드가 쓰는 문구 키가 LocalizationTable 에 있는가"},
-    {"id": "i18n.length_budget", "area": "i18n", "invariants": ["INV-9"], "question": "문구가 키 종류별 글자 수 상한 안인가(U7 정적 부분)"},
-    {"id": "i18n.do_not_translate", "area": "i18n", "invariants": ["INV-3"], "question": "수식·좌표가 번역 뒤에도 그대로인가"},
-    {"id": "i18n.hardcoded_text", "area": "i18n", "invariants": ["INV-3"], "question": "엔진 코드에 화면 문구가 없는가"},
-    {"id": "text.readability", "area": "text", "invariants": ["INV-15"], "question": "문장 길이·수가 상한 안인가(E5)"},
-    {"id": "math.truth", "area": "math", "invariants": ["INV-7"], "question": "수학 명제가 참인가(E1)"},
-    {"id": "math.conditions", "area": "math", "invariants": ["INV-7"], "question": "수학 명제의 조건이 빠지지 않았는가(E2)"},
-    {"id": "safety.banned_terms", "area": "safety", "invariants": ["INV-11", "INV-8", "INV-14"], "question": "금지어가 없는가"},
-    {"id": "safety.url", "area": "safety", "invariants": ["INV-16"], "question": "외부 링크가 없는가"},
-    {"id": "safety.external_call", "area": "safety", "invariants": ["INV-16"], "question": "런타임 외부 호출(생성형 AI 등)이 없는가"},
-    {"id": "safety.free_text", "area": "safety", "invariants": ["INV-16", "INV-10"], "question": "필터 없는 자유 입력이 없는가"},
-    {"id": "safety.random_or_paid_reward", "area": "safety", "invariants": ["INV-12"], "question": "무작위·유료 보상이 없는가"},
-    {"id": "analytics.calls", "area": "analytics", "invariants": ["INV-10"], "question": "분석이 서버에서 허용 이벤트·열거형 값만 보내는가"}
+    {
+      "id": "server.reward_authority",
+      "area": "server",
+      "invariants": [
+        "INV-4"
+      ],
+      "question": "보상·저장 권한을 보상 모듈 밖에서(클라이언트든 서버든) 쓰는가"
+    },
+    {
+      "id": "server.duplicate_reward",
+      "area": "server",
+      "invariants": [
+        "INV-4"
+      ],
+      "question": "보상이 한 번만 지급되는가(claimOnce·호출 자리 하나)"
+    },
+    {
+      "id": "server.remote_validation",
+      "area": "server",
+      "invariants": [
+        "INV-4"
+      ],
+      "question": "원격 입력의 형식을 검사하는가"
+    },
+    {
+      "id": "server.remote_cooldown",
+      "area": "server",
+      "invariants": [
+        "INV-4"
+      ],
+      "question": "원격 입력이 쿨다운을 거치는가(cv.server_cooldown)"
+    },
+    {
+      "id": "server.reward_after_verdict",
+      "area": "server",
+      "invariants": [
+        "INV-4"
+      ],
+      "question": "원격 처리가 서버 판정 뒤에만 보상에 닿는가(클라이언트 완료 신고 금지)"
+    },
+    {
+      "id": "i18n.missing_key",
+      "area": "i18n",
+      "invariants": [
+        "INV-3"
+      ],
+      "question": "코드가 쓰는 문구 키가 LocalizationTable 에 있는가"
+    },
+    {
+      "id": "i18n.length_budget",
+      "area": "i18n",
+      "invariants": [
+        "INV-9"
+      ],
+      "question": "문구가 키 종류별 화면 폭 상한 안인가(U7 정적 부분)"
+    },
+    {
+      "id": "i18n.do_not_translate",
+      "area": "i18n",
+      "invariants": [
+        "INV-3"
+      ],
+      "question": "수식·좌표가 번역 뒤에도 그대로인가"
+    },
+    {
+      "id": "i18n.hardcoded_text",
+      "area": "i18n",
+      "invariants": [
+        "INV-3"
+      ],
+      "question": "엔진 코드에 화면 문구가 없는가"
+    },
+    {
+      "id": "text.readability",
+      "area": "text",
+      "invariants": [
+        "INV-15"
+      ],
+      "question": "문장 길이·수가 상한 안인가(E5)"
+    },
+    {
+      "id": "math.truth",
+      "area": "math",
+      "invariants": [
+        "INV-7"
+      ],
+      "question": "수학 명제가 참인가(E1)"
+    },
+    {
+      "id": "math.conditions",
+      "area": "math",
+      "invariants": [
+        "INV-7"
+      ],
+      "question": "수학 명제의 조건이 빠지지 않았는가(E2)"
+    },
+    {
+      "id": "safety.banned_terms",
+      "area": "safety",
+      "invariants": [
+        "INV-11",
+        "INV-8",
+        "INV-14"
+      ],
+      "question": "금지어가 없는가"
+    },
+    {
+      "id": "safety.url",
+      "area": "safety",
+      "invariants": [
+        "INV-16"
+      ],
+      "question": "외부 링크가 없는가"
+    },
+    {
+      "id": "safety.external_call",
+      "area": "safety",
+      "invariants": [
+        "INV-16"
+      ],
+      "question": "런타임 외부 호출·생성형 AI(TextGenerator 포함)가 없는가"
+    },
+    {
+      "id": "safety.free_text",
+      "area": "safety",
+      "invariants": [
+        "INV-16",
+        "INV-10"
+      ],
+      "question": "필터 없는 자유 입력이 없는가"
+    },
+    {
+      "id": "safety.random_or_paid_reward",
+      "area": "safety",
+      "invariants": [
+        "INV-12"
+      ],
+      "question": "난수·결제·구독 조건으로 보상·진행을 가르지 않는가"
+    },
+    {
+      "id": "analytics.calls",
+      "area": "analytics",
+      "invariants": [
+        "INV-10"
+      ],
+      "question": "분석이 서버에서 허용 이벤트·열거형 값만, 퍼널·사용자 정의를 맞는 전송 함수로 보내는가"
+    }
   ],
   "items": [
-    {"id": "E1", "source": "K3 §3", "title": "수학적 참/거짓", "mode": "static", "stage": "Q3", "checks": ["math.truth"]},
-    {"id": "E2", "source": "K3 §3", "title": "조건 완전성", "mode": "static", "stage": "Q3", "checks": ["math.conditions"]},
-    {"id": "E3", "source": "K3 §3", "title": "교육과정 적합성", "mode": "human", "stage": "Q8", "reason": "그 나라·학년의 선수개념·난도 판단은 현지 교사 승인(INV-7)"},
-    {"id": "E4", "source": "K3 §3", "title": "오개념 대응", "mode": "static_later", "stage": "Q4", "reason": "선택지 → 오개념 표는 Q4 에서 선택지를 만들 때 생긴다 — 그때 정적 검사를 더한다"},
-    {"id": "E5", "source": "K3 §3", "title": "문해력 부담", "mode": "static", "stage": "Q3", "checks": ["text.readability"]},
-    {"id": "E6", "source": "K3 §3", "title": "게임 적합성", "mode": "covered", "stage": "Q2", "covered_by": ["Q2-C2", "Q2-C7"], "reason": "퀴즈·정의 카드 단계 금지와 행동 → 월드 반응 순서는 잠긴 Q2 검사기가 본다"},
-    {"id": "U1", "source": "K4 §8", "title": "360px 폭에서 필수 버튼이 보인다", "mode": "runtime", "stage": "Q4", "reason": "화면을 그려 봐야 안다(스테이징 Play 시험·화면 캡처)"},
-    {"id": "U2", "source": "K4 §8", "title": "기본 조이스틱·점프와 커스텀 UI 가 겹치지 않는다", "mode": "runtime", "stage": "Q4", "reason": "기기별 기본 UI 배치를 그려 봐야 안다"},
-    {"id": "U3", "source": "K4 §8", "title": "안전영역에 글자가 가리지 않는다", "mode": "runtime", "stage": "Q4", "reason": "노치·홈 인디케이터는 기기에서만 보인다"},
-    {"id": "U4", "source": "K4 §8", "title": "세로·가로 모드에서 핵심 UI 유지", "mode": "runtime", "stage": "Q4", "reason": "화면 회전을 실행해 봐야 안다"},
-    {"id": "U5", "source": "K4 §8", "title": "한 화면에 주 행동 버튼 1개", "mode": "runtime", "stage": "Q4", "reason": "UI 가 Q4 에서 만들어진다 — 화면 상태별로 센다"},
-    {"id": "U6", "source": "K4 §8", "title": "터치·키보드·게임패드로 핵심 미션 완주", "mode": "covered", "stage": "Q2", "covered_by": ["Q2-C7"], "reason": "입력 3종마다 혼자 끝까지 가는 시나리오를 잠긴 Q2 가 요구한다 — 실제 완주는 Q4 Play 시험"},
-    {"id": "U7", "source": "K4 §8", "title": "긴 번역문에서도 UI 가 깨지지 않는다", "mode": "static", "stage": "Q3", "checks": ["i18n.length_budget"], "reason": "글자 수 상한은 Q3 정적 검사, 실제로 깨지지 않는지는 Q4 화면 시험"},
-    {"id": "U8", "source": "K4 §8", "title": "색을 안 봐도 정답·위험·역할을 안다", "mode": "runtime", "stage": "Q4", "reason": "색 외 표지(아이콘·패턴)는 UI 를 만든 뒤 화면에서 본다 — 원칙은 정본 값 cv.color_meaning(color_only false)"},
-    {"id": "U9", "source": "K4 §8", "title": "게임패드 포커스 순서가 논리적이다", "mode": "runtime", "stage": "Q4", "reason": "포커스 이동을 실행해 봐야 안다"},
-    {"id": "U10", "source": "K4 §8", "title": "자막·대비·투명도 설정이 적용된다", "mode": "runtime", "stage": "Q4", "reason": "설정을 켜고 화면을 봐야 안다"},
-    {"id": "U11", "source": "K4 §8", "title": "첫 60초 안에 첫 목표·상호작용·보상", "mode": "runtime", "stage": "Q4", "reason": "Q2 는 신호 1(첫 월드 반응)을 60초 안에 둔다. '첫 보상'을 월드 반응으로 볼지 K4 와 K5(첫 큰 보상 3~4분)가 다르다 — Q4 퍼널 실측으로 판정"},
-    {"id": "U12", "source": "K4 §8", "title": "실패 뒤 5초 안에 재도전·힌트", "mode": "runtime", "stage": "Q4", "reason": "Q2 는 다른 결과 1번에 힌트 1단계를 둔다 — 5초는 실행 시간이라 Q4 에서 잰다"},
-    {"id": "U13", "source": "K4 §8", "title": "친구 없이 핵심 온보딩 통과", "mode": "covered", "stage": "Q2", "covered_by": ["Q2-C7"], "reason": "필수 미션 혼자(NPC) 완주와 매칭 대기 끝 NPC 를 잠긴 Q2 가 요구한다"},
-    {"id": "U14", "source": "K4 §8", "title": "팀원 상태·준비 조건·다음 행동이 보인다", "mode": "runtime", "stage": "Q4", "reason": "협동 UI 가 Q4 에서 만들어진다"},
-    {"id": "INV-3", "source": "intent §5", "title": "엔진 코드에 화면 문구 없음·번역 금지 구간", "mode": "static", "stage": "Q3", "checks": ["i18n.missing_key", "i18n.hardcoded_text", "i18n.do_not_translate"]},
-    {"id": "INV-4", "source": "intent §5", "title": "서버 권위·공정 보상", "mode": "static", "stage": "Q3", "checks": ["server.client_reward", "server.duplicate_reward", "server.remote_validation", "server.remote_cooldown"]},
-    {"id": "INV-10", "source": "intent §5", "title": "아동 개인정보 — 허용 이벤트만", "mode": "static", "stage": "Q3", "checks": ["analytics.calls", "safety.free_text"]},
-    {"id": "INV-11", "source": "intent §5", "title": "세계관 안전 — 금지어", "mode": "static", "stage": "Q3", "checks": ["safety.banned_terms"]},
-    {"id": "INV-12", "source": "intent §5", "title": "공정한 수익화 — 무작위·유료 보상 없음", "mode": "static", "stage": "Q3", "checks": ["safety.random_or_paid_reward"]},
-    {"id": "INV-16", "source": "intent §5", "title": "연령 차단 회피 — 외부 링크·런타임 AI·자유 입력 없음", "mode": "static", "stage": "Q3", "checks": ["safety.url", "safety.external_call", "safety.free_text"]}
+    {
+      "id": "E1",
+      "source": "K3 §3",
+      "title": "수학적 참/거짓",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "math.truth"
+      ],
+      "note": "대사-명제 연결은 명제가 말하는 값(이동·결과 칸·기울기 값·점)이 원문에 있는지까지 본다. 비교 방향(더 가파르다 등)은 말로 표현되어 정적으로 묶지 않는다 — 사람 검토(Q8)"
+    },
+    {
+      "id": "E2",
+      "source": "K3 §3",
+      "title": "조건 완전성",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "math.conditions"
+      ]
+    },
+    {
+      "id": "E3",
+      "source": "K3 §3",
+      "title": "교육과정 적합성",
+      "mode": "human",
+      "stage": "Q8",
+      "reason": "그 나라·학년의 선수개념·난도 판단은 현지 교사 승인(INV-7)",
+      "checks": []
+    },
+    {
+      "id": "E4",
+      "source": "K3 §3",
+      "title": "오개념 대응",
+      "mode": "static_later",
+      "stage": "Q4",
+      "reason": "선택지 → 오개념 표는 Q4 에서 선택지를 만들 때 생긴다 — 그때 정적 검사를 더한다",
+      "checks": []
+    },
+    {
+      "id": "E5",
+      "source": "K3 §3",
+      "title": "문해력 부담",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "text.readability"
+      ],
+      "note": "정적 검사는 문장 폭·문장 수만 본다. 학년에 맞는 어휘·시험식 어미는 현지 교사 승인(Q8)"
+    },
+    {
+      "id": "E6",
+      "source": "K3 §3",
+      "title": "게임 적합성",
+      "mode": "covered",
+      "stage": "Q2",
+      "covered_by": [
+        "Q2-C2",
+        "Q2-C7"
+      ],
+      "reason": "퀴즈·정의 카드 단계 금지와 행동 → 월드 반응 순서는 잠긴 Q2 검사기가 본다",
+      "checks": []
+    },
+    {
+      "id": "U1",
+      "source": "K4 §8",
+      "title": "360px 폭에서 필수 버튼이 보인다",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "화면을 그려 봐야 안다(스테이징 Play 시험·화면 캡처)",
+      "checks": []
+    },
+    {
+      "id": "U2",
+      "source": "K4 §8",
+      "title": "기본 조이스틱·점프와 커스텀 UI 가 겹치지 않는다",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "기기별 기본 UI 배치를 그려 봐야 안다",
+      "checks": []
+    },
+    {
+      "id": "U3",
+      "source": "K4 §8",
+      "title": "안전영역에 글자가 가리지 않는다",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "노치·홈 인디케이터는 기기에서만 보인다",
+      "checks": []
+    },
+    {
+      "id": "U4",
+      "source": "K4 §8",
+      "title": "세로·가로 모드에서 핵심 UI 유지",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "화면 회전을 실행해 봐야 안다",
+      "checks": []
+    },
+    {
+      "id": "U5",
+      "source": "K4 §8",
+      "title": "한 화면에 주 행동 버튼 1개",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "UI 가 Q4 에서 만들어진다 — 화면 상태별로 센다",
+      "checks": []
+    },
+    {
+      "id": "U6",
+      "source": "K4 §8",
+      "title": "터치·키보드·게임패드로 핵심 미션 완주",
+      "mode": "covered",
+      "stage": "Q2",
+      "covered_by": [
+        "Q2-C7"
+      ],
+      "reason": "입력 3종마다 혼자 끝까지 가는 시나리오를 잠긴 Q2 가 요구한다 — 실제 완주는 Q4 Play 시험",
+      "checks": []
+    },
+    {
+      "id": "U7",
+      "source": "K4 §8",
+      "title": "긴 번역문에서도 UI 가 깨지지 않는다",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "i18n.length_budget"
+      ],
+      "reason": "글자 수 상한은 Q3 정적 검사, 실제로 깨지지 않는지는 Q4 화면 시험"
+    },
+    {
+      "id": "U8",
+      "source": "K4 §8",
+      "title": "색을 안 봐도 정답·위험·역할을 안다",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "색 외 표지(아이콘·패턴)는 UI 를 만든 뒤 화면에서 본다 — 원칙은 정본 값 cv.color_meaning(color_only false)",
+      "checks": []
+    },
+    {
+      "id": "U9",
+      "source": "K4 §8",
+      "title": "게임패드 포커스 순서가 논리적이다",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "포커스 이동을 실행해 봐야 안다",
+      "checks": []
+    },
+    {
+      "id": "U10",
+      "source": "K4 §8",
+      "title": "자막·대비·투명도 설정이 적용된다",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "설정을 켜고 화면을 봐야 안다",
+      "checks": []
+    },
+    {
+      "id": "U11",
+      "source": "K4 §8",
+      "title": "첫 60초 안에 첫 목표·상호작용·보상",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "Q2 는 신호 1(첫 월드 반응)을 60초 안에 둔다. '첫 보상'을 월드 반응으로 볼지 K4 와 K5(첫 큰 보상 3~4분)가 다르다 — Q4 퍼널 실측으로 판정",
+      "checks": []
+    },
+    {
+      "id": "U12",
+      "source": "K4 §8",
+      "title": "실패 뒤 5초 안에 재도전·힌트",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "Q2 는 다른 결과 1번에 힌트 1단계를 둔다 — 5초는 실행 시간이라 Q4 에서 잰다",
+      "checks": []
+    },
+    {
+      "id": "U13",
+      "source": "K4 §8",
+      "title": "친구 없이 핵심 온보딩 통과",
+      "mode": "covered",
+      "stage": "Q2",
+      "covered_by": [
+        "Q2-C7"
+      ],
+      "reason": "필수 미션 혼자(NPC) 완주와 매칭 대기 끝 NPC 를 잠긴 Q2 가 요구한다",
+      "checks": []
+    },
+    {
+      "id": "U14",
+      "source": "K4 §8",
+      "title": "팀원 상태·준비 조건·다음 행동이 보인다",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "협동 UI 가 Q4 에서 만들어진다",
+      "checks": []
+    },
+    {
+      "id": "INV-3",
+      "source": "intent §5",
+      "title": "엔진 코드에 화면 문구 없음·번역 금지 구간",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "i18n.missing_key",
+        "i18n.hardcoded_text",
+        "i18n.do_not_translate"
+      ]
+    },
+    {
+      "id": "INV-4",
+      "source": "intent §5",
+      "title": "서버 권위·공정 보상",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "server.reward_authority",
+        "server.duplicate_reward",
+        "server.remote_validation",
+        "server.remote_cooldown",
+        "server.reward_after_verdict"
+      ]
+    },
+    {
+      "id": "INV-10",
+      "source": "intent §5",
+      "title": "아동 개인정보 — 허용 이벤트만",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "analytics.calls",
+        "safety.free_text"
+      ]
+    },
+    {
+      "id": "INV-11",
+      "source": "intent §5",
+      "title": "세계관 안전 — 금지어",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "safety.banned_terms"
+      ]
+    },
+    {
+      "id": "INV-12",
+      "source": "intent §5",
+      "title": "공정한 수익화 — 무작위·유료 보상 없음",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "safety.random_or_paid_reward"
+      ]
+    },
+    {
+      "id": "INV-16",
+      "source": "intent §5",
+      "title": "연령 차단 회피 — 외부 링크·런타임 AI·자유 입력 없음",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "safety.url",
+        "safety.external_call",
+        "safety.free_text"
+      ]
+    }
   ],
   "defects": [
-    {"id": "D-client-reward", "class": "클라이언트가 보상을 정하는 코드", "expected": ["server.client_reward"]},
-    {"id": "D-duplicate-reward", "class": "중복 보상", "expected": ["server.duplicate_reward"]},
-    {"id": "D-unvalidated-remote", "class": "검증 없는 원격 입력", "expected": ["server.remote_validation"]},
-    {"id": "D-remote-no-cooldown", "class": "쿨다운 없는 원격 입력", "expected": ["server.remote_cooldown"]},
-    {"id": "D-broken-key", "class": "끊긴 번역 키", "expected": ["i18n.missing_key"]},
-    {"id": "D-long-translation", "class": "넘치는 긴 번역문", "expected": ["i18n.length_budget"]},
-    {"id": "D-translated-math", "class": "번역된 수식", "expected": ["i18n.do_not_translate"]},
-    {"id": "D-hardcoded-text", "class": "코드 속 하드코딩 문구", "expected": ["i18n.hardcoded_text"]},
-    {"id": "D-wrong-math", "class": "틀린 수학 대사", "expected": ["math.truth"]},
-    {"id": "D-missing-condition", "class": "조건이 빠진 수학 명제", "expected": ["math.conditions"]},
-    {"id": "D-hard-sentence", "class": "어려운 문장", "expected": ["text.readability"]},
-    {"id": "D-banned-term", "class": "금지어", "expected": ["safety.banned_terms"]},
-    {"id": "D-random-reward", "class": "무작위 보상 코드", "expected": ["safety.random_or_paid_reward"]},
-    {"id": "D-paid-item", "class": "유료 보상 코드", "expected": ["safety.random_or_paid_reward"]},
-    {"id": "D-url", "class": "URL 문자열", "expected": ["safety.url"]},
-    {"id": "D-llm-call", "class": "런타임 외부 호출(LLM)", "expected": ["safety.external_call"]},
-    {"id": "D-free-text", "class": "필터 없는 자유 입력", "expected": ["safety.free_text"]},
-    {"id": "D-analytics-pii", "class": "커스텀 필드 개인정보", "expected": ["analytics.calls"]},
-    {"id": "D-analytics-unknown-event", "class": "허용 밖 분석 이벤트", "expected": ["analytics.calls"]},
-    {"id": "D-client-analytics", "class": "클라이언트 분석 전송", "expected": ["analytics.calls"]}
+    {
+      "id": "D-client-reward",
+      "class": "클라이언트가 보상을 정하는 코드",
+      "expected": [
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "sendCell(2, 1)\nlocal player = game:GetService(\"Players\").LocalPlayer\nplayer.leaderstats.Stars.Value += 1\n"
+        }
+      ]
+    },
+    {
+      "id": "D-duplicate-reward",
+      "class": "중복 보상",
+      "expected": [
+        "server.duplicate_reward",
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\treturn reached\n",
+          "replace": "\tif reached then\n\t\tRewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n\tend\n\treturn reached\n"
+        }
+      ],
+      "note": "판정 함수(coordinateMove) 안에서 보상을 주므로 '서버 판정 뒤에만 보상' 도 함께 깨진다 — 두 검사가 모두 잡는 것이 맞다"
+    },
+    {
+      "id": "D-unvalidated-remote",
+      "class": "검증 없는 원격 입력",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n",
+          "replace": ""
+        }
+      ]
+    },
+    {
+      "id": "D-remote-no-cooldown",
+      "class": "쿨다운 없는 원격 입력",
+      "expected": [
+        "server.remote_cooldown"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif not Cooldown.allow(player, \"signal\") then return end\n",
+          "replace": ""
+        }
+      ]
+    },
+    {
+      "id": "D-broken-key",
+      "class": "끊긴 번역 키",
+      "expected": [
+        "i18n.missing_key"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "\"goal.signal_2\"",
+          "replace": "\"goal.signal_two\""
+        }
+      ]
+    },
+    {
+      "id": "D-long-translation",
+      "class": "넘치는 긴 번역문",
+      "expected": [
+        "i18n.length_budget"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "[Ŀüɱï ŝïĝñàŀ ķàñ]",
+          "replace": "[Ŝēñð Ŀüɱï ţö ţĥē ŝïĝñàŀ ķàñ ƀēƒöŕē ţĥē ĝàţē čŀöŝēŝ]"
+        }
+      ]
+    },
+    {
+      "id": "D-translated-math",
+      "class": "번역된 수식",
+      "expected": [
+        "i18n.do_not_translate"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "→ (2, 1). Ĉööŕðïñàţē.",
+          "replace": "→ (2; 1). Ĉööŕðïñàţē."
+        }
+      ]
+    },
+    {
+      "id": "D-hardcoded-text",
+      "class": "코드 속 하드코딩 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal.Text = \"루미를 신호 칸으로 보내자\""
+        }
+      ]
+    },
+    {
+      "id": "D-wrong-math",
+      "class": "틀린 수학 대사",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "위 1 → (2, 1). 방금",
+          "replace": "위 1 → (1, 2). 방금"
+        },
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "ûƥ 1 → (2, 1). Ĉ",
+          "replace": "ûƥ 1 → (1, 2). Ĉ"
+        },
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    states: [2, 1]\n",
+          "replace": "    states: [1, 2]\n"
+        }
+      ]
+    },
+    {
+      "id": "D-missing-condition",
+      "class": "조건이 빠진 수학 명제",
+      "expected": [
+        "math.conditions"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    states: 2\n    conditions: {run_nonzero: true, same_unit: grid_cell}\n",
+          "replace": "    states: 2\n    conditions: {same_unit: grid_cell}\n"
+        }
+      ]
+    },
+    {
+      "id": "D-hard-sentence",
+      "class": "어려운 문장",
+      "expected": [
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "이 다리가 옆 다리보다 더 가팔라.",
+          "replace": "이 다리는 옆으로 한 칸 갈 때마다 높이가 세 칸씩 올라가니까 옆에 있는 다리보다 훨씬 더 가파르다고 말할 수 있어."
+        }
+      ]
+    },
+    {
+      "id": "D-banned-term",
+      "class": "금지어",
+      "expected": [
+        "safety.banned_terms"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "도시 언어 게이트가 열렸어!,",
+          "replace": "도시 언어 게이트 입국심사 통과!,"
+        }
+      ]
+    },
+    {
+      "id": "D-random-reward",
+      "class": "무작위 보상 코드",
+      "expected": [
+        "safety.random_or_paid_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\t\towned:SetAttribute(rewardId, true)\n",
+          "replace": "\t\towned:SetAttribute(rewardId, true)\n\t\tif math.random() < 0.1 then\n\t\t\towned:SetAttribute(\"reward.rare_drop\", true)\n\t\tend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-paid-item",
+      "class": "유료 보상 코드",
+      "expected": [
+        "safety.random_or_paid_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})\n\tgame:GetService(\"MarketplaceService\"):PromptProductPurchase(player, 1234567)"
+        }
+      ]
+    },
+    {
+      "id": "D-url",
+      "class": "URL 문자열",
+      "expected": [
+        "safety.url"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "도시 언어 게이트가 열렸어!,",
+          "replace": "도시 언어 게이트가 열렸어! roblox.com/groups 에서 더 보기,"
+        }
+      ]
+    },
+    {
+      "id": "D-llm-call",
+      "class": "런타임 외부 호출(LLM)",
+      "expected": [
+        "safety.external_call"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "local MissionService = {}\n",
+          "replace": "local MissionService = {}\nlocal HttpService = game:GetService(\"HttpService\")\n\nfunction MissionService.askHint(prompt: string)\n\treturn HttpService:RequestAsync({Url = script:GetAttribute(\"HintEndpoint\"), Method = \"POST\", Body = prompt})\nend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-free-text",
+      "class": "필터 없는 자유 입력",
+      "expected": [
+        "safety.free_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Parent = script.Parent\n",
+          "replace": "goal.Parent = script.Parent\n\nlocal answer = Instance.new(\"TextBox\")\nanswer.Parent = script.Parent\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-pii",
+      "class": "커스텀 필드 개인정보",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = player.Name})"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-unknown-event",
+      "class": "허용 밖 분석 이벤트",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics.funnel(player, \"player_profile\", {play_mode = \"solo_npc\"})"
+        }
+      ]
+    },
+    {
+      "id": "D-client-analytics",
+      "class": "클라이언트 분석 전송",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "sendCell(2, 1)\ngame:GetService(\"AnalyticsService\"):LogCustomEvent(game:GetService(\"Players\").LocalPlayer, \"session_start\", 1)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-mapped-outside-src",
+      "class": "Rojo 가 src 밖에서 싣는 결함 코드",
+      "expected": [
+        "safety.free_text"
+      ],
+      "edits": [
+        {
+          "file": "default.project.json",
+          "find": "\"StarterPlayer\"",
+          "replace": "\"StarterGui\": {\"Gate\": {\"$path\": \"ui\"}},\n    \"StarterPlayer\""
+        },
+        {
+          "file": "ui/Answer.client.luau",
+          "create": "--!strict\nlocal answer = Instance.new(\"TextBox\")\nanswer.Parent = script.Parent\n"
+        }
+      ]
+    },
+    {
+      "id": "D-unreadable-model",
+      "class": "검사할 수 없는 이진 모델",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Widget.rbxm",
+          "create": "<binary model placeholder>\n"
+        }
+      ]
+    },
+    {
+      "id": "D-broken-claims",
+      "class": "망가진 명제 파일",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "claims:\n",
+          "replace": "claims:\n\t- id: claim.tab\n"
+        }
+      ]
+    },
+    {
+      "id": "D-reward-alias",
+      "class": "별칭으로 부른 중복 보상",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "local RewardService = require(script.Parent.RewardService)\n",
+          "replace": "local RewardService = require(script.Parent.RewardService)\nlocal Rewards = require(script.Parent.RewardService)\n"
+        },
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tRewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n",
+          "replace": "\tRewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n\tRewards.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n"
+        }
+      ]
+    },
+    {
+      "id": "D-reward-bypass",
+      "class": "보상 모듈을 거치지 않은 지급",
+      "expected": [
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tRewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n",
+          "replace": "\tRewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n\tplayer.leaderstats.Stars.Value += 10\n"
+        }
+      ]
+    },
+    {
+      "id": "D-remotefunction",
+      "class": "검증 없는 RemoteFunction",
+      "expected": [
+        "server.remote_validation",
+        "server.remote_cooldown"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
+          "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\n\nlocal AnswerRemote = Instance.new(\"RemoteFunction\")\nAnswerRemote.Name = \"AnswerRemote\"\nAnswerRemote.Parent = ReplicatedStorage\n\nAnswerRemote.OnServerInvoke = function(player: Player, x, y)\n\treturn MissionService.coordinateMove(player, {x = x, y = y})\nend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-vararg-handler",
+      "class": "가변 인자 원격 처리",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
+          "replace": "SignalRemote.OnServerEvent:Connect(function(player: Player, ...)\n\tif not Cooldown.allow(player, \"signal\") then return end\n\tonSignal(player, ...)\nend)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-nonblocking-typeof",
+      "class": "막지 않는 typeof 검사",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n",
+          "replace": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then warn(\"bad signal input\") end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-client-completion",
+      "class": "클라이언트 완료 신고로 보상",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
+          "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\n\nlocal GateRemote = Instance.new(\"RemoteEvent\")\nGateRemote.Name = \"GateRemote\"\nGateRemote.Parent = ReplicatedStorage\n\nGateRemote.OnServerEvent:Connect(function(player: Player)\n\tif not Cooldown.allow(player, \"gate\") then return end\n\tMissionService.openGate(player)\nend)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-random-helper",
+      "class": "도우미 모듈로 옮긴 무작위 보상",
+      "expected": [
+        "safety.random_or_paid_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Chance.luau",
+          "create": "--!strict\nlocal Chance = {}\n\nlocal rng = Random.new()\n\nfunction Chance.roll(percent: number): boolean\n\treturn rng:NextInteger(1, 100) <= percent\nend\n\nreturn Chance\n"
+        },
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "local Analytics = require(script.Parent.Analytics)\n",
+          "replace": "local Analytics = require(script.Parent.Analytics)\nlocal Chance = require(script.Parent.Chance)\n"
+        },
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tRewardService.grant(player, \"unlock.light_rail_booster\", \"m.gate_open\")\n",
+          "replace": "\tif Chance.roll(10) then\n\t\tRewardService.grant(player, \"unlock.light_rail_booster\", \"m.gate_open\")\n\tend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-premium-gate",
+      "class": "구독 회원 전용 보상",
+      "expected": [
+        "safety.random_or_paid_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tRewardService.grant(player, \"unlock.light_rail_booster\", \"m.gate_open\")\n",
+          "replace": "\tif player.HasRobloxSubscription then\n\t\tRewardService.grant(player, \"unlock.light_rail_booster\", \"m.gate_open\")\n\tend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-textgenerator",
+      "class": "런타임 생성형 AI 대화(TextGenerator)",
+      "expected": [
+        "safety.external_call"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "local MissionService = {}\n",
+          "replace": "local MissionService = {}\nlocal generator = Instance.new(\"TextGenerator\")\n\nfunction MissionService.hint(prompt: string)\n\treturn generator:GenerateTextAsync({UserPrompt = prompt})\nend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-model-textbox",
+      "class": "데이터 파일로 만든 자유 입력",
+      "expected": [
+        "safety.free_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Answer.model.json",
+          "create": "{\n  \"$className\": \"TextBox\"\n}\n"
+        }
+      ]
+    },
+    {
+      "id": "D-ui-text-literal",
+      "class": "UI 글자 속성에 바로 넣은 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal.Text = \"Start\""
+        }
+      ]
+    },
+    {
+      "id": "D-text-alias",
+      "class": "별칭으로 부른 끊긴 번역 키",
+      "expected": [
+        "i18n.missing_key"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "local Text = require(ReplicatedStorage.Shared.Text)\n",
+          "replace": "local Text = require(ReplicatedStorage.Shared.Text)\nlocal T = require(ReplicatedStorage.Shared.Text)\n"
+        },
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Parent = script.Parent\n",
+          "replace": "goal.Parent = script.Parent\n\nlocal extra = Instance.new(\"TextLabel\")\nextra.Text = T.get(\"goal.missing\")\nextra.Parent = script.Parent\n"
+        }
+      ]
+    },
+    {
+      "id": "D-untied-math-line",
+      "class": "명제 없는 수학 대사",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "resp.gate_open,",
+          "replace": "label.extra.line,옆으로 2칸 가면 3칸 올라가서 기울기는 3야.,이름표 대사,,[Ŕûñ 2 ŕïŝē 3 → ŝŀöƥē 3.]\nresp.gate_open,"
+        }
+      ]
+    },
+    {
+      "id": "D-funnel-as-custom",
+      "class": "퍼널 단계를 사용자 정의로 전송",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics.log(player, \"gate_opened\", {play_mode = \"solo_npc\"})"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-alias",
+      "class": "별칭으로 부른 허용 밖 분석 이벤트",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "local Analytics = require(script.Parent.Analytics)\n",
+          "replace": "local Analytics = require(script.Parent.Analytics)\nlocal tracker = Analytics\n"
+        },
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})\n\ttracker.log(player, \"player_profile\", {play_mode = \"solo_npc\"})"
+        }
+      ]
+    }
   ]
 }

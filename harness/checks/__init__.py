@@ -7,10 +7,11 @@ from __future__ import annotations
 from harness.checks import analytics, i18n, math_claims, safety, server
 
 REGISTRY = {
-    "server.client_reward": server.client_reward,
+    "server.reward_authority": server.reward_authority,
     "server.duplicate_reward": server.duplicate_reward,
     "server.remote_validation": server.remote_validation,
     "server.remote_cooldown": server.remote_cooldown,
+    "server.reward_after_verdict": server.reward_after_verdict,
     "i18n.missing_key": i18n.missing_key,
     "i18n.length_budget": i18n.length_budget,
     "i18n.do_not_translate": i18n.do_not_translate,

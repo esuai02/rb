@@ -1,11 +1,13 @@
 """검사 대상 읽기 (작업 Graph Q3 — 검수 Harness).
 
 대상은 Rojo 구조의 소스 트리 하나다(DEC-8 — Git 파일이 정본):
-  default.project.json          Rojo 프로젝트 — 폴더가 어느 서비스로 들어가는지(서버/클라이언트에 보이는지)를 정한다
-  src/**.luau                   *.server.luau = Script · *.client.luau = LocalScript · *.luau = ModuleScript (F12·F14)
-  src/**.csv                    LocalizationTable (F13)
-  content/math_claims.yaml      수학 대사의 구조화된 명제 — E1·E2 검사 대상
+  default.project.json          Rojo 프로젝트 — 어느 폴더·파일이 어느 서비스로 들어가는지(서버/클라이언트에 보이는지)를 정한다
+  <$path>/**.luau               *.server.luau = Script · *.client.luau = LocalScript · *.luau = ModuleScript (F12·F14)
+  <$path>/**.csv                LocalizationTable (F13)
+  <$path>/**.model.json·.meta.json·.json·.txt   Rojo 가 인스턴스·속성·문구로 싣는 데이터 — 문자열을 모아 문구·안전 검사에 넣는다
+  content/math_claims.yaml      수학 대사의 구조화된 명제 — E1·E2 검사 대상 (Rojo 가 싣지 않는 검사 입력)
 
+Rojo 가 싣는데 읽지 못한 파일(모르는 확장자·이진 모델)은 problems 로 올린다 — 읽지 못한 것을 통과로 보지 않는다.
 규칙(허용 이벤트·금지어·번역 금지 패턴)은 저장소의 잠긴 명세(specs/)에서 읽는다 — 고정 데이터가 규칙을 바꾸지 못한다.
 """
 from __future__ import annotations
@@ -24,6 +26,12 @@ REPO = Path(__file__).resolve().parent.parent
 # 서버에서만 보이는 서비스. 나머지(ReplicatedStorage·StarterPlayer·StarterGui·Workspace 등)는 클라이언트가 읽거나 require 할 수 있다
 SERVER_ONLY = {"ServerScriptService", "ServerStorage"}
 LOCALIZATION_HEADERS = ("Key", "Source", "Context", "Example")
+HARNESS_INPUT = ("content",)        # Rojo 가 싣지 않는 검사 입력 폴더
+PROJECT_FILE = "default.project.json"
+DATA_SUFFIXES = (".model.json", ".meta.json", ".json", ".txt")
+UNREADABLE_SUFFIXES = (".rbxm", ".rbxmx")
+LUAU_SUFFIXES = ((".server.luau", "Script"), (".server.lua", "Script"), (".client.luau", "LocalScript"),
+                 (".client.lua", "LocalScript"), (".luau", "ModuleScript"), (".lua", "ModuleScript"))
 
 
 @dataclass
@@ -32,6 +40,10 @@ class LuauFile:
     container: str      # 최상위 서비스 이름
     kind: str           # Script · LocalScript · ModuleScript
     tokens: list
+
+    @property
+    def name(self) -> str:
+        return self.rel.rsplit("/", 1)[-1].split(".")[0]
 
     @property
     def client_visible(self) -> bool:
@@ -44,13 +56,35 @@ class LuauFile:
 
 
 @dataclass
+class DataFile:
+    rel: str
+    container: str
+    strings: list[str]       # 파일에 담긴 문자열 값
+    class_names: list[str]   # .model.json 의 $className (인스턴스 종류)
+
+
+@dataclass
 class Tree:
     root: Path
     luau: list[LuauFile] = field(default_factory=list)
+    data: list[DataFile] = field(default_factory=list)
     strings: dict[str, dict[str, str]] = field(default_factory=dict)   # 키 → {열 이름: 문구}
     csv_files: list[str] = field(default_factory=list)
     claims: list[dict] = field(default_factory=list)
     problems: list[str] = field(default_factory=list)   # 읽다가 생긴 문제 — 검사 실패로 다룬다
+
+    def texts(self):
+        """(위치, 글자) — LocalizationTable 의 모든 칸, Luau 문자열, 데이터 파일 문자열."""
+        for key, row in sorted(self.strings.items()):
+            for col, text in row.items():
+                yield f"{key}[{col}]", text
+        for f in self.luau:
+            for t in f.tokens:
+                if t.kind == luau.STRING:
+                    yield f"{f.rel}:{t.line}", t.text
+        for d in self.data:
+            for text in d.strings:
+                yield d.rel, text
 
 
 @dataclass(frozen=True)
@@ -78,50 +112,88 @@ def _mappings(node: dict, chain: tuple[str, ...]) -> list[tuple[str, tuple[str, 
 
 
 def _kind(name: str) -> str | None:
-    for suffix, kind in ((".server.luau", "Script"), (".server.lua", "Script"), (".client.luau", "LocalScript"),
-                         (".client.lua", "LocalScript"), (".luau", "ModuleScript"), (".lua", "ModuleScript")):
-        if name.endswith(suffix):
-            return kind
-    return None
+    return next((kind for suffix, kind in LUAU_SUFFIXES if name.endswith(suffix)), None)
 
 
 def load_tree(root: Path) -> Tree:
     tree = Tree(root)
-    project_path = root / "default.project.json"
     try:
-        project = json.loads(project_path.read_text(encoding="utf-8"))
+        project = json.loads((root / PROJECT_FILE).read_text(encoding="utf-8"))
         mappings = _mappings(project["tree"], ())
-    except (OSError, ValueError, KeyError) as exc:
-        tree.problems.append(f"default.project.json 을 읽지 못했다 ({type(exc).__name__})")
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        tree.problems.append(f"{PROJECT_FILE} 을 읽지 못했다 ({type(exc).__name__})")
         return tree
-    mapped = []
-    for rel_dir, chain in mappings:
-        base = (root / rel_dir).resolve()
-        if not base.is_dir() or root.resolve() not in base.parents and base != root.resolve():
-            tree.problems.append(f"Rojo 경로 {rel_dir} 가 트리 안의 폴더가 아니다")
+    owners: dict[Path, str] = {}
+    for rel_path, chain in mappings:
+        target = (root / rel_path).resolve()
+        if not target.exists() or (root.resolve() not in target.parents and target != root.resolve()):
+            tree.problems.append(f"Rojo 경로 {rel_path} 가 트리 안에 없다")
             continue
-        mapped.append((base, chain[0]))
-    for path in sorted(p for p in (root / "src").rglob("*") if p.is_file()) if (root / "src").is_dir() else []:
+        for path in sorted(target.rglob("*")) if target.is_dir() else [target]:
+            if path.is_file():
+                owners.setdefault(path.resolve(), chain[0])
+    for path in sorted(p for p in root.rglob("*") if p.is_file()):
         rel = path.relative_to(root).as_posix()
-        owner = next((container for base, container in mapped if base in path.resolve().parents), None)
+        if rel == PROJECT_FILE or rel.split("/", 1)[0] in HARNESS_INPUT:
+            continue
+        owner = owners.get(path.resolve())
         if owner is None:
             tree.problems.append(f"{rel}: Rojo 프로젝트가 어디에도 넣지 않는 파일이다")
             continue
-        kind = _kind(path.name)
+        _load_file(tree, path, rel, owner)
+    _load_claims(tree, root)
+    return tree
+
+
+def _load_file(tree: Tree, path: Path, rel: str, owner: str) -> None:
+    kind = _kind(path.name)
+    try:
         if kind:
-            try:
-                tokens = luau.tokenize(path.read_text(encoding="utf-8"))
-            except (luau.LuauSyntaxError, UnicodeDecodeError) as exc:
-                tree.problems.append(f"{rel}: Luau 를 읽지 못했다 ({exc})")
-                continue
-            tree.luau.append(LuauFile(rel, owner, kind, tokens))
+            tree.luau.append(LuauFile(rel, owner, kind, luau.tokenize(path.read_text(encoding="utf-8"))))
         elif path.suffix == ".csv":
             _load_csv(tree, path, rel)
-    claims_path = root / "content" / "math_claims.yaml"
-    if claims_path.is_file():
-        data = yaml.safe_load(claims_path.read_text(encoding="utf-8")) or {}
-        tree.claims = data.get("claims", []) if isinstance(data, dict) else []
-    return tree
+        elif path.name.endswith(DATA_SUFFIXES):
+            strings, classes = [], []
+            _collect(json.loads(path.read_text(encoding="utf-8")), strings, classes) if path.suffix == ".json" \
+                else strings.append(path.read_text(encoding="utf-8"))
+            tree.data.append(DataFile(rel, owner, strings, classes))
+        elif path.name.endswith(UNREADABLE_SUFFIXES):
+            tree.problems.append(f"{rel}: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)")
+        else:
+            tree.problems.append(f"{rel}: Rojo 가 싣지만 검사할 줄 모르는 파일이다")
+    except (OSError, ValueError, UnicodeDecodeError, luau.LuauSyntaxError) as exc:
+        tree.problems.append(f"{rel}: 읽지 못했다 ({type(exc).__name__}: {exc})")
+
+
+def _collect(node, strings: list[str], classes: list[str]) -> None:
+    if isinstance(node, dict):
+        for name, child in node.items():
+            if name == "$className" and isinstance(child, str):
+                classes.append(child)
+            elif isinstance(child, str) and not name.startswith("$"):
+                strings.append(child)
+            else:
+                _collect(child, strings, classes)
+    elif isinstance(node, list):
+        for child in node:
+            _collect(child, strings, classes)
+    elif isinstance(node, str):
+        strings.append(node)
+
+
+def _load_claims(tree: Tree, root: Path) -> None:
+    path = root / "content" / "math_claims.yaml"
+    if not path.is_file():
+        return
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except (OSError, UnicodeDecodeError, yaml.YAMLError) as exc:
+        tree.problems.append(f"content/math_claims.yaml: 읽지 못했다 ({type(exc).__name__})")
+        return
+    if not isinstance(data, dict) or not isinstance(data.get("claims", []), list):
+        tree.problems.append("content/math_claims.yaml: claims 는 목록이어야 한다")
+        return
+    tree.claims = data.get("claims", [])
 
 
 def _load_csv(tree: Tree, path: Path, rel: str) -> None:
@@ -138,4 +210,6 @@ def _load_csv(tree: Tree, path: Path, rel: str) -> None:
         key = row[0]
         if key in tree.strings:
             tree.problems.append(f"{rel}:{n} 키 {key} 가 겹친다")
+        if not row[1].strip():
+            tree.problems.append(f"{rel}:{n} 키 {key} 의 원문(Source)이 비었다")
         tree.strings[key] = {h: v for h, v in zip(header[1:], row[1:]) if h not in ("Context", "Example")}

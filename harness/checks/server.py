@@ -1,107 +1,289 @@
-"""서버 권위 검사 (INV-4 · K3 §5). 보상·저장은 서버만 정하고, 완료·수령은 한 번만, 원격 입력은 형식을 검사하고 쿨다운을 거친다."""
+"""서버 권위 검사 (INV-4 · K3 §5). 보상·저장은 보상 모듈만 정하고, 완료·수령은 한 번만,
+원격 입력은 막는 형태로 형식을 검사하고 쿨다운을 거치며, 보상은 서버 판정 뒤에만 준다."""
 from __future__ import annotations
 
 from harness import luau
-from harness.luau import NAME, STRING
+from harness.luau import NAME, STRING, SYMBOL
+
+BLOCKING = ("return", "error")   # 조건이 맞지 않을 때 멈추는 말
 
 
 def _at(f, tok) -> str:
     return f"{f.rel}:{tok.line}"
 
 
-def client_reward(tree, rules, config) -> list[str]:
-    """클라이언트가 실행하거나 require 할 수 있는 코드는 보상·저장 권한 이름을 쓰지 않는다. 보상 모듈은 서버 전용 위치에 있다."""
-    names, module = set(config["authority_names"]), config["reward_module"]
-    out = []
-    for f in tree.luau:
-        if f.rel.rsplit("/", 1)[-1].split(".")[0] == module and f.client_visible:
-            out.append(f"{f.rel}:1 보상 모듈 {module} 이 클라이언트가 볼 수 있는 곳({f.container})에 있다")
-        if not f.client_visible:
+def _module_names(f, module: str) -> set[str]:
+    """이 파일에서 보상/분석 같은 모듈을 가리키는 이름 — 자기 이름과 `local X = require(... Module)` · `local X = Module` 의 X."""
+    names, toks = {module}, f.tokens
+    for i in range(len(toks) - 2):
+        if not (toks[i].kind == NAME and toks[i + 1].text == "=" ):
             continue
-        out += [f"{_at(f, t)} 클라이언트 코드가 보상·저장 권한 {t.text} 를 쓴다" for t in f.tokens if t.text in names and t.kind in (NAME, STRING)]
+        tail = toks[i + 2:i + 12]
+        if any(t.kind == NAME and t.text == module for t in tail):
+            names.add(toks[i].text)
+    return names
+
+
+def _grant_aliases(f, module_names: set[str]) -> set[tuple[str, ...]]:
+    """grant 를 부르는 이름 경로 — M.grant 들과 `local g = M.grant` 의 g."""
+    paths = {(name, "grant") for name in module_names}
+    toks = f.tokens
+    for i in range(len(toks) - 4):
+        if toks[i].kind == NAME and toks[i + 1].text == "=" and toks[i + 2].kind == NAME and toks[i + 2].text in module_names \
+                and toks[i + 3].text == "." and toks[i + 4].text == "grant":
+            paths.add((toks[i].text,))
+    return paths
+
+
+def grant_calls(f, module: str) -> list[int]:
+    """이 파일에서 보상을 주는 호출 위치(별칭 포함)."""
+    return sorted(i for path in _grant_aliases(f, _module_names(f, module)) for i in luau.find_calls(f.tokens, path))
+
+
+def reward_reaching(tree, module: str) -> set[str]:
+    """보상에 닿는 함수 이름 — 본문에서 grant 를 부르는 함수(M.openGate 의 openGate)."""
+    names = set()
+    for f in tree.luau:
+        calls, spans = set(grant_calls(f, module)), _function_spans(f.tokens)
+        for start, end in spans:
+            if any(start <= i < end for i in calls):
+                named = _declared_name(f.tokens, start)
+                if named:
+                    names.add(named)
+    return names
+
+
+def _declared_name(tokens, start: int) -> str | None:
+    """function M.openGate( … 에서 선언된 이름(openGate). 이름 없는 function 이면 None."""
+    j, names = start + 1, []
+    while j < len(tokens) and tokens[j].text != "(":
+        if tokens[j].kind == NAME:
+            names.append(tokens[j].text)
+        j += 1
+    return names[-1] if names else None
+
+
+def _function_spans(tokens) -> list[tuple[int, int]]:
+    """function 토큰 번호 → 그 함수가 끝나는 end 다음 번호."""
+    spans, bodies = [], luau.function_bodies(tokens)
+    for _params, body, start in bodies:
+        j = start
+        while j < len(tokens) and tokens[j].text != "(":
+            j += 1
+        depth, k = 1, j + len(luau.balanced(tokens, j))
+        while k < len(tokens) and depth:
+            depth += luau._block_delta(tokens, k)
+            k += 1
+        spans.append((start, k))
+    return spans
+
+
+def reward_authority(tree, rules, config) -> list[str]:
+    """보상·저장 권한(leaderstats·DataStore·보상 속성)은 보상 모듈 파일 안에서만 쓴다 — 클라이언트도, 다른 서버 코드도 쓰지 않는다 (INV-4)."""
+    names, module, out = set(config["authority_names"]), config["reward_module"], []
+    for f in tree.luau:
+        if f.name == module and f.client_visible:
+            out.append(f"{f.rel}:1 보상 모듈 {module} 이 클라이언트가 볼 수 있는 곳({f.container})에 있다")
+        if f.name == module:
+            continue
+        where = "클라이언트 코드" if f.client_visible else "보상 모듈 밖 서버 코드"
+        out += [f"{_at(f, t)} {where}가 보상·저장 권한 {t.text} 를 쓴다 — 보상은 {module} 만 정한다" for t in f.tokens
+                if t.text in names and t.kind in (NAME, STRING)]
     return out
-
-
-def _grant_calls(f, module: str) -> list[int]:
-    return luau.find_calls(f.tokens, (module, "grant"))
 
 
 def duplicate_reward(tree, rules, config) -> list[str]:
     """보상 모듈의 grant 는 맨 앞에서 claimOnce 로 한 번만 지급을 보장하고, 같은 보상 id 를 주는 호출 자리는 하나뿐이다."""
     module, out, sites = config["reward_module"], [], {}
-    owners = [f for f in tree.luau if f.rel.rsplit("/", 1)[-1].split(".")[0] == module]
+    owners = [f for f in tree.luau if f.name == module]
     if not owners:
         out.append(f"보상 모듈 {module} 이 없다")
     for f in owners:
         grants = [(p, body, i) for p, body, i in luau.function_bodies(f.tokens) if _names_grant(f.tokens, i)]
         if not grants:
             out.append(f"{f.rel}:1 {module}.grant 함수가 없다")
-        for params, body, i in grants:
+        for _params, body, i in grants:
             texts = [t.text for t in body]
             then = texts.index("then") if "then" in texts else -1
             if texts[:3] != ["if", "not", "claimOnce"] or then < 0 or texts[then + 1:then + 2] != ["return"]:
                 out.append(f"{_at(f, f.tokens[i])} grant 가 맨 앞에서 'if not claimOnce(...) then return' 으로 중복 지급을 막지 않는다")
     for f in tree.luau:
-        for i in _grant_calls(f, module):
+        for i in grant_calls(f, module):
             args = luau.call_args(f.tokens, i)
-            reward = args[1][0] if len(args) > 1 and len(args[1]) == 1 and args[1][0].kind == STRING else None
-            if reward is None:
-                out.append(f"{_at(f, f.tokens[i])} 보상 id 는 글자 그대로 써야 한다(어떤 보상을 주는지 정적으로 알 수 있게)")
+            literal = [a[0] if len(a) == 1 and a[0].kind == STRING else None for a in args]
+            if len(args) < 3 or literal[1] is None or literal[2] is None:
+                out.append(f"{_at(f, f.tokens[i])} 보상 id 와 미션 id 는 글자 그대로 써야 한다(누구에게 무엇을 주는지 정적으로 알 수 있게)")
                 continue
-            sites.setdefault(reward.text, []).append(_at(f, f.tokens[i]))
-    out += [f"{where[1]} 보상 {rid} 를 주는 호출이 {len(where)}곳이다 ({', '.join(where)}) — 한 곳에서만" for rid, where in sites.items() if len(where) > 1]
+            sites.setdefault((literal[1].text, literal[2].text), []).append(_at(f, f.tokens[i]))
+    out += [f"{where[1]} 보상 {rid}({mid})를 주는 호출이 {len(where)}곳이다 ({', '.join(where)}) — 한 곳에서만"
+            for (rid, mid), where in sites.items() if len(where) > 1]
     return out
 
 
 def _names_grant(tokens, i: int) -> bool:
     """function M.grant( / function M:grant( / function grant( 처럼 grant 를 정의하는 function 인가."""
-    j = i + 1
-    names = []
-    while j < len(tokens) and tokens[j].text != "(":
-        if tokens[j].kind == NAME:
-            names.append(tokens[j].text)
-        j += 1
-    return bool(names) and names[-1] == "grant"
+    return _declared_name(tokens, i) == "grant"
 
 
-def _handlers(f) -> list[tuple[list[str], list, int]]:
-    """X.OnServerEvent:Connect(function(...) ... end) 또는 Connect(이름) 의 처리 함수."""
-    toks, out = f.tokens, []
-    bodies = luau.function_bodies(toks)
+def _handlers(f) -> list[tuple[list[str], list, int, str]]:
+    """원격 입력 처리 함수 — (매개변수, 본문, 알림 위치 토큰 번호, 문제). 못 찾으면 문제를 적어 보수적으로 실패시킨다.
+
+    보는 꼴: X.OnServerEvent:Connect(function…) · :Connect(이름) · X.OnServerInvoke = function… · = 이름
+    """
+    toks, bodies, out = f.tokens, luau.function_bodies(f.tokens), []
     for i, t in enumerate(toks):
-        if not (t.kind == NAME and t.text == "OnServerEvent" and i + 3 < len(toks) and toks[i + 1].text == ":" and toks[i + 2].text == "Connect"):
+        if t.kind != NAME or t.text not in ("OnServerEvent", "OnServerInvoke"):
             continue
-        arg = toks[i + 4] if i + 4 < len(toks) else None
-        if arg is not None and arg.kind == NAME and arg.text == "function":
-            out += [b for b in bodies if b[2] == i + 4]
-        elif arg is not None and arg.kind == NAME:
-            named = [b for b in bodies if b[2] + 1 < len(toks) and toks[b[2] + 1].text == arg.text]
-            out += named or [([], [], i)]
+        after = toks[i + 1:i + 4]
+        shape = [x.text for x in after]
+        target = None
+        if t.text == "OnServerEvent" and shape[:2] == [":", "Connect"]:
+            target = i + 3
+        elif t.text == "OnServerInvoke" and shape[:1] == ["="]:
+            target = i + 2
+        if target is None or target >= len(toks):
+            out.append(([], [], i, f"{t.text} 를 Connect(함수)·= 함수 가 아닌 방식({' '.join(shape[:2])})으로 이었다 — 처리 함수를 검사할 수 없다"))
+            continue
+        arg = toks[target + 1] if toks[target].text == "(" else toks[target]
+        if arg.kind == NAME and arg.text == "function":
+            found = [b for b in bodies if b[2] == (target + 1 if toks[target].text == "(" else target)]
+        elif arg.kind == NAME:
+            found = [b for b in bodies if b[2] + 1 < len(toks) and toks[b[2] + 1].text == arg.text]
+        else:
+            found = []
+        if not found:
+            out.append(([], [], i, "처리 함수를 찾지 못했다"))
+        else:
+            out += [(params, body, i, "") for params, body, _ in found]
     return out
 
 
+def _typeof_pairs(toks) -> list[tuple[str, str, str]]:
+    """typeof(x) ~= "T" · typeof(x.f) == "T" 꼴에서 (검사한 이름, 요구한 종류, 비교 기호)."""
+    pairs = []
+    for k in range(len(toks) - 3):
+        if not (toks[k].kind == NAME and toks[k].text == "typeof" and toks[k + 1].text == "(" and toks[k + 2].kind == NAME):
+            continue
+        name, j = toks[k + 2].text, k + 3
+        while j + 1 < len(toks) and toks[j].text == "." and toks[j + 1].kind == NAME:
+            name += "." + toks[j + 1].text
+            j += 2
+        if toks[j].text != ")" or j + 2 >= len(toks) or toks[j + 1].text not in ("~=", "==") or toks[j + 2].kind != STRING:
+            continue
+        pairs.append((name, toks[j + 2].text, toks[j + 1].text))
+    return pairs
+
+
+def _guards(body) -> dict[str, str]:
+    """막는 형태의 typeof 검사로 보호되는 이름 → 요구한 종류.
+
+    `if typeof(p) ~= "T" [or …] then return/error` 와 `assert(typeof(p) == "T" [and …])` 만 센다.
+    and 로 이어진 부정 검사(하나만 틀려도 통과)는 세지 않는다.
+    """
+    guarded, i = {}, 0
+    while i < len(body):
+        tok = body[i]
+        if tok.kind == NAME and tok.text == "if":
+            j = i + 1
+            while j < len(body) and not (body[j].kind == NAME and body[j].text == "then"):
+                j += 1
+            cond, after = body[i + 1:j], body[j + 1:j + 2]
+            blocks = bool(after) and after[0].kind == NAME and after[0].text in BLOCKING
+            has_and = any(t.kind == NAME and t.text == "and" for t in cond)
+            pairs = _typeof_pairs(cond)
+            if blocks and pairs and not has_and and all(op == "~=" for _n, _k, op in pairs):
+                guarded.update({name: kind for name, kind, _op in pairs})
+            i = j
+        elif tok.kind == NAME and tok.text == "assert" and i + 1 < len(body) and body[i + 1].text == "(":
+            args = luau.balanced(body, i + 1)
+            if any(t.kind == NAME and t.text == "or" for t in args):
+                i += 1
+                continue   # or 로 이어진 긍정 검사는 하나만 맞아도 통과한다
+            guarded.update({name: kind for name, kind, op in _typeof_pairs(args) if op == "=="})
+            i += 1
+        else:
+            i += 1
+    return guarded
+
+
+def _fields_used(body, name: str) -> set[str]:
+    return {f"{name}.{body[k + 2].text}" for k in range(len(body) - 2)
+            if body[k].kind == NAME and body[k].text == name and body[k + 1].text == "." and body[k + 2].kind == NAME}
+
+
 def remote_validation(tree, rules, config) -> list[str]:
-    """원격 이벤트 처리 함수는 player 다음의 인자마다 typeof 로 형식을 검사한다."""
+    """원격 처리 함수는 player 다음 인자마다 막는 형태의 typeof 검사를 거친다. 표로 받으면 쓰는 필드까지 검사한다."""
     out = []
     for f in tree.luau:
-        for params, body, i in _handlers(f):
-            if not params:
-                out.append(f"{_at(f, f.tokens[i])} OnServerEvent 처리 함수를 찾지 못했다")
+        for params, body, i, problem in _handlers(f):
+            where = _at(f, f.tokens[i])
+            if problem:
+                out.append(f"{where} {problem}")
                 continue
-            checked = {body[k + 2].text for k in range(len(body) - 2) if body[k].text == "typeof" and body[k + 1].text == "("}
-            out += [f"{_at(f, f.tokens[i])} 원격 입력 {p} 의 형식을 typeof 로 검사하지 않는다" for p in params[1:] if p not in checked]
             if f.client_visible:
-                out.append(f"{_at(f, f.tokens[i])} 원격 이벤트 처리가 클라이언트가 볼 수 있는 코드에 있다")
+                out.append(f"{where} 원격 이벤트 처리가 클라이언트가 볼 수 있는 코드에 있다")
+            if "..." in params:
+                out.append(f"{where} 가변 인자(...)는 형식을 검사할 수 없다 — 받는 값을 이름으로 적어야 한다")
+            guarded = _guards(body)
+            for p in params[1:]:
+                if p == "...":
+                    continue
+                if p not in guarded:
+                    out.append(f"{where} 원격 입력 {p} 를 막는 형태의 typeof 검사로 거르지 않는다")
+                elif guarded[p] == "table":
+                    out += [f"{where} 표로 받은 {field} 의 형식을 검사하지 않는다" for field in sorted(_fields_used(body, p)) if field not in guarded]
     return out
 
 
 def remote_cooldown(tree, rules, config) -> list[str]:
-    """원격 이벤트 처리 함수는 쿨다운(cv.server_cooldown) 모듈을 거친다 — 값의 실측은 Q4."""
-    path = tuple(config["cooldown_call"])
-    out = []
+    """원격 처리 함수는 쿨다운(cv.server_cooldown) 모듈을 거친다 — 값의 실측은 Q4."""
+    path, out = tuple(config["cooldown_call"]), []
     for f in tree.luau:
-        for params, body, i in _handlers(f):
-            if params and not luau.find_calls(body, path):
+        for params, body, i, problem in _handlers(f):
+            if not problem and not luau.find_calls(body, path):
                 out.append(f"{_at(f, f.tokens[i])} 원격 이벤트 처리가 {'.'.join(path)} 를 거치지 않는다 (연타·자동 반복 방지)")
     return out
 
+
+def reward_after_verdict(tree, rules, config) -> list[str]:
+    """원격 처리에서 보상에 닿는 호출은 서버 판정의 결과 안에서만 — 클라이언트가 '다 했다'고 알린다고 보상하지 않는다 (INV-4)."""
+    module, verdicts, out = config["reward_module"], [tuple(v) for v in config["verdict_calls"]], []
+    reaching = reward_reaching(tree, module)
+    for f in tree.luau:
+        for _params, body, i, problem in _handlers(f):
+            if problem:
+                continue
+            calls = set(luau.find_calls(body, (module, "grant"))) | {k for k in range(len(body))
+                       if body[k].kind == NAME and body[k].text in reaching and k + 1 < len(body) and body[k + 1].text == "("}
+            calls |= {k for k in range(len(body) - 2) if body[k + 2].kind == NAME and body[k + 2].text in reaching and body[k + 1].text == "."}
+            for k in sorted(calls):
+                if not _inside_verdict(body, k, verdicts):
+                    out.append(f"{_at(f, f.tokens[i])} 원격 처리가 서버 판정({' · '.join('.'.join(v) for v in verdicts)}) 없이 보상에 닿는다 "
+                               f"— 클라이언트가 완료를 정하면 안 된다")
+    return out
+
+
+def _inside_verdict(body, index: int, verdicts) -> bool:
+    """index 의 호출이 `if <판정 호출> ... then … end` 안에 있는가."""
+    for start in range(index):
+        if not (body[start].kind == NAME and body[start].text == "if"):
+            continue
+        j = start + 1
+        while j < len(body) and not (body[j].kind == NAME and body[j].text == "then"):
+            j += 1
+        if j >= len(body) or not any(luau.find_calls(body[start:j], v) for v in verdicts):
+            continue
+        depth, k = 1, j + 1
+        while k < len(body) and depth:
+            if body[k].kind == NAME and body[k].text in ("if", "do", "function", "repeat"):
+                depth += 1
+            elif body[k].kind == NAME and body[k].text in ("end", "until"):
+                depth -= 1
+            if depth and k == index:
+                return True
+            k += 1
+    return False
+
+
+__all__ = ["reward_authority", "duplicate_reward", "remote_validation", "remote_cooldown", "reward_after_verdict",
+           "grant_calls", "reward_reaching", "SYMBOL"]

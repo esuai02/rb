@@ -1,32 +1,48 @@
 """번역·문구 검사 (INV-3 · K4 U7 · K3 E5 · intent §4 번역 금지 구간).
 
-화면 문구는 LocalizationTable(CSV)을 거치고, 코드가 쓰는 키는 표에 있으며, 문구는 칸에 들어가는 길이·읽기 쉬운 문장이고,
+화면 문구는 LocalizationTable(CSV)을 거치고, 코드가 쓰는 키는 표에 있으며, 문구는 칸에 들어가는 폭·읽기 쉬운 문장이고,
 수식·좌표는 번역해도 그대로 남는다.
 """
 from __future__ import annotations
 
 import re
+import unicodedata
 
 from harness import luau
 from harness.luau import NAME, STRING
 
-HANGUL = re.compile(r"[가-힣]")
-WORDS = re.compile(r"[A-Za-z]{2,}(?:\s+[A-Za-z]{2,})+")
+IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]*$")      # 키·열거형 토큰 — 화면 문구가 아니다
+LETTER = re.compile(r"[^\W\d_]", re.UNICODE)               # 어떤 문자 체계든 '글자'
 SENTENCE_END = re.compile(r"(?<=[.!?。])\s+")
 DEV_MESSAGE_CALLS = {"error", "warn", "print", "assert"}   # 개발자용 메시지 — 화면 문구가 아니다
+
+
+def width(text: str) -> int:
+    """화면 폭 — 한글·전각은 2, 그 밖은 1로 센다(글자 수는 언어마다 뜻이 달라 폭으로 잰다)."""
+    return sum(2 if unicodedata.east_asian_width(c) in ("W", "F") else 1 for c in text)
 
 
 def _text_columns(row: dict) -> dict[str, str]:
     return {col: text for col, text in row.items() if text}
 
 
+def _aliases(f, module: str) -> set[str]:
+    """이 파일에서 문구 모듈을 가리키는 이름 — 자기 이름과 `local X = require(... Text)` 의 X."""
+    names, toks = {module}, f.tokens
+    for i in range(len(toks) - 2):
+        if toks[i].kind == NAME and toks[i + 1].text == "=" and any(t.kind == NAME and t.text == module for t in toks[i + 2:i + 12]):
+            names.add(toks[i].text)
+    return names
+
+
 def _key_calls(f, config) -> list[tuple[int, list]]:
+    """문구 키를 쓰는 호출 — <문구 모듈>.get("키") 와 translator:FormatByKey("키")."""
+    if f.name == config["text_module"]:
+        return []   # 문구 모듈 자신은 받은 키를 그대로 넘긴다 — 그 모듈을 부르는 쪽을 검사한다
     out = []
-    for path in config["text_key_calls"]:
-        out += [(i, luau.call_args(f.tokens, i)) for i in luau.find_calls(f.tokens, tuple(path))]
-    if f.rel.rsplit("/", 1)[-1].split(".")[0] == config["text_module"]:
-        return out   # 문구 모듈 자신은 받은 키를 그대로 넘긴다 — 그 모듈을 부르는 쪽(Text.get("키"))을 검사한다
-    for i, t in enumerate(f.tokens):   # translator:FormatByKey("key") — 받는 쪽 이름이 무엇이든
+    for name in _aliases(f, config["text_module"]):
+        out += [(i, luau.call_args(f.tokens, i)) for i in luau.find_calls(f.tokens, (name, "get"))]
+    for i, t in enumerate(f.tokens):
         if t.kind == NAME and t.text in config["text_key_methods"] and i and f.tokens[i - 1].text == ":":
             out.append((i, luau.call_args(f.tokens, i)))
     return out
@@ -48,51 +64,86 @@ def missing_key(tree, rules, config) -> list[str]:
 
 
 def _budget(key: str, config) -> int:
-    best = max((p for p in config["length_budget"] if p != "*" and key.startswith(p)), key=len, default="*")
-    return config["length_budget"][best]
+    best = max((p for p in config["width_budget"] if p != "*" and key.startswith(p)), key=len, default="*")
+    return config["width_budget"][best]
 
 
 def length_budget(tree, rules, config) -> list[str]:
-    """문구가 키 종류별 글자 수 상한(버튼·목표·이름·대사)을 넘지 않는다 — 넘치는 긴 번역문 (U7 의 정적 부분)."""
-    return [f"{tree.csv_files[0] if tree.csv_files else 'csv'} {key}[{col}] {len(text)}자 — 상한 {_budget(key, config)}자를 넘는다"
-            for key, row in sorted(tree.strings.items()) for col, text in _text_columns(row).items() if len(text) > _budget(key, config)]
+    """문구가 키 종류별 화면 폭 상한을 넘지 않는다 — 넘치는 긴 번역문 (U7 의 정적 부분). 실제 화면 폭 실측은 Q4."""
+    return [f"{key}[{col}] 폭 {width(text)} — 상한 {_budget(key, config)} 을 넘는다"
+            for key, row in sorted(tree.strings.items()) for col, text in _text_columns(row).items() if width(text) > _budget(key, config)]
+
+
+def math_fragments(text: str, rules) -> list[str]:
+    """번역해도 그대로 남아야 하는 조각(수식·좌표)."""
+    return sorted(m.group() for r in rules.world_spec.get("do_not_translate", []) for m in re.finditer(r["pattern"], text))
 
 
 def do_not_translate(tree, rules, config) -> list[str]:
-    """원문(Source)의 수식·좌표 조각이 모든 번역 칸에 그대로 있다 (intent §4 번역 금지 구간)."""
-    patterns = [re.compile(r["pattern"]) for r in rules.world_spec.get("do_not_translate", [])]
+    """원문의 수식·좌표 조각이 모든 번역 칸에 똑같이(빠짐도 더함도 없이) 있다 (intent §4 번역 금지 구간)."""
     out = []
     for key, row in sorted(tree.strings.items()):
-        source = row.get("Source", "")
-        pieces = [m.group() for p in patterns for m in p.finditer(source)]
+        source = math_fragments(row.get("Source", ""), rules)
         for col, text in _text_columns(row).items():
             if col == "Source":
                 continue
-            out += [f"{key}[{col}] 번역 금지 조각 '{piece}' 이 그대로 남지 않았다" for piece in pieces if piece not in text]
+            found = math_fragments(text, rules)
+            if found != source:
+                out.append(f"{key}[{col}] 번역 금지 조각이 원문과 다르다 (원문 {source} · 번역 {found})")
+    return out
+
+
+def _dev_strings(f) -> set[int]:
+    return {id(t) for name in DEV_MESSAGE_CALLS for i in luau.find_calls(f.tokens, (name,)) for arg in luau.call_args(f.tokens, i) for t in arg}
+
+
+def _ui_text_literals(f, config) -> list:
+    """UI 글자 속성에 바로 넣은 문자열 — 내용과 관계없이 문구 키를 거쳐야 한다."""
+    toks, out = f.tokens, []
+    for i in range(len(toks) - 2):
+        if not (toks[i].text == "." and toks[i + 1].kind == NAME and toks[i + 1].text in config["ui_text_properties"] and toks[i + 2].text == "="):
+            continue
+        depth, j = 0, i + 3
+        while j < len(toks) and not (toks[j].kind == NAME and toks[j].text in ("local", "function", "end", "return")):
+            if toks[j].kind == luau.SYMBOL and toks[j].text in ("(", "{", "["):
+                depth += 1
+            elif toks[j].kind == luau.SYMBOL and toks[j].text in (")", "}", "]"):
+                if depth == 0:
+                    break
+                depth -= 1
+            elif toks[j].kind == STRING and depth == 0:
+                out.append((toks[i + 1].text, toks[j]))
+            elif toks[j].line > toks[i].line and depth == 0:
+                break
+            j += 1
     return out
 
 
 def hardcoded_text(tree, rules, config) -> list[str]:
-    """엔진 코드에 화면 문구(한글 또는 띄어 쓴 영어 낱말들)를 쓰지 않는다 — LocalizationTable 을 거친다 (INV-3)."""
+    """엔진 코드·데이터 파일에 화면 문구를 쓰지 않는다 — LocalizationTable 을 거친다 (INV-3)."""
     out = []
     for f in tree.luau:
-        dev = set()
-        for name in DEV_MESSAGE_CALLS:
-            for i in luau.find_calls(f.tokens, (name,)):
-                dev |= {id(t) for arg in luau.call_args(f.tokens, i) for t in arg}
+        dev = _dev_strings(f)
+        out += [f"{f.rel}:{t.line} UI 글자 속성 .{prop} 에 문구 '{t.text[:20]}' 를 바로 넣었다 — 문구 키로 바꿔야 한다"
+                for prop, t in _ui_text_literals(f, config)]
         out += [f"{f.rel}:{t.line} 코드에 화면 문구 '{t.text[:20]}' 가 있다 — 문구 키로 바꿔야 한다" for t in f.tokens
-                if t.kind == STRING and id(t) not in dev and (HANGUL.search(t.text) or WORDS.search(t.text))]
+                if t.kind == STRING and id(t) not in dev and LETTER.search(t.text) and not IDENTIFIER.fullmatch(t.text)]
+    out += [f"{d.rel} 데이터 파일에 화면 문구 '{text[:20]}' 가 있다 — 문구 키로 바꿔야 한다" for d in tree.data for text in d.strings
+            if LETTER.search(text) and not IDENTIFIER.fullmatch(text)]
     return out
 
 
 def readability(tree, rules, config) -> list[str]:
-    """문장 하나는 상한 글자 수 안, 문구 하나는 상한 문장 수 안 — 수학이 아니라 문장 때문에 막히지 않게 (K3 E5)."""
-    limit = config["readability"]
-    out = []
+    """문장 하나는 상한 폭 안, 문구 하나는 상한 문장 수 안 — 수학이 아니라 문장 때문에 막히지 않게 (K3 E5).
+
+    학년에 맞는 어휘인지는 사람(현지 교사 승인, Q8)이 본다.
+    """
+    limit, out = config["readability"], []
     for key, row in sorted(tree.strings.items()):
         for col, text in _text_columns(row).items():
             sentences = [s for s in SENTENCE_END.split(text.strip()) if s]
             if len(sentences) > limit["max_sentences"]:
                 out.append(f"{key}[{col}] 문장이 {len(sentences)}개다 — {limit['max_sentences']}개 이하")
-            out += [f"{key}[{col}] 문장이 {len(s)}자다 — {limit['max_sentence_chars']}자 이하" for s in sentences if len(s) > limit["max_sentence_chars"]]
+            out += [f"{key}[{col}] 문장 폭이 {width(s)} 다 — {limit['max_sentence_width']} 이하" for s in sentences
+                    if width(s) > limit["max_sentence_width"]]
     return out

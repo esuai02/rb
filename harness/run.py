@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -41,6 +42,24 @@ def fixture_index(fixtures: Path = REPO / "harness" / "fixtures") -> dict[str, s
     """고정 시험 데이터 파일 → sha256. harness/fixtures/index.json 이 이 값과 같아야 한다(작업 Graph 가 색인으로 데이터를 고정)."""
     return {p.relative_to(fixtures).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in sorted(fixtures.rglob("*")) if p.is_file() and p.name != "index.json"}
+
+
+def build_defect(clean: Path, defect: dict, dest: Path) -> Path:
+    """깨끗한 고정 데이터에 결함 하나를 심은 트리를 dest 에 만든다. edits 의 find 가 꼭 한 번 나와야 한다."""
+    shutil.copytree(clean, dest, dirs_exist_ok=True)
+    for edit in defect["edits"]:
+        path = dest / edit["file"]
+        if "create" in edit:
+            if path.exists():
+                raise ValueError(f"{defect['id']}: {edit['file']} 이 이미 있다")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(edit["create"], encoding="utf-8")
+            continue
+        text = path.read_text(encoding="utf-8")
+        if text.count(edit["find"]) != 1:
+            raise ValueError(f"{defect['id']}: {edit['file']} 에서 '{edit['find'][:40]}' 가 {text.count(edit['find'])}번 나온다 (한 번이어야 한다)")
+        path.write_text(text.replace(edit["find"], edit["replace"]), encoding="utf-8")
+    return dest
 
 
 def run_checks(root: Path, manifest: dict | None = None, rules: source.Rules | None = None) -> dict[str, list[str]]:

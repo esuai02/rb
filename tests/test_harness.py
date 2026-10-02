@@ -1,7 +1,7 @@
 """검수 Harness 검사 (작업 Graph Q3 기준별 테스트).
 
 깨끗한 고정 데이터는 모든 정적 검사를 통과하고, 심은 결함은 정해진 검사가 정확히 잡는지(기준선 + 변이)를 본다.
-저장소 파일은 쓰지 않는다 — 결함 데이터는 임시 폴더에 덧씌워 만든다.
+저장소 파일은 쓰지 않는다 — 결함 데이터는 임시 폴더에 매니페스트의 edits 를 적용해 만든다.
 """
 import contextlib
 import copy
@@ -16,13 +16,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from harness import luau, run, source  # noqa: E402
-from harness.checks import REGISTRY, math_claims  # noqa: E402
+from harness.checks import REGISTRY, i18n, math_claims  # noqa: E402
 
 FIXTURES = ROOT / "harness" / "fixtures"
 CLEAN = FIXTURES / "clean"
 MANIFEST = run.load_manifest()
 RULES = source.load_rules(ROOT)
 GRAPH = json.loads((ROOT / "graph.json").read_text(encoding="utf-8"))
+DEFECTS = {d["id"]: d for d in MANIFEST["defects"]}
 # intent §3 Q3 와 작업 Graph Q3-C1 이 이름으로 요구하는 결함 종류 — 매니페스트의 결함이 이것을 모두 덮어야 한다
 REQUIRED_CLASSES = {"클라이언트가 보상을 정하는 코드", "중복 보상", "끊긴 번역 키", "넘치는 긴 번역문", "틀린 수학 대사", "금지어",
                     "무작위 보상 코드", "URL 문자열", "런타임 외부 호출(LLM)", "필터 없는 자유 입력", "커스텀 필드 개인정보"}
@@ -33,12 +34,12 @@ MODES = {"static", "runtime", "human", "covered", "static_later"}
 class TreeCase(unittest.TestCase):
     """깨끗한 트리를 임시 폴더에 복사해 고친 뒤 검사한다."""
 
-    def make_tree(self, overlay: str | None = None) -> Path:
+    def make_tree(self, defect: str | None = None) -> Path:
         tmp = Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, tmp)
+        self.addCleanup(shutil.rmtree, tmp, True)
+        if defect:
+            return run.build_defect(CLEAN, DEFECTS[defect], tmp)
         shutil.copytree(CLEAN, tmp, dirs_exist_ok=True)
-        if overlay:
-            shutil.copytree(FIXTURES / "defects" / overlay, tmp, dirs_exist_ok=True)
         return tmp
 
     def edit(self, tree: Path, rel: str, old: str, new: str) -> None:
@@ -46,6 +47,11 @@ class TreeCase(unittest.TestCase):
         text = path.read_text(encoding="utf-8")
         self.assertEqual(text.count(old), 1, f"{rel}: '{old}' 가 한 번 있어야 한다")
         path.write_text(text.replace(old, new), encoding="utf-8")
+
+    def add(self, tree: Path, rel: str, text: str) -> None:
+        path = tree / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
 
     def failing(self, tree: Path) -> dict[str, list[str]]:
         return {k: v for k, v in run.run_checks(tree, MANIFEST, RULES).items() if v}
@@ -64,19 +70,22 @@ class PlantedDefectTest(TreeCase):
     def test_each_planted_defect_is_caught_by_exactly_its_checks(self):
         for defect in MANIFEST["defects"]:
             with self.subTest(defect=defect["id"]):
-                failing = self.failing(self.make_tree(defect["id"]))
-                self.assertEqual(sorted(failing), sorted(defect["expected"]))
+                self.assertEqual(sorted(self.failing(self.make_tree(defect["id"]))), sorted(defect["expected"]))
 
     def test_required_defect_classes_are_planted(self):
         self.assertEqual(REQUIRED_CLASSES - {d["class"] for d in MANIFEST["defects"]}, set())
 
-    def test_every_defect_has_overlay_and_every_overlay_is_listed(self):
-        overlays = {p.name for p in (FIXTURES / "defects").iterdir() if p.is_dir()}
-        self.assertEqual(overlays, {d["id"] for d in MANIFEST["defects"]})
-
     def test_every_static_check_has_a_planted_defect(self):
-        caught = {c for d in MANIFEST["defects"] for c in d["expected"]}
-        self.assertEqual(set(REGISTRY) - caught, set())
+        self.assertEqual(set(REGISTRY) - {c for d in MANIFEST["defects"] for c in d["expected"]}, set())
+
+    def test_defect_edits_must_match_exactly_once(self):
+        broken = copy.deepcopy(DEFECTS["D-banned-key" if "D-banned-key" in DEFECTS else "D-banned-term"])
+        broken["edits"] = [{"file": "src/client/Hud.client.luau", "find": "없는 글자", "replace": "x"}]
+        with self.assertRaises(ValueError):
+            run.build_defect(CLEAN, broken, Path(tempfile.mkdtemp()))
+        broken["edits"] = [{"file": "src/client/Hud.client.luau", "create": "x"}]
+        with self.assertRaises(ValueError):
+            run.build_defect(CLEAN, broken, Path(tempfile.mkdtemp()))
 
 
 class MathClaimTest(TreeCase):
@@ -89,6 +98,8 @@ class MathClaimTest(TreeCase):
         {"kind": "slope", "rise": 0, "run": 4, "states": 0},
         {"kind": "slope_compare", "this": {"rise": 3, "run": 1}, "other": {"rise": 1, "run": 1}, "states": "steeper"},
         {"kind": "slope_compare", "this": {"rise": 2, "run": 4}, "other": {"rise": 1, "run": 2}, "states": "equal"},
+        {"kind": "slope_compare", "this": {"rise": -3, "run": 1}, "other": {"rise": 1, "run": 1}, "states": "steeper"},
+        {"kind": "slope_compare", "this": {"rise": -1, "run": 2}, "other": {"rise": 1, "run": 1}, "states": "less_steep"},
         {"kind": "line_point", "line": {"m": 2, "b": 1}, "point": [2, 5], "states": True},
         {"kind": "line_point", "line": {"m": "1/2", "b": 0}, "point": [3, 1], "states": False},
     ]
@@ -96,6 +107,7 @@ class MathClaimTest(TreeCase):
         {"kind": "coordinate", "origin": [0, 0], "moves": [{"dir": "right", "n": 2}, {"dir": "up", "n": 1}], "states": [1, 2]},
         {"kind": "slope", "rise": 1, "run": 3, "states": "0.333"},       # 근삿값은 같지 않다 — 정확한 유리수
         {"kind": "slope_compare", "this": {"rise": 4, "run": 4}, "other": {"rise": 3, "run": 1}, "states": "steeper"},  # 큰 수가 더 가파른 게 아니다(K2 오개념)
+        {"kind": "slope_compare", "this": {"rise": -3, "run": 1}, "other": {"rise": 1, "run": 1}, "states": "less_steep"},  # 내리막도 가파르다
         {"kind": "line_point", "line": {"m": 2, "b": 1}, "point": [2, 4], "states": True},
     ]
     ERRORS = [
@@ -103,8 +115,8 @@ class MathClaimTest(TreeCase):
         {"kind": "coordinate", "origin": [0, 0], "moves": [{"dir": "forward", "n": 1}], "states": [0, 1]},
         {"kind": "slope", "rise": 1.5, "run": 1, "states": 1},           # 실수는 근삿값이라 받지 않는다
         {"kind": "parabola", "states": 1},
-        {"kind": "slope", "rise": "a", "run": 1, "states": 1},           # 수로 읽을 수 없다
-        {"kind": "coordinate", "origin": [0], "moves": [], "states": [0, 0]},   # 점은 [x, y]
+        {"kind": "slope", "rise": "a", "run": 1, "states": 1},
+        {"kind": "coordinate", "origin": [0], "moves": [], "states": [0, 0]},
         {"kind": "slope_compare", "this": {"rise": 1, "run": 1}, "other": {"rise": 1, "run": 1}, "states": "bigger"},
         {"kind": "line_point", "line": {"m": 1, "b": 0}, "point": [1, 1], "states": "yes"},
     ]
@@ -129,26 +141,18 @@ class MathClaimTest(TreeCase):
         self.assertTrue(first)
         self.assertEqual([run.run_checks(tree, MANIFEST, RULES)["math.truth"] for _ in range(3)], [first] * 3)
 
-    def test_line_must_state_the_claimed_value(self):
-        tree = self.make_tree()
-        self.edit(tree, "src/shared/Localization.csv", "출발 칸에서 오른쪽 2, 위 1 → (2, 1).", "출발 칸에서 오른쪽 2, 위 1 → (1, 2).")
-        self.edit(tree, "src/shared/Localization.csv", "→ (2, 1). Ĉööŕðïñàţē.", "→ (1, 2). Ĉööŕðïñàţē.")
-        self.assertCaught(tree, "math.truth", "명제와 대사가 따로 논다")
-
-    def test_missing_and_inconsistent_conditions(self):
-        cases = [("    conditions: {origin: [0, 0], axes: x_right_y_up}\n", "    conditions: {axes: x_right_y_up}\n", "조건 origin 가 빠졌다"),
-                 ("    conditions: {origin: [0, 0], axes: x_right_y_up}\n", "    conditions: {origin: [1, 0], axes: x_right_y_up}\n", "기준점과 다르다"),
-                 ("    conditions: {origin: [0, 0], axes: x_right_y_up}\n", "    conditions: {origin: [0, 0], axes: x_right_y_down}\n", "축 방향"),
-                 ("    conditions: {domain: real}\n", "    conditions: {domain: complex}\n", "정의역"),
-                 ("    this: {rise: 3, run: 1}\n", "    this: {rise: 3, run: 0}\n", "가로 변화가 0 이 아니라는 조건"),
-                 ("    states: steeper\n    conditions: {run_nonzero: true, same_unit: grid_cell}\n",
-                  "    states: steeper\n    conditions: {run_nonzero: true, same_unit: meter}\n", "단위"),
-                 ("    kind: line_point\n", "    kind: circle\n", "명제 종류")]
+    def test_line_must_state_each_part_of_the_claim(self):
+        cases = [("출발 칸에서 오른쪽 2, 위 1 →", "출발 칸에서 오른쪽 3, 위 1 →", "오른쪽 2"),         # 이동 수가 다르다
+                 ("옆으로 1칸 갈 때 2칸 올라가면 기울기는 2야.", "옆으로 1칸 갈 때 2칸 올라가면 가팔라져.", "기울기"),   # 용어가 없다
+                 ("옆으로 1칸 갈 때 2칸 올라가면 기울기는 2야.", "옆으로 한 칸 갈 때 두 칸 올라가면 기울기는 2/3야.", "2")]                                        # 2 가 2/3 의 앞부분으로 걸리면 안 된다
         for old, new, fragment in cases:
             with self.subTest(fragment=fragment):
                 tree = self.make_tree()
-                self.edit(tree, "content/math_claims.yaml", old, new)
-                self.assertCaught(tree, "math.conditions", fragment)
+                self.edit(tree, "src/shared/Localization.csv", old, new)
+                self.assertCaught(tree, "math.truth", f"'{fragment}' 을 말하지 않는다")
+
+    def test_math_line_without_claim(self):
+        self.assertCaught(self.make_tree("D-untied-math-line"), "math.truth", "명제가 없다")
 
     def test_claim_problems_inside_a_tree(self):
         cases = [("    rise: 2\n    run: 1\n", "    rise: 2\n    run: 0\n", "math.truth", "판정할 수 없다"),
@@ -159,6 +163,23 @@ class MathClaimTest(TreeCase):
                 tree = self.make_tree()
                 self.edit(tree, "content/math_claims.yaml", old, new)
                 self.assertCaught(tree, check, fragment)
+
+    def test_missing_and_inconsistent_conditions(self):
+        cases = [("    conditions: {origin: [0, 0], axes: x_right_y_up}\n", "    conditions: {axes: x_right_y_up}\n", "조건 origin 가 빠졌다"),
+                 ("    conditions: {origin: [0, 0], axes: x_right_y_up}\n", "    conditions: {origin: [1, 0], axes: x_right_y_up}\n", "기준점"),
+                 ("    conditions: {origin: [0, 0], axes: x_right_y_up}\n", "    conditions: {origin: [0, 0], axes: x_right_y_down}\n", "축 방향"),
+                 ("    conditions: {domain: real}\n", "    conditions: {domain: complex}\n", "정의역"),
+                 ("    line: {m: 2, b: 1}\n    point: [2, 5]\n    states: true\n    conditions: {domain: real}\n",
+                  "    line: {m: '1/2', b: 1}\n    point: [2, 2]\n    states: true\n    conditions: {domain: grid_integer}\n", "격자 정수"),
+                 ("    this: {rise: 3, run: 1}\n", "    this: {rise: 3, run: 0}\n", "가로 변화가 0"),
+                 ("    states: steeper\n    conditions: {run_nonzero: true, same_unit: grid_cell}\n",
+                  "    states: steeper\n    conditions: {run_nonzero: true, same_unit: meter}\n", "단위"),
+                 ("    kind: line_point\n", "    kind: circle\n", "명제 종류")]
+        for old, new, fragment in cases:
+            with self.subTest(fragment=fragment):
+                tree = self.make_tree()
+                self.edit(tree, "content/math_claims.yaml", old, new)
+                self.assertCaught(tree, "math.conditions", fragment)
 
     def test_claims_required(self):
         tree = self.make_tree()
@@ -172,9 +193,9 @@ class RecordTest(TreeCase):
     def test_one_record_per_check_without_local_paths(self):
         tree = self.make_tree("D-banned-term")
         out = Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, out)
+        self.addCleanup(shutil.rmtree, out, True)
         results = run.run_checks(tree, MANIFEST, RULES)
-        paths = run.write_records(tree, results, out, "harness/fixtures/defects/D-banned-term")
+        paths = run.write_records(tree, results, out, "harness/fixtures/clean")
         self.assertEqual(len(paths), len(MANIFEST["checks"]))
         self.assertEqual(sorted(p.stem for p in out.iterdir()), sorted(c["id"] for c in MANIFEST["checks"]))
         for p in paths:
@@ -186,6 +207,16 @@ class RecordTest(TreeCase):
         self.assertIn("result: FAIL", (out / "safety.banned_terms.txt").read_text(encoding="utf-8"))
         self.assertIn("result: PASS", (out / "safety.url.txt").read_text(encoding="utf-8"))
 
+    def test_records_written_through_main_have_no_local_paths(self):
+        tree, out = self.make_tree("D-url"), Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, out, True)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(run.main([str(tree), "--out", str(out)]), 1)
+        for p in out.iterdir():
+            body = p.read_text(encoding="utf-8")
+            for secret in (str(tree), str(Path.home()), str(tree.parent)):
+                self.assertNotIn(secret, body)
+
     def test_fingerprint_changes_with_content(self):
         tree = self.make_tree()
         before = run.fingerprint(tree)
@@ -194,7 +225,7 @@ class RecordTest(TreeCase):
 
     def test_cli_exit_codes(self):
         out = Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, out)
+        self.addCleanup(shutil.rmtree, out, True)
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(run.main([str(self.make_tree()), "--out", str(out)]), 0)
             self.assertEqual(run.main([str(self.make_tree("D-url")), "--out", str(out)]), 1)
@@ -206,7 +237,7 @@ class RecordTest(TreeCase):
         self.assertIn("구현이 없다", run.run_checks(self.make_tree(), manifest, RULES)["missing.check"][0])
         manifest = copy.deepcopy(MANIFEST)
         del manifest["config"]["reward_module"]
-        self.assertIn("끝까지 돌지 못했다", run.run_checks(self.make_tree(), manifest, RULES)["server.client_reward"][0])
+        self.assertIn("끝까지 돌지 못했다", run.run_checks(self.make_tree(), manifest, RULES)["server.reward_authority"][0])
 
 
 class ManifestTest(unittest.TestCase):
@@ -237,8 +268,13 @@ class ManifestTest(unittest.TestCase):
 
     def test_registry_and_manifest_checks_match(self):
         self.assertEqual({c["id"] for c in MANIFEST["checks"]}, set(REGISTRY))
-        used = {c for i in MANIFEST["items"] for c in i.get("checks", [])}
-        self.assertEqual(set(REGISTRY) - used, set())
+        self.assertEqual(set(REGISTRY) - {c for i in MANIFEST["items"] for c in i.get("checks", [])}, set())
+
+    def test_width_budgets_fit_the_locked_glossary(self):
+        """상한은 잠긴 Q2 용어집의 실측 폭보다 넓어야 한다 — 통과하는 원문을 거부하지 않는다."""
+        for key, text in RULES.glossary["strings"].items():
+            with self.subTest(key=key):
+                self.assertLessEqual(i18n.width(text), i18n._budget(key, MANIFEST["config"]))
 
     def test_fixture_index_matches_files(self):
         index = json.loads((FIXTURES / "index.json").read_text(encoding="utf-8"))["files"]
@@ -246,7 +282,7 @@ class ManifestTest(unittest.TestCase):
 
     def test_fixture_index_detects_change(self):
         tmp = Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, tmp)
+        self.addCleanup(shutil.rmtree, tmp, True)
         shutil.copytree(FIXTURES, tmp, dirs_exist_ok=True)
         (tmp / "clean" / "src" / "client" / "Hud.client.luau").write_text("-- 바뀜\n", encoding="utf-8")
         index = json.loads((FIXTURES / "index.json").read_text(encoding="utf-8"))["files"]
@@ -287,6 +323,9 @@ return M
         self.assertEqual([b[0] for b in bodies], [["player", "rewardId", "opts"], ["y"]])
         self.assertEqual([t.text for t in bodies[0][1][-2:]], ["return", "hi {player}"])
 
+    def test_varargs_are_a_parameter(self):
+        self.assertEqual(luau.function_bodies(luau.tokenize("function f(a, ...) end"))[0][0], ["a", "..."])
+
     def test_calls_exclude_definitions(self):
         toks = luau.tokenize("function M.grant(a) end\nM.grant(1, 2)\nx.M.grant(3)\n")
         self.assertEqual(len(luau.find_calls(toks, ("M", "grant"))), 1)
@@ -300,19 +339,25 @@ return M
 
 
 class CheckBranchTest(TreeCase):
-    """검사 함수의 갈래마다 — 결함 데이터 20종이 닿지 않는 경우를 변이로 본다."""
+    """검사 함수의 갈래마다 — 결함 데이터가 닿지 않는 경우를 변이로 본다."""
 
     def test_server_branches(self):
         cases = [
-            ("src/server/RewardService.luau", "\tif not claimOnce(player, missionId .. \"|\" .. rewardId) then return end\n", "", "server.duplicate_reward", "중복 지급을 막지 않는다"),
+            ("src/server/RewardService.luau", "\tif not claimOnce(player, missionId .. \"|\" .. rewardId) then return end\n", "",
+             "server.duplicate_reward", "중복 지급을 막지 않는다"),
             ("src/server/RewardService.luau", "function RewardService.grant(", "function RewardService.give(", "server.duplicate_reward", "grant 함수가 없다"),
             ("src/server/MissionService.luau", 'RewardService.grant(player, "reward.explorer_card", "m.gate_open")',
              'RewardService.grant(player, rewardName, "m.gate_open")', "server.duplicate_reward", "글자 그대로"),
             ("src/server/Main.server.luau", "SignalRemote.OnServerEvent:Connect(onSignal)", "SignalRemote.OnServerEvent:Connect(missingHandler)",
              "server.remote_validation", "처리 함수를 찾지 못했다"),
-            ("src/server/Main.server.luau", "SignalRemote.OnServerEvent:Connect(onSignal)",
-             'SignalRemote.OnServerEvent:Connect(function(player, x)\n\tif not Cooldown.allow(player, "signal") then return end\nend)',
-             "server.remote_validation", "원격 입력 x 의 형식"),
+            ("src/server/Main.server.luau", "SignalRemote.OnServerEvent:Connect(onSignal)", "SignalRemote.OnServerEvent:Once(onSignal)",
+             "server.remote_validation", "Connect(함수)·= 함수 가 아닌 방식"),
+            ("src/server/Main.server.luau", '\tif typeof(x) ~= "number" or typeof(y) ~= "number" then return end\n',
+             '\tif typeof(x) ~= "number" and typeof(y) ~= "number" then return end\n', "server.remote_validation", "막는 형태의 typeof"),
+            ("src/server/Main.server.luau", "local function onSignal(player: Player, x: unknown, y: unknown)\n"
+             '\tif typeof(x) ~= "number" or typeof(y) ~= "number" then return end\n',
+             "local function onSignal(player: Player, payload: unknown)\n\tif typeof(payload) ~= \"table\" then return end\n\tlocal x, y = payload.x, payload.y\n",
+             "server.remote_validation", "표로 받은 payload.x"),
         ]
         for rel, old, new, check, fragment in cases:
             with self.subTest(fragment=fragment):
@@ -320,10 +365,16 @@ class CheckBranchTest(TreeCase):
                 self.edit(tree, rel, old, new)
                 self.assertCaught(tree, check, fragment)
 
-    def test_server_module_in_client_visible_place(self):
+    def test_assert_counts_as_validation(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/server/Main.server.luau", '\tif typeof(x) ~= "number" or typeof(y) ~= "number" then return end\n',
+                  '\tassert(typeof(x) == "number" and typeof(y) == "number", "bad input")\n')
+        self.assertEqual(run.run_checks(tree, MANIFEST, RULES)["server.remote_validation"], [])
+
+    def test_reward_module_placement(self):
         tree = self.make_tree()
         shutil.move(tree / "src/server/RewardService.luau", tree / "src/shared/RewardService.luau")
-        self.assertCaught(tree, "server.client_reward", "보상 모듈 RewardService 이 클라이언트가 볼 수 있는 곳")
+        self.assertCaught(tree, "server.reward_authority", "클라이언트가 볼 수 있는 곳")
         tree = self.make_tree()
         (tree / "src/server/RewardService.luau").unlink()
         self.assertCaught(tree, "server.duplicate_reward", "보상 모듈 RewardService 이 없다")
@@ -343,16 +394,19 @@ class CheckBranchTest(TreeCase):
         (tree / "src/shared/Localization.csv").unlink()
         self.assertCaught(tree, "i18n.missing_key", "LocalizationTable(CSV)이 없다")
         tree = self.make_tree()
-        self.edit(tree, "src/client/Hud.client.luau", "sendCell(2, 1)", 'sendCell(2, 1)\ngoal.Text = "Open the gate"')
+        self.edit(tree, "src/client/Hud.client.luau", "sendCell(2, 1)", 'sendCell(2, 1)\nlocal label = "Open the gate"')
         self.assertCaught(tree, "i18n.hardcoded_text", "Open the gate")
         tree = self.make_tree()
         self.edit(tree, "src/shared/Localization.csv", "도시 언어 게이트가 열렸어!", "열렸어! 정말로. 진짜로. 와!")
         self.assertCaught(tree, "text.readability", "문장이 4개다")
+        tree = self.make_tree()
+        self.edit(tree, "src/shared/Localization.csv", "→ (2, 1). Ĉööŕðïñàţē.", "→ (2, 1) (3, 4). Ĉööŕðïñàţē.")
+        self.assertCaught(tree, "i18n.do_not_translate", "번역 금지 조각이 원문과 다르다")
 
     def test_source_reading_problems_fail_every_check(self):
         cases = [("src/shared/Localization.csv", "Key,Source,Context,Example,qps-ploc", "Id,Text", "머리줄"),
-                 ("src/server/Cooldown.luau", "return Cooldown\n", 'return "unterminated\n', "Luau 를 읽지 못했다"),
-                 ("default.project.json", '"$path": "src/client"', '"$path": "src/missing"', "트리 안의 폴더가 아니다")]
+                 ("src/server/Cooldown.luau", "return Cooldown\n", 'return "unterminated\n', "읽지 못했다"),
+                 ("default.project.json", '"$path": "src/client"', '"$path": "src/missing"', "트리 안에 없다")]
         for rel, old, new, fragment in cases:
             with self.subTest(fragment=fragment):
                 tree = self.make_tree()
@@ -361,22 +415,25 @@ class CheckBranchTest(TreeCase):
                 self.assertTrue(all(any(fragment in x for x in found) for found in results.values()), fragment)
         unmapped = "Rojo 프로젝트가 어디에도 넣지 않는 파일"
         tree = self.make_tree()
-        (tree / "src/stray").mkdir()
-        (tree / "src/stray/Loose.luau").write_text("return {}\n", encoding="utf-8")
-        self.assertTrue(all(any(unmapped in x for x in v) for v in run.run_checks(tree, MANIFEST, RULES).values()))
-        tree = self.make_tree()
-        self.edit(tree, "default.project.json", '"StarterPlayer": {"StarterPlayerScripts": {"Gate": {"$path": "src/client"}}}', '"Workspace": {}')
+        self.add(tree, "src/stray/Loose.luau", "return {}\n")
         self.assertTrue(all(any(unmapped in x for x in v) for v in run.run_checks(tree, MANIFEST, RULES).values()))
         tree = self.make_tree()
         (tree / "default.project.json").write_text("{", encoding="utf-8")
-        self.assertTrue(all(any("default.project.json 을 읽지 못했다" in x for x in v) for v in run.run_checks(tree, MANIFEST, RULES).values()))
+        self.assertTrue(all(any("을 읽지 못했다" in x for x in v) for v in run.run_checks(tree, MANIFEST, RULES).values()))
+        tree = self.make_tree()
+        self.add(tree, "src/shared/Notes.toml", "a = 1\n")
+        self.assertTrue(all(any("검사할 줄 모르는 파일" in x for x in v) for v in run.run_checks(tree, MANIFEST, RULES).values()))
+        tree = self.make_tree()
+        self.edit(tree, "src/shared/Localization.csv", "resp.gate_open,도시 언어 게이트가 열렸어!", "resp.gate_open,")
+        self.assertTrue(all(any("원문(Source)이 비었다" in x for x in v) for v in run.run_checks(tree, MANIFEST, RULES).values()))
 
     def test_analytics_branches(self):
-        cases = [('Analytics.log(player, "gate_opened", {play_mode = "solo_npc"})', 'Analytics.log(player, "gate_opened")', "꼴이어야 한다"),
-                 ('Analytics.log(player, "gate_opened", {play_mode = "solo_npc"})', 'Analytics.log(player, "gate_opened", {mission = "m.gate_open"})', "필드 mission 는 허용되지 않는다"),
-                 ('Analytics.log(player, "gate_opened", {play_mode = "solo_npc"})', 'Analytics.log(player, "gate_opened", fields)', "표 글자 그대로"),
-                 ('Analytics.log(player, "gate_opened", {play_mode = "solo_npc"})', 'Analytics.log(player, "gate_opened", {"solo_npc"})', "이름 = 값 꼴"),
-                 ('Analytics.log(player, "gate_opened", {play_mode = "solo_npc"})', 'Analytics.log(player, "gate_opened", {play_mode = "trio"})', "열거형 글자 그대로가 아니다")]
+        base = '\tAnalytics.funnel(player, "gate_opened", {play_mode = "solo_npc"})'
+        cases = [(base, '\tAnalytics.funnel(player, "gate_opened")', "꼴이어야 한다"),
+                 (base, '\tAnalytics.funnel(player, "gate_opened", {mission = "m.gate_open"})', "필드 mission 는 허용되지 않는다"),
+                 (base, '\tAnalytics.funnel(player, "gate_opened", fields)', "표 글자 그대로"),
+                 (base, '\tAnalytics.funnel(player, "gate_opened", {"solo_npc"})', "이름 = 값 꼴"),
+                 (base, '\tAnalytics.funnel(player, "gate_opened", {play_mode = "trio"})', "열거형 글자 그대로가 아니다")]
         for old, new, fragment in cases:
             with self.subTest(fragment=fragment):
                 tree = self.make_tree()
@@ -386,20 +443,29 @@ class CheckBranchTest(TreeCase):
         shutil.move(tree / "src/server/Analytics.luau", tree / "src/shared/Analytics.luau")
         self.assertCaught(tree, "analytics.calls", "분석 모듈이 클라이언트가 볼 수 있는 곳")
         tree = self.make_tree()
-        self.edit(tree, "src/client/Hud.client.luau", "sendCell(2, 1)", 'sendCell(2, 1)\nAnalytics.log(player, "gate_opened", {play_mode = "solo_npc"})')
-        self.assertCaught(tree, "analytics.calls", "클라이언트 코드가 분석을 보낸다")
+        self.edit(tree, "src/server/Analytics.luau", "AnalyticsService:LogOnboardingFunnelStepEvent(player, FUNNEL_STEPS[stepName], stepName, pack(fields))",
+                  "AnalyticsService:LogCustomEvent(player, stepName, 1, pack(fields))")
+        self.assertCaught(tree, "analytics.calls", "플랫폼 전송 함수 LogOnboardingFunnelStepEvent")
 
     def test_safety_branches(self):
         tree = self.make_tree()
         rules = source.Rules(RULES.events, {**RULES.glossary, "banned_terms": []}, RULES.world_spec)
         self.assertIn("금지어 목록을 읽지 못했다", run.run_checks(tree, MANIFEST, rules)["safety.banned_terms"][0])
         tree = self.make_tree()
-        self.edit(tree, "src/server/RewardService.luau", "\t\towned:SetAttribute(rewardId, true)\n",
-                  "\t\towned:SetAttribute(rewardId, true)\n\t\tlocal r = Random.new()\n")
-        self.assertCaught(tree, "safety.random_or_paid_reward", "난수")
+        self.edit(tree, "src/server/Cooldown.luau", "local last: {[string]: number} = {}",
+                  "local last: {[string]: number} = {}\nlocal roll = math.random\n")
+        self.assertCaught(tree, "safety.random_or_paid_reward", "다른 이름(roll)에 담았다")
         tree = self.make_tree()
         self.edit(tree, "src/client/Hud.client.luau", "sendCell(2, 1)", 'sendCell(2, 1)\nlocal link = "see www.example.org"')
         self.assertCaught(tree, "safety.url", "www.")
+
+    def test_random_allowed_module_is_an_explicit_exception(self):
+        manifest = copy.deepcopy(MANIFEST)
+        tree = run.build_defect(CLEAN, DEFECTS["D-random-helper"], Path(tempfile.mkdtemp()))
+        self.addCleanup(shutil.rmtree, tree, True)
+        self.assertTrue(run.run_checks(tree, manifest, RULES)["safety.random_or_paid_reward"])
+        manifest["config"]["random_allowed_modules"] = ["Chance"]
+        self.assertEqual(run.run_checks(tree, manifest, RULES)["safety.random_or_paid_reward"], [])
 
 
 if __name__ == "__main__":

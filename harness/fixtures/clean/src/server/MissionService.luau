@@ -21,7 +21,7 @@ function MissionService.openGate(player: Player)
 	RewardService.grant(player, "reward.explorer_card", "m.gate_open")
 	RewardService.grant(player, "reward.explorer_badge", "m.gate_open")
 	RewardService.grant(player, "unlock.light_rail_booster", "m.gate_open")
-	Analytics.log(player, "gate_opened", {play_mode = "solo_npc"})
+	Analytics.funnel(player, "gate_opened", {play_mode = "solo_npc"})
 end
 
 return MissionService

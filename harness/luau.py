@@ -226,6 +226,6 @@ def _param_names(params_tokens: list[Token]) -> list[str]:
             depth += 1
         elif t.kind == SYMBOL and t.text in (")", "}", "]"):
             depth -= 1
-        elif t.kind == NAME and depth == 1 and params_tokens[k - 1].text in ("(", ","):
+        elif depth == 1 and params_tokens[k - 1].text in ("(", ",") and (t.kind == NAME or t.text == "..."):
             names.append(t.text)
     return names
