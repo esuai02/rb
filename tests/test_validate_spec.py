@@ -263,5 +263,31 @@ class LanguageFirstTest(unittest.TestCase):
         self.assertTrue(all("reuse_contexts" in g for g in SPEC["language_goals"]))
 
 
+class IdentifierTypeTest(unittest.TestCase):
+    """Malformed identifiers must return validation errors, not raise TypeError."""
+
+    def test_unhashable_identifiers_return_validation_errors(self):
+        for path in ("language_goals.0.term_id", "do_not_translate.0.id"):
+            for value in ([], {}):
+                with self.subTest(path=path, value=value):
+                    errors = vs.validate(with_value(SPEC, path, value), SCHEMA)
+                    self.assertTrue(errors)
+                    self.assertTrue(any(path.replace(".", "/") in error for error in errors))
+
+    def test_cli_reports_invalid_identifier_without_traceback(self):
+        bad = with_value(SPEC, "language_goals.0.term_id", [])
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bad_identifier.yaml"
+            path.write_text(vs.yaml.safe_dump(bad), encoding="utf-8")
+            proc = subprocess.run(
+                [sys.executable, str(ROOT / "tools/validate_spec.py"), str(path)],
+                capture_output=True, text=True,
+            )
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn("FAIL", proc.stdout)
+        self.assertIn("language_goals/0/term_id", proc.stdout)
+        self.assertNotIn("Traceback", proc.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
