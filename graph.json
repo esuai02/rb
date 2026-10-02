@@ -2,12 +2,12 @@
   "schema_version": 1,
   "kind": "execution_graph",
   "run_id": "rb-mission",
-  "revision": 7,
+  "revision": 8,
   "locale": "ko",
   "intent_file": "intent.md",
   "intent_sha256": "615140fbb8634268268ad0def1e932bbc4fcded7c0241f46316ee85ceeed3616",
   "mission": "Neo Seoul 의 도시 언어 게이트에서 시작하는, 수학을 잘하지 않아도 수학적 언어로 친구와 도시를 움직이는 글로벌 소셜 어드벤처 (DEC-10 B안·DEC-1)",
-  "focus": "Q2",
+  "focus": "Q3",
   "nodes": [
     {
       "id": "Q1",
@@ -421,7 +421,8 @@
             "type": "vectors"
           }
         }
-      ]
+      ],
+      "focus_gap": "Q2 잠금(2026-10-02, binding cc23c1f19ef7)을 받아 생성·검수 Harness 를 만든다: 고정 시험 데이터에 결함을 심고 검사가 모두 잡는다. 시작 조건: DEC-8(소스 정본) 결정 — Harness 가 무엇(저장소 파일·Studio Place)을 검사할지 정한다(F12·F13). 넘겨받은 것: Q2 시나리오 6개(기대 이벤트 계산 규칙 포함)·금지어 하한·분석 이벤트 허용 목록·가설 정본 값 중 Q3 측정 항목(cv.server_cooldown), Q2 invariant_scope.later 의 INV-4·INV-12·INV-16 코드 수준 검사, 리팩터 후보 tools/validate_graph.py(1,037줄)"
     },
     {
       "id": "Q4",

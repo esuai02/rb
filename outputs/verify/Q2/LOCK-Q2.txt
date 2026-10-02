@@ -1,0 +1,5 @@
+hold: LOCK-Q2
+node: Q2
+binding: cc23c1f19ef785965c830f074322a1bb0c57f79963caa8af63f913e53a97f88c
+time: 2026-10-02T09:06:02.880580+00:00
+source: 사용자 메시지 2026-10-02 "직접 진행해" (LOCK-Q2 결정 요청 — PR #3, 버전 cc23c1f19ef7 — 에 대한 답)
