@@ -197,7 +197,9 @@ def cmd_run(root: Path, node_id: str) -> int:
 # ---------- ② 독립 리뷰 ----------
 
 def review_packet(root: Path, graph: dict, node: dict, binding: str) -> str:
-    evidence = [r for r in ledger(root) if r.get("kind") == "verification" and r.get("node_id") == node["id"] and r.get("binding") == binding]
+    latest = {r["criterion_id"]: r for r in ledger(root)  # 같은 binding 을 여러 번 검사했으면 기준마다 마지막 결과만 — 리뷰어에게 모순된 상태를 주지 않는다
+              if r.get("kind") == "verification" and r.get("node_id") == node["id"] and r.get("binding") == binding}
+    evidence = [latest[c["id"]] for c in node["criteria"] if c["id"] in latest]
     crit_lines = "\n".join(f"- {c['id']}: {c['statement']} (목표: {c['target']})" for c in node["criteria"])
     ev_lines = "\n".join(f"- {r['criterion_id']}: {r['result']} — {r['observed']}" for r in evidence) or "- (자동 검사 기록 없음)"
     scope = node.get("invariant_scope", {})
