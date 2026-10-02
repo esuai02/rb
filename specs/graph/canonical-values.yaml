@@ -136,10 +136,10 @@ values:
 
   - id: cv.coop_switch_ids
     k0_item: 협동 스위치 식별자
-    value: [gate_prism_left, gate_prism_right]
+    value: [gate_prism_left, gate_prism_right, plaza_bridge_left, plaza_bridge_right]
     status: proposed
     refs: [INV-4]
-    rationale: 오브젝트 이름 하나로 통일한다. '준비됨'은 별도 이름(prism_left_ready)이 아니라 서버가 가진 상태다
+    rationale: 협동 오브젝트 이름을 이 목록 하나로 통일한다(게이트 프리즘 2개 + 광장 다리 2개). '준비됨'은 별도 이름(prism_left_ready)이 아니라 서버가 가진 상태다
 
   - id: cv.rule_source
     k0_item: 규칙 정본 위치

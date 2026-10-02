@@ -84,6 +84,11 @@ class ReferenceTest(CheckCase):
         ("sc.solo_touch_first_try: 미션 m.ghost", lambda b: b.graph["scenarios"][0]["path"].append("m.ghost")),
         ("입력 vr_headset 가 Q1", lambda b: setv(b.graph["scenarios"][0], "input", "vr_headset")),
         ("terms: 같은 용어가 두 번 있다", lambda b: dup_first(b.graph["terms"])),
+        ("graph.missions[5].core: true/false", lambda b: setv(mission(b, "m.plaza_drone_delivery"), "core", "false")),
+        ("graph.missions[0].target_end_s: 정수나 null", lambda b: setv(mission(b, "m.signal_wake"), "target_end_s", "60")),
+        ("항목 ['requires'] 가 없다", lambda b: mission(b, "m.gate_open").pop("requires")),
+        ("graph.missions[3].steps: 목록이어야", lambda b: setv(mission(b, "m.gate_open"), "steps", {})),
+        ("graph.pacing.stop_point: 모르는 항목", lambda b: setv(b.graph["pacing"]["stop_point"], "auto_continue_s", 5)),
         ("이 용어의 재사용 사다리가 아니다", lambda b: setv(b.graph["reuse_contexts"][0], "hint_ladder", "hl.reuse.slope")),
         ("미션 사다리(mission)나 재사용 사다리(term) 중 하나", lambda b: setv(b.graph["hint_ladders"][2], "mission", "m.signal_coordinate")),
         ("이 재사용 사다리를 쓰는 맥락이 없다", lambda b: [setv(c, "hint_ladder", None) for c in b.graph["reuse_contexts"] if c["term_id"] == "term.slope"]),
@@ -166,6 +171,7 @@ class ReuseTest(CheckCase):
         ("이름표가 있는데 new_term 이 없다", lambda b: mission(b, "m.gate_open")["steps"].append({"kind": "math_label", "key": "term.slope.name"})),
         ("빈 미션", lambda b: setv(b.graph, "reuse_contexts", [c for c in b.graph["reuse_contexts"] if c["mission"] != "m.plaza_drone_delivery"])),
         ("에 행동이 없다", lambda b: setv(b.graph["reuse_contexts"][0], "action_keys", [])),
+        ("일상어와 수학 이름 둘 다", lambda b: b.graph["reuse_contexts"][0]["accepts"].append("quiz")),
     )
 
     def test_two_reuse_contexts_are_not_enough(self):
@@ -187,7 +193,7 @@ class ReuseTest(CheckCase):
     def test_reuse_must_accept_everyday_language(self):
         b = bundle()
         b.graph["reuse_contexts"][3]["accepts"] = ["label"]
-        self.assertCaught(b, "일상어로 진행할 수 없다")
+        self.assertCaught(b, "일상어와 수학 이름 둘 다")
 
     def test_duplicate_context_is_not_a_different_context(self):
         b = bundle()
@@ -228,7 +234,7 @@ class EventsTest(CheckCase):
     cases = (
         ("limits: 플랫폼 한도", lambda b: setv(b.events["limits"], "max_fields_per_event", 5)),
         ("이벤트 이름이 중복된다", lambda b: dup_first(b.events["custom_events"])),
-        ("(100개 이하)", lambda b: b.events["custom_events"].extend({"name": f"extra_{i}", "fields": []} for i in range(100))),
+        ("(100개 이하)", lambda b: b.events["custom_events"].extend({"name": f"extra_{i}", "fields": [], "when": "w"} for i in range(100))),
         ("단계 번호가 1부터", lambda b: setv(b.events["onboarding_funnel"][1], "step", 5)),
         ("중복 없는 열거형", lambda b: setv(b.events["fields"], "outcome", ["target_reached", "target_reached"])),
         ("필드 ghost 가 열거형 사전에 없다", lambda b: setv(b.events["custom_events"][1], "fields", ["mission", "ghost"])),
@@ -240,6 +246,15 @@ class EventsTest(CheckCase):
                                          setv(next(e for e in b.events["custom_events"] if e["name"] == "label_shown"), "fields", ["term", "context", "expression_used"]))),
         ("분모는 session_start", lambda b: setv(b.events["north_star"]["denominator"], "event", "hint_shown")),
         ("분모는 매 세션 보내는", lambda b: setv(b.events["north_star"]["denominator"], "aggregation", "count")),
+        ("더함 ['any_reason']", lambda b: b.events["north_star"]["counts_only_when"].append("any_reason")),
+        ("events.north_star.numerator: 모르는 항목", lambda b: setv(b.events["north_star"]["numerator"], "filter", "label_only")),
+        ("events: 모르는 항목", lambda b: setv(b.events, "extra_events", [])),
+        ("events.custom_events[0]: 모르는 항목", lambda b: setv(b.events["custom_events"][0], "sample_rate", 1)),
+        ("events.source_mapping.k5_funnel.session_start", lambda b: setv(b.events["source_mapping"]["k5_funnel"], "session_start", {"x": 1})),
+        ("글자 키 사전이어야", lambda b: setv(b.events, "fields", [])),
+        ("events.custom_events: 목록이어야", lambda b: setv(b.events, "custom_events", {})),
+        ("fields/hint_level", lambda b: setv(b.events["fields"], "hint_level", ["level_1", "level_2"])),
+        ("fields/expression_used", lambda b: b.events["fields"]["expression_used"].append("guess")),
     )
 
     def test_field_outside_allowlist(self):
@@ -335,6 +350,9 @@ class CanonicalValuesTest(CheckCase):
     check = staticmethod(vg.check_canonical)
     cases = (
         ("§3 표를 읽지 못했다", lambda b: setattr(b, "k0_text", "")),
+        ("서버 판정 거리가", lambda b: setv(value(b, "cv.server_distance")["value"], "server_check_studs", 8)),
+        ("cv.match_wait.value.seconds: 양수", lambda b: setv(value(b, "cv.match_wait")["value"], "seconds", -10)),
+        ("cv.hint_ladder.value.reveals_answer: true/false", lambda b: setv(value(b, "cv.hint_ladder")["value"], "reveals_answer", "no")),
         ("K0 §3 에 없는 항목", lambda b: b.values["values"].append({"id": "cv.extra", "k0_item": "없는 항목", "value": 1, "status": "proposed", "rationale": "r"})),
         ("values: id 가 중복된다", lambda b: dup_first(b.values["values"])),
         ("id 는 cv.이름 형식", lambda b: setv(value(b, "cv.hold_cancel"), "id", "hold-cancel")),
@@ -349,8 +367,12 @@ class CanonicalValuesTest(CheckCase):
         ("cv.hold_time: 모르는 항목 ['price']", lambda b: setv(value(b, "cv.hold_time"), "price", 1)),
         ("검사기에 형식이 없는 정본 값", lambda b: b.values["values"].append({"id": "cv.extra", "k0_item": "게이트 이름", "value": 1, "status": "proposed", "rationale": "r"})),
         ("q1_paths target_minutes → session.first_world_reaction_s", lambda b: setv(value(b, "cv.gate_time"), "q1_paths", {"target_minutes": "session.first_world_reaction_s"})),
-        ("결정됨인 DEC", lambda b: setv(value(b, "cv.match_wait"), "status", "decided") or setv(value(b, "cv.match_wait"), "refs", ["Q1"])),
-        ("결정됨인 DEC", lambda b: setv(value(b, "cv.hold_cancel"), "status", "decided") or setv(value(b, "cv.hold_cancel"), "refs", ["DEC-2"])),
+        ("결정됨인 관련 DEC", lambda b: setv(value(b, "cv.match_wait"), "status", "decided") or setv(value(b, "cv.match_wait"), "refs", ["Q1"])),
+        ("결정됨인 관련 DEC", lambda b: setv(value(b, "cv.hold_cancel"), "status", "decided") or setv(value(b, "cv.hold_cancel"), "refs", ["DEC-2"])),
+        ("cv.match_wait: 결정된 값은", lambda b: setv(value(b, "cv.match_wait"), "status", "decided") or setv(value(b, "cv.match_wait"), "refs", ["DEC-1"])),
+        ("cv.gate_name: 결정된 값은", lambda b: setv(value(b, "cv.gate_name")["value"], "ko", "도시 언어 심사")),
+        ("정본 값 파일: 모르는 항목", lambda b: setv(b.values, "owner", "ai")),
+        ("cv.coop_switch_ids:", lambda b: setv(b.graph["coop"][1], "objects", ["x_left", "x_right"])),
     )
 
     def test_every_k0_row_is_read(self):
@@ -386,7 +408,7 @@ class CanonicalValuesTest(CheckCase):
         v = value(b, "cv.match_wait")
         v.update(status="decided", refs=["INV-9"])
         del v["measure_at"]
-        self.assertCaught(b, "결정됨인 DEC")
+        self.assertCaught(b, "결정됨인 관련 DEC")
 
     def test_unknown_status(self):
         b = bundle()
@@ -412,7 +434,23 @@ class GlossaryTest(CheckCase):
         ("문구가 비었다", lambda b: setv(b.glossary["strings"], "retry.again", " ")),
         ("겹치지 않아야", lambda b: dup_first(b.glossary["banned_terms"])),
         ("이유가 없다", lambda b: setv(b.glossary["banned_terms"][0], "reason", "")),
+        ("glossary: 모르는 항목", lambda b: setv(b.glossary, "allow_terms", [])),
+        ("glossary.strings: 글자 → 글자 사전", lambda b: setv(b.glossary, "strings", [])),
+        ("glossary.banned_terms[0]: 모르는 항목", lambda b: setv(b.glossary["banned_terms"][0], "severity", "low")),
     )
+
+    def test_banned_term_with_spaces(self):
+        b = bundle()
+        b.glossary["strings"]["sit.gate_dark"] = "Neo Seoul 입 국 게이트가 꺼져 있어."
+        self.assertCaught(b, "금지어")
+
+    def test_every_required_banned_term_cannot_be_removed(self):
+        for term in sorted(vg.REQUIRED_BANNED):
+            with self.subTest(term=term):
+                b = bundle()
+                b.glossary["banned_terms"] = [x for x in b.glossary["banned_terms"] if x["term"].lower() != term]
+                b.glossary["strings"]["retry.again"] = f"{term} 다시 해 보자."
+                self.assertCaught(b, "빠졌다")
 
     def test_banned_term_inside_string(self):
         b = bundle()
@@ -481,6 +519,11 @@ class DoNotTranslateBoundaryTest(CheckCase):
         rule["pattern"] = rule["pattern"].replace("-?", "")
         self.assertCaught(b, "(-100, -250)")
 
+    def test_invalid_regex(self):
+        b = bundle()
+        b.spec["do_not_translate"][0]["pattern"] = "(unclosed"
+        self.assertCaught(b, "정규식이 아니다")
+
     def test_unparenthesised_expression_is_protected(self):
         b = bundle()
         b.glossary["strings"]["label.slope.line"] = "y = x² + 1 은 기울기가 아니야."
@@ -503,10 +546,15 @@ class DesignRulesTest(CheckCase):
         ("마지막 미션에 정지점", lambda b: setv(b.graph["pacing"]["stop_point"], "mission", "m.gate_open")),
         ("선택 미션 m.plaza_drone_delivery 를 기다린다", lambda b: setv(mission(b, "m.zone_portal"), "requires", ["m.gate_open", "m.plaza_drone_delivery"])),
         ("Graph·용어집의 시장이 다르다", lambda b: setv(b.glossary, "market_id", "en-US")),
+        ("플레이어가 고른다", lambda b: setv(b.graph["coop"][0], "role_assignment", "forced")),
+        ("양의 정수", lambda b: setv(mission(b, "m.signal_wake"), "target_end_s", -1)),
         ("재사용 맥락에 그 용어의 힌트 사다리가 없다", lambda b: b.graph["reuse_contexts"][4].pop("hint_ladder")),
         ("ctx.slope.booster_ramp: 힌트 문구 수가", lambda b: b.graph["hint_ladders"][3]["keys"].pop()),
         ("ctx.slope.partner_bridge: 목표 표현(answer_keys)이 없어", lambda b: setv(b.graph["reuse_contexts"][5], "answer_keys", [])),
-        ("맥락 ctx.slope.metro_preview 의 목표 표현", lambda b: setv(b.glossary["strings"], "hint.reuse.slope.l2", "레일을 더 올라가게 바꿔 봐.")),
+        ("ctx.slope.metro_preview 의 목표 표현", lambda b: setv(b.glossary["strings"], "hint.reuse.slope.l2", "레일을 더 올라가게 바꿔 봐.")),
+        ("목표 표현 '오른쪽 2, 위 1' 을 그대로", lambda b: setv(b.glossary["strings"], "hint.coordinate.l2", "오른쪽 2,   위 1 일까?")),
+        ("이 term.coordinate 의 일상 표현으로", lambda b: setv(b.glossary["strings"], "answer.coordinate.portal_map", "지도 입구")),
+        ("이름표 대사가 목표 표현", lambda b: setv(b.glossary["strings"], "label.coordinate.line", "방금 쓴 말을 수학에서는 좌표라고 불러.")),
         ("계속·쉬기", lambda b: setv(b.graph["pacing"]["stop_point"], "choice_keys", ["pacing.continue", "pacing.continue"])),
     )
 

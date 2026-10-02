@@ -18,7 +18,7 @@ strings:
   term.coordinate.name: 좌표
   term.slope.name: 기울기
   label.coordinate.line: 출발 칸에서 오른쪽 2, 위 1 → (2, 1). 방금 네가 쓴 말을 수학에서는 좌표라고 불러.
-  label.slope.line: 옆으로 한 칸 갈 때 다리가 얼마나 올라가는지를 수학에서는 기울기라고 불러. 평평하면 기울기 0이야.
+  label.slope.line: 방금 더 올라가게 바꾼 건 다리의 기울기야. 옆으로 한 칸 갈 때 다리가 얼마나 올라가는지를 수학에서는 기울기라고 불러. 평평하면 기울기 0이야.
 
   # 미션의 목표 표현 — 힌트 문구에 들어가면 안 된다(정답 공개 검사)
   answer.coordinate.signal_cell: 오른쪽 2, 위 1
