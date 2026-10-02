@@ -1,8 +1,8 @@
 criterion: Q2-C5 — ko-KR 용어집이 닫힌 형식으로 있고 정본 이름(Neo Seoul·도시 언어 게이트)과 모든 문구 키를 담으며, 금지어(현실 출입국·국적·신분 한·영, 시험 언어, 압박·보상형 초대 언어)가 검사기 하한 목록을 모두 포함하고, 어떤 문구에도 금지어가 없다(띄어쓰기·대소문자 무시, INV-11·INV-8·INV-14). locale 은 LocalizationTable 의 IETF 태그 규칙을 따른다(F9)
 command: python3 -m unittest tests.test_q2_graph.GlossaryTest -v
 exit: 0
-binding: 546dbc57ebaafea2810a7b7686b2bf26a8d3dd90b29a0c02b0aa8f4f6ab85a59
-time: 2026-10-02T06:17:23.842490+00:00
+binding: 2168f8e7ffdb385b8d743fc362d0964e412a8ea5483fb18d8a2b7eab72d22671
+time: 2026-10-02T07:00:00.373369+00:00
 
 test_banned_term_inside_string (tests.test_q2_graph.GlossaryTest.test_banned_term_inside_string) ... ok
 test_banned_term_with_spaces (tests.test_q2_graph.GlossaryTest.test_banned_term_with_spaces) ... ok
@@ -18,6 +18,6 @@ test_required_banned_term_cannot_be_removed (tests.test_q2_graph.GlossaryTest.te
 test_unused_key (tests.test_q2_graph.GlossaryTest.test_unused_key) ... ok
 
 ----------------------------------------------------------------------
-Ran 12 tests in 0.247s
+Ran 12 tests in 0.239s
 
 OK

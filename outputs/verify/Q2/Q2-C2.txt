@@ -1,8 +1,8 @@
 criterion: Q2-C2 — 용어마다 그 용어를 새로 붙이는 미션은 하나이고 단계가 Q1 순서(상황 → 일상 표현 → 행동 → 월드 반응 → 이름표)를 따른다. 선수 용어는 앞에서 먼저 배운 용어와 같다. 단계 종류는 허용 목록뿐(퀴즈·정의 카드 없음)이고 종류마다 꼭 필요한 항목(문구 키 등)이 비지 않고 있다. 이름표 뒤에 서로 다른 미션의 재사용 맥락이 3개 이상 있고, 모두 일상어로도 진행된다 (INV-15·INV-8)
 command: python3 -m unittest tests.test_q2_graph.ReuseTest -v
 exit: 0
-binding: 546dbc57ebaafea2810a7b7686b2bf26a8d3dd90b29a0c02b0aa8f4f6ab85a59
-time: 2026-10-02T06:17:22.787108+00:00
+binding: 2168f8e7ffdb385b8d743fc362d0964e412a8ea5483fb18d8a2b7eab72d22671
+time: 2026-10-02T06:59:59.394806+00:00
 
 test_all_q1_everyday_expressions_offered (tests.test_q2_graph.ReuseTest.test_all_q1_everyday_expressions_offered) ... ok
 test_baseline_passes (tests.test_q2_graph.ReuseTest.test_baseline_passes) ... ok

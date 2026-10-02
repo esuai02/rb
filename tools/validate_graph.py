@@ -51,7 +51,7 @@ DECIDED_BY = {"cv.gate_name": ("DEC-1", "ko")}
 STEP_FIELDS = {"situation": ({"key"}, set()), "interaction": ({"key"}, set()), "world_response": ({"key"}, {"other_result_key"}),
                "everyday_expression": ({"keys"}, set()), "player_action": ({"keys"}, set()), "math_label": ({"key", "line_key"}, set()),
                "reward": ({"ids"}, set())}
-CANONICAL_PATH = "specs/graph/canonical-values.yaml"
+CANONICAL_PATH, EVENTS_PATH = "specs/graph/canonical-values.yaml", "specs/analytics/events.yaml"
 STRING_KEY_RE = re.compile(r"^[a-z0-9_]+(\.[a-z0-9_]+)+$")
 HINT_KINDS = ["world_signal", "strategy_question", "similar_example"]
 STATUSES = {"decided", "proposed", "hypothesis"}
@@ -138,13 +138,13 @@ CV_PINS = {
     ("cv.coop_offer_timing", "invite_prompt"): ("after_gate_open", "INV-14 — 첫 성공 전 초대 압박 없음"),
     ("cv.events", "naming"): ("k5_funnel_names", "cv.events"),
 }
-# 가설 수치는 원천 문서들이 낸 값의 범위 안에서 고른다 (docs/knowledge/K0-docs-index.md §3)
+# 가설 수치는 원천 문서들이 낸 값의 범위 안에서 고른다 (docs/knowledge/K0-docs-index.md §3, 리듬 규칙은 K6). 수 목록이면 값마다 본다
 CV_RANGES = {
     ("cv.match_wait", "seconds"): (10, 15), ("cv.coop_sync_window", "seconds"): (2, 4),
     ("cv.server_distance", "prompt_activation_studs"): (8, 20), ("cv.server_distance", "server_check_studs"): (8, 20),
     ("cv.server_cooldown", "seconds"): (0.35, 1.5), ("cv.hold_time", "seconds"): (0.4, 0.8), ("cv.hold_cancel", "display_tween_seconds"): (0, 0.2),
     ("cv.label_tag_display", "full_seconds"): (1, 4), ("cv.hint_ladder", "first_trigger", "idle_seconds"): (5, 25),
-    ("cv.hint_ladder", "first_trigger", "other_results"): (1, 3),
+    ("cv.hint_ladder", "first_trigger", "other_results"): (1, 3), ("cv.first_try", "success_within_two_tries"): (0.7, 0.9),  # K6 R2
 }
 # 번역 금지 경계 표본 — 큰 수·음수·소수·공백. Q1 검사기의 무작위 표본(0~99)이 닿지 않는 범위 (DEFER-Q1-9c3b4caa-1)
 BOUNDARY_SAMPLES = {
@@ -358,7 +358,7 @@ def check_references(b: Bundle) -> list[str]:
         if len(ids) != len(set(map(str, ids))):
             errors.append(f"{group}: id 가 중복된다")
     expected_spec = f"specs/worlds/{str(g.get('world_id')).replace('_', '-')}.yaml"
-    for field, want in (("world_spec", expected_spec), ("canonical_values", CANONICAL_PATH)):
+    for field, want in (("world_spec", expected_spec), ("canonical_values", CANONICAL_PATH), ("events", EVENTS_PATH)):
         if g.get(field) != want:
             errors.append(f"{field}: {want} 이어야 한다 ({g.get(field)})")
     errors += [f"reuse_contexts/{c['id']}: id 가 용어 이름(ctx.{str(c.get('term_id')).split('.')[-1]}.…)으로 시작하지 않는다" for c in g.get("reuse_contexts", [])
@@ -677,8 +677,9 @@ def check_canonical(b: Bundle) -> list[str]:
             errors.append(f"{cid}.{'.'.join(path)}: {want} 이어야 한다 ({why})")
     for (cid, *path), (low, high) in CV_RANGES.items():
         got = dotted(val(cid), ".".join(path))
-        if isinstance(got, (int, float)) and not isinstance(got, bool) and not low <= got <= high:
-            errors.append(f"{cid}.{'.'.join(path)}: {got} 이 원천 문서 범위 {low}~{high} 밖이다 (K0 §3)")
+        numbers = got if isinstance(got, list) else [got]
+        if any(isinstance(x, (int, float)) and not isinstance(x, bool) and not low <= x <= high for x in numbers):
+            errors.append(f"{cid}.{'.'.join(path)}: {got} 이 원천 문서 범위 {low}~{high} 밖이다 (K0 §3·K6)")
     grid = val("cv.coordinate_expression").get("grid") or {}
     errors += [f"cv.coordinate_expression.grid.{axis}: [음수, 양수] 두 정수여야 한다 (기준점 0 이 가운데)" for axis in ("x", "y")
                if not (isinstance(grid.get(axis), list) and len(grid[axis]) == 2 and all(isinstance(v, int) for v in grid[axis])
