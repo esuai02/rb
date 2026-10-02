@@ -1,0 +1,35 @@
+criterion: Q2-C7 — 설계 규칙: 보상은 서버만 정하고 기본 보상은 완주한 모두에게 같으며 협동 보너스는 꾸미기만이고 화폐·무작위 보상이 없다(INV-4·INV-12). 수학 미션마다 자기 힌트 사다리가 있고 힌트는 무료이며 한 번 해 본 뒤에만 다음 단계로 가고 힌트 문구가 목표 표현을 말하지 않는다(INV-8·K6 R3). 필수 미션은 혼자(NPC)로 끝낼 수 있고 매칭 대기 끝은 NPC 다(INV-9). 시간 압박 실패·스트릭·자동 다음 미션이 없고 자동 저장과 같은 크기의 계속·쉬기 정지점이 있다(INV-14·K6 R7). 필수 경로가 Q1 시간 안에 들고, 입력 3종마다 혼자 끝까지 가는 시나리오와 2인·재도전·멈춤·일상어만 쓰기 시나리오가 있다
+command: python3 -m unittest tests.test_q2_graph.DesignRulesTest -v
+exit: 0
+binding: a09229fc8cf32d7472a54a1ea61101f6bd0c62d9f868e121d6542b7f0f81ea69
+time: 2026-10-02T02:00:51.183948+00:00
+
+test_base_reward_by_correct_count (tests.test_q2_graph.DesignRulesTest.test_base_reward_by_correct_count) ... ok
+test_base_reward_for_some_players_only (tests.test_q2_graph.DesignRulesTest.test_base_reward_for_some_players_only) ... ok
+test_baseline_passes (tests.test_q2_graph.DesignRulesTest.test_baseline_passes) ... ok
+test_client_granted_reward (tests.test_q2_graph.DesignRulesTest.test_client_granted_reward) ... ok
+test_coop_bonus_must_be_cosmetic (tests.test_q2_graph.DesignRulesTest.test_coop_bonus_must_be_cosmetic) ... ok
+test_coop_needs_npc (tests.test_q2_graph.DesignRulesTest.test_coop_needs_npc) ... ok
+test_core_mission_needs_solo_path (tests.test_q2_graph.DesignRulesTest.test_core_mission_needs_solo_path) ... ok
+test_core_path_over_target_minutes (tests.test_q2_graph.DesignRulesTest.test_core_path_over_target_minutes) ... ok
+test_currency_reward (tests.test_q2_graph.DesignRulesTest.test_currency_reward) ... ok
+test_duo_and_idle_scenarios_required (tests.test_q2_graph.DesignRulesTest.test_duo_and_idle_scenarios_required) ... ok
+test_each_input_has_solo_full_path (tests.test_q2_graph.DesignRulesTest.test_each_input_has_solo_full_path) ... ok
+test_first_math_success_time (tests.test_q2_graph.DesignRulesTest.test_first_math_success_time) ... ok
+test_first_world_reaction_time (tests.test_q2_graph.DesignRulesTest.test_first_world_reaction_time) ... ok
+test_hint_advance_after_attempt (tests.test_q2_graph.DesignRulesTest.test_hint_advance_after_attempt) ... ok
+test_hint_reveals_answer (tests.test_q2_graph.DesignRulesTest.test_hint_reveals_answer) ... ok
+test_hint_text_states_the_answer (tests.test_q2_graph.DesignRulesTest.test_hint_text_states_the_answer) ... ok
+test_listed_mutations_are_caught (tests.test_q2_graph.DesignRulesTest.test_listed_mutations_are_caught) ... ok
+test_match_wait_ends_with_npc (tests.test_q2_graph.DesignRulesTest.test_match_wait_ends_with_npc) ... ok
+test_math_mission_needs_own_ladder (tests.test_q2_graph.DesignRulesTest.test_math_mission_needs_own_ladder) ... ok
+test_role_npc_can_fill (tests.test_q2_graph.DesignRulesTest.test_role_npc_can_fill) ... ok
+test_scenario_path_respects_order (tests.test_q2_graph.DesignRulesTest.test_scenario_path_respects_order) ... ok
+test_scenarios_cover_inputs (tests.test_q2_graph.DesignRulesTest.test_scenarios_cover_inputs) ... ok
+test_stop_point_equal_choice (tests.test_q2_graph.DesignRulesTest.test_stop_point_equal_choice) ... ok
+test_streak (tests.test_q2_graph.DesignRulesTest.test_streak) ... ok
+
+----------------------------------------------------------------------
+Ran 24 tests in 0.012s
+
+OK

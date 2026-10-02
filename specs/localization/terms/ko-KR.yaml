@@ -1,0 +1,149 @@
+# ko-KR 시장 용어집 — 원본 월드의 화면 문구(한국어 원문)와 금지어·대체어 (작업 Graph Q2-C5, INV-11)
+# 검사: python3 tools/validate_graph.py
+# locale 은 LocalizationTable 열 이름이다. IETF 언어 태그이며 언어만 쓴 태그(ko)도 쓸 수 있다(evidence F9).
+# 수학 이름표(term.*.name)는 시장 축, 일상 표현·화면 문구는 언어 축이다(intent §4). 이 파일은 둘 다 ko-KR 원본을 담는다.
+# 수식·좌표('(2, 1)')는 명세의 do_not_translate 구간이다 — 번역하지 않는다.
+schema_version: 1
+market_id: ko-KR
+locale: ko
+world_spec: specs/worlds/neo-seoul-city-language-gate.yaml
+
+strings:
+  # 정본 이름 (DEC-1)
+  world.neo_seoul.name: Neo Seoul
+  world.city_language_gate.title: 도시 언어 게이트
+  npc.signal_drone.name: 루미
+
+  # 수학 이름표 (Q1 label_key)
+  term.coordinate.name: 좌표
+  term.slope.name: 기울기
+  label.coordinate.line: 출발 칸에서 오른쪽 2, 위 1 → (2, 1). 방금 네가 쓴 말을 수학에서는 좌표라고 불러.
+  label.slope.line: 옆으로 한 칸 갈 때 다리가 얼마나 올라가는지를 수학에서는 기울기라고 불러. 평평하면 기울기 0이야.
+
+  # 미션의 목표 표현 — 힌트 문구에 들어가면 안 된다(정답 공개 검사)
+  answer.coordinate.signal_cell: 오른쪽 2, 위 1
+
+  # 일상 표현과 행동 (Q1 everyday_expression_keys · everyday_action_keys)
+  expr.position.right: 오른쪽
+  expr.position.left: 왼쪽
+  expr.position.up: 위
+  expr.position.down: 아래
+  action.position.move_right: 오른쪽으로 보내기
+  action.position.move_left: 왼쪽으로 보내기
+  action.position.move_up: 위로 보내기
+  action.position.move_down: 아래로 보내기
+  expr.slope.rise_more: 더 올라가게
+  expr.slope.rise_less: 덜 올라가게
+  expr.slope.flat: 평평하게
+  action.slope.increase: 빛 다리 끝 올리기
+  action.slope.decrease: 빛 다리 끝 내리기
+  action.slope.set_zero: 빛 다리 평평하게 놓기
+
+  # 현재 목표 (HUD — 한 번에 하나)
+  goal.signal_1: 빛나는 신호 패널에 다가가 보자
+  goal.signal_2: 루미를 신호 칸으로 보내자
+  goal.signal_3: 빛 다리를 게이트에 닿게 하자
+  goal.portal: 다음 구역 입구를 찾자
+
+  # 신호 1 — 첫 월드 반응
+  sit.gate_dark: 도시 언어 게이트가 꺼져 있어. 신호 패널 하나만 켜 보자.
+  prompt.signal_panel.activate: 신호 패널 켜기
+  resp.signal_1.panel_lit: 신호 1/3 복구! 멀리 도시 불빛이 켜졌어.
+
+  # 신호 2 — 좌표
+  sit.coordinate.drone_waiting: 루미가 출발 칸에서 신호 칸으로 가야 해. 어느 쪽으로 몇 칸 보낼까?
+  resp.coordinate.drone_lands: 루미가 신호 칸에 도착했어! 신호 2/3 복구.
+  resp.coordinate.other_spot: 루미가 다른 칸에 내렸다가 출발 칸으로 돌아왔어. 다시 골라 보자.
+  hint.coordinate.l1: 출발 칸에서 가로줄과 세로줄에 빛이 켜졌어. 빛줄을 따라 세어 봐.
+  hint.coordinate.l2: 출발 칸에서 신호 칸까지, 옆으로 몇 칸이고 위아래로 몇 칸일까?
+  hint.coordinate.l3: 옆 드론은 출발 칸에서 왼쪽 1, 아래 2로 날아가 자기 칸에 닿았어. 같은 방법으로 세어 보자.
+
+  # 신호 3 — 기울기 + 협동
+  sit.slope.bridge_low: 빛 다리가 출발점에서 뻗어 나가는데 게이트 문턱에 닿지 않아. 다리를 어떻게 바꿀까?
+  resp.slope.bridge_reaches: 빛 다리가 게이트 문턱에 닿았어! 신호 3/3 복구.
+  resp.slope.other_height: 다리 끝이 문턱과 높이가 달라. 다리를 다시 바꿔 보자.
+  hint.slope.l1: 문턱 높이에 빛줄이 켜졌어. 다리 끝과 견주어 봐.
+  hint.slope.l2: 다리 끝과 문턱 중에 어느 쪽이 더 높아?
+  hint.slope.l3: 옆 작은 다리는 끝이 너무 높았는데, 덜 올라가게 바꾸니 닿았어. 네 다리 끝은 어때?
+  coop.prism.left: 왼쪽 프리즘
+  coop.prism.right: 오른쪽 프리즘
+  coop.ready: 준비 완료
+  coop.partner_waiting: 다른 프리즘에서 탐험가가 기다리고 있어.
+  coop.npc_takes_prism: 루미가 다른 프리즘을 맡을게.
+  role.map_reader.name: 길 안내
+  role.switch_holder.name: 프리즘 지킴이
+
+  # 게이트 열림 — 기본 보상
+  resp.gate_open: 도시 언어 게이트가 열렸어!
+  reward.explorer_card.name: 탐험 카드
+  reward.explorer_badge.name: 도시 언어 탐험가 배지
+  unlock.light_rail_booster.name: 빛 레일 부스터
+  reward.coop_trail.name: 함께 걸은 빛 자국
+  coop.invite_friend: 친구와 함께 가기
+
+  # 재사용 맥락 (용어를 다른 상황에서 다시 쓴다 — 일상어로도 언제나 진행된다)
+  sit.reuse.coordinate.slope_anchor: 빛 다리를 놓을 출발 칸을 골라 줘.
+  resp.reuse.coordinate.anchor_set: 출발 칸에 빛 기둥이 섰어.
+  sit.reuse.slope.booster_ramp: 빛 레일을 타고 위 광장으로 가 보자. 출발점은 그대로야. 레일을 어떻게 놓을까?
+  resp.reuse.slope.ramp_reached: 레일이 위 광장에 닿았어!
+  sit.reuse.coordinate.portal_map: 탐험 카드 지도에 다음 구역 입구가 빛나. 루미를 그쪽으로 보내 줘.
+  resp.reuse.coordinate.portal_found: 루미가 Metro District 입구를 비췄어.
+  sit.reuse.slope.metro_preview: Metro District 열차 레일이 출발점에서 뻗어 나가는데 끝이 플랫폼에 못 미쳐. 레일을 어떻게 바꿀까?
+  resp.reuse.slope.metro_rail_set: 열차 레일이 플랫폼에 닿았어.
+  sit.reuse.coordinate.drone_delivery: 광장 등불에 부품을 보내야 해. 어디로 보낼까?
+  resp.reuse.coordinate.delivered: 등불이 켜졌어!
+  sit.reuse.slope.partner_bridge: 두 탑 사이 다리가 기울어서 건널 수 없어. 다리를 어떻게 놓을까?
+  resp.reuse.slope.bridge_flat: 다리가 평평해져서 건널 수 있어!
+  choice.use_label: 수학 이름으로 말하기
+
+  # 다음 목표 — 한 곳만 강하게 추천
+  zone.metro_district.name: Metro District
+  zone.recommend: 추천 — Metro District. 친구와 함께 갈 수 있어.
+
+  # 협동 핑 — 미리 정한 문구만 (자유 입력 없음, INV-10)
+  ping.here: 여기
+  ping.help: 도와줘
+  ping.ready: 준비
+  ping.follow: 따라와
+
+  # 재도전 언어 (INV-8)
+  retry.again: 다른 방법으로 다시 해 보자.
+
+  # 정지점 — 계속·쉬기를 같은 크기로 (K6 R7)
+  pacing.continue: 계속하기
+  pacing.rest: 쉬기
+
+# 금지어 — 화면 문구 어디에도 들어가면 안 된다. replacement 는 대신 쓸 말 (없으면 그 개념 자체를 쓰지 않는다)
+banned_terms:
+  - {term: 입국, replacement: 게이트 통과, reason: INV-11 현실 출입국 재현 — 입국심사·입국 거부 등 모든 활용형}
+  - {term: 출입국, replacement: 게이트 통과, reason: INV-11}
+  - {term: 심사, replacement: 도시 언어 게이트, reason: INV-11·INV-8 — 원천 문서의 '도시 언어 심사'는 버린 이름(K0 §3)}
+  - {term: 여권, replacement: 탐험 카드, reason: INV-11}
+  - {term: 비자, replacement: 탐험 카드, reason: INV-11}
+  - {term: 국적, replacement: null, reason: INV-11 국적으로 구분·평가하지 않는다}
+  - {term: 이민, replacement: null, reason: INV-11·F8 16세 이상 민감 주제}
+  - {term: 국경, replacement: 구역 경계, reason: INV-11}
+  - {term: 국기, replacement: 도시 깃발, reason: INV-11}
+  - {term: 외국인, replacement: 탐험가, reason: INV-11}
+  - {term: 시민권, replacement: 도시 언어 탐험가 배지, reason: INV-11 — 시민권 루프는 Q5 뒤 안내문과 함께 다시 정한다}
+  - {term: passport, replacement: 탐험 카드, reason: INV-11 영문 표기 (대소문자 무시)}
+  - {term: visa, replacement: 탐험 카드, reason: INV-11 영문 표기}
+  - {term: citizen, replacement: 도시 언어 탐험가 배지, reason: INV-11 — Seoul Cyber Citizen 계열 이름을 쓰지 않는다}
+  - {term: immigration, replacement: null, reason: INV-11·F8}
+  - {term: border, replacement: 구역 경계, reason: INV-11}
+  - {term: 불합격, replacement: 다시 해 보자, reason: INV-8}
+  - {term: 낙제, replacement: 다시 해 보자, reason: INV-8}
+  - {term: 오답, replacement: 다른 칸에 도착했어, reason: INV-8}
+  - {term: 정답, replacement: 신호 칸, reason: INV-8 시험 언어}
+  - {term: 틀렸, replacement: 다른 길이었어, reason: INV-8}
+  - {term: 틀린, replacement: 다른, reason: INV-8}
+  - {term: 실패, replacement: 다시 해 보자, reason: INV-8·K5 §7}
+  - {term: 시험, replacement: 해 보기, reason: INV-8·K5 §7 시험 언어}
+  - {term: 테스트, replacement: 해 보기, reason: INV-8·K5 §7}
+  - {term: 진단, replacement: null, reason: K5 §7 '레벨 진단' 시험 언어}
+  - {term: 순위, replacement: null, reason: INV-15 정답률 공개 순위 없음}
+  - {term: 연속, replacement: null, reason: INV-14 연속 접속·연속 보상 같은 강박형 장치 없음}
+  - {term: 매일, replacement: null, reason: INV-14 출석·일일 보상 없음}
+  - {term: 서둘러, replacement: null, reason: INV-14 시간 압박 없음}
+  - {term: 남은 시간, replacement: null, reason: INV-14 시간 압박 없음}
+  - {term: 초대하면, replacement: 친구와 함께 가기, reason: 보상형 초대 없음(K6 좌 가드레일)}

@@ -1,0 +1,26 @@
+criterion: Q2-C1 — Graph 는 정해진 항목만 쓰고(모르는 항목 0 — 가격·확률·타이머 같은 항목으로 규칙을 비켜 가지 못한다), 모든 참조(용어·일상 표현·행동·미션·맥락·힌트 사다리·협동·NPC·보상·시나리오·이벤트·문구 키·정본 값)가 Q1 명세·용어집·이벤트 목록·정본 값으로 해석된다. 미션 선행과 선수 용어에 순환이 없다
+command: python3 -m unittest tests.test_q2_graph.ReferenceTest -v
+exit: 0
+binding: a09229fc8cf32d7472a54a1ea61101f6bd0c62d9f868e121d6542b7f0f81ea69
+time: 2026-10-02T02:00:49.783496+00:00
+
+test_action_key_outside_q1_spec (tests.test_q2_graph.ReferenceTest.test_action_key_outside_q1_spec) ... ok
+test_baseline_passes (tests.test_q2_graph.ReferenceTest.test_baseline_passes) ... ok
+test_ladder_of_another_mission (tests.test_q2_graph.ReferenceTest.test_ladder_of_another_mission) ... ok
+test_listed_mutations_are_caught (tests.test_q2_graph.ReferenceTest.test_listed_mutations_are_caught) ... ok
+test_missing_prerequisite_mission (tests.test_q2_graph.ReferenceTest.test_missing_prerequisite_mission) ... ok
+test_mission_cycle (tests.test_q2_graph.ReferenceTest.test_mission_cycle) ... ok
+test_npc_must_be_q1_fallback (tests.test_q2_graph.ReferenceTest.test_npc_must_be_q1_fallback) ... ok
+test_stop_point_must_resolve (tests.test_q2_graph.ReferenceTest.test_stop_point_must_resolve) ... ok
+test_string_key_missing_from_glossary (tests.test_q2_graph.ReferenceTest.test_string_key_missing_from_glossary) ... ok
+test_term_prerequisite_cycle (tests.test_q2_graph.ReferenceTest.test_term_prerequisite_cycle) ... ok
+test_unknown_canonical_value (tests.test_q2_graph.ReferenceTest.test_unknown_canonical_value) ... ok
+test_unknown_event_in_scenario (tests.test_q2_graph.ReferenceTest.test_unknown_event_in_scenario) ... ok
+test_unknown_keys_cannot_bypass_rules (tests.test_q2_graph.ReferenceTest.test_unknown_keys_cannot_bypass_rules) ... ok
+test_unknown_term_in_reuse_context (tests.test_q2_graph.ReferenceTest.test_unknown_term_in_reuse_context) ... ok
+test_world_identity_must_match_q1 (tests.test_q2_graph.ReferenceTest.test_world_identity_must_match_q1) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.019s
+
+OK

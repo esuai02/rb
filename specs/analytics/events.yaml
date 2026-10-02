@@ -1,0 +1,97 @@
+# 분석 이벤트 허용 목록 — 하나뿐이다 (작업 Graph Q2-C3, INV-10)
+# 검사: python3 tools/validate_graph.py
+# 전송: Roblox AnalyticsService (서버에서만). 첫 5분 단계는 LogOnboardingFunnelStepEvent, 나머지는 LogCustomEvent (evidence F10)
+#       온보딩 퍼널은 사용자당 한 번만 센다(F11) — 매 세션 신호는 사용자 정의 이벤트 session_start 로 따로 보낸다.
+# 규칙: 필드 이름은 검사기(tools/validate_graph.py ALLOWED_FIELDS)의 허용 목록만, 값은 아래 사전의 열거형만 쓴다 —
+#       숫자·자유 텍스트·이름·사용자 ID 를 필드에 넣지 않는다(INV-10). 이벤트 하나에 필드는 3개까지(CustomField01~03).
+#       사용자 정의 이벤트는 게임당 100개까지. 플레이어별 기록을 따로 저장하지 않는다 — 집계는 Roblox 대시보드가 한다(DEC-12).
+schema_version: 1
+transport: roblox_analytics_service
+limits: {max_custom_events: 100, max_fields_per_event: 3}
+
+fields:
+  mission: [m.signal_wake, m.signal_coordinate, m.signal_slope, m.gate_open, m.zone_portal, m.plaza_drone_delivery, m.plaza_partner_bridge]
+  term: [term.coordinate, term.slope]
+  context: [ctx.coordinate.slope_anchor, ctx.coordinate.portal_map, ctx.coordinate.drone_delivery, ctx.slope.booster_ramp, ctx.slope.metro_preview, ctx.slope.partner_bridge]
+  expression_used: [everyday, label]
+  outcome: [target_reached, other_result]
+  attempt: [first, second, third_or_more]
+  hint_level: [level_1, level_2, level_3]
+  play_mode: [solo_npc, duo]
+  input: [touch, keyboard_mouse, gamepad]
+  offer_source: [player_present, invite_button]
+
+# 첫 5분 퍼널 — 순서대로 한 줄 (협동처럼 갈라지는 단계는 퍼널에 넣지 않고 아래 이벤트로 둔다)
+onboarding_funnel:
+  - {step: 1, name: onboarding_start, fields: [input]}
+  - {step: 2, name: character_spawned, fields: []}
+  - {step: 3, name: first_input, fields: []}
+  - {step: 4, name: gate_visible, fields: []}
+  - {step: 5, name: movement_complete, fields: []}
+  - {step: 6, name: first_interaction, fields: []}
+  - {step: 7, name: first_math_action, fields: []}
+  - {step: 8, name: first_math_success, fields: [attempt]}
+  - {step: 9, name: gate_opened, fields: [play_mode]}
+  - {step: 10, name: explorer_card_earned, fields: []}
+  - {step: 11, name: zone_portal_entered, fields: []}
+  - {step: 12, name: onboarding_complete, fields: [play_mode]}
+
+custom_events:
+  - {name: session_start, fields: [input], when: 매 세션 입장 — 북극성 지표의 분모(주간 고유 사용자)}
+  - {name: math_attempt, fields: [mission, outcome, attempt], when: 수학 행동 하나가 월드 결과를 냈을 때(서버 판정)}
+  - {name: hint_shown, fields: [mission, hint_level], when: 힌트 단계가 올라갔을 때}
+  - {name: label_shown, fields: [term], when: 수학 이름표가 처음 보였을 때}
+  - {name: term_reused, fields: [term, context, expression_used], when: 재사용 맥락에서 행동이 월드 결과로 이어졌을 때 — 북극성 지표의 분자(조건은 north_star)}
+  - {name: co_play_offered, fields: [offer_source], when: 빈 프리즘을 비추거나 친구 초대 버튼이 보였을 때}
+  - {name: co_play_started, fields: [play_mode], when: 다른 플레이어와 같은 협동 오브젝트를 처음 함께 썼을 때}
+  - {name: session_end, fields: [mission], when: 플레이어가 나갈 때 마지막으로 진행 중이던 미션}
+
+# 플랫폼이 이미 재는 값 — 따로 이벤트를 보내지 않는다
+platform_metrics: [platform.d1_retention, platform.d7_retention, platform.session_length]
+
+# 북극성 지표 — 활성 플레이어당 주간 의미 있는 도시 언어 재사용 (intent §1)
+north_star:
+  id: ns.weekly_meaningful_reuse
+  numerator: {event: term_reused, aggregation: count, window_days: 7}
+  denominator: {event: session_start, aggregation: count_unique_users, window_days: 7}
+  counts_only_when:
+    - server_confirmed_world_response   # 행동이 월드 결과로 이어졌다고 서버가 판정한 것만
+    - optional_mission_only             # 필수 게이트 경로(강제 튜토리얼) 안의 재사용은 세지 않는다 — 선택 미션의 맥락만
+    - label_used                        # '용어 사용'만 센다 (expression_used = label). 일상어 재사용은 보조 지표
+    - first_per_context_per_session     # 같은 맥락 반복 클릭은 세션당 1번만
+  per_player_storage: false             # 집계만 쓴다 (DEC-12 결정 전)
+  secondary: {id: ns.weekly_everyday_reuse, note: 같은 조건에서 expression_used = everyday — 용어를 몰라도 진행하는지(INV-15) 본다}
+
+# 원천 문서 이벤트 → 이 목록의 이름 (cv.events: K5 이름을 정본으로)
+source_mapping:
+  k5_funnel:
+    session_start: session_start         # 매 세션 이벤트 (퍼널 1단계는 onboarding_start)
+    character_spawned: character_spawned
+    first_input: first_input
+    gate_visible: gate_visible
+    movement_complete: movement_complete
+    first_interaction: first_interaction
+    first_math_action: first_math_action
+    first_math_success: first_math_success
+    co_play_offered: co_play_offered
+    co_play_started: co_play_started
+    gate_opened: gate_opened
+    explorer_card_earned: explorer_card_earned
+    first_zone_entered: zone_portal_entered   # 구역 자체는 Q5 뒤(INV-2) — 이번 월드에서는 입구까지
+    onboarding_complete: onboarding_complete
+    session_end: session_end
+    day_1_return: platform.d1_retention
+  k3_allowed:
+    입장: session_start
+    튜토리얼 시작/완료: [onboarding_start, onboarding_complete]
+    첫 이동: movement_complete
+    첫 미션 시작/성공/실패: [first_math_action, first_math_success, math_attempt]
+    힌트 사용: hint_shown
+    재도전: math_attempt
+    협동 미션 참가/완주: [co_play_started, gate_opened]
+    다음 지역 진입: zone_portal_entered
+    세션 종료: session_end
+    다음 날 재방문: platform.d1_retention
+  other_names:            # 원천 문서 3 의 다른 이름
+    ftue_started: onboarding_start
+    explorer_card_granted: explorer_card_earned

@@ -1,0 +1,177 @@
+# 정본 값 — 원천 문서 간 충돌(docs/knowledge/K0-docs-index.md §3)을 값 하나로 정한다 (작업 Graph Q2-C4)
+# 검사: python3 tools/validate_graph.py
+# status: decided   = 사람 결정(DEC-*) 또는 잠긴 Q1 명세가 이미 정한 값. 불변식(INV-*)에서 AI 가 끌어낸 값은 decided 가 아니다
+#         proposed  = AI 제안. Q2 잠금 승인(LOCK-Q2)으로 확정된다
+#         hypothesis = 시작 수치. measure_at 단계에서 실측으로 고친다 (라이브 반영은 사람 승인 뒤 — INV-13)
+# Graph 는 수치를 다시 적지 않고 id(cv.*)로 참조한다. 수치의 정본은 이 파일 하나다.
+schema_version: 1
+source: docs/knowledge/K0-docs-index.md
+values:
+  - id: cv.gate_name
+    k0_item: 게이트 이름
+    value: {ko: 도시 언어 게이트, string_key: world.city_language_gate.title}
+    status: decided
+    refs: [DEC-1]
+    rationale: DEC-1(2026-10-01). 영어 이름(City Language Gate)은 제안일 뿐 — 영어 locale 은 Q7 전에는 열지 않는다(INV-2)
+
+  - id: cv.world_title
+    k0_item: 세계·칭호
+    value: {world: Neo Seoul, world_key: world.neo_seoul.name, first_title_key: reward.explorer_badge.name, citizenship_loop: after_Q5}
+    status: proposed
+    refs: [DEC-1, INV-2, INV-11, F8]
+    rationale: 세계 이름은 DEC-1. 첫 칭호는 '도시 언어 탐험가'. 시민권·Seoul Cyber Citizen 계열은 현실 신분과 섞일 수 있어(INV-11, 이민은 16세 이상 민감 주제 F8) 입장 게이트에서 쓰지 않고, 시민권 루프는 Q5 뒤에 다룬다
+
+  - id: cv.first_rewards
+    k0_item: 첫 보상·수집
+    value: [reward.explorer_card, reward.explorer_badge, unlock.light_rail_booster]
+    status: proposed
+    refs: [INV-4, K5]
+    rationale: 탐험 카드 + 탐험가 배지 + 새 이동 행동(K5 '코인이 아니라 새 행동'). 지도책(Atlas) 수집은 장기 구조라 Q5 뒤. 이 목록이 Graph 의 기본 보상 전부와 같아야 한다
+
+  - id: cv.gate_signals
+    k0_item: 게이트 신호 구성
+    value: {signal_1: interaction, signal_2: term.coordinate, signal_3: term.slope, coop_on: signal_3, out_of_mvp: [pattern]}
+    status: proposed
+    refs: [Q1, DEC-1]
+    rationale: 용어 두 개(좌표·기울기)는 잠긴 Q1 명세가 정했다. 신호 1 을 수학 없는 첫 월드 반응(60초 안)으로, 협동을 신호 3 에 두는 것은 Q2 제안이다. 패턴(G3)은 MVP 밖
+
+  - id: cv.gate_time
+    k0_item: 게이트 시간
+    value: {target_minutes: [3, 5]}
+    status: decided
+    refs: [Q1]
+    rationale: 잠긴 Q1 명세 session.target_minutes. 원천 문서의 '7분 넘으면 경고'는 실측 임계라 Q4 에서 정한다
+
+  - id: cv.match_wait
+    k0_item: 매칭 대기 상한
+    value: {seconds: 10, then: npc_fallback}
+    status: hypothesis
+    measure_at: Q4
+    refs: [INV-9]
+    rationale: 혼자 온 플레이어가 기다리지 않게 짧은 쪽(10초). 넘으면 루미가 맡는다
+
+  - id: cv.coop_sync_window
+    k0_item: 협동 동시 판정 창
+    value: {seconds: 3}
+    status: hypothesis
+    measure_at: Q4
+    refs: [INV-9]
+    rationale: 2~4초 범위의 가운데. 터치·게임패드 사용자의 반응 차이를 Q4 Play 시험으로 잰다
+
+  - id: cv.server_distance
+    k0_item: 서버 거리 허용치
+    value: {prompt_activation_studs: 10, server_check_studs: 12}
+    status: hypothesis
+    measure_at: Q4
+    refs: [INV-4]
+    rationale: 서버 판정은 화면 프롬프트 거리보다 넓어야 지연 때문에 정상 입력을 버리지 않는다. 여유 2 studs. 문서별 8~20 값은 각자 다른 오브젝트 크기를 전제했다
+
+  - id: cv.server_cooldown
+    k0_item: 서버 쿨다운
+    value: {seconds: 0.5, scope: per_player_per_object}
+    status: hypothesis
+    measure_at: Q3
+    refs: [INV-4]
+    rationale: 연타·자동 반복은 막고 두 번째 정상 시도는 막지 않는 값. Q3 서버 권위 검사에서 중복 요청으로 시험한다
+
+  - id: cv.hold_time
+    k0_item: 홀드 시간
+    value: {seconds: 0.6, accessible_alternative: tap_toggle}
+    status: hypothesis
+    measure_at: Q4
+    refs: [INV-9]
+    rationale: 0.4~0.8 의 가운데. 길게 누르기 어려운 플레이어를 위해 접근성 설정에서 탭 전환을 둔다(K4 §6 시간 제한 완화)
+
+  - id: cv.hold_cancel
+    k0_item: 홀드 취소
+    value: {server: immediate, display_tween_seconds: 0.12}
+    status: proposed
+    refs: [INV-4]
+    rationale: 판정은 서버에서 손을 떼는 즉시 취소하고, 0.12초 Tween 은 화면 표시만이다. 판정과 표시를 나누면 두 값이 충돌하지 않는다
+
+  - id: cv.slope_choices
+    k0_item: 변화 신호 선택지
+    value: {expressions: [expr.slope.rise_more, expr.slope.rise_less, expr.slope.flat], steps: [0, 1, 2, 3], fixed: [start_point, run]}
+    status: proposed
+    refs: [Q1]
+    rationale: 표현 키는 잠긴 Q1 명세. '평평하게'는 기울기 0 이고 '그대로'(바꾸지 않음)와 다르므로 '그대로'는 쓰지 않는다. 출발점과 가로 거리를 고정하고 기울기만 바꾼다 — 높이(절편)를 옮겨 맞추는 오개념과 섞지 않는다. 기울기 단계는 0~3 네 개(유한). 내려가는 기울기(음수)는 게이트 밖
+
+  - id: cv.coordinate_expression
+    k0_item: 좌표 표현
+    value: {order: [direction, distance], axes: [x_right_left, y_up_down], plane: vertical_signal_wall, origin: start_cell, moves_from: origin_always, grid: {x: [-2, 2], y: [-2, 2]}, numeric_form: after_label_only}
+    status: proposed
+    refs: [INV-15, Q1]
+    rationale: 일상 표현 '오른쪽 2, 위 1'(방향 → 거리)을 먼저 쓰고, 숫자 '(2, 1)'은 이름표 뒤에만 보인다. 루미는 언제나 출발 칸(기준점 0, 0)에서 출발한다 — 다른 칸에 내리면 출발 칸으로 돌아오므로 '방금 쓴 말'이 늘 좌표와 같다(상대 이동을 좌표라고 부르지 않는다). 신호판을 세로 벽에 두어 '위'가 실제 위가 되게 한다. 격자는 5×5(유한)
+
+  - id: cv.hint_ladder
+    k0_item: 힌트 강화 기준
+    value:
+      first_trigger: {idle_seconds: 10, other_results: 1}
+      advance: after_one_attempt
+      levels: [world_signal, strategy_question, similar_example]
+      reveals_answer: false
+      tried_marker: true
+      cost: free
+    status: hypothesis
+    measure_at: Q5
+    refs: [INV-8, INV-15, K5, K6]
+    rationale: 진행 없음 10초 또는 다른 결과 1번 중 먼저 오는 쪽에 1단계(K5 X2 지연 힌트안·K6 R3). 다음 단계는 한 번 더 해 본 뒤에만. 월드 신호 → 전략 질문 → 같은 구조의 다른 예시이고 정답을 주는 단계는 없다. 힌트는 무료·감점 없음. 선택지가 유한하고(좌표 격자 24칸, 기울기 단계 4개) 해 본 선택에 표시가 남으므로 반드시 끝난다
+
+  - id: cv.label_tag_display
+    k0_item: 발견 태그 노출
+    value: {full_seconds: 2, then: shrink_to_card}
+    status: hypothesis
+    measure_at: Q4
+    refs: [INV-15]
+    rationale: 이름표는 2초 크게 보인 뒤 탐험 카드로 줄어든다. 진행을 막지 않는다
+
+  - id: cv.events
+    k0_item: 이벤트 이름·수
+    value: {allowlist: specs/analytics/events.yaml, naming: k5_funnel_names, renamed: {first_zone_entered: zone_portal_entered, day_1_return: platform.d1_retention}}
+    status: proposed
+    refs: [INV-10, F10, F11]
+    rationale: 이벤트 목록은 events.yaml 하나. 이름은 K5 퍼널 이름(session_start, explorer_card_earned)을 쓰고 K3 목록은 그 이름으로 대응시킨다. 예외 둘 — 구역 자체는 Q5 뒤라 입구까지만 잰다(zone_portal_entered), 다음 날 재방문은 플랫폼 유지율로 본다. session_start 는 매 세션 보내는 사용자 정의 이벤트다(온보딩 퍼널은 사용자당 한 번만 센다, F11)
+
+  - id: cv.coop_switch_ids
+    k0_item: 협동 스위치 식별자
+    value: [gate_prism_left, gate_prism_right]
+    status: proposed
+    refs: [INV-4]
+    rationale: 오브젝트 이름 하나로 통일한다. '준비됨'은 별도 이름(prism_left_ready)이 아니라 서버가 가진 상태다
+
+  - id: cv.rule_source
+    k0_item: 규칙 정본 위치
+    value: {authority: server_config, prompt_attributes: display_only}
+    status: proposed
+    refs: [INV-4]
+    rationale: INV-4 서버 권위. Prompt Attribute 는 클라이언트가 바꿀 수 있으므로 표시용이다
+
+  - id: cv.helper_npc
+    k0_item: 보조 NPC
+    value: {id: npc.signal_drone, name_key: npc.signal_drone.name}
+    status: proposed
+    refs: [Q1, INV-9]
+    rationale: 잠긴 Q1 명세의 NPC 하나(신호 드론). 이름은 원천 문서 다수가 쓴 '루미'. 라인 드론·보조 드론은 같은 NPC 의 다른 이름이라 쓰지 않는다
+
+  - id: cv.coop_offer_timing
+    k0_item: 친구 협동 제안 시점
+    value: {in_gate: signal_3_if_player_present, invite_prompt: after_gate_open}
+    status: hypothesis
+    measure_at: Q5
+    refs: [INV-9, INV-14]
+    rationale: 신호 3 에서 같은 서버에 다른 플레이어가 있으면 빈 프리즘을 비추기만 한다(초대 창 없음). 친구 초대 버튼은 첫 성공(게이트 열림) 뒤에만 — K5 X3 실험으로 확인
+
+  - id: cv.first_try
+    k0_item: 첫 시도 설계
+    value: {forced_failure: false, success_within_two_tries: [0.7, 0.9], key_metrics: [attempts_to_first_success, retry_after_other_result]}
+    status: hypothesis
+    measure_at: Q5
+    refs: [INV-8, INV-14, K6]
+    rationale: 일부러 실패를 겪게 하지 않는다. 첫·둘째 시도 성공 70~90% 를 출발 가설로 둔다(K6 R2). 첫 시도 성공률 하나만 보지 않고 첫 성공까지의 시도 수(first_math_success 의 attempt 필드)와 다른 결과 뒤 재시도율(math_attempt)을 함께 본다. 첫 성공까지 걸린 시간은 Q4 Play 시험에서 잰다
+
+  - id: cv.color_meaning
+    k0_item: 색 의미
+    value: {purple: special_mission, hold_interrupted: [gray, icon], color_only: false}
+    status: proposed
+    refs: [INV-9]
+    rationale: 보라는 K4 디자인 토큰대로 특별 미션. 홀드 중단은 회색 + 아이콘으로 — 색만으로 뜻을 전하지 않는다

@@ -1,0 +1,23 @@
+criterion: Q2-C4 — 원천 문서 간 충돌 값(K0 §3)의 모든 행이 정본 값 하나와 근거, 상태(decided 는 사람 결정·잠긴 Q1 근거만 · proposed · hypothesis 는 실측 단계)를 가지며, Graph·Q1 이 쓰는 실제 값과 일치한다
+command: python3 -m unittest tests.test_q2_graph.CanonicalValuesTest -v
+exit: 0
+binding: a09229fc8cf32d7472a54a1ea61101f6bd0c62d9f868e121d6542b7f0f81ea69
+time: 2026-10-02T02:00:50.469732+00:00
+
+test_baseline_passes (tests.test_q2_graph.CanonicalValuesTest.test_baseline_passes) ... ok
+test_decided_needs_human_decision_or_q1 (tests.test_q2_graph.CanonicalValuesTest.test_decided_needs_human_decision_or_q1) ... ok
+test_every_k0_row_is_read (tests.test_q2_graph.CanonicalValuesTest.test_every_k0_row_is_read) ... ok
+test_first_rewards_must_match_graph (tests.test_q2_graph.CanonicalValuesTest.test_first_rewards_must_match_graph) ... ok
+test_hypothesis_needs_later_measurement (tests.test_q2_graph.CanonicalValuesTest.test_hypothesis_needs_later_measurement) ... ok
+test_k0_row_without_spaces_is_read (tests.test_q2_graph.CanonicalValuesTest.test_k0_row_without_spaces_is_read) ... ok
+test_listed_mutations_are_caught (tests.test_q2_graph.CanonicalValuesTest.test_listed_mutations_are_caught) ... ok
+test_missing_rationale (tests.test_q2_graph.CanonicalValuesTest.test_missing_rationale) ... ok
+test_missing_row (tests.test_q2_graph.CanonicalValuesTest.test_missing_row) ... ok
+test_two_values_for_one_row (tests.test_q2_graph.CanonicalValuesTest.test_two_values_for_one_row) ... ok
+test_unknown_status (tests.test_q2_graph.CanonicalValuesTest.test_unknown_status) ... ok
+test_value_must_match_graph (tests.test_q2_graph.CanonicalValuesTest.test_value_must_match_graph) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.007s
+
+OK
