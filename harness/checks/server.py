@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from harness import luau, resolve, source
+from harness.checks import i18n
 from harness.luau import NAME, NUMBER, STRING, SYMBOL
 
 BLOCKING = ("return", "error")   # 조건이 맞지 않을 때 멈추는 말
@@ -160,6 +161,13 @@ def _handlers(f) -> list[tuple[list[str], list, int, str]]:
     보는 꼴: X.OnServerEvent:Connect(function…) · :Connect(이름) · X.OnServerInvoke = function… · = 이름
     """
     toks, bodies, out = f.tokens, luau.function_bodies(f.tokens), []
+    for i, _rhs, key in i18n._bracket_assignments(f):
+        close = i + 1
+        while close < len(toks) and not (toks[close].kind == SYMBOL and toks[close].text == "["):
+            close += 1
+        rhs = close + len(luau.balanced(toks, close)) + 1
+        if not isinstance(key, str) and rhs < len(toks) and toks[rhs].kind == NAME and toks[rhs].text == "function":
+            out.append(("?", [], [], i, f"값을 알 수 없는 멤버({toks[i].text}[…])에 처리 함수를 대입했다 — 어떤 원격인지 검사할 수 없다"))
     for i, tok in enumerate(toks):
         if not (tok.kind == NAME and tok.text in ("Connect", "Once", "ConnectParallel") and i and toks[i - 1].text == ":"):
             continue

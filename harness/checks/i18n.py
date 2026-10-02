@@ -178,7 +178,8 @@ def _bracket_assignments(f) -> list[tuple[int, int, object]]:
 def unresolved_ui_property(f, config) -> list[str]:
     """속성 이름을 값을 알 수 없는 방식으로 고르면 거부한다 — 화면 문구 속성인지 검사할 수 없다."""
     return [f"{f.rel}:{f.tokens[i].line} {f.tokens[i].text} 의 속성 이름을 값을 알 수 없는 방식으로 고른다 "
-            f"— 화면 문구 속성인지 검사할 수 없으므로 쓰지 않는다" for i, _rhs, key in _bracket_assignments(f) if not isinstance(key, str)]
+            f"— 화면 문구 속성인지 검사할 수 없으므로 쓰지 않는다" for i, rhs, key in _bracket_assignments(f)
+            if not isinstance(key, str) and not (rhs < len(f.tokens) and f.tokens[rhs].kind == NAME and f.tokens[rhs].text == "function")]
 
 
 def _ui_assignments(f, config) -> list:
@@ -199,7 +200,8 @@ def unresolved_ui_text(f, config) -> list[str]:
         if any(k in key_calls for k in range(start, start + 12)):
             continue
         calls = [k for k in range(start, min(start + 12, len(f.tokens)))
-                 if f.tokens[k].kind == NAME and k + 1 < len(f.tokens) and f.tokens[k + 1].text == "("]
+                 if k + 1 < len(f.tokens) and f.tokens[k + 1].text == "("
+                 and (f.tokens[k].kind == NAME or (f.tokens[k].kind == SYMBOL and f.tokens[k].text == "]"))]
         if calls:
             out.append(f"{f.rel}:{f.tokens[start].line} UI 글자 속성 .{prop} 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다 — 문구 키를 거쳐야 한다")
         elif not any(t.kind == STRING for t in rhs) and not any(isinstance(f.resolved.get(t.text), str) for t in rhs if t.kind == NAME):

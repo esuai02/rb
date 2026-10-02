@@ -2658,6 +2658,50 @@
           "replace": "\"$path\": [\"src/server\"]"
         }
       ]
+    },
+    {
+      "id": "D-dynamic-member-handler",
+      "class": "동적 멤버에 대입한 원격 처리",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)",
+          "replace": "local method = script.Name\nSignalRemote[method] = function(player: Player, x: unknown, y: unknown)\n\tMissionService.openGate(player)\nend"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-dynamic-platform-member",
+      "class": "분석 모듈 안의 동적 플랫폼 멤버",
+      "expected": [
+        "analytics.calls",
+        "safety.external_call"
+      ],
+      "note": "플랫폼 서비스의 멤버를 값을 알 수 없는 방식으로 부르면 어떤 전송 함수인지도, 어떤 외부 호출인지도 알 수 없다 — 두 검사가 모두 맞다",
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
+          "replace": "\tlocal method = script.Name\n\tAnalyticsService[method](player, eventName, 1, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-ui-text-from-bracket-call",
+      "class": "대괄호 멤버로 부른 UI 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "local method = script.Name\ngoal.Text = translator[method](\"goal.signal_2\")"
+        }
+      ]
     }
   ]
 }
