@@ -7,7 +7,7 @@ import unicodedata
 from harness import luau, resolve
 from harness.luau import NAME, NUMBER, STRING, SYMBOL
 
-URL = re.compile(r"(?i)\b(?:https?://|www\.)|\b[a-z0-9-]+\.(?:com|net|org|gg|io|kr|ly|me|co)\b")
+URL = re.compile(r"(?i)\b[a-z][a-z0-9+.\-]*://|\bwww\.|\b[a-z0-9-]+\.(?:com|net|org|gg|io|kr|ly|me|co|xyz|app|dev|link|site|online|info|biz|tv|cc|to)\b")
 RANDOM_PATHS = (("math", "random"), ("Random", "new"))
 RANDOM_METHODS = {"NextInteger", "NextNumber", "NextUnitVector"}
 
@@ -52,7 +52,7 @@ def url(tree, rules, config) -> list[str]:
     return sorted(set(out))
 
 
-URL_PART = re.compile(r"(?i)https?|://|www\.|\.(?:com|net|org|gg|io|kr|ly|me|co)\b")
+URL_PART = re.compile(r"(?i)https?|ftp|://|www\.|\.(?:com|net|org|gg|io|kr|ly|me|co|xyz|app|dev|link|site|online|info|biz|tv|cc|to)\b")
 
 
 def _url_like_part(f, start: int, stop: int) -> bool:

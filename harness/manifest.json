@@ -2092,6 +2092,123 @@
           "replace": "goal.Text = getScheme() .. getHost()"
         }
       ]
+    },
+    {
+      "id": "D-claimonce-not-called",
+      "class": "호출하지 않은 중복 방지",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\tif not claimOnce(player, missionId .. \"|\" .. rewardId) then return end\n",
+          "replace": "\tif not claimOnce then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-verdict-then-grant-outside",
+      "class": "판정을 부르고 바깥에서 보상",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\treturn reached\n",
+          "replace": "\tRewardService.grant(player, \"reward.coop_trail\", \"m.signal_slope\")\n\treturn reached\n"
+        }
+      ]
+    },
+    {
+      "id": "D-range-before-type",
+      "class": "타입보다 앞선 범위 검사",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n",
+          "replace": "\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-dynamic-reward-member",
+      "class": "값을 알 수 없는 보상 멤버",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tRewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n",
+          "replace": "\tRewardService[pickMethod()](player, \"reward.explorer_card\", \"m.gate_open\")\n"
+        }
+      ]
+    },
+    {
+      "id": "D-dynamic-text-member-unresolved",
+      "class": "값을 알 수 없는 문구 멤버",
+      "expected": [
+        "i18n.missing_key"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal.Text = Text[pickMethod()](\"goal.signal_2\")"
+        }
+      ]
+    },
+    {
+      "id": "D-dynamic-analytics-member",
+      "class": "값을 알 수 없는 분석 멤버",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics[pickMethod()](player, \"gate_opened\", {play_mode = \"solo_npc\"})"
+        }
+      ]
+    },
+    {
+      "id": "D-platform-api-alias",
+      "class": "플랫폼 전송 함수를 담은 이름",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "local Analytics = require(script.Parent.Analytics)\n",
+          "replace": "local Analytics = require(script.Parent.Analytics)\nlocal AnalyticsService = game:GetService(\"AnalyticsService\")\nlocal send = AnalyticsService.LogCustomEvent\n"
+        },
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})\n\tsend(AnalyticsService, player, \"player_profile\", 1)"
+        }
+      ]
+    },
+    {
+      "id": "D-ftp-url",
+      "class": "다른 스킴의 외부 링크",
+      "expected": [
+        "safety.url"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "도시 언어 게이트가 열렸어!,",
+          "replace": "도시 언어 게이트가 열렸어! ftp://example.xyz 에서 더 보기,"
+        }
+      ]
     }
   ]
 }

@@ -61,6 +61,11 @@ def calls(tree, rules, config) -> list[str]:
         out += [f"{f.rel}:{t.line} 분석 모듈을 거치지 않고 AnalyticsService 를 쓴다" for t in f.tokens
                 if t.text in ("AnalyticsService", *config["platform_apis"]) and t.kind in (NAME, STRING)]
         names = _aliases(f, module)
+        out += [f"{f.rel}:{f.tokens[i].line} 분석 모듈 {name} 의 멤버를 값을 알 수 없는 방식으로 고른다 — 어떤 이벤트를 보내는지 검사할 수 없다"
+                for i, name in resolve.dynamic_member_calls(f, names)]
+        out += [f"{f.rel}:{f.tokens[i].line} 플랫폼 전송 함수를 다른 이름({alias})에 담아 부른다 — 분석 모듈을 거쳐야 한다"
+                for api in config["platform_apis"] for alias in resolve.names_for(f.resolved, ("AnalyticsService", api)) if alias != "AnalyticsService"
+                for i in luau.find_calls(f.tokens, (alias,))]
         for kind, sender in senders.items():
             for name in names:
                 out += _check_call(f, name, sender, kind, allowed, enums, module, (name, sender))

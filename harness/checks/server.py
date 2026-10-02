@@ -108,11 +108,14 @@ def duplicate_reward(tree, rules, config) -> list[str]:
         if not grants:
             out.append(f"{f.rel}:1 {module}.grant 함수가 없다")
         for _params, body, i in grants:
-            texts = [t.text for t in body]
+            texts = [x.text for x in body]
             then = texts.index("then") if "then" in texts else -1
-            if texts[:3] != ["if", "not", "claimOnce"] or then < 0 or texts[then + 1:then + 2] != ["return"]:
-                out.append(f"{_at(f, f.tokens[i])} grant 가 맨 앞에서 'if not claimOnce(...) then return' 으로 중복 지급을 막지 않는다")
+            called = len(body) > 3 and body[3].text == "(" and len(luau.call_args(body, 2)) >= 1
+            if texts[:3] != ["if", "not", "claimOnce"] or not called or then < 0 or texts[then + 1:then + 2] != ["return"]:
+                out.append(f"{_at(f, f.tokens[i])} grant 가 맨 앞에서 'if not claimOnce(…) then return' 으로 중복 지급을 막지 않는다(실제 호출이어야 한다)")
     for f in tree.luau:
+        out += [f"{f.rel}:{f.tokens[i].line} 보상 모듈 {name} 의 멤버를 값을 알 수 없는 방식으로 고른다 — 어떤 함수인지 검사할 수 없다"
+                for i, name in resolve.dynamic_member_calls(f, _module_names(f, module))]
         for i in grant_calls(f, module):
             args = luau.call_args(f.tokens, i)
             literal = [a[0] if len(a) == 1 and a[0].kind == STRING else None for a in args]
@@ -414,6 +417,8 @@ def _param_errors(where, name, want, guarded, positions, ranges, work, body, con
         out.append(f"{where} 원격 입력 {name} 를 {guarded[name]} 로 검사하지만 계약은 {kind} 다")
     if positions.get(name, len(body)) > work:
         out.append(f"{where} 원격 입력 {name} 의 형식 검사가 처리를 시작한 뒤에 있다 — 쓰기 전에 걸러야 한다")
+    elif name in ranges and positions.get(name, len(body)) > ranges[name][0]:
+        out.append(f"{where} 원격 입력 {name} 의 형식 검사가 범위 검사보다 뒤에 있다 — 수인지 먼저 확인해야 한다")
     if guarded[name] == "number":
         got = ranges.get(name)
         if got is None or got[0] > work:
@@ -491,15 +496,21 @@ def _is_sole_cooldown_guard(body, start: int, stop: int, path: tuple[str, ...]) 
     return not any(x.kind == NAME and x.text in ("and", "or") for x in cond)
 
 
-def self_verdicting(tree, verdicts) -> set[str]:
-    """스스로 서버 판정을 거쳐 보상하는 함수 — 이런 함수를 부르는 쪽은 판정을 또 할 필요가 없다."""
+def self_verdicting(tree, verdicts, module: str, reaching: set[str]) -> set[str]:
+    """스스로 판정을 거쳐 보상하는 함수 — 그 함수 안의 보상이 모두 판정의 참 가지 안에 있을 때만. 부르는 쪽은 판정을 또 하지 않아도 된다."""
     names = set()
     for f in tree.luau:
+        aliases = _grant_aliases(f, _module_names(f, module))
         for start, end in _function_spans(f.tokens):
             named = _declared_name(f.tokens, start)
             if not named and start >= 2 and f.tokens[start - 1].text == "=" and f.tokens[start - 2].kind == NAME:
                 named = f.tokens[start - 2].text
-            if named and any(luau.find_calls(f.tokens[start:end], v) for v in verdicts):
+            body = f.tokens[start:end]
+            rewards = {k for alias in aliases for k in luau.find_calls(body, alias)}
+            rewards |= {k for k, tok in enumerate(body) if tok.kind == NAME and tok.text in reaching and tok.text != named
+                        and ((k + 1 < len(body) and body[k + 1].text == "(") or (k and body[k - 1].text == "."))}
+            if named and rewards and any(luau.find_calls(body, v) for v in verdicts) \
+                    and all(_inside_verdict(body, k, verdicts) for k in rewards):
                 names.add(named)
     return names
 
@@ -507,7 +518,8 @@ def self_verdicting(tree, verdicts) -> set[str]:
 def reward_after_verdict(tree, rules, config) -> list[str]:
     """원격 처리에서 보상에 닿는 호출은 서버 판정의 결과 안에서만 — 클라이언트가 '다 했다'고 알린다고 보상하지 않는다 (INV-4)."""
     module, verdicts, out = config["reward_module"], [tuple(v) for v in config["verdict_calls"]], []
-    reaching = reward_reaching(tree, module) - self_verdicting(tree, verdicts)
+    reaching_all = reward_reaching(tree, module)
+    reaching = reaching_all - self_verdicting(tree, verdicts, module, reaching_all)
     for f in tree.luau:
         for remote, _params, body, i, problem in _handlers(f):
             if problem:

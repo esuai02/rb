@@ -51,6 +51,8 @@ def missing_key(tree, rules, config) -> list[str]:
     if not tree.csv_files:
         out.append("LocalizationTable(CSV)이 없다")
     for f in tree.luau:
+        out += [f"{f.rel}:{f.tokens[i].line} 문구 모듈 {name} 의 멤버를 값을 알 수 없는 방식으로 고른다 — 어떤 키를 쓰는지 검사할 수 없다"
+                for i, name in resolve.dynamic_member_calls(f, _aliases(f, config["text_module"]))]
         for i, args in _key_calls(f, config):
             key = args[0] if args else []
             if len(key) != 1 or key[0].kind != STRING:

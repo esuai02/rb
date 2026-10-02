@@ -128,3 +128,15 @@ def expression_value(tokens: list[Token], start: int, known: dict[str, object]) 
 def names_for(known: dict[str, object], path: tuple[str, ...]) -> set[str]:
     """그 경로를 가리키는 이름 모두 — `local R = RewardService` 도, `local g = R.grant` 도."""
     return {path[0]} | {name for name, value in known.items() if isinstance(value, tuple) and tuple(value) == tuple(path)}
+
+
+def dynamic_member_calls(f, module_names: set[str]) -> list[tuple[int, str]]:
+    """모듈에 대괄호로 멤버를 골라 부르는데 값을 알 수 없는 자리 — (토큰 번호, 모듈 이름).
+
+    값이 풀리면 harness.luau.normalize_index 가 이미 점 접근으로 바꿔 두었으므로, 여기 남은 것은 알 수 없는 것뿐이다.
+    """
+    toks, out = f.tokens, []
+    for i, tok in enumerate(toks):
+        if tok.kind == NAME and tok.text in module_names and i + 1 < len(toks) and toks[i + 1].text == "[":
+            out.append((i, tok.text))
+    return out
