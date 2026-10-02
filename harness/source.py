@@ -190,7 +190,7 @@ def _load_file(tree: Tree, path: Path, rel: str, owner: str) -> None:
     kind = _kind(path.name)
     try:
         if kind:
-            folded = luau.fold_strings(luau.tokenize(path.read_text(encoding="utf-8")))
+            folded = luau.fold_require_calls(luau.fold_strings(luau.tokenize(path.read_text(encoding="utf-8"))))
             tokens = luau.normalize_index(folded, resolve.resolve_names(folded))   # 이름이 가리키는 값을 먼저 풀어야 대괄호를 바꿀 수 있다
             tree.luau.append(LuauFile(rel, owner, kind, tokens, resolve.resolve_names(tokens)))
             tree.problems += [f"{rel}:{x.line} 보간 문자열(`…{{…}}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다" for x in tokens if x.kind == luau.INTERP]

@@ -84,6 +84,8 @@ def external_call(tree, rules, config) -> list[str]:
     for f in tree.luau:
         out += [f"{f.rel}:{t.line} 런타임 외부 호출·생성형 AI {t.text} 를 쓴다" for t in f.tokens
                 if t.kind in (NAME, STRING) and t.text in names]
+        out += [f"{f.rel} 이름 {name} 가 가리키는 글자가 런타임 외부 호출·생성형 AI {value} 다 — 이름을 조립해도 같다"
+                for name, value in sorted(f.resolved.items()) if isinstance(value, str) and value in names]
         for i in [k for k, t in enumerate(f.tokens) if t.kind == NAME and t.text == "GetService"
                   and k + 1 < len(f.tokens) and f.tokens[k + 1].text == "("]:
             args = luau.call_args(f.tokens, i)
@@ -127,6 +129,8 @@ def random_or_paid_reward(tree, rules, config) -> list[str]:
     allowed, paid, out = set(config["random_allowed_modules"]), set(config["paid_names"]), []
     for f in tree.luau:
         out += [f"{f.rel}:{t.line} 결제·구독 조건 {t.text} 를 쓴다 (DEC-5 결정 전 · INV-12)" for t in f.tokens if t.kind in (NAME, STRING) and t.text in paid]
+        out += [f"{f.rel} 이름 {name} 가 가리키는 글자가 결제·구독 조건 {value} 다 — 이름을 조립해도 같다 (DEC-5 결정 전 · INV-12)"
+                for name, value in sorted(f.resolved.items()) if isinstance(value, str) and value in paid]
         if f.name in allowed:
             continue
         paths = {path for path in RANDOM_PATHS} | {(alias,) for path in RANDOM_PATHS

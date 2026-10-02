@@ -118,6 +118,30 @@ def require_aliases(tokens: list[Token], module: str) -> set[str]:
     return names
 
 
+def fold_require_calls(tokens: list[Token]) -> list[Token]:
+    """`require(….Module).멤버` 를 `Module.멤버` 로 바꾼다 — 이름에 담지 않고 바로 부르는 꼴도 모듈 호출로 보게.
+
+    이름에 담는 `local X = require(…)` 는 그대로 둔다(require_aliases 가 본다).
+    """
+    out, i = [], 0
+    while i < len(tokens):
+        tok = tokens[i]
+        if not (tok.kind == NAME and tok.text == "require" and i + 1 < len(tokens) and tokens[i + 1].text == "("):
+            out.append(tok)
+            i += 1
+            continue
+        inside = balanced(tokens, i + 1)
+        after = i + 1 + len(inside)
+        names = [x.text for x in inside if x.kind == NAME]
+        if after < len(tokens) and tokens[after].kind == SYMBOL and tokens[after].text in (".", ":") and names:
+            out.append(Token(NAME, names[-1], tok.line))
+            i = after
+            continue
+        out.append(tok)
+        i += 1
+    return out
+
+
 def normalize_index(tokens: list[Token], resolved: dict | None = None) -> list[Token]:
     """값에 붙은 대괄호 접근을 점 접근으로 바꾼다 — R["OnServerEvent"] 와 `local e = "OnServerEvent"; R[e]` 를 R.OnServerEvent 로.
     표를 만들 때 쓰는 { ["a"] = 1 } 은 건드리지 않는다."""

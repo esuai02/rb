@@ -2702,6 +2702,114 @@
           "replace": "local method = script.Name\ngoal.Text = translator[method](\"goal.signal_2\")"
         }
       ]
+    },
+    {
+      "id": "D-direct-require-grant",
+      "class": "직접 require 로 부른 보상 지급",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend",
+          "replace": "\trequire(script.Parent.RewardService).grant(player, \"explorer_card\", \"mission.signal_2\")"
+        }
+      ]
+    },
+    {
+      "id": "D-direct-require-analytics",
+      "class": "직접 require 로 부른 분석 이벤트",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "require(script.Parent.Analytics).log(nil, \"not_allowed_event\", {})\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-direct-require-text-key",
+      "class": "직접 require 로 부른 끊긴 번역 키",
+      "expected": [
+        "i18n.missing_key"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local label = require(script.Parent.Parent.shared.Text).get(\"goal.missing_key\")\nprint(label)\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-dynamic-table-field",
+      "class": "값을 알 수 없는 키로 읽은 표 입력",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local GRID = 2",
+          "replace": "local PayloadRemote = Instance.new(\"RemoteEvent\")\nPayloadRemote.Name = \"PayloadRemote\"\nPayloadRemote.Parent = ReplicatedStorage\n\nlocal GRID = 2"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)",
+          "replace": "local function onPayload(player: Player, payload: unknown)\n\tif typeof(payload) ~= \"table\" then return end\n\tif not Cooldown.allow(player, \"payload\") then return end\n\tlocal key = script.Name\n\tprint((payload :: any)[key])\nend\nPayloadRemote.OnServerEvent:Connect(onPayload)\nSignalRemote.OnServerEvent:Connect(onSignal)"
+        },
+        {
+          "file": "content/remote_contracts.yaml",
+          "find": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n",
+          "replace": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n  PayloadRemote:\n    - {name: payload, type: table, fields: [{name: x, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.x}]}\n"
+        }
+      ]
+    },
+    {
+      "id": "D-assembled-external-name",
+      "class": "조립해 만든 외부 호출 이름",
+      "expected": [
+        "safety.external_call"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local head = \"Text\"\nlocal name = head .. \"Generator\"\nprint(name)\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-assembled-paid-name",
+      "class": "조립해 만든 유료 서비스 이름",
+      "expected": [
+        "safety.random_or_paid_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local head = \"Marketplace\"\nlocal name = head .. \"Service\"\nlocal svc = game:GetService(name)\nsvc:UserOwnsGamePassAsync(1, 2)\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-fullwidth-sentence-count",
+      "class": "전각 종결 부호로 숨긴 긴 문구",
+      "expected": [
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "goal.signal_2,루미를 신호 칸으로 보내자,HUD 목표,,[Ŀüɱï ŝïĝñàŀ ķàñ]",
+          "replace": "goal.signal_2,가자!또!또！또？,HUD 목표,,[Ŀüɱï ŝïĝñàŀ ķàñ]"
+        }
+      ]
     }
   ]
 }

@@ -13,7 +13,7 @@ from harness.luau import NAME, STRING, SYMBOL
 
 IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]*$")      # 키·열거형 토큰 — 화면 문구가 아니다
 LETTER = re.compile(r"[^\W\d_]", re.UNICODE)               # 어떤 문자 체계든 '글자'
-SENTENCE_END = re.compile(r"(?<=[.!?。])\s+")
+SENTENCE_END = re.compile(r"(?<=[.!?。！？])(?!\d)\s*")   # 전각 부호·공백 없는 경계도 센다. 소수점(0.5)은 자르지 않는다
 DEV_MESSAGE_CALLS = {"error", "warn", "print", "assert"}   # 개발자용 메시지 — 화면 문구가 아니다
 
 

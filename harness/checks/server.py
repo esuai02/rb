@@ -428,6 +428,7 @@ def remote_validation(tree, rules, config) -> list[str]:
                 out.append(f"{where} 원격 이벤트 처리가 클라이언트가 볼 수 있는 코드에 있다")
             if "..." in params:
                 out.append(f"{where} 가변 인자(...)는 형식을 검사할 수 없다 — 받는 값을 이름으로 적어야 한다")
+            out += [f"{where} {problem}" for problem in _dynamic_reads(f, body)]
             contract = tree.contracts.get(remote)
             if contract is None:
                 out.append(f"{where} 원격 {remote} 의 입력 계약이 content/remote_contracts.yaml 에 없다")
@@ -439,6 +440,24 @@ def remote_validation(tree, rules, config) -> list[str]:
             for n, p in enumerate([p for p in params[1:] if p != "..."]):
                 want = contract[n] if n < len(contract) else {}
                 out += _param_errors(where, p, want, guarded, positions, ranges, work, body, constants)
+    return out
+
+
+def _dynamic_reads(f, body) -> list[str]:
+    """처리 함수 안에서 값을 알 수 없는 키로 읽는 자리 — 계약의 어느 필드를 쓰는지 알 수 없으므로 거부한다.
+
+    `local t = {}` 로 만든 제 표에서 꺼내는 것은 받은 입력이 아니므로 뺀다.
+    """
+    tables, out = i18n._table_names(f), []
+    for j, tok in enumerate(body):
+        if not (tok.kind == SYMBOL and tok.text == "["):
+            continue
+        before = body[j - 1] if j else None
+        if before is not None and before.kind == NAME and before.text in tables:
+            continue
+        key, _has_text = resolve.expression_value(body, j + 1, f.resolved)
+        if not isinstance(key, (str, float)):
+            out.append("받은 입력을 값을 알 수 없는 키로 읽는다 — 계약의 어느 필드인지 검사할 수 없다")
     return out
 
 
