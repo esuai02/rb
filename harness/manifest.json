@@ -2541,6 +2541,48 @@
           "replace": "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\nlocal svc = game:GetService(script.Name)\nsvc[script.ClassName]({})\n"
         }
       ]
+    },
+    {
+      "id": "D-client-grant-call",
+      "class": "클라이언트가 부른 보상 지급",
+      "expected": [
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "local RewardService = require(ReplicatedStorage.Shared.RewardService)\nRewardService.grant(nil, \"explorer_card\", \"mission.signal_2\")\nsendCell(2, 1)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-ui-bracket-unresolved-property",
+      "class": "값을 알 수 없는 UI 속성 이름",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal[pickProp()] = Text.get(\"goal.signal_2\")"
+        }
+      ]
+    },
+    {
+      "id": "D-conditions-not-a-table",
+      "class": "표가 아닌 조건",
+      "expected": [
+        "math.conditions"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    conditions: {origin: [0, 0], axes: x_right_y_up}\n",
+          "replace": "    conditions: 1\n"
+        }
+      ]
     }
   ]
 }

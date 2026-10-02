@@ -92,6 +92,9 @@ def reward_authority(tree, rules, config) -> list[str]:
     for f in tree.luau:
         if f is trusted:
             continue
+        if f.client_visible:
+            out += [f"{_at(f, f.tokens[i])} 클라이언트가 볼 수 있는 코드가 보상 지급 {module}.grant 를 부른다 — 보상은 서버만 정한다"
+                    for i in grant_calls(f, module)]
         if f.name == module:
             reason = f"클라이언트가 볼 수 있는 곳({f.container})에 있다" if f.client_visible else f"정해진 자리({path})의 ModuleScript 가 아니다"
             out.append(f"{f.rel}:1 보상 모듈과 같은 이름인데 {reason} — 권한을 믿을 수 없다")

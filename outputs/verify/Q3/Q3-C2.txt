@@ -1,8 +1,8 @@
 criterion: Q3-C2 — 수학 검사 E1(참/거짓)·E2(조건 완전성)는 모델 없이 정확한 유리수 계산으로 판정하는 결정론 관문이다 — 같은 입력은 같은 결과, 틀린 명제(내리막 기울기 비교 포함)·빠진 조건(기준점·축·단위·가로 변화 0 아님·정의역)은 실패하고, 명제가 말하는 값이 대사에 없으면 실패한다. 수만으로 묶을 수 없는 명제(비교 방향·분수)는 대사가 말해야 할 말을 데이터에 적어야 하고 검사기에는 특정 언어의 말을 두지 않는다, 맞는 명제는 통과 (INV-7)
 command: python3 -m unittest tests.test_harness.MathClaimTest -v
 exit: 0
-binding: 85fc64ecc595f1a81e8b4a52acbd820775cecf12cb166b4b45207cdacfd8c2b1
-time: 2026-10-02T15:26:02.913218+00:00
+binding: 0eead6a409586f0f38d71e114648a63c9e20545ca7c2310f6a327518902b379d
+time: 2026-10-02T15:41:42.165105+00:00
 
 test_claim_problems_inside_a_tree (tests.test_harness.MathClaimTest.test_claim_problems_inside_a_tree) ... ok
 test_claims_required (tests.test_harness.MathClaimTest.test_claims_required) ... ok
@@ -10,10 +10,12 @@ test_deterministic (tests.test_harness.MathClaimTest.test_deterministic) ... ok
 test_line_must_state_each_part_of_the_claim (tests.test_harness.MathClaimTest.test_line_must_state_each_part_of_the_claim) ... ok
 test_math_line_without_claim (tests.test_harness.MathClaimTest.test_math_line_without_claim) ... ok
 test_missing_and_inconsistent_conditions (tests.test_harness.MathClaimTest.test_missing_and_inconsistent_conditions) ... ok
+test_number_grammar (tests.test_harness.MathClaimTest.test_number_grammar)
+정수·'분자/분모'·소수 글자는 정확한 유리수로 읽고, 실수(근삿값)와 수가 아닌 값은 거부한다. ... ok
 test_true_and_false_claims (tests.test_harness.MathClaimTest.test_true_and_false_claims) ... ok
 test_undecidable_claims_raise (tests.test_harness.MathClaimTest.test_undecidable_claims_raise) ... ok
 
 ----------------------------------------------------------------------
-Ran 8 tests in 1.500s
+Ran 9 tests in 1.523s
 
 OK

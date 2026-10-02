@@ -1,9 +1,9 @@
-major | harness/checks/math_claims.py:116-122,149-167 | 좌표 명제의 분수 이동량이 대사에 없어도 통과한다 | `right 1/2` 후 `left 1/2`, 결과 `(0, 0)`인 명제는 이동량 검사가 없어 `truth`가 빈 결과를 낸다 | 모든 이동량의 분수·소수도 대사 연결을 요구하고 검사한다
+major | harness/checks/math_claims.py:30-36; tests/test_harness.py:276-299 | Q3-C2의 수치 문법과 테스트가 불일치한다 | `Fraction("0.333")`은 333/1000으로 허용되어 `evaluate()`가 False를 반환하지만, 테스트는 ClaimError를 기대한다. 제시된 C2 PASS 증거와 현재 코드는 양립하지 않는다 | `_num()`을 정수 또는 `분자/분모`만 허용하도록 고치거나 테스트·기준을 일치시킨다
 
-major | harness/checks/analytics.py:57-59,125-140 | 분석 모듈 내부에서 플랫폼 전송 함수를 별칭으로 바꾸면 퍼널을 CustomEvent로 보내도 통과한다 | `local send = AnalyticsService.LogCustomEvent` 후 `Analytics.funnel`에서 `send(...)`를 호출해도 직접 `API(`만 검사하므로 `calls`가 빈 결과를 낸다 | 플랫폼 API 별칭을 해석해 래퍼별 실제 전송 함수를 검증하고 미해석 시 거부한다
+major | harness/checks/server.py:86-103,119-148,543-559 | 클라이언트의 직접 `RewardService.grant()` 호출이 검출되지 않는다 | 클라이언트 파일의 고유 보상 호출은 `reward_authority=[]`, `duplicate_reward=[]`, `reward_after_verdict=[]`가 된다. 권한 검사는 설정된 저장 권한 이름만 보고, 보상 호출의 클라이언트 여부를 보지 않는다 | `grant_calls()`가 `client_visible` 파일에서 발견되면 즉시 거부한다
 
-major | harness/checks/server.py:149-166 | 원격 객체를 미해석 변수로 받아 `evt:Connect(...)`하면 원격 검증·쿨다운·판정 검사가 모두 건너뛴다 | `_handlers`는 `OnServerEvent`·`OnServerInvoke` 또는 특정 대괄호 형태만 찾으며 `evt = getRemoteEvent(); evt:Connect(...)`는 빈 처리 목록이 된다 | 미해석 연결 수신자는 거부하거나 정본 RemoteEvent/RemoteFunction 형태만 허용한다
+major | harness/checks/i18n.py:106-158,161-173 | 해석 불가능한 대괄호 UI 속성이 화면 문구 검사를 우회한다 | `goal[prop] = makeText()`에서 `prop`이 해석되지 않으면 `_ui_assignments()`가 찾지 않고, 하드코딩 검사도 함수 결과를 잡지 못한다 | 대괄호 대입도 수집하고 속성 또는 RHS가 해석되지 않으면 거부한다
 
-major | harness/source.py:47-48; harness/checks/server.py:86-96 | `RewardService.server.luau` 같은 Script가 이름만으로 보상 모듈로 신뢰되어 권한 검사를 피한다 | `name`이 첫 점 앞까지만 반환되고 `reward_authority`는 `f.name == module`이면 건너뛴다 | 보상 모듈을 ModuleScript·정확한 서버 경로·단일 소유자로 검증하고 나머지는 모두 검사한다
+minor | tests/test_harness.py:356-371; harness/run.py:100-106 | Q3-C3 테스트가 기록된 대상 지문이 실제 지문인지 검증하지 않는다 | 테스트는 `target_sha256:` 존재만 확인하며 `run.fingerprint(tree)`와의 일치를 확인하지 않는다 | 각 기록의 지문을 계산값 및 64자리 SHA-256 형식과 비교한다
 
-major | harness/checks/safety.py:81-85 | 외부 서비스와 메서드를 미해석 변수·동적 멤버로 호출해도 외부 호출 검사를 통과한다 | `game:GetService(serviceName); svc[methodName]({})`에는 설정된 이름 토큰이 없어 `external_call`이 빈 결과를 낸다 | 동적 `GetService`·멤버 호출은 거부하고 허용된 리터럴 서비스·메서드만 통과시킨다
+minor | harness/checks/math_claims.py:221-235; harness/run.py:77-81 | YAML은 유효하지만 `conditions`가 스칼라면 수학 검사가 중단된다 | `conditions: 1`에서 `c not in cond`가 TypeError를 내고 실행기가 일반적인 “검사가 끝까지 돌지 못했다”로 처리한다 | `conditions`가 dict인지 먼저 검사하고 명시적 진단을 반환한다

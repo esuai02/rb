@@ -7,10 +7,12 @@ import contextlib
 import copy
 import io
 import json
+import re
 import shutil
 import sys
 import tempfile
 import unittest
+from fractions import Fraction
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -41,6 +43,9 @@ EXPECTED_DEFECTS = {
     "D-remote-receiver-unresolved": ("값을 알 수 없는 변수에 건 원격 처리", ("server.remote_validation",), "연결 대상 evt 가 멤버 경로가 아니다"),
     "D-reward-module-impostor": ("이름만 보상 모듈인 Script", ("server.reward_authority",), "보상 모듈과 같은 이름인데 정해진 자리"),
     "D-dynamic-service-call": ("값을 알 수 없는 서비스·메서드 호출", ("safety.external_call",), "어떤 서비스를 가져오는지 알 수 없다"),
+    "D-client-grant-call": ("클라이언트가 부른 보상 지급", ("server.reward_authority",), "클라이언트가 볼 수 있는 코드가 보상 지급 RewardService.grant 를 부른다"),
+    "D-ui-bracket-unresolved-property": ("값을 알 수 없는 UI 속성 이름", ("i18n.hardcoded_text",), "속성 이름을 값을 알 수 없는 방식으로 고른다"),
+    "D-conditions-not-a-table": ("표가 아닌 조건", ("math.conditions",), "조건(conditions)은 '이름: 값' 표여야 한다"),
     "D-analytics-concat-event": ("이어 붙인 분석 이벤트 이름", ("analytics.calls",), "분석 모듈이 LogCustomEvent 의 이벤트 이름 자리에 'eventNam"),
     "D-analytics-dot-call": ("점 표기로 부른 플랫폼 분석 API", ("analytics.calls",), "분석 모듈이 LogCustomEvent 에 정해진 값 ['player_profi"),
     "D-analytics-method-alias": ("전송 함수를 담은 이름으로 보낸 분석", ("analytics.calls",), "이벤트 player_profile 가 허용 목록(specs/analytics/e"),
@@ -292,6 +297,18 @@ class MathClaimTest(TreeCase):
             with self.subTest(claim=claim):
                 self.assertIs(math_claims.evaluate(claim), False)
 
+    def test_number_grammar(self):
+        """정수·'분자/분모'·소수 글자는 정확한 유리수로 읽고, 실수(근삿값)와 수가 아닌 값은 거부한다."""
+        for value, want in ((2, Fraction(2)), ("2", Fraction(2)), ("1/3", Fraction(1, 3)), ("0.5", Fraction(1, 2)), ("-3/4", Fraction(-3, 4))):
+            with self.subTest(value=value):
+                self.assertEqual(math_claims._num(value), want)
+        for value in (0.5, 1.5, True, None, [1], "a", "1/0"):
+            with self.subTest(value=value):
+                with self.assertRaises(math_claims.ClaimError):
+                    math_claims._num(value)
+        self.assertIs(math_claims.evaluate({"kind": "slope", "rise": 1, "run": 2, "states": "0.5"}), True)
+        self.assertIs(math_claims.evaluate({"kind": "slope", "rise": 1, "run": 3, "states": "0.333"}), False)
+
     def test_undecidable_claims_raise(self):
         for claim in self.ERRORS:
             with self.subTest(claim=claim):
@@ -365,6 +382,9 @@ class RecordTest(TreeCase):
             body = p.read_text(encoding="utf-8")
             for field in ("check:", "command: python3 -m harness.run", "result:", "time:", "target_sha256:", "findings:"):
                 self.assertIn(field, body)
+            recorded = re.search(r"target_sha256: ([0-9a-f]{64})\n", body)
+            self.assertIsNotNone(recorded, f"대상 지문이 64자리 sha256 이 아니다: {p.name}")
+            self.assertEqual(recorded.group(1), run.fingerprint(tree))
             self.assertNotIn(str(tree), body)
             self.assertNotIn(str(Path.home()), body)
         self.assertIn("result: FAIL", (out / "safety.banned_terms.txt").read_text(encoding="utf-8"))

@@ -133,12 +133,43 @@ def _ui_text_literals(f, config) -> list:
     return out
 
 
+def _instance_names(f) -> set[str]:
+    """Instance.new 으로 만든 것을 담은 이름 — 그 속성 대입은 화면에 닿을 수 있다."""
+    toks, out = f.tokens, set()
+    for i in range(len(toks) - 4):
+        if toks[i].kind == NAME and toks[i].text == "local" and toks[i + 1].kind == NAME and toks[i + 2].text == "=" \
+                and toks[i + 3].kind == NAME and toks[i + 3].text == "Instance" and toks[i + 4].text == ".":
+            out.add(toks[i + 1].text)
+    return out
+
+
+def _bracket_assignments(f) -> list[tuple[int, int, object]]:
+    """인스턴스의 obj[키] = … 대입 — (시작 토큰 번호, 오른쪽 시작 토큰 번호, 풀린 키 값)."""
+    toks, names, out = f.tokens, _instance_names(f), []
+    for i in range(len(toks) - 3):
+        if not (toks[i].kind == NAME and toks[i].text in names and toks[i + 1].kind == SYMBOL and toks[i + 1].text == "["):
+            continue
+        close = i + 1 + len(luau.balanced(toks, i + 1)) - 1
+        if close + 1 >= len(toks) or toks[close + 1].text != "=":
+            continue
+        key, _has_text = resolve.expression_value(toks, i + 2, f.resolved)
+        out.append((i, close + 2, key))
+    return out
+
+
+def unresolved_ui_property(f, config) -> list[str]:
+    """인스턴스 속성 이름을 값을 알 수 없는 방식으로 고르면 거부한다 — 화면 문구 속성인지 검사할 수 없다."""
+    return [f"{f.rel}:{f.tokens[i].line} 인스턴스 {f.tokens[i].text} 의 속성 이름을 값을 알 수 없는 방식으로 고른다 "
+            f"— 화면 문구 속성인지 검사할 수 없으므로 쓰지 않는다" for i, _rhs, key in _bracket_assignments(f) if not isinstance(key, str)]
+
+
 def _ui_assignments(f, config) -> list:
-    """UI 글자 속성 대입의 (속성, 오른쪽 시작 토큰 번호)."""
+    """UI 글자 속성 대입의 (속성, 오른쪽 시작 토큰 번호) — 점 접근과 글자로 풀리는 대괄호 접근 모두."""
     toks, out = f.tokens, []
     for i in range(len(toks) - 3):
         if toks[i].text == "." and toks[i + 1].kind == NAME and toks[i + 1].text in config["ui_text_properties"] and toks[i + 2].text == "=":
             out.append((toks[i + 1].text, i + 3))
+    out += [(key, rhs) for _i, rhs, key in _bracket_assignments(f) if isinstance(key, str) and key in config["ui_text_properties"]]
     return out
 
 
@@ -168,7 +199,7 @@ def hardcoded_text(tree, rules, config) -> list[str]:
         out += [f"{f.rel}:{t.line} 코드에 화면 문구 '{t.text[:20]}' 가 있다 — 문구 키로 바꿔야 한다" for t in f.tokens
                 if t.kind == STRING and id(t) not in dev and LETTER.search(t.text) and not IDENTIFIER.fullmatch(t.text)]
     for f in tree.luau:
-        out += unresolved_ui_text(f, config)
+        out += unresolved_ui_text(f, config) + unresolved_ui_property(f, config)
     out += [f"{d.rel} 데이터 파일에 화면 문구 '{text[:20]}' 가 있다 — 문구 키로 바꿔야 한다" for d in tree.data for text in d.strings
             if LETTER.search(text) and not IDENTIFIER.fullmatch(text)]
     return out

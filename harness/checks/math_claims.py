@@ -28,8 +28,12 @@ class ClaimError(ValueError):
 
 
 def _num(value) -> Fraction:
+    """정확한 유리수만 받는다 — 정수, 또는 '분자/분모'·소수를 적은 글자.
+
+    실수(float)는 2진 근삿값이라 받지 않는다. 글자로 적은 소수('0.5')는 정확히 1/2 로 읽히므로 받는다.
+    """
     if isinstance(value, bool) or not isinstance(value, (int, str)):
-        raise ClaimError(f"수는 정수나 '분자/분모' 글자여야 한다 ({value!r})")
+        raise ClaimError(f"수는 정수, 또는 '분자/분모'·소수를 적은 글자여야 한다 — 실수는 근삿값이라 받지 않는다 ({value!r})")
     try:
         return Fraction(value)
     except (ValueError, ZeroDivisionError) as exc:
@@ -225,7 +229,11 @@ def conditions(tree, rules, config) -> list[str]:
         if not isinstance(claim, dict):
             out.append("명제는 객체여야 한다")
             continue
-        cid, kind, cond = claim.get("id", "?"), claim.get("kind"), claim.get("conditions") or {}
+        cid, kind, raw = claim.get("id", "?"), claim.get("kind"), claim.get("conditions")
+        if raw is not None and not isinstance(raw, dict):
+            out.append(f"{cid}: 조건(conditions)은 '이름: 값' 표여야 한다 — {raw!r} 로는 명제와 대조할 수 없다 (E2)")
+            continue
+        cond = raw or {}
         if kind not in REQUIRED:
             out.append(f"{cid}: 명제 종류 {kind!r} 를 모른다")
         out += [f"{cid}: 조건 {c} 가 빠졌다 (E2)" for c in REQUIRED.get(kind, ()) if c not in cond]
