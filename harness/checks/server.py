@@ -181,10 +181,11 @@ def _claim_once_errors(f) -> list[str]:
             else:
                 reads.setdefault(key, k)
         deny = next((k for k in range(len(texts) - 1) if texts[k] == "return" and texts[k + 1] == "false"), None)
-        ordered = any(reads[key] < deny < writes[key] for key in writes if key in reads and deny is not None)
+        allow = next((k for k in range(len(texts) - 1) if texts[k] == "return" and texts[k + 1] == "true"), len(texts))
+        ordered = any(reads[key] < deny < writes[key] < allow for key in writes if key in reads and deny is not None)
         missing = [name for name, ok in (("이미 준 적 있는지 읽기", bool(reads)), ("준 것을 표시해 두기(참으로)", bool(writes)),
                                          ("이미 줬으면 거짓 돌려주기", deny is not None),
-                                         ("읽고 → 거부하고 → 같은 자리에 표시하기", ordered)) if not ok]
+                                         ("읽고 → 거부하고 → 같은 자리에 표시한 뒤 참 돌려주기", ordered)) if not ok]
         if missing:
             return [f"{_at(f, f.tokens[i])} claimOnce 가 {' · '.join(missing)} 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"]
         if undone:

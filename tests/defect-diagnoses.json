@@ -306,17 +306,22 @@
  },
  "D-claim-once-does-nothing": {
   "server.duplicate_reward": [
-   "src/server/RewardService.luau:7 claimOnce 가 이미 준 적 있는지 읽기 · 준 것을 표시해 두기(참으로) · 이미 줬으면 거짓 돌려주기 · 읽고 → 거부하고 → 같은 자리에 표시하기 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"
+   "src/server/RewardService.luau:7 claimOnce 가 이미 준 적 있는지 읽기 · 준 것을 표시해 두기(참으로) · 이미 줬으면 거짓 돌려주기 · 읽고 → 거부하고 → 같은 자리에 표시한 뒤 참 돌려주기 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"
+  ]
+ },
+ "D-claim-once-marks-after-return": {
+  "server.duplicate_reward": [
+   "src/server/RewardService.luau:7 claimOnce 가 읽고 → 거부하고 → 같은 자리에 표시한 뒤 참 돌려주기 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"
   ]
  },
  "D-claim-once-marks-elsewhere": {
   "server.duplicate_reward": [
-   "src/server/RewardService.luau:7 claimOnce 가 읽고 → 거부하고 → 같은 자리에 표시하기 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"
+   "src/server/RewardService.luau:7 claimOnce 가 읽고 → 거부하고 → 같은 자리에 표시한 뒤 참 돌려주기 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"
   ]
  },
  "D-claim-once-marks-false": {
   "server.duplicate_reward": [
-   "src/server/RewardService.luau:7 claimOnce 가 준 것을 표시해 두기(참으로) · 읽고 → 거부하고 → 같은 자리에 표시하기 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"
+   "src/server/RewardService.luau:7 claimOnce 가 준 것을 표시해 두기(참으로) · 읽고 → 거부하고 → 같은 자리에 표시한 뒤 참 돌려주기 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"
   ]
  },
  "D-claim-once-undone": {
@@ -571,6 +576,9 @@
   ]
  },
  "D-dynamic-member-handler": {
+  "i18n.hardcoded_text": [
+   "src/server/Main.server.luau:23 SignalRemote 의 속성 이름을 값을 알 수 없는 방식으로 고른다 — 화면 문구 속성인지 검사할 수 없으므로 쓰지 않는다"
+  ],
   "server.remote_validation": [
    "src/server/Main.server.luau:23 값을 알 수 없는 멤버(SignalRemote[…])에 처리 함수를 대입했다 — 어떤 원격인지 검사할 수 없다"
   ]
@@ -618,6 +626,14 @@
   ],
   "i18n.missing_key": [
    "src/client/Hud.client.luau:8 문구 모듈 Text 의 멤버를 값을 알 수 없는 방식으로 고른다 — 어떤 키를 쓰는지 검사할 수 없다"
+  ]
+ },
+ "D-dynamic-ui-function": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:8 goal 의 속성 이름을 값을 알 수 없는 방식으로 고른다 — 화면 문구 속성인지 검사할 수 없으므로 쓰지 않는다"
+  ],
+  "server.remote_validation": [
+   "src/client/Hud.client.luau:8 값을 알 수 없는 멤버(goal[…])에 처리 함수를 대입했다 — 어떤 원격인지 검사할 수 없다"
   ]
  },
  "D-else-reward": {
@@ -704,6 +720,11 @@
    "src/server/Main.server.luau:24 원격 입력 y 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)"
   ]
  },
+ "D-instance-new-alias": {
+  "safety.free_text": [
+   "src/client/Hud.client.luau:16 Instance.new 의 클래스 이름을 글자 그대로 알 수 없다 — 조립한 이름은 쓰지 않는다"
+  ]
+ },
  "D-interpolated-string": {
   "analytics.calls": [
    "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
@@ -768,6 +789,11 @@
  "D-key-call-with-extra-assembly": {
   "i18n.hardcoded_text": [
    "src/client/Hud.client.luau:8 UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다 — 문구 키를 거쳐야 한다"
+  ]
+ },
+ "D-key-prefix-domain": {
+  "safety.url": [
+   "src/client/Hud.client.luau:15 URL 이나 도메인 'goal.museum' 이 있다"
   ]
  },
  "D-late-cooldown": {

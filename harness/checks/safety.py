@@ -5,6 +5,7 @@ import re
 import unicodedata
 
 from harness import luau, resolve
+from harness.checks import i18n
 from harness.luau import NAME, NUMBER, STRING, SYMBOL
 
 # 도메인 끝 목록은 넓히되 목록으로 둔다 — 모든 `낱말.낱말` 을 막으면 문구 키(goal.signal_2)까지 걸린다 (리뷰 R-Q3 26차)
@@ -46,35 +47,38 @@ def _dotted_ids(node, out: set[str]) -> None:
 
 
 def known_ids(tree, rules) -> set[str]:
-    """점이 찍힌 식별자의 앞머리 — 번역표의 키와 잠긴 Q2 명세의 id 에서 뽑는다 (리뷰 R-Q3 27차).
+    """점이 찍힌 식별자 — 번역표의 키와 잠긴 Q2 명세에 적힌 id 전체 (리뷰 R-Q3 27·28차).
 
-    `goal.signal_2` 같은 키는 도메인이 아니다. 아직 표에 없는 키(`goal.missing`)도 앞머리로 가려낸다 —
-    그래서 id 전체가 아니라 첫 칸(goal·term·m·cv …)을 모은다.
+    앞머리만 보면 `goal.museum` 같은 도메인까지 키로 봐 버린다. 그래서 적힌 id 는 전체로 맞춰 보고,
+    아직 표에 없는 키(`goal.missing`)는 '문구 모듈에 넘기는 글자인가' 라는 쓰임으로 가린다.
     """
     ids = set(tree.strings)
     for spec in (rules.events, rules.glossary, rules.world_spec, rules.canonical):
         _dotted_ids(spec, ids)
-    return {i.split(".", 1)[0] for i in ids if "." in i}
+    return ids
 
 
-def _domain(text: str, prefixes: set[str]) -> str | None:
-    """글자 안의 도메인. 첫 칸이 잠긴 명세의 식별자 앞머리면 키로 보고 도메인으로 세지 않는다."""
+def _domain(text: str, ids: set[str]) -> str | None:
+    """글자 안의 도메인. 잠긴 명세에 그대로 적힌 식별자는 도메인으로 세지 않는다."""
     plain = unicodedata.normalize("NFKC", text)
+    if plain.strip() in ids:
+        return None
     found = URL.search(plain)
     if found:
-        return found.group()   # 스킴·www·알려진 도메인 끝은 식별자와 겹치지 않는다
+        return found.group()
     host = HOST.search(plain)
-    return host.group() if host and host.group().split(".", 1)[0] not in prefixes else None
+    return host.group() if host and host.group() not in ids else None
 
 
 def url(tree, rules, config) -> list[str]:
     """게임 안 외부 링크 없음 (INV-16). 글자를 이어 붙여 만든 값도 풀어서 보고, 풀 수 없으면 거부한다."""
-    prefixes = known_ids(tree, rules)
+    ids = known_ids(tree, rules)
+    skip = {(f"{f.rel}:{f.tokens[k].line}", f.tokens[k].text) for f in tree.luau for k in i18n.text_call_strings(f, config)}
     out = [f"{where} URL 이나 도메인 '{found}' 이 있다" for where, text in tree.texts()
-           for found in [_domain(text, prefixes)] if found]
+           for found in [_domain(text, ids)] if found and (where, text) not in skip]
     for f in tree.luau:
         for name, value in sorted(f.resolved.items()):
-            if isinstance(value, str) and _domain(value, prefixes):
+            if isinstance(value, str) and _domain(value, ids):
                 out.append(f"{f.rel} 이름 {name} 가 가리키는 글자에 URL 이 있다 ('{value[:40]}')")
         for i, tok in enumerate(f.tokens):
             if not (tok.kind == SYMBOL and tok.text == ".." and i):
@@ -82,7 +86,7 @@ def url(tree, rules, config) -> list[str]:
             start = _start_of(f.tokens, i)
             value, _has_text = resolve.expression_value(f.tokens, start, f.resolved)
             if isinstance(value, str):
-                if _domain(value, prefixes):
+                if _domain(value, ids):
                     out.append(f"{f.rel}:{tok.line} 이어 붙인 글자가 URL 이 된다 ('{value[:40]}')")
             elif _url_like_part(f, start, i):
                 out.append(f"{f.rel}:{tok.line} URL 조각을 이어 붙이는데 값을 알 수 없다 — 외부 링크인지 검사할 수 없으므로 쓰지 않는다")
@@ -163,7 +167,8 @@ def free_text(tree, rules, config) -> list[str]:
     names, out = set(config["free_text_names"]), []
     for f in tree.luau:
         out += [f"{f.rel}:{t.line} 자유 입력 {t.text} 를 쓴다" for t in f.tokens if t.kind in (NAME, STRING) and t.text in names]
-        for i in luau.find_calls(f.tokens, ("Instance", "new")):
+        paths = {("Instance", "new")} | {(alias,) for alias in resolve.names_for(f.resolved, ("Instance", "new")) if alias != "Instance"}
+        for i in sorted({i for path in paths for i in luau.find_calls(f.tokens, path)}):
             args = luau.call_args(f.tokens, i)
             if not args:
                 continue

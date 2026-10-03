@@ -48,6 +48,24 @@ def _key_calls(f, config) -> list[tuple[int, list]]:
     return out
 
 
+def text_call_strings(f, config) -> set[int]:
+    """문구 모듈에 넘기는 글자의 토큰 번호 — 점·대괄호·콜론 어느 쪽으로 불러도 모은다.
+
+    문구 키는 도메인처럼 보일 수 있어서(goal.missing), 쓰임으로 가려야 한다 (리뷰 R-Q3 28차).
+    """
+    toks, out = f.tokens, set()
+    names = _aliases(f, config["text_module"])
+    for i, tok in enumerate(toks):
+        rooted = tok.kind == NAME and (tok.text in names or tok.text in config["text_key_methods"])
+        if not rooted:
+            continue
+        opened = next((k for k in range(i, min(i + 6, len(toks))) if toks[k].kind == SYMBOL and toks[k].text == "("), None)
+        if opened is None:
+            continue
+        out |= {k for k in range(opened, opened + len(luau.balanced(toks, opened))) if toks[k].kind == STRING}
+    return out
+
+
 def missing_key(tree, rules, config) -> list[str]:
     """코드가 쓰는 문구 키는 글자 그대로이고 LocalizationTable 에 있다 (끊긴 번역 키)."""
     out = []
@@ -167,8 +185,8 @@ def _bracket_assignments(f) -> list[tuple[int, int, object]]:
 def unresolved_ui_property(f, config) -> list[str]:
     """속성 이름을 값을 알 수 없는 방식으로 고르면 거부한다 — 화면 문구 속성인지 검사할 수 없다."""
     return [f"{f.rel}:{f.tokens[i].line} {f.tokens[i].text} 의 속성 이름을 값을 알 수 없는 방식으로 고른다 "
-            f"— 화면 문구 속성인지 검사할 수 없으므로 쓰지 않는다" for i, rhs, key in _bracket_assignments(f)
-            if not isinstance(key, str) and not (rhs < len(f.tokens) and f.tokens[rhs].kind == NAME and f.tokens[rhs].text == "function")]
+            f"— 화면 문구 속성인지 검사할 수 없으므로 쓰지 않는다" for i, _rhs, key in _bracket_assignments(f)
+            if not isinstance(key, str)]
 
 
 def _ui_assignments(f, config) -> list:
