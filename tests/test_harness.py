@@ -885,7 +885,7 @@ class DiagnosisCoverageTest(TreeCase):
         tree = self.make_tree()
         self.edit(tree, "src/client/Hud.client.luau", 'goal.Text = Text.get("goal.signal_2")',
                   'local part = "준비"\nlocal label = part .. " 완료"\ngoal.Text = label')
-        self.assertCaught(tree, "i18n.hardcoded_text", "문구 키로 바꿔야 한다")
+        self.assertCaught(tree, "i18n.hardcoded_text", "UI 글자 속성 .Text 에 문구 '준비 완료' 를 바로 넣었다")
 
     def test_bracket_ui_property_resolved_to_text(self):
         tree = self.make_tree()
@@ -917,14 +917,13 @@ class DiagnosisCoverageTest(TreeCase):
 
     def test_line_coefficients_must_appear_in_the_line(self):
         tree = self.make_tree()
-        self.edit(tree, "content/math_claims.yaml", "    line: {m: 2, b: 1}\n", "    line: {m: 3, b: 1}\n")
-        self.edit(tree, "content/math_claims.yaml", "    point: [2, 5]\n", "    point: [2, 7]\n")
-        self.assertCaught(tree, "math.truth", "을 말하지 않는다")
+        self.edit(tree, "content/math_claims.yaml", "    line: {m: 2, b: 1}\n", "    line: {m: 1, b: 3}\n")
+        self.assertCaught(tree, "math.truth", "'b=3' 을 말하지 않는다")
 
     def test_states_text_must_appear_in_the_line(self):
         tree = self.make_tree()
         self.edit(tree, "content/math_claims.yaml", "    states_text: 더 가팔라\n", "    states_text: 더 완만해\n")
-        self.assertCaught(tree, "math.truth", "을 말하지 않는다")
+        self.assertCaught(tree, "math.truth", "'더 완만해' 을 말하지 않는다")
 
     def test_conditions_that_cannot_be_compared(self):
         tree = self.make_tree()
@@ -987,6 +986,7 @@ class DiagnosisCoverageTest(TreeCase):
         tree = self.make_tree()
         self.add(tree, "content/remote_contracts.yaml", "remotes:\n  SignalRemote: 1\n")
         self.assertCaught(tree, "server.remote_validation", "받는 값 목록이어야 한다")
+        self.assertCaught(tree, "server.remote_validation", "입력 계약을 받는 값 목록으로 읽을 수 없다")
 
     def test_contract_params_need_a_name_and_a_type(self):
         tree = self.make_tree()

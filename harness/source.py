@@ -138,11 +138,7 @@ def load_tree(root: Path) -> Tree:
     if not isinstance(project, dict) or not isinstance(project.get("tree"), dict):
         tree.problems.append(f"{PROJECT_FILE}: tree 는 객체여야 한다")
         return tree
-    try:
-        mappings = _mappings(project["tree"], ())
-    except (KeyError, TypeError, AttributeError) as exc:
-        tree.problems.append(f"{PROJECT_FILE}: 구조를 읽지 못했다 ({type(exc).__name__})")
-        return tree
+    mappings = _mappings(project["tree"], ())
     owners: dict[Path, str] = {}
     places: dict[Path, tuple[str, ...]] = {}
     for rel_path, chain in mappings:

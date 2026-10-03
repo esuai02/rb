@@ -183,13 +183,12 @@ def unresolved_ui_property(f, config) -> list[str]:
 
 
 def _ui_assignments(f, config) -> list:
-    """UI 글자 속성 대입의 (속성, 오른쪽 시작 토큰 번호) — 점 접근과 글자로 풀리는 대괄호 접근 모두."""
+    """UI 글자 속성 대입의 (속성, 오른쪽 시작 토큰 번호)."""
     toks, out = f.tokens, []
     for i in range(len(toks) - 3):
         if toks[i].text == "." and toks[i + 1].kind == NAME and toks[i + 1].text in config["ui_text_properties"] and toks[i + 2].text == "=":
             out.append((toks[i + 1].text, i + 3))
-    out += [(key, rhs) for _i, rhs, key in _bracket_assignments(f) if isinstance(key, str) and key in config["ui_text_properties"]]
-    return out
+    return out   # 글자로 풀리는 대괄호 키는 luau.normalize_index 가 이미 점 접근으로 바꿔 두므로 위 고리가 함께 본다
 
 
 def unresolved_ui_text(f, config) -> list[str]:
