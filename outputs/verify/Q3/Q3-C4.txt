@@ -2,7 +2,7 @@ criterion: Q3-C4 — 매니페스트가 수학 6종(E1~E6)·UI 14종(U1~U14)·�
 command: python3 -m unittest tests.test_harness.ManifestTest -v
 exit: 0
 binding: 2151b953b638d4f888c0cb10e48d3085598d56e95bffd15ccd7146a0d6299c64
-time: 2026-10-03T11:49:00.108454+00:00
+time: 2026-10-03T11:58:23.464001+00:00
 
 test_each_item_has_mode_stage_and_reason_or_checks (tests.test_harness.ManifestTest.test_each_item_has_mode_stage_and_reason_or_checks) ... ok
 test_every_item_has_a_reason (tests.test_harness.ManifestTest.test_every_item_has_a_reason) ... ok
@@ -15,6 +15,6 @@ test_width_budgets_fit_the_locked_glossary (tests.test_harness.ManifestTest.test
 상한은 잠긴 Q2 용어집의 실측 폭보다 넓어야 한다 — 통과하는 원문을 거부하지 않는다. ... ok
 
 ----------------------------------------------------------------------
-Ran 8 tests in 0.199s
+Ran 8 tests in 0.162s
 
 OK

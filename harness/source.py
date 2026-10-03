@@ -61,8 +61,9 @@ class LuauFile:
 class DataFile:
     rel: str
     container: str
-    strings: list[str]       # 파일에 담긴 문자열 값
-    class_names: list[str]   # .model.json 의 $className (인스턴스 종류)
+    strings: list[str]                      # 파일에 담긴 문자열 값
+    class_names: list[str]                  # 인스턴스 종류 ($className · ClassName)
+    properties: list[tuple[str, str]] = field(default_factory=list)   # (속성 이름, 글자) — UI 글자 속성을 가려내려고
 
 
 @dataclass
@@ -195,10 +196,10 @@ def _load_file(tree: Tree, path: Path, rel: str, owner: str) -> None:
         elif path.suffix == ".csv":
             _load_csv(tree, path, rel)
         elif path.name.endswith(DATA_SUFFIXES):
-            strings, classes = [], []
-            _collect(json.loads(path.read_text(encoding="utf-8")), strings, classes) if path.suffix == ".json" \
+            strings, classes, properties = [], [], []
+            _collect(json.loads(path.read_text(encoding="utf-8")), strings, classes, properties) if path.suffix == ".json" \
                 else strings.append(path.read_text(encoding="utf-8"))
-            tree.data.append(DataFile(rel, owner, strings, classes))
+            tree.data.append(DataFile(rel, owner, strings, classes, properties))
         elif path.name.endswith(UNREADABLE_SUFFIXES):
             tree.problems.append(f"{rel}: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)")
         else:
@@ -207,18 +208,20 @@ def _load_file(tree: Tree, path: Path, rel: str, owner: str) -> None:
         tree.problems.append(f"{rel}: 읽지 못했다 ({type(exc).__name__}: {exc})")
 
 
-def _collect(node, strings: list[str], classes: list[str]) -> None:
+def _collect(node, strings: list[str], classes: list[str], properties: list[tuple[str, str]] | None = None) -> None:
+    properties = properties if properties is not None else []
     if isinstance(node, dict):
         for name, child in node.items():
-            if name == "$className" and isinstance(child, str):
+            if name in ("$className", "ClassName") and isinstance(child, str):
                 classes.append(child)
             elif isinstance(child, str) and not name.startswith("$"):
                 strings.append(child)
+                properties.append((name, child))
             else:
-                _collect(child, strings, classes)
+                _collect(child, strings, classes, properties)
     elif isinstance(node, list):
         for child in node:
-            _collect(child, strings, classes)
+            _collect(child, strings, classes, properties)
     elif isinstance(node, str):
         strings.append(node)
 

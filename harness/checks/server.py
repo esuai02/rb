@@ -168,7 +168,7 @@ def _claim_once_errors(f) -> list[str]:
         if _declared_name(f.tokens, i) != "claimOnce":
             continue
         texts = [t.text for t in body]
-        reads, writes = {}, {}
+        reads, writes, undone = {}, {}, []
         for k in _indexes(body, tables):
             inner = luau.balanced(body, k + 1)
             close = k + 1 + len(inner)
@@ -176,6 +176,8 @@ def _claim_once_errors(f) -> list[str]:
             if close < len(body) and body[close].text == "=":
                 if close + 1 < len(body) and body[close + 1].text == "true":
                     writes.setdefault(key, k)
+                else:
+                    undone.append(key)
             else:
                 reads.setdefault(key, k)
         deny = next((k for k in range(len(texts) - 1) if texts[k] == "return" and texts[k + 1] == "false"), None)
@@ -185,6 +187,8 @@ def _claim_once_errors(f) -> list[str]:
                                          ("읽고 → 거부하고 → 같은 자리에 표시하기", ordered)) if not ok]
         if missing:
             return [f"{_at(f, f.tokens[i])} claimOnce 가 {' · '.join(missing)} 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"]
+        if undone:
+            return [f"{_at(f, f.tokens[i])} claimOnce 가 표시한 자리를 다시 거짓으로 되돌린다 — 다음 호출에서 또 준다"]
         return []
     return [f"{f.rel}:1 보상 모듈에 claimOnce 함수가 없다 — 중복 지급을 막는 자리를 검사할 수 없다"]
 
@@ -449,6 +453,9 @@ def _first_work(body, cooldown: tuple[str, ...]) -> int:
             continue
         if tok.kind == NAME and tok.text == "local" and i + 2 < len(body) and body[i + 2].text == "=":
             return i   # 받은 값으로 계산해 담는 것도 처리의 시작이다
+        if tok.kind == SYMBOL and tok.text == "=" and i and body[i - 1].kind == NAME and body[i - 1].text not in skip \
+                and (i < 2 or body[i - 2].text != "local") and (i + 1 >= len(body) or body[i + 1].text != "="):
+            return max(0, i - 1)   # 전역·속성·표에 담는 것도 처리의 시작이다 (local 만 보면 비켜 간다)
         if tok.kind != NAME or i + 1 >= len(body) or body[i + 1].text not in ("(", ".", ":"):
             continue
         if tok.text in skip:

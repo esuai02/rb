@@ -2,7 +2,7 @@ criterion: Q3-C2 — 수학 검사 E1(참/거짓)·E2(조건 완전성)는 모�
 command: python3 -m unittest tests.test_harness.MathClaimTest -v
 exit: 0
 binding: 2151b953b638d4f888c0cb10e48d3085598d56e95bffd15ccd7146a0d6299c64
-time: 2026-10-03T11:48:58.611341+00:00
+time: 2026-10-03T11:58:22.182674+00:00
 
 test_claim_problems_inside_a_tree (tests.test_harness.MathClaimTest.test_claim_problems_inside_a_tree) ... ok
 test_claims_required (tests.test_harness.MathClaimTest.test_claims_required) ... ok
@@ -16,6 +16,6 @@ test_true_and_false_claims (tests.test_harness.MathClaimTest.test_true_and_false
 test_undecidable_claims_raise (tests.test_harness.MathClaimTest.test_undecidable_claims_raise) ... ok
 
 ----------------------------------------------------------------------
-Ran 9 tests in 2.327s
+Ran 9 tests in 1.626s
 
 OK

@@ -3017,6 +3017,54 @@
           "replace": "    line: {m: '1/3', b: '13/3'}\n    line_text: 123\n"
         }
       ]
+    },
+    {
+      "id": "D-input-stored-before-guard",
+      "class": "검증 전에 전역에 담은 원격 입력",
+      "expected": [
+        "server.remote_cooldown",
+        "server.remote_validation"
+      ],
+      "note": "검증보다 먼저 담으면 형식·범위·쿨다운이 모두 처리 뒤가 된다 — 두 검사가 모두 맞다",
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local GRID = 2",
+          "replace": "local stash = 0\nlocal GRID = 2"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end",
+          "replace": "\tstash = x\n\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end"
+        }
+      ]
+    },
+    {
+      "id": "D-claim-once-undone",
+      "class": "표시를 되돌리는 claimOnce",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\tclaimed[slot] = true\n\treturn true\n",
+          "replace": "\tclaimed[slot] = true\n\tclaimed[slot] = false\n\treturn true\n"
+        }
+      ]
+    },
+    {
+      "id": "D-data-model-ui-text",
+      "class": "데이터 모델의 UI 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Sign.model.json",
+          "create": "{\"ClassName\": \"TextLabel\", \"Properties\": {\"Text\": \"Start\"}}\n"
+        }
+      ]
     }
   ]
 }
