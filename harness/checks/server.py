@@ -168,11 +168,19 @@ def _claim_once_errors(f) -> list[str]:
         if _declared_name(f.tokens, i) != "claimOnce":
             continue
         texts = [t.text for t in body]
-        spots = _indexes(body, tables)
-        writes = [k for k in spots if (close := k + 1 + len(luau.balanced(body, k + 1))) < len(body) and body[close].text == "="]
+        reads, writes = [], []
+        for k in _indexes(body, tables):
+            inner = luau.balanced(body, k + 1)
+            close = k + 1 + len(inner)
+            key = " ".join(x.text for x in inner[1:-1])
+            if close < len(body) and body[close].text == "=":
+                writes.append(key)
+            else:
+                reads.append(key)
         denies = any(texts[k] == "return" and texts[k + 1:k + 2] == ["false"] for k in range(len(texts) - 1))
-        missing = [name for name, ok in (("이미 준 적 있는지 읽기", bool(spots)), ("준 것을 표시해 두기", bool(writes)),
-                                         ("이미 줬으면 거짓 돌려주기", denies)) if not ok]
+        missing = [name for name, ok in (("이미 준 적 있는지 읽기", bool(reads)), ("준 것을 표시해 두기", bool(writes)),
+                                         ("이미 줬으면 거짓 돌려주기", denies),
+                                         ("읽은 자리와 같은 자리에 표시하기", any(w in reads for w in writes))) if not ok]
         if missing:
             return [f"{_at(f, f.tokens[i])} claimOnce 가 {' · '.join(missing)} 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"]
         return []
@@ -184,42 +192,31 @@ def _names_grant(tokens, i: int) -> bool:
     return _declared_name(tokens, i) == "grant"
 
 
-def _function_names(tokens) -> set[str]:
-    """이 파일이 선언한 함수 이름 — `local function f` · `function M.f` · `local f = function`."""
-    out = set()
-    for i in range(len(tokens) - 2):
-        if tokens[i].kind == NAME and tokens[i].text == "function" and tokens[i + 1].kind == NAME:
-            out.add(tokens[i + 1].text if tokens[i + 2].text != "." else tokens[i + 2].text)
-        if tokens[i].kind == NAME and tokens[i].text == "local" and tokens[i + 1].kind == NAME \
-                and tokens[i + 2].text == "=" and i + 3 < len(tokens) and tokens[i + 3].text == "function":
-            out.add(tokens[i + 1].text)
-    return out
+def _is_surely_not_a_function(f, start: int, config) -> bool:
+    """그 자리의 값이 함수가 아님을 확정할 수 있는가 — 글자·수 리터럴, 풀리는 값, 표 리터럴, 허용된 문구 키 호출.
 
-
-def _is_function_value(f, start: int, functions: set[str]) -> bool:
-    """그 자리에 놓인 값이 함수인가 — 함수 리터럴, 선언한 함수 이름, 또는 그 함수를 담은 이름."""
+    확정하지 못하면 거부한다. 함수일 수도 있는 값을 멤버에 담으면 어떤 원격에 무엇을 이었는지 알 수 없다.
+    """
     tok = f.tokens[start]
-    if tok.kind != NAME:
-        return False
-    if tok.text == "function" or tok.text in functions:
+    if tok.kind in (STRING, NUMBER) or (tok.kind == SYMBOL and tok.text == "{"):
         return True
-    value = f.resolved.get(tok.text)
-    return isinstance(value, tuple) and bool(value) and value[-1] in functions
+    if tok.kind == NAME and isinstance(f.resolved.get(tok.text), (str, float)):
+        return True
+    return start in {i for i, _args in i18n._key_calls(f, config)}
 
 
-def _handlers(f) -> list[tuple[list[str], list, int, str]]:
+def _handlers(f, config) -> list[tuple[list[str], list, int, str]]:
     """원격 입력 처리 함수 — (원격 이름, 매개변수, 본문, 알림 위치 토큰 번호, 문제). 못 찾으면 문제를 적어 보수적으로 실패시킨다.
 
     보는 꼴: X.OnServerEvent:Connect(function…) · :Connect(이름) · X.OnServerInvoke = function… · = 이름
     """
     toks, bodies, out = f.tokens, luau.function_bodies(f.tokens), []
-    functions = _function_names(toks)
     for i, _rhs, key in i18n._bracket_assignments(f):
         close = i + 1
         while close < len(toks) and not (toks[close].kind == SYMBOL and toks[close].text == "["):
             close += 1
         rhs = close + len(luau.balanced(toks, close)) + 1
-        if not isinstance(key, str) and rhs < len(toks) and _is_function_value(f, rhs, functions):
+        if not isinstance(key, str) and rhs < len(toks) and not _is_surely_not_a_function(f, rhs, config):
             out.append(("?", [], [], i, f"값을 알 수 없는 멤버({toks[i].text}[…])에 처리 함수를 대입했다 — 어떤 원격인지 검사할 수 없다"))
     for i, tok in enumerate(toks):
         if not (tok.kind == NAME and tok.text in ("Connect", "Once", "ConnectParallel") and i and toks[i - 1].text == ":"):
@@ -472,7 +469,7 @@ def remote_validation(tree, rules, config) -> list[str]:
     out += _contract_errors(tree, rules)
     for f in tree.luau:
         constants = {k: v for k, v in f.resolved.items() if isinstance(v, float)}
-        for remote, params, body, i, problem in _handlers(f):
+        for remote, params, body, i, problem in _handlers(f, config):
             where = _at(f, f.tokens[i])
             if problem:
                 out.append(f"{where} {problem}")
@@ -579,7 +576,7 @@ def remote_cooldown(tree, rules, config) -> list[str]:
     """원격 처리 함수는 처리를 시작하기 전에 쿨다운(cv.server_cooldown)의 결과로 멈춘다 — 값의 실측은 Q4."""
     path, out = tuple(config["cooldown_call"]), []
     for f in tree.luau:
-        for remote, _params, body, i, problem in _handlers(f):
+        for remote, _params, body, i, problem in _handlers(f, config):
             if problem:
                 continue
             where, work = _at(f, f.tokens[i]), _first_work(body, path)
@@ -630,7 +627,7 @@ def reward_after_verdict(tree, rules, config) -> list[str]:
     reaching_all = reward_reaching(tree, module)
     reaching = reaching_all - self_verdicting(tree, verdicts, module, reaching_all)
     for f in tree.luau:
-        for remote, _params, body, i, problem in _handlers(f):
+        for remote, _params, body, i, problem in _handlers(f, config):
             if problem:
                 continue
             calls = {k for alias in _grant_aliases(f, _module_names(f, module)) for k in luau.find_calls(body, alias)} | {k for k in range(len(body))

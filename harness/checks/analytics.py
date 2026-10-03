@@ -57,7 +57,7 @@ def calls(tree, rules, config) -> list[str]:
         if f is trusted:
             out += [f"{f.rel}:1 분석 모듈이 플랫폼 전송 함수 {api} 를 쓰지 않는다 (퍼널·사용자 정의를 모두 보내야 한다, F11)"
                     for api in config["platform_apis"] if not any(t.kind == NAME and t.text == api for t in f.tokens)]
-            out += _check_module(f, config)
+            out += _check_module(f, rules, config)
             continue
         if f.name == module:
             reason = (f"클라이언트가 볼 수 있는 곳({f.container})에 있다 — 분석은 서버에서만 보낸다(F10)" if f.client_visible
@@ -129,7 +129,7 @@ def _player_names(f, config) -> set[str]:
     return base | {name for name, value in f.resolved.items() if isinstance(value, tuple) and len(value) == 1 and value[0] in base}
 
 
-def _check_module(f, config) -> list[str]:
+def _check_module(f, rules, config) -> list[str]:
     """분석 모듈 자신도 믿지 않는다 — 이벤트 이름은 받은 값이어야 하고, 플레이어 개인정보 속성을 쓰지 않는다 (INV-10)."""
     out = []
     for api in config["platform_apis"]:
@@ -149,9 +149,28 @@ def _check_module(f, config) -> list[str]:
             for i, name in resolve.dynamic_member_calls(f, resolve.names_for(f.resolved, ("AnalyticsService",)))]
     out += [f"{f.rel}:1 분석 모듈이 플랫폼 전송 함수 {api} 를 다른 이름({alias})에 담는다 — 모듈 안에서는 직접 불러야 검사할 수 있다"
             for api in config["platform_apis"] for alias in resolve.names_for(f.resolved, ("AnalyticsService", api)) if alias != "AnalyticsService"]
+    out += _custom_field_errors(f, rules)
     out += [f"{f.rel}:{t.line} 분석 모듈이 플레이어 개인정보 속성 {t.text} 를 쓴다 (INV-10)" for k, t in enumerate(f.tokens)
             if t.kind == NAME and t.text in config["player_identity_names"] and k >= 2 and f.tokens[k - 1].text == "."
             and f.tokens[k - 2].kind == NAME and f.tokens[k - 2].text in _player_names(f, config)]
+    return out
+
+
+def _custom_field_errors(f, rules) -> list[str]:
+    """분석 모듈이 플랫폼에 보내는 표의 칸 — 정해진 열거형 칸(F10: 최대 3개)만 쓰고, 글자 그대로 끼워 넣지 않는다.
+
+    모듈이 `custom["CustomField04"] = …` 처럼 칸을 직접 늘리면 허용 목록·필드 수 검사를 모두 비켜 간다(리뷰 R-Q3 20차).
+    """
+    limit = (rules.events.get("limits") or {}).get("max_fields_per_event", 3)
+    slots = {f"CustomField{n:02d}" for n in range(1, limit + 1)}
+    toks, out = f.tokens, []
+    out += [f"{f.rel}:{t.line} 분석 모듈이 플랫폼 칸 {t.text} 를 쓴다 — 쓸 수 있는 칸은 {sorted(slots)} 뿐이다 (F10)"
+            for k, t in enumerate(toks) if t.kind == NAME and t.text.startswith("CustomField") and t.text not in slots
+            and k and toks[k - 1].text == "."]
+    out += [f"{f.rel}:{toks[k].line} 분석 모듈이 표 칸 이름을 글자 그대로({toks[k + 2].text}) 끼워 넣는다 — 칸은 열거형으로만 고른다 (F10)"
+            for k in range(len(toks) - 4)
+            if toks[k].kind == NAME and toks[k + 1].text == "[" and toks[k + 2].kind == STRING
+            and toks[k + 3].text == "]" and toks[k + 4].text == "="]
     return out
 
 

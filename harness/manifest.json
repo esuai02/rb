@@ -2931,6 +2931,50 @@
           "replace": "goal.Text = Text.get(\"goal.signal_2\") .. a .. b .. c .. d .. e .. unknownValue()"
         }
       ]
+    },
+    {
+      "id": "D-unresolved-handler-value",
+      "class": "함수인지 알 수 없는 값을 건 원격 등록",
+      "expected": [
+        "i18n.hardcoded_text",
+        "server.remote_validation"
+      ],
+      "note": "속성 이름도 값도 알 수 없으면 어떤 원격인지도, 화면 문구인지도 알 수 없다 — 두 검사가 모두 맞다",
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)",
+          "replace": "local key = script.Name\nlocal h = require(script.Parent.MissionService).makeHandler()\nSignalRemote[key] = h"
+        }
+      ]
+    },
+    {
+      "id": "D-claim-once-marks-elsewhere",
+      "class": "읽은 자리와 다른 자리에 표시하는 claimOnce",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\tclaimed[slot] = true\n",
+          "replace": "\tclaimed[slot .. \"mark\"] = true\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-extra-field-slot",
+      "class": "분석 모듈이 늘린 플랫폼 칸",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\treturn custom\n",
+          "replace": "\tcustom[Enum.AnalyticsCustomFieldKeys.CustomField04.Name] = \"fixed\"\n\treturn custom\n"
+        }
+      ]
     }
   ]
 }
