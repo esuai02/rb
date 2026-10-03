@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from harness import luau, resolve, source
-from harness.luau import NAME, STRING
+from harness.luau import NAME, STRING, SYMBOL
 
 FUNNEL, CUSTOM = "funnel", "custom"
 
@@ -200,7 +200,21 @@ def _custom_field_errors(f, rules) -> list[str]:
             for k in range(len(toks) - 3)
             if toks[k].kind == NAME and toks[k + 1].text == "." and toks[k + 2].kind == NAME
             and toks[k + 2].text.startswith("CustomField") and toks[k + 3].text == "="]
+    out += [f"{f.rel}:{toks[k].line} 분석 모듈이 표 칸을 계산해서 만든다 — 어떤 칸인지 알 수 없으므로 열거형으로만 고른다 (F10)"
+            for k in range(len(toks) - 2) if _computed_slot(f, k)]
     return out
+
+
+def _computed_slot(f, k: int) -> bool:
+    """`{ [계산한 키] = … }` 꼴인가 — 형 표기 `{[string]: string}` 은 대입이 아니므로 뺀다."""
+    toks = f.tokens
+    if not (toks[k].kind == SYMBOL and toks[k].text == "{" and toks[k + 1].kind == SYMBOL and toks[k + 1].text == "["):
+        return False
+    inner = luau.balanced(toks, k + 1)
+    close = k + 1 + len(inner)
+    if close >= len(toks) or toks[close].text != "=":
+        return False   # 형 표기이거나 대입이 아니다
+    return not any(t.kind == NAME and t.text == "AnalyticsCustomFieldKeys" for t in inner)
 
 
 def _check_call(f, name: str, sender: str, kind: str, allowed: dict, enums: dict, module: str, path: tuple[str, ...]) -> list[str]:

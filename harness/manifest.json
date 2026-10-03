@@ -51,7 +51,12 @@
       "ContentText",
       "ObjectText",
       "ActionText",
-      "PromptText"
+      "PromptText",
+      "InitialPrompt",
+      "UserDialog",
+      "ResponseDialog",
+      "ToolTip",
+      "HintText"
     ],
     "external_call_names": [
       "HttpService",
@@ -3136,6 +3141,65 @@
           "file": "src/server/Analytics.luau",
           "find": "return Analytics\n",
           "replace": "local function log(player, eventName)\n\tAnalyticsService:LogCustomEvent(player, eventName, 1, {})\nend\nlog(nil, \"not_allowed\")\n\nreturn Analytics\n"
+        }
+      ]
+    },
+    {
+      "id": "D-project-child-not-an-object",
+      "class": "객체가 아닌 Rojo 자식",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "default.project.json",
+          "find": "\"StarterPlayer\"",
+          "replace": "\"Workspace\": {\"Broken\": [\"not\", \"an\", \"object\"]},\n    \"StarterPlayer\""
+        }
+      ]
+    },
+    {
+      "id": "D-unlisted-tld-domain",
+      "class": "허용 목록 밖 도메인",
+      "expected": [
+        "safety.url"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "print(\"example.education\")\nsendCell(2, 1)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-computed-slot",
+      "class": "계산해서 만든 분석 칸",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\treturn custom\n",
+          "replace": "\tlocal extra = {[pickSlot()] = \"fixed\"}\n\treturn extra\n"
         }
       ]
     }

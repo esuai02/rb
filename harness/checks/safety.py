@@ -7,7 +7,8 @@ import unicodedata
 from harness import luau, resolve
 from harness.luau import NAME, NUMBER, STRING, SYMBOL
 
-URL = re.compile(r"(?i)\b[a-z][a-z0-9+.\-]*://|\bwww\.|\b[a-z0-9-]+\.(?:com|net|org|gg|io|kr|ly|me|co|xyz|app|dev|link|site|online|info|biz|tv|cc|to)\b")
+# 도메인 끝 목록은 넓히되 목록으로 둔다 — 모든 `낱말.낱말` 을 막으면 문구 키(goal.signal_2)까지 걸린다 (리뷰 R-Q3 26차)
+URL = re.compile(r"(?i)\b[a-z][a-z0-9+.\-]*://|\bwww\.|\b[a-z0-9-]+\.(?:com|net|org|gg|io|kr|ly|me|co|xyz|app|dev|link|site|online|info|biz|tv|cc|to|ai|education|edu|gov|academy|school|shop|store|blog|page|cloud|tech|zone|world|games|fun|live|news|wiki|uk|jp|cn|de|fr|eu|us|ca|au|in|br|ru)\b")
 RANDOM_PATHS = (("math", "random"), ("Random", "new"))
 RANDOM_METHODS = {"NextInteger", "NextNumber", "NextUnitVector"}
 
@@ -52,7 +53,7 @@ def url(tree, rules, config) -> list[str]:
     return sorted(set(out))
 
 
-URL_PART = re.compile(r"(?i)https?|ftp|://|www\.|\.(?:com|net|org|gg|io|kr|ly|me|co|xyz|app|dev|link|site|online|info|biz|tv|cc|to)\b")
+URL_PART = re.compile(r"(?i)https?|ftp|://|www\.|\.(?:com|net|org|gg|io|kr|ly|me|co|xyz|app|dev|link|site|online|info|biz|tv|cc|to|ai|education|edu|gov|academy|school|shop|store|blog|page|cloud|tech|zone|world|games|fun|live|news|wiki|uk|jp|cn|de|fr|eu|us|ca|au|in|br|ru)\b")
 
 
 def _url_like_part(f, start: int, stop: int) -> bool:

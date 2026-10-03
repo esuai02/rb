@@ -8,7 +8,6 @@ import contextlib
 import copy
 import io
 import json
-import os
 import re
 import shutil
 import sys
@@ -84,6 +83,9 @@ EXPECTED_DEFECTS = {
     "D-multipart-external-service": ("여러 조각으로 조립한 외부 서비스", ("safety.external_call",), "TextGenerator 를 가져온다 — 조각을 나눠 조립해도 같다"),
     "D-multipart-paid-service": ("여러 조각으로 조립한 유료 서비스", ("safety.random_or_paid_reward",), "MarketplaceService 를 가져온다 — 조각을 나눠 조립해도 같다"),
     "D-analytics-lookalike-sender": ("이름만 같은 분석 전송 함수", ("analytics.calls",), "이름만 같은 보조 함수를 거치면"),
+    "D-project-child-not-an-object": ("객체가 아닌 Rojo 자식", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "가 객체가 아니다 (list)"),
+    "D-unlisted-tld-domain": ("허용 목록 밖 도메인", ("safety.url",), "URL 이나 도메인 'example.education' 이 있다"),
+    "D-analytics-computed-slot": ("계산해서 만든 분석 칸", ("analytics.calls",), "표 칸을 계산해서 만든다"),
     "D-analytics-concat-event": ("이어 붙인 분석 이벤트 이름", ("analytics.calls",), "분석 모듈이 LogCustomEvent 의 이벤트 이름 자리에 'eventNam"),
     "D-analytics-dot-call": ("점 표기로 부른 플랫폼 분석 API", ("analytics.calls",), "분석 모듈이 LogCustomEvent 에 정해진 값 ['player_profi"),
     "D-analytics-method-alias": ("전송 함수를 담은 이름으로 보낸 분석", ("analytics.calls",), "이벤트 player_profile 가 허용 목록(specs/analytics/e"),
@@ -199,6 +201,8 @@ EXPECTED_DEFECTS = {
 }
 ITEM_IDS = {f"E{i}" for i in range(1, 7)} | {f"U{i}" for i in range(1, 15)}
 MODES = {"static", "runtime", "human", "covered", "static_later"}
+# 방식 → 그 항목을 맡는 단계. static 은 지금(Q3), 실행·나중 정적 검사는 Q4, 사람 승인은 Q8, 이미 덮인 것은 Q2.
+MODE_STAGE = {"static": "Q3", "runtime": "Q4", "static_later": "Q4", "human": "Q8", "covered": "Q2"}
 
 
 _LOCAL_CLEAN: list[Path] = []
@@ -311,16 +315,14 @@ class PlantedDefectTest(TreeCase):
     def test_defect_diagnoses_match_the_frozen_snapshot(self):
         """결함마다 나오는 진단 전부를 묶어 둔다 — 뜻하지 않은 진단이 끼어들면 실패한다 (리뷰 R-Q3 19차).
 
-        고칠 때는 RB_FREEZE_DIAGNOSES=1 로 다시 적고, 바뀐 줄을 눈으로 확인한 뒤 커밋한다.
+        고칠 때는 `python3 tools/freeze_diagnoses.py` 로 다시 적고, 바뀐 줄을 눈으로 확인한 뒤 커밋한다.
+        이 시험 자체는 어떤 환경변수로도 건너뛸 수 없다 (리뷰 R-Q3 26차).
         """
         now = {}
         for defect_id in sorted(EXPECTED_DEFECTS):
             with self.scratch(defect_id) as tree:
                 now[defect_id] = {check: found for check, found in sorted(self.failing(tree).items())}
-        if os.environ.get("RB_FREEZE_DIAGNOSES") == "1":
-            DIAGNOSES.write_text(json.dumps(now, ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
-            self.skipTest("진단 묶음을 다시 적었다")
-        self.assertTrue(DIAGNOSES.exists(), "진단 묶음 파일이 없다 — RB_FREEZE_DIAGNOSES=1 로 만든다")
+        self.assertTrue(DIAGNOSES.exists(), "진단 묶음 파일이 없다 — python3 tools/freeze_diagnoses.py 로 만든다")
         frozen = json.loads(DIAGNOSES.read_text(encoding="utf-8"))
         self.assertEqual(sorted(now), sorted(frozen), "결함 목록이 묶어 둔 것과 다르다")
         for defect_id in sorted(now):
@@ -528,9 +530,8 @@ class ManifestTest(unittest.TestCase):
         for item in MANIFEST["items"]:
             with self.subTest(item=item["id"]):
                 self.assertIn(item["mode"], MODES)
-                self.assertRegex(item["stage"], r"^Q[2-8]$")
+                self.assertEqual(item["stage"], MODE_STAGE[item["mode"]], "방식마다 맡는 단계가 정해져 있다 (리뷰 R-Q3 26차)")
                 if item["mode"] == "static":
-                    self.assertEqual(item["stage"], "Q3")
                     self.assertTrue(item["checks"])
                     self.assertEqual(set(item["checks"]) - set(REGISTRY), set())
                 else:

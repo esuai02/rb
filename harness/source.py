@@ -114,14 +114,17 @@ def trusted_module(tree, path: str, name: str):
     return found[0] if len(found) == 1 else None
 
 
-def _mappings(node: dict, chain: tuple[str, ...]) -> list[tuple[str, tuple[str, ...]]]:
-    out = []
+def _mappings(node: dict, chain: tuple[str, ...], problems: list[str] | None = None) -> list[tuple[str, tuple[str, ...]]]:
+    out, problems = [], problems if problems is not None else []
     for name, child in node.items():
-        if name.startswith("$") or not isinstance(child, dict):
+        if name.startswith("$"):
+            continue
+        if not isinstance(child, dict):
+            problems.append(f"{PROJECT_FILE}: {'/'.join(chain + (name,))} 가 객체가 아니다 ({type(child).__name__}) — 어디에 무엇을 싣는지 읽을 수 없다")
             continue
         if "$path" in child:
             out.append((child["$path"], chain + (name,)))   # 타입 검사는 load_tree 가 한다(진단 문구를 한 곳에서)
-        out += _mappings(child, chain + (name,))
+        out += _mappings(child, chain + (name,), problems)
     return out
 
 
@@ -139,7 +142,7 @@ def load_tree(root: Path) -> Tree:
     if not isinstance(project, dict) or not isinstance(project.get("tree"), dict):
         tree.problems.append(f"{PROJECT_FILE}: tree 는 객체여야 한다")
         return tree
-    mappings = _mappings(project["tree"], ())
+    mappings = _mappings(project["tree"], (), tree.problems)
     owners: dict[Path, str] = {}
     places: dict[Path, tuple[str, ...]] = {}
     for rel_path, chain in mappings:
