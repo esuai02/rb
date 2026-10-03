@@ -1,0 +1,20 @@
+criterion: Q3-C4 — 매니페스트가 수학 6종(E1~E6)·UI 14종(U1~U14)·안전 불변식 항목을 빠짐없이 담고 항목마다 방식(정적 Q3 · 실행 Q4 · 사람 Q5/Q8 · 잠긴 Q2 기준으로 덮음)과 이유를 가진다(이유는 모든 항목에 있다). 정적 항목은 실제 검사 함수가 있고, 고정 데이터 색인의 지문이 파일과 같다
+command: python3 -m unittest tests.test_harness.ManifestTest -v
+exit: 0
+binding: 0c6c5abe4922e75c4eb78863d842138f09efeb4bd785a9bcb88b3011a43a7634
+time: 2026-10-03T15:53:03.437120+00:00
+
+test_each_item_has_mode_stage_and_reason_or_checks (tests.test_harness.ManifestTest.test_each_item_has_mode_stage_and_reason_or_checks) ... ok
+test_every_item_has_a_reason (tests.test_harness.ManifestTest.test_every_item_has_a_reason) ... ok
+test_fixture_index_detects_change (tests.test_harness.ManifestTest.test_fixture_index_detects_change) ... ok
+test_fixture_index_matches_files (tests.test_harness.ManifestTest.test_fixture_index_matches_files) ... ok
+test_items_cover_math_and_ui_lists (tests.test_harness.ManifestTest.test_items_cover_math_and_ui_lists) ... ok
+test_registry_and_manifest_checks_match (tests.test_harness.ManifestTest.test_registry_and_manifest_checks_match) ... ok
+test_safety_invariants_have_static_checks (tests.test_harness.ManifestTest.test_safety_invariants_have_static_checks) ... ok
+test_width_budgets_fit_the_locked_glossary (tests.test_harness.ManifestTest.test_width_budgets_fit_the_locked_glossary)
+상한은 잠긴 Q2 용어집의 실측 폭보다 넓어야 한다 — 통과하는 원문을 거부하지 않는다. ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.162s
+
+OK

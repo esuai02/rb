@@ -1,0 +1,36 @@
+criterion: Q2-C7 — 설계 규칙: 보상은 서버만 정하고 기본 보상은 완주한 모두에게 같으며 협동 보너스는 꾸미기만이고 화폐·무작위 보상이 없다(INV-4·INV-12). 수학 미션과 재사용 맥락마다 힌트 사다리가 있고 힌트는 무료이며 한 번 해 본 뒤에만 다음 단계로 가고 수학 미션과 재사용 맥락마다 구조화된 목표(좌표 칸 [x, y] 또는 Q1 기울기 표현 키)가 있고, 검사기가 목표에서 정답 구성 요소·필요한 행동·좌표 숫자를 계산해 — 힌트 문구가 정답 구성 요소를 모두 담지 않고(순서·띄어쓰기 무시, 바꿔 말한 표현의 의미 판단은 사람 검토), 필요한 행동이 제시되며, 이름표 대사가 방금 쓴 말과 좌표를 담는지 본다(INV-8·INV-15·K6 R3). 필수 미션은 혼자(NPC)로 끝낼 수 있고 매칭 대기 끝은 NPC 다(INV-9). 시간 압박 실패·스트릭·자동 다음 미션이 없고 자동 저장과 같은 크기의 계속·쉬기 정지점이 있다(INV-14·K6 R7). 필수 미션이 있고 필수 경로는 한 줄(바로 앞 필수 미션만 기다림)이며 용어를 처음 배우는 미션·게이트 신호 미션은 필수이고 필수 미션마다 현재 목표 문구가 있으며 Q1 시간 안에 들고, 멈춤 변형 밖 시나리오는 필수 경로 전체를 지나며, 역할 기여는 닫힌 목록에서 역할마다 다르다(K3 §5). 시나리오 경로의 미션은 모두 그 시나리오의 플레이 방식을 지원하고, 시나리오는 행동(시도 수·멈춘 시간·쓴 표현·끝난 지점)을 적고 그 행동이 변형 이름과 맞으며 기대 이벤트가 그 행동이 내는 이벤트(허용 이벤트 20개 전부의 발생 규칙으로 계산)와 정확히 같다. 입력 3종마다 혼자 끝까지 가는 시나리오와 2인·재도전·멈춤·일상어만 쓰기 시나리오가 있다
+command: python3 -m unittest tests.test_q2_graph.DesignRulesTest -v
+exit: 0
+binding: cc23c1f19ef785965c830f074322a1bb0c57f79963caa8af63f913e53a97f88c
+time: 2026-10-02T08:52:05.310783+00:00
+
+test_base_reward_by_correct_count (tests.test_q2_graph.DesignRulesTest.test_base_reward_by_correct_count) ... ok
+test_base_reward_for_some_players_only (tests.test_q2_graph.DesignRulesTest.test_base_reward_for_some_players_only) ... ok
+test_baseline_passes (tests.test_q2_graph.DesignRulesTest.test_baseline_passes) ... ok
+test_client_granted_reward (tests.test_q2_graph.DesignRulesTest.test_client_granted_reward) ... ok
+test_coop_bonus_must_be_cosmetic (tests.test_q2_graph.DesignRulesTest.test_coop_bonus_must_be_cosmetic) ... ok
+test_coop_needs_npc (tests.test_q2_graph.DesignRulesTest.test_coop_needs_npc) ... ok
+test_core_mission_needs_solo_path (tests.test_q2_graph.DesignRulesTest.test_core_mission_needs_solo_path) ... ok
+test_core_path_over_target_minutes (tests.test_q2_graph.DesignRulesTest.test_core_path_over_target_minutes) ... ok
+test_currency_reward (tests.test_q2_graph.DesignRulesTest.test_currency_reward) ... ok
+test_duo_and_idle_scenarios_required (tests.test_q2_graph.DesignRulesTest.test_duo_and_idle_scenarios_required) ... ok
+test_each_input_has_solo_full_path (tests.test_q2_graph.DesignRulesTest.test_each_input_has_solo_full_path) ... ok
+test_every_event_rule_is_pinned_by_a_scenario (tests.test_q2_graph.DesignRulesTest.test_every_event_rule_is_pinned_by_a_scenario)
+허용 이벤트마다 그 이벤트를 내는 시나리오가 있고, 기대 이벤트에서 빼거나 생기지 않는 이벤트를 더하면 잡힌다. ... ok
+test_first_math_success_time (tests.test_q2_graph.DesignRulesTest.test_first_math_success_time) ... ok
+test_first_world_reaction_time (tests.test_q2_graph.DesignRulesTest.test_first_world_reaction_time) ... ok
+test_hint_advance_after_attempt (tests.test_q2_graph.DesignRulesTest.test_hint_advance_after_attempt) ... ok
+test_hint_reveals_answer (tests.test_q2_graph.DesignRulesTest.test_hint_reveals_answer) ... ok
+test_hint_text_states_the_answer (tests.test_q2_graph.DesignRulesTest.test_hint_text_states_the_answer) ... ok
+test_listed_mutations_are_caught (tests.test_q2_graph.DesignRulesTest.test_listed_mutations_are_caught) ... ok
+test_math_mission_needs_own_ladder (tests.test_q2_graph.DesignRulesTest.test_math_mission_needs_own_ladder) ... ok
+test_role_npc_can_fill (tests.test_q2_graph.DesignRulesTest.test_role_npc_can_fill) ... ok
+test_scenario_path_respects_order (tests.test_q2_graph.DesignRulesTest.test_scenario_path_respects_order) ... ok
+test_scenarios_cover_inputs (tests.test_q2_graph.DesignRulesTest.test_scenarios_cover_inputs) ... ok
+test_stop_point_equal_choice (tests.test_q2_graph.DesignRulesTest.test_stop_point_equal_choice) ... ok
+test_streak (tests.test_q2_graph.DesignRulesTest.test_streak) ... ok
+
+----------------------------------------------------------------------
+Ran 24 tests in 0.143s
+
+OK

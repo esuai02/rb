@@ -1,0 +1,789 @@
+{
+  "schema_version": 1,
+  "id": "neo_seoul_city_language_gate.graph",
+  "note": "교육과정·월드 Graph (작업 Graph Q2). 용어·표현·행동 키는 Q1 명세, 화면 문구 키는 용어집, 수치는 정본 값(cv.*)을 참조만 한다. 검사: python3 tools/validate_graph.py",
+  "world_spec": "specs/worlds/neo-seoul-city-language-gate.yaml",
+  "world_id": "neo_seoul_city_language_gate",
+  "market_id": "ko-KR",
+  "curriculum_id": "ko-KR.math_language.v1",
+  "glossary": "specs/localization/terms/ko-KR.yaml",
+  "events": "specs/analytics/events.yaml",
+  "canonical_values": "specs/graph/canonical-values.yaml",
+  "terms": [
+    {
+      "term_id": "term.coordinate",
+      "prerequisites": [],
+      "first_mission": "m.signal_coordinate"
+    },
+    {
+      "term_id": "term.slope",
+      "prerequisites": [
+        "term.coordinate"
+      ],
+      "first_mission": "m.signal_slope"
+    }
+  ],
+  "missions": [
+    {
+      "id": "m.signal_wake",
+      "core": true,
+      "signal": 1,
+      "new_term": null,
+      "requires": [],
+      "goal_key": "goal.signal_1",
+      "play_modes": [
+        "solo_npc",
+        "duo"
+      ],
+      "target_end_s": 60,
+      "steps": [
+        {
+          "kind": "situation",
+          "key": "sit.gate_dark"
+        },
+        {
+          "kind": "interaction",
+          "key": "prompt.signal_panel.activate"
+        },
+        {
+          "kind": "world_response",
+          "key": "resp.signal_1.panel_lit"
+        }
+      ]
+    },
+    {
+      "id": "m.signal_coordinate",
+      "core": true,
+      "signal": 2,
+      "new_term": "term.coordinate",
+      "requires": [
+        "m.signal_wake"
+      ],
+      "goal_key": "goal.signal_2",
+      "play_modes": [
+        "solo_npc",
+        "duo"
+      ],
+      "target_end_s": 150,
+      "params": [
+        "cv.coordinate_expression",
+        "cv.label_tag_display"
+      ],
+      "steps": [
+        {
+          "kind": "situation",
+          "key": "sit.coordinate.drone_waiting"
+        },
+        {
+          "kind": "everyday_expression",
+          "keys": [
+            "expr.position.right",
+            "expr.position.left",
+            "expr.position.up",
+            "expr.position.down"
+          ]
+        },
+        {
+          "kind": "player_action",
+          "keys": [
+            "action.position.move_right",
+            "action.position.move_left",
+            "action.position.move_up",
+            "action.position.move_down"
+          ]
+        },
+        {
+          "kind": "world_response",
+          "key": "resp.coordinate.drone_lands",
+          "other_result_key": "resp.coordinate.other_spot"
+        },
+        {
+          "kind": "math_label",
+          "key": "term.coordinate.name",
+          "line_key": "label.coordinate.line"
+        }
+      ],
+      "hint_ladder": "hl.coordinate",
+      "target": {
+        "cell": [
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "id": "m.signal_slope",
+      "core": true,
+      "signal": 3,
+      "new_term": "term.slope",
+      "requires": [
+        "m.signal_coordinate"
+      ],
+      "goal_key": "goal.signal_3",
+      "play_modes": [
+        "solo_npc",
+        "duo"
+      ],
+      "target_end_s": 230,
+      "params": [
+        "cv.slope_choices",
+        "cv.label_tag_display"
+      ],
+      "steps": [
+        {
+          "kind": "situation",
+          "key": "sit.slope.bridge_low"
+        },
+        {
+          "kind": "everyday_expression",
+          "keys": [
+            "expr.slope.rise_more",
+            "expr.slope.rise_less",
+            "expr.slope.flat"
+          ]
+        },
+        {
+          "kind": "player_action",
+          "keys": [
+            "action.slope.increase",
+            "action.slope.decrease",
+            "action.slope.set_zero"
+          ]
+        },
+        {
+          "kind": "world_response",
+          "key": "resp.slope.bridge_reaches",
+          "other_result_key": "resp.slope.other_height"
+        },
+        {
+          "kind": "math_label",
+          "key": "term.slope.name",
+          "line_key": "label.slope.line"
+        }
+      ],
+      "hint_ladder": "hl.slope",
+      "coop": "coop.gate_prisms",
+      "target": {
+        "expression": "expr.slope.rise_more"
+      }
+    },
+    {
+      "id": "m.gate_open",
+      "core": true,
+      "signal": null,
+      "new_term": null,
+      "requires": [
+        "m.signal_slope"
+      ],
+      "goal_key": "goal.portal",
+      "play_modes": [
+        "solo_npc",
+        "duo"
+      ],
+      "target_end_s": 260,
+      "steps": [
+        {
+          "kind": "world_response",
+          "key": "resp.gate_open"
+        },
+        {
+          "kind": "reward",
+          "ids": [
+            "reward.explorer_card",
+            "reward.explorer_badge",
+            "unlock.light_rail_booster"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "m.zone_portal",
+      "core": true,
+      "signal": null,
+      "new_term": null,
+      "requires": [
+        "m.gate_open"
+      ],
+      "goal_key": "goal.portal",
+      "play_modes": [
+        "solo_npc",
+        "duo"
+      ],
+      "target_end_s": 300,
+      "steps": [
+        {
+          "kind": "situation",
+          "key": "zone.recommend"
+        },
+        {
+          "kind": "interaction",
+          "key": "zone.metro_district.name"
+        }
+      ]
+    },
+    {
+      "id": "m.plaza_drone_delivery",
+      "core": false,
+      "signal": null,
+      "new_term": null,
+      "requires": [
+        "m.gate_open"
+      ],
+      "goal_key": null,
+      "play_modes": [
+        "solo_npc",
+        "duo"
+      ],
+      "target_end_s": null,
+      "steps": []
+    },
+    {
+      "id": "m.plaza_partner_bridge",
+      "core": false,
+      "signal": null,
+      "new_term": null,
+      "requires": [
+        "m.gate_open"
+      ],
+      "goal_key": null,
+      "play_modes": [
+        "solo_npc",
+        "duo"
+      ],
+      "target_end_s": null,
+      "steps": [],
+      "coop": "coop.plaza_bridge"
+    }
+  ],
+  "reuse_contexts": [
+    {
+      "id": "ctx.coordinate.slope_anchor",
+      "term_id": "term.coordinate",
+      "mission": "m.signal_slope",
+      "situation_key": "sit.reuse.coordinate.slope_anchor",
+      "action_keys": [
+        "action.position.move_right",
+        "action.position.move_up"
+      ],
+      "response_key": "resp.reuse.coordinate.anchor_set",
+      "accepts": [
+        "everyday",
+        "label"
+      ],
+      "hint_ladder": "hl.reuse.coordinate",
+      "target": {
+        "cell": [
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "ctx.coordinate.portal_map",
+      "term_id": "term.coordinate",
+      "mission": "m.zone_portal",
+      "situation_key": "sit.reuse.coordinate.portal_map",
+      "action_keys": [
+        "action.position.move_right",
+        "action.position.move_left",
+        "action.position.move_up",
+        "action.position.move_down"
+      ],
+      "response_key": "resp.reuse.coordinate.portal_found",
+      "accepts": [
+        "everyday",
+        "label"
+      ],
+      "hint_ladder": "hl.reuse.coordinate",
+      "target": {
+        "cell": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "ctx.coordinate.drone_delivery",
+      "term_id": "term.coordinate",
+      "mission": "m.plaza_drone_delivery",
+      "situation_key": "sit.reuse.coordinate.drone_delivery",
+      "action_keys": [
+        "action.position.move_right",
+        "action.position.move_left",
+        "action.position.move_up",
+        "action.position.move_down"
+      ],
+      "response_key": "resp.reuse.coordinate.delivered",
+      "accepts": [
+        "everyday",
+        "label"
+      ],
+      "hint_ladder": "hl.reuse.coordinate",
+      "target": {
+        "cell": [
+          -1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "ctx.slope.booster_ramp",
+      "term_id": "term.slope",
+      "mission": "m.gate_open",
+      "situation_key": "sit.reuse.slope.booster_ramp",
+      "action_keys": [
+        "action.slope.increase",
+        "action.slope.decrease"
+      ],
+      "response_key": "resp.reuse.slope.ramp_reached",
+      "accepts": [
+        "everyday",
+        "label"
+      ],
+      "hint_ladder": "hl.reuse.slope",
+      "target": {
+        "expression": "expr.slope.rise_more"
+      }
+    },
+    {
+      "id": "ctx.slope.metro_preview",
+      "term_id": "term.slope",
+      "mission": "m.zone_portal",
+      "situation_key": "sit.reuse.slope.metro_preview",
+      "action_keys": [
+        "action.slope.increase",
+        "action.slope.decrease"
+      ],
+      "response_key": "resp.reuse.slope.metro_rail_set",
+      "accepts": [
+        "everyday",
+        "label"
+      ],
+      "hint_ladder": "hl.reuse.slope",
+      "target": {
+        "expression": "expr.slope.rise_more"
+      }
+    },
+    {
+      "id": "ctx.slope.partner_bridge",
+      "term_id": "term.slope",
+      "mission": "m.plaza_partner_bridge",
+      "situation_key": "sit.reuse.slope.partner_bridge",
+      "action_keys": [
+        "action.slope.increase",
+        "action.slope.decrease",
+        "action.slope.set_zero"
+      ],
+      "response_key": "resp.reuse.slope.bridge_flat",
+      "accepts": [
+        "everyday",
+        "label"
+      ],
+      "hint_ladder": "hl.reuse.slope",
+      "target": {
+        "expression": "expr.slope.flat"
+      }
+    }
+  ],
+  "label_choice_key": "choice.use_label",
+  "hint_ladders": [
+    {
+      "id": "hl.coordinate",
+      "mission": "m.signal_coordinate",
+      "rule": "cv.hint_ladder",
+      "keys": [
+        "hint.coordinate.l1",
+        "hint.coordinate.l2",
+        "hint.coordinate.l3"
+      ]
+    },
+    {
+      "id": "hl.slope",
+      "mission": "m.signal_slope",
+      "rule": "cv.hint_ladder",
+      "keys": [
+        "hint.slope.l1",
+        "hint.slope.l2",
+        "hint.slope.l3"
+      ]
+    },
+    {
+      "id": "hl.reuse.coordinate",
+      "term": "term.coordinate",
+      "rule": "cv.hint_ladder",
+      "keys": [
+        "hint.reuse.coordinate.l1",
+        "hint.reuse.coordinate.l2",
+        "hint.reuse.coordinate.l3"
+      ]
+    },
+    {
+      "id": "hl.reuse.slope",
+      "term": "term.slope",
+      "rule": "cv.hint_ladder",
+      "keys": [
+        "hint.reuse.slope.l1",
+        "hint.reuse.slope.l2",
+        "hint.reuse.slope.l3"
+      ]
+    }
+  ],
+  "roles": [
+    {
+      "id": "role.map_reader",
+      "name_key": "role.map_reader.name",
+      "contribution": "ping_anchor_cell",
+      "npc_can_fill": true
+    },
+    {
+      "id": "role.switch_holder",
+      "name_key": "role.switch_holder.name",
+      "contribution": "hold_prism_in_sync_window",
+      "npc_can_fill": true
+    }
+  ],
+  "coop": [
+    {
+      "id": "coop.gate_prisms",
+      "mission": "m.signal_slope",
+      "objects": [
+        "gate_prism_left",
+        "gate_prism_right"
+      ],
+      "object_keys": [
+        "coop.prism.left",
+        "coop.prism.right"
+      ],
+      "roles": [
+        "role.map_reader",
+        "role.switch_holder"
+      ],
+      "role_assignment": "player_choice",
+      "npc_fallback": "npc.signal_drone",
+      "npc_line_key": "coop.npc_takes_prism",
+      "waiting_key": "coop.partner_waiting",
+      "ready_key": "coop.ready",
+      "max_players": 2,
+      "params": [
+        "cv.coop_sync_window",
+        "cv.hold_time",
+        "cv.hold_cancel",
+        "cv.match_wait",
+        "cv.coop_offer_timing",
+        "cv.coop_switch_ids",
+        "cv.helper_npc"
+      ]
+    },
+    {
+      "id": "coop.plaza_bridge",
+      "mission": "m.plaza_partner_bridge",
+      "objects": [
+        "plaza_bridge_left",
+        "plaza_bridge_right"
+      ],
+      "object_keys": [
+        "coop.prism.left",
+        "coop.prism.right"
+      ],
+      "roles": [
+        "role.map_reader",
+        "role.switch_holder"
+      ],
+      "role_assignment": "player_choice",
+      "npc_fallback": "npc.signal_drone",
+      "npc_line_key": "coop.npc_takes_prism",
+      "waiting_key": "coop.partner_waiting",
+      "ready_key": "coop.ready",
+      "max_players": 2,
+      "params": [
+        "cv.coop_sync_window",
+        "cv.hold_time",
+        "cv.hold_cancel",
+        "cv.match_wait",
+        "cv.helper_npc"
+      ]
+    }
+  ],
+  "pings": [
+    "ping.here",
+    "ping.help",
+    "ping.ready",
+    "ping.follow"
+  ],
+  "rewards": [
+    {
+      "id": "reward.explorer_card",
+      "name_key": "reward.explorer_card.name",
+      "mission": "m.gate_open",
+      "basis": "completion",
+      "granted_to": "all_finishers",
+      "granted_by": "server",
+      "kind": "card"
+    },
+    {
+      "id": "reward.explorer_badge",
+      "name_key": "reward.explorer_badge.name",
+      "mission": "m.gate_open",
+      "basis": "completion",
+      "granted_to": "all_finishers",
+      "granted_by": "server",
+      "kind": "badge"
+    },
+    {
+      "id": "unlock.light_rail_booster",
+      "name_key": "unlock.light_rail_booster.name",
+      "mission": "m.gate_open",
+      "basis": "completion",
+      "granted_to": "all_finishers",
+      "granted_by": "server",
+      "kind": "ability_unlock"
+    },
+    {
+      "id": "reward.coop_trail",
+      "name_key": "reward.coop_trail.name",
+      "mission": "m.signal_slope",
+      "basis": "role_contribution",
+      "granted_to": "contributing_players",
+      "granted_by": "server",
+      "kind": "cosmetic"
+    }
+  ],
+  "invite_key": "coop.invite_friend",
+  "retry_key": "retry.again",
+  "pacing": {
+    "countdown_fail": false,
+    "streaks": false,
+    "autoplay_next_mission": false,
+    "autosave": true,
+    "stop_point": {
+      "mission": "m.zone_portal",
+      "choice_keys": [
+        "pacing.continue",
+        "pacing.rest"
+      ],
+      "equal_size": true
+    },
+    "long_play_notice": "deferred_human_threshold",
+    "params": [
+      "cv.gate_time",
+      "cv.first_try"
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "sc.solo_touch_first_try",
+      "play_mode": "solo_npc",
+      "input": "touch",
+      "variation": "first_try",
+      "path": [
+        "m.signal_wake",
+        "m.signal_coordinate",
+        "m.signal_slope",
+        "m.gate_open",
+        "m.zone_portal"
+      ],
+      "expects_events": [
+        "onboarding_start",
+        "character_spawned",
+        "first_input",
+        "gate_visible",
+        "movement_complete",
+        "first_interaction",
+        "first_math_action",
+        "first_math_success",
+        "gate_opened",
+        "explorer_card_earned",
+        "zone_portal_entered",
+        "onboarding_complete",
+        "session_start",
+        "math_attempt",
+        "label_shown",
+        "term_reused",
+        "co_play_offered"
+      ],
+      "attempts_before_target": 0,
+      "idle_s": 0,
+      "expression": "everyday",
+      "stops_after": null
+    },
+    {
+      "id": "sc.solo_gamepad_other_results",
+      "play_mode": "solo_npc",
+      "input": "gamepad",
+      "variation": "other_result_x3",
+      "path": [
+        "m.signal_wake",
+        "m.signal_coordinate",
+        "m.signal_slope",
+        "m.gate_open",
+        "m.zone_portal"
+      ],
+      "expects_events": [
+        "onboarding_start",
+        "character_spawned",
+        "first_input",
+        "gate_visible",
+        "movement_complete",
+        "first_interaction",
+        "first_math_action",
+        "first_math_success",
+        "gate_opened",
+        "explorer_card_earned",
+        "zone_portal_entered",
+        "onboarding_complete",
+        "session_start",
+        "math_attempt",
+        "hint_shown",
+        "label_shown",
+        "term_reused",
+        "co_play_offered"
+      ],
+      "attempts_before_target": 3,
+      "idle_s": 0,
+      "expression": "everyday",
+      "stops_after": null
+    },
+    {
+      "id": "sc.duo_keyboard",
+      "play_mode": "duo",
+      "input": "keyboard_mouse",
+      "variation": "first_try",
+      "path": [
+        "m.signal_wake",
+        "m.signal_coordinate",
+        "m.signal_slope",
+        "m.gate_open",
+        "m.zone_portal"
+      ],
+      "expects_events": [
+        "onboarding_start",
+        "character_spawned",
+        "first_input",
+        "gate_visible",
+        "movement_complete",
+        "first_interaction",
+        "first_math_action",
+        "first_math_success",
+        "gate_opened",
+        "explorer_card_earned",
+        "zone_portal_entered",
+        "onboarding_complete",
+        "session_start",
+        "math_attempt",
+        "label_shown",
+        "term_reused",
+        "co_play_offered",
+        "co_play_started"
+      ],
+      "attempts_before_target": 0,
+      "idle_s": 0,
+      "expression": "everyday",
+      "stops_after": null
+    },
+    {
+      "id": "sc.solo_touch_idle",
+      "play_mode": "solo_npc",
+      "input": "touch",
+      "variation": "idle_hints",
+      "path": [
+        "m.signal_wake",
+        "m.signal_coordinate"
+      ],
+      "expects_events": [
+        "onboarding_start",
+        "character_spawned",
+        "first_input",
+        "gate_visible",
+        "movement_complete",
+        "first_interaction",
+        "first_math_action",
+        "first_math_success",
+        "session_start",
+        "math_attempt",
+        "hint_shown",
+        "label_shown",
+        "session_end"
+      ],
+      "attempts_before_target": 0,
+      "idle_s": 15,
+      "expression": "everyday",
+      "stops_after": "m.signal_coordinate"
+    },
+    {
+      "id": "sc.solo_keyboard_everyday_only",
+      "play_mode": "solo_npc",
+      "input": "keyboard_mouse",
+      "variation": "never_uses_label",
+      "path": [
+        "m.signal_wake",
+        "m.signal_coordinate",
+        "m.signal_slope",
+        "m.gate_open",
+        "m.zone_portal",
+        "m.plaza_drone_delivery",
+        "m.plaza_partner_bridge"
+      ],
+      "expects_events": [
+        "onboarding_start",
+        "character_spawned",
+        "first_input",
+        "gate_visible",
+        "movement_complete",
+        "first_interaction",
+        "first_math_action",
+        "first_math_success",
+        "gate_opened",
+        "explorer_card_earned",
+        "zone_portal_entered",
+        "onboarding_complete",
+        "session_start",
+        "math_attempt",
+        "label_shown",
+        "term_reused",
+        "co_play_offered"
+      ],
+      "attempts_before_target": 0,
+      "idle_s": 0,
+      "expression": "everyday",
+      "stops_after": null
+    },
+    {
+      "id": "sc.duo_gamepad_plaza_reuse",
+      "play_mode": "duo",
+      "input": "gamepad",
+      "variation": "uses_label",
+      "path": [
+        "m.signal_wake",
+        "m.signal_coordinate",
+        "m.signal_slope",
+        "m.gate_open",
+        "m.zone_portal",
+        "m.plaza_partner_bridge"
+      ],
+      "expects_events": [
+        "onboarding_start",
+        "character_spawned",
+        "first_input",
+        "gate_visible",
+        "movement_complete",
+        "first_interaction",
+        "first_math_action",
+        "first_math_success",
+        "gate_opened",
+        "explorer_card_earned",
+        "zone_portal_entered",
+        "onboarding_complete",
+        "session_start",
+        "math_attempt",
+        "label_shown",
+        "term_reused",
+        "co_play_offered",
+        "co_play_started"
+      ],
+      "attempts_before_target": 0,
+      "idle_s": 0,
+      "expression": "label",
+      "stops_after": null
+    }
+  ]
+}

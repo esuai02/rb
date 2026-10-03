@@ -1,0 +1,5 @@
+hold: LOCK-Q3
+node: Q3
+binding: b649f2ed03fa22d5f6087b9fd611561feff457a4b5e43e915daa3586603f22df
+time: 2026-10-03T07:48:18.342476+00:00
+source: 사용자 메시지 2026-10-03 "잠금 승인" (Q3 잠금 결정 요청에 대한 답)

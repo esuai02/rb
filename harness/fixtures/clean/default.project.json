@@ -1,0 +1,9 @@
+{
+  "name": "neo-seoul-gate-fixture",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {"Gate": {"$path": "src/server"}},
+    "ReplicatedStorage": {"Shared": {"$path": "src/shared"}},
+    "StarterPlayer": {"StarterPlayerScripts": {"Gate": {"$path": "src/client"}}}
+  }
+}

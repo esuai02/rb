@@ -1,0 +1,26 @@
+criterion: Q2-C1 — Graph 는 검사기의 닫힌 형식(항목 이름과 형식 — 참거짓·정수·목록)만 쓰고(모르는 항목 0 — 가격·확률·타이머 같은 항목으로 규칙을 비켜 가지 못한다), 모든 참조(용어·일상 표현·행동·미션·맥락·힌트 사다리·협동·NPC·보상·시나리오·이벤트·문구 키·정본 값)가 Q1 명세·용어집·이벤트 목록·정본 값으로 해석된다. id 를 가진 모든 목록의 id 가 형식에 맞고 겹치지 않으며, 글자 목록에 겹치는 값이 없고, 가리키는 파일(Q1 명세·정본 값·이벤트 목록)이 정해진 경로다. 미션 선행·선수 용어 순환이 없다
+command: python3 -m unittest tests.test_q2_graph.ReferenceTest -v
+exit: 0
+binding: cc23c1f19ef785965c830f074322a1bb0c57f79963caa8af63f913e53a97f88c
+time: 2026-10-02T08:52:03.395057+00:00
+
+test_action_key_outside_q1_spec (tests.test_q2_graph.ReferenceTest.test_action_key_outside_q1_spec) ... ok
+test_baseline_passes (tests.test_q2_graph.ReferenceTest.test_baseline_passes) ... ok
+test_ladder_of_another_mission (tests.test_q2_graph.ReferenceTest.test_ladder_of_another_mission) ... ok
+test_listed_mutations_are_caught (tests.test_q2_graph.ReferenceTest.test_listed_mutations_are_caught) ... ok
+test_missing_prerequisite_mission (tests.test_q2_graph.ReferenceTest.test_missing_prerequisite_mission) ... ok
+test_mission_cycle (tests.test_q2_graph.ReferenceTest.test_mission_cycle) ... ok
+test_npc_must_be_q1_fallback (tests.test_q2_graph.ReferenceTest.test_npc_must_be_q1_fallback) ... ok
+test_stop_point_must_resolve (tests.test_q2_graph.ReferenceTest.test_stop_point_must_resolve) ... ok
+test_string_key_missing_from_glossary (tests.test_q2_graph.ReferenceTest.test_string_key_missing_from_glossary) ... ok
+test_term_prerequisite_cycle (tests.test_q2_graph.ReferenceTest.test_term_prerequisite_cycle) ... ok
+test_unknown_canonical_value (tests.test_q2_graph.ReferenceTest.test_unknown_canonical_value) ... ok
+test_unknown_event_in_scenario (tests.test_q2_graph.ReferenceTest.test_unknown_event_in_scenario) ... ok
+test_unknown_keys_cannot_bypass_rules (tests.test_q2_graph.ReferenceTest.test_unknown_keys_cannot_bypass_rules) ... ok
+test_unknown_term_in_reuse_context (tests.test_q2_graph.ReferenceTest.test_unknown_term_in_reuse_context) ... ok
+test_world_identity_must_match_q1 (tests.test_q2_graph.ReferenceTest.test_world_identity_must_match_q1) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.074s
+
+OK

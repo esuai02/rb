@@ -1,0 +1,8 @@
+# 원격 입력 계약 — 각 RemoteEvent 가 player 다음에 받는 값. Harness 가 코드의 검증과 대조한다 (INV-4)
+# 범위는 잠긴 Q2 정본 값과 같아야 한다: cv.coordinate_expression.grid · cv.slope_choices.steps
+remotes:
+  SignalRemote:
+    - {name: x, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.x}
+    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}
+  SlopeRemote:
+    - {name: choice, type: string, canonical: cv.slope_choices.expressions}

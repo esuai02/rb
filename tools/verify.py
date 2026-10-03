@@ -95,12 +95,19 @@ def write_record(root: Path, node_id: str, name: str, text: str) -> tuple[str, s
 
 # ---------- ① 자동 검사 ----------
 
+def scrub(root: Path, text: str) -> str:
+    """기록(공개 저장소)에 로컬 경로가 남지 않게 저장소 경로·홈 경로를 바꿔 쓴다 (INV-6)."""
+    for local, alias in ((str(root.resolve()), "<repo>"), (str(root), "<repo>"), (str(Path.home()), "~")):
+        text = text.replace(local, alias)
+    return text
+
+
 def run_command(root: Path, argv: list[str]) -> tuple[int, str]:
     try:
         proc = subprocess.run(argv, cwd=root, capture_output=True, text=True, timeout=CHECK_TIMEOUT_SEC)
-        return proc.returncode, (proc.stdout + proc.stderr)
+        return proc.returncode, scrub(root, proc.stdout + proc.stderr)
     except (OSError, subprocess.TimeoutExpired) as exc:
-        return 99, f"{type(exc).__name__}: {exc}"
+        return 99, scrub(root, f"{type(exc).__name__}: {exc}")
 
 
 def valid_time(value: object) -> bool:
@@ -190,7 +197,9 @@ def cmd_run(root: Path, node_id: str) -> int:
 # ---------- ② 독립 리뷰 ----------
 
 def review_packet(root: Path, graph: dict, node: dict, binding: str) -> str:
-    evidence = [r for r in ledger(root) if r.get("kind") == "verification" and r.get("node_id") == node["id"] and r.get("binding") == binding]
+    latest = {r["criterion_id"]: r for r in ledger(root)  # 같은 binding 을 여러 번 검사했으면 기준마다 마지막 결과만 — 리뷰어에게 모순된 상태를 주지 않는다
+              if r.get("kind") == "verification" and r.get("node_id") == node["id"] and r.get("binding") == binding}
+    evidence = [latest[c["id"]] for c in node["criteria"] if c["id"] in latest]
     crit_lines = "\n".join(f"- {c['id']}: {c['statement']} (목표: {c['target']})" for c in node["criteria"])
     ev_lines = "\n".join(f"- {r['criterion_id']}: {r['result']} — {r['observed']}" for r in evidence) or "- (자동 검사 기록 없음)"
     scope = node.get("invariant_scope", {})

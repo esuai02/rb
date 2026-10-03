@@ -1,0 +1,3438 @@
+{
+  "schema_version": 1,
+  "note": "검수 Harness 지도 (작업 Graph Q3). 검사 id 는 harness/checks/__init__.py REGISTRY 와 같다. 결함은 깨끗한 고정 데이터(harness/fixtures/clean)에 edits 를 그대로 적용해 만든다 — 각 edits 의 find 는 꼭 한 번만 나와야 한다. 실행: python3 -m harness.run <소스 트리>",
+  "config": {
+    "reward_module": "RewardService",
+    "analytics_module": "Analytics",
+    "text_module": "Text",
+    "authority_names": [
+      "DataStoreService",
+      "GetDataStore",
+      "GetOrderedDataStore",
+      "leaderstats",
+      "SetAsync",
+      "UpdateAsync",
+      "IncrementAsync",
+      "OwnedRewards",
+      "BadgeService",
+      "AwardBadge",
+      "Experience",
+      "Citizenship",
+      "Eligibility"
+    ],
+    "cooldown_call": [
+      "Cooldown",
+      "allow"
+    ],
+    "verdict_calls": [
+      [
+        "MissionService",
+        "coordinateMove"
+      ],
+      [
+        "MissionService",
+        "slopeSet"
+      ]
+    ],
+    "text_key_calls": [
+      [
+        "Text",
+        "get"
+      ]
+    ],
+    "text_key_methods": [
+      "FormatByKey",
+      "GetString"
+    ],
+    "ui_text_properties": [
+      "Text",
+      "PlaceholderText",
+      "Title",
+      "ContentText",
+      "ObjectText",
+      "ActionText",
+      "PromptText",
+      "InitialPrompt",
+      "UserDialog",
+      "ResponseDialog",
+      "ToolTip",
+      "HintText"
+    ],
+    "external_call_names": [
+      "HttpService",
+      "RequestAsync",
+      "PostAsync",
+      "TextGenerator",
+      "GenerateTextAsync",
+      "GenerationService"
+    ],
+    "free_text_names": [
+      "TextBox"
+    ],
+    "paid_names": [
+      "MarketplaceService",
+      "ProcessReceipt",
+      "PromptProductPurchase",
+      "PromptGamePassPurchase",
+      "HasRobloxSubscription",
+      "MembershipType",
+      "UserOwnsGamePassAsync",
+      "UserOwnsAssetAsync",
+      "PlayerOwnsAsset"
+    ],
+    "random_allowed_modules": [],
+    "funnel_call": "funnel",
+    "custom_call": "log",
+    "platform_apis": [
+      "LogCustomEvent",
+      "LogOnboardingFunnelStepEvent"
+    ],
+    "width_budget": {
+      "*": 175,
+      "action.": 30,
+      "prompt.": 20,
+      "choice.": 25,
+      "expr.": 15,
+      "ping.": 10,
+      "pacing.": 10,
+      "role.": 20,
+      "goal.": 40,
+      "coop.": 50,
+      "term.": 10,
+      "reward.": 30,
+      "unlock.": 20,
+      "npc.": 10,
+      "world.": 20,
+      "zone.": 60,
+      "retry.": 35,
+      "hint.": 115,
+      "resp.": 80,
+      "sit.": 120,
+      "label.": 175
+    },
+    "readability": {
+      "max_sentence_width": 90,
+      "max_sentences": 3
+    },
+    "budget_status": "가설 — 화면 폭 단위(한글·전각 2, 그 밖 1)로 센다. 잠긴 ko-KR 용어집과 고정 데이터의 실측 최댓값에 약 25% 여유를 둔 값(예: label. 실측 138 → 175). 실제 화면(360px)에서의 폭 실측은 Q4, 언어별 상한은 Q7",
+    "player_identity_names": [
+      "Name",
+      "DisplayName",
+      "UserId",
+      "AccountAge",
+      "FollowUserId",
+      "CharacterAppearanceId"
+    ],
+    "player_variable_names": [
+      "player",
+      "plr",
+      "target",
+      "user"
+    ],
+    "platform_event_arg": {
+      "LogCustomEvent": 1,
+      "LogOnboardingFunnelStepEvent": 2
+    },
+    "reward_module_path": "src/server/RewardService.luau",
+    "analytics_module_path": "src/server/Analytics.luau"
+  },
+  "checks": [
+    {
+      "id": "server.reward_authority",
+      "area": "server",
+      "invariants": [
+        "INV-4"
+      ],
+      "question": "보상·저장 권한을 보상 모듈 밖에서(클라이언트든 서버든) 쓰는가"
+    },
+    {
+      "id": "server.duplicate_reward",
+      "area": "server",
+      "invariants": [
+        "INV-4"
+      ],
+      "question": "보상이 한 번만 지급되는가(claimOnce·호출 자리 하나)"
+    },
+    {
+      "id": "server.remote_validation",
+      "area": "server",
+      "invariants": [
+        "INV-4"
+      ],
+      "question": "원격 입력의 형식과 범위를 처리 전에 막는 형태로 검사하는가(상태는 server.reward_after_verdict)"
+    },
+    {
+      "id": "server.remote_cooldown",
+      "area": "server",
+      "invariants": [
+        "INV-4"
+      ],
+      "question": "원격 처리가 쿨다운 결과로 처리 전에 멈추는가"
+    },
+    {
+      "id": "server.reward_after_verdict",
+      "area": "server",
+      "invariants": [
+        "INV-4"
+      ],
+      "question": "원격 처리가 서버 판정 뒤에만 보상에 닿는가(클라이언트 완료 신고 금지)"
+    },
+    {
+      "id": "i18n.missing_key",
+      "area": "i18n",
+      "invariants": [
+        "INV-3"
+      ],
+      "question": "코드가 쓰는 문구 키가 LocalizationTable 에 있는가"
+    },
+    {
+      "id": "i18n.length_budget",
+      "area": "i18n",
+      "invariants": [
+        "INV-9"
+      ],
+      "question": "문구가 키 종류별 화면 폭 상한 안인가(U7 정적 부분)"
+    },
+    {
+      "id": "i18n.do_not_translate",
+      "area": "i18n",
+      "invariants": [
+        "INV-3"
+      ],
+      "question": "수식·좌표가 번역 뒤에도 그대로인가"
+    },
+    {
+      "id": "i18n.hardcoded_text",
+      "area": "i18n",
+      "invariants": [
+        "INV-3"
+      ],
+      "question": "엔진 코드에 화면 문구가 없는가"
+    },
+    {
+      "id": "text.readability",
+      "area": "text",
+      "invariants": [
+        "INV-15"
+      ],
+      "question": "문장 길이·수가 상한 안인가(E5)"
+    },
+    {
+      "id": "math.truth",
+      "area": "math",
+      "invariants": [
+        "INV-7"
+      ],
+      "question": "수학 명제가 참인가(E1)"
+    },
+    {
+      "id": "math.conditions",
+      "area": "math",
+      "invariants": [
+        "INV-7"
+      ],
+      "question": "수학 명제의 조건이 빠지지 않았는가(E2)"
+    },
+    {
+      "id": "safety.banned_terms",
+      "area": "safety",
+      "invariants": [
+        "INV-11",
+        "INV-8",
+        "INV-14"
+      ],
+      "question": "금지어가 없는가"
+    },
+    {
+      "id": "safety.url",
+      "area": "safety",
+      "invariants": [
+        "INV-16"
+      ],
+      "question": "외부 링크가 없는가"
+    },
+    {
+      "id": "safety.external_call",
+      "area": "safety",
+      "invariants": [
+        "INV-16"
+      ],
+      "question": "런타임 외부 호출·생성형 AI(TextGenerator 포함)가 없는가"
+    },
+    {
+      "id": "safety.free_text",
+      "area": "safety",
+      "invariants": [
+        "INV-16",
+        "INV-10"
+      ],
+      "question": "필터 없는 자유 입력이 없는가"
+    },
+    {
+      "id": "safety.random_or_paid_reward",
+      "area": "safety",
+      "invariants": [
+        "INV-12"
+      ],
+      "question": "난수·결제·구독 조건으로 보상·진행을 가르지 않는가"
+    },
+    {
+      "id": "analytics.calls",
+      "area": "analytics",
+      "invariants": [
+        "INV-10"
+      ],
+      "question": "분석이 서버에서 허용 이벤트·열거형 값만, 퍼널·사용자 정의를 맞는 전송 함수로 보내는가"
+    }
+  ],
+  "items": [
+    {
+      "id": "E1",
+      "source": "K3 §3",
+      "title": "수학적 참/거짓",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "math.truth"
+      ],
+      "reason": "대사-명제 연결은 명제가 말하는 값(이동·결과 칸·기울기 값·점)이 원문에 있는지까지 본다. 비교 방향(더 가파르다 등)은 말로 표현되어 정적으로 묶지 않는다 — 사람 검토(Q8)"
+    },
+    {
+      "id": "E2",
+      "source": "K3 §3",
+      "title": "조건 완전성",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "math.conditions"
+      ],
+      "reason": "저장소 파일만 보고 판정할 수 있다 — 검사 math.conditions"
+    },
+    {
+      "id": "E3",
+      "source": "K3 §3",
+      "title": "교육과정 적합성",
+      "mode": "human",
+      "stage": "Q8",
+      "reason": "그 나라·학년의 선수개념·난도 판단은 현지 교사 승인(INV-7)",
+      "checks": []
+    },
+    {
+      "id": "E4",
+      "source": "K3 §3",
+      "title": "오개념 대응",
+      "mode": "static_later",
+      "stage": "Q4",
+      "reason": "선택지 → 오개념 표는 Q4 에서 선택지를 만들 때 생긴다 — 그때 정적 검사를 더한다",
+      "checks": []
+    },
+    {
+      "id": "E5",
+      "source": "K3 §3",
+      "title": "문해력 부담",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "text.readability"
+      ],
+      "reason": "정적 검사는 문장 폭·문장 수만 본다. 학년에 맞는 어휘·시험식 어미는 현지 교사 승인(Q8)"
+    },
+    {
+      "id": "E6",
+      "source": "K3 §3",
+      "title": "게임 적합성",
+      "mode": "covered",
+      "stage": "Q2",
+      "covered_by": [
+        "Q2-C2",
+        "Q2-C7"
+      ],
+      "reason": "퀴즈·정의 카드 단계 금지와 행동 → 월드 반응 순서는 잠긴 Q2 검사기가 본다",
+      "checks": []
+    },
+    {
+      "id": "U1",
+      "source": "K4 §8",
+      "title": "360px 폭에서 필수 버튼이 보인다",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "화면을 그려 봐야 안다(스테이징 Play 시험·화면 캡처)",
+      "checks": []
+    },
+    {
+      "id": "U2",
+      "source": "K4 §8",
+      "title": "기본 조이스틱·점프와 커스텀 UI 가 겹치지 않는다",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "기기별 기본 UI 배치를 그려 봐야 안다",
+      "checks": []
+    },
+    {
+      "id": "U3",
+      "source": "K4 §8",
+      "title": "안전영역에 글자가 가리지 않는다",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "노치·홈 인디케이터는 기기에서만 보인다",
+      "checks": []
+    },
+    {
+      "id": "U4",
+      "source": "K4 §8",
+      "title": "세로·가로 모드에서 핵심 UI 유지",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "화면 회전을 실행해 봐야 안다",
+      "checks": []
+    },
+    {
+      "id": "U5",
+      "source": "K4 §8",
+      "title": "한 화면에 주 행동 버튼 1개",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "UI 가 Q4 에서 만들어진다 — 화면 상태별로 센다",
+      "checks": []
+    },
+    {
+      "id": "U6",
+      "source": "K4 §8",
+      "title": "터치·키보드·게임패드로 핵심 미션 완주",
+      "mode": "covered",
+      "stage": "Q2",
+      "covered_by": [
+        "Q2-C7"
+      ],
+      "reason": "입력 3종마다 혼자 끝까지 가는 시나리오를 잠긴 Q2 가 요구한다 — 실제 완주는 Q4 Play 시험",
+      "checks": []
+    },
+    {
+      "id": "U7",
+      "source": "K4 §8",
+      "title": "긴 번역문에서도 UI 가 깨지지 않는다",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "i18n.length_budget"
+      ],
+      "reason": "글자 수 상한은 Q3 정적 검사, 실제로 깨지지 않는지는 Q4 화면 시험"
+    },
+    {
+      "id": "U8",
+      "source": "K4 §8",
+      "title": "색을 안 봐도 정답·위험·역할을 안다",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "색 외 표지(아이콘·패턴)는 UI 를 만든 뒤 화면에서 본다 — 원칙은 정본 값 cv.color_meaning(color_only false)",
+      "checks": []
+    },
+    {
+      "id": "U9",
+      "source": "K4 §8",
+      "title": "게임패드 포커스 순서가 논리적이다",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "포커스 이동을 실행해 봐야 안다",
+      "checks": []
+    },
+    {
+      "id": "U10",
+      "source": "K4 §8",
+      "title": "자막·대비·투명도 설정이 적용된다",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "설정을 켜고 화면을 봐야 안다",
+      "checks": []
+    },
+    {
+      "id": "U11",
+      "source": "K4 §8",
+      "title": "첫 60초 안에 첫 목표·상호작용·보상",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "Q2 는 신호 1(첫 월드 반응)을 60초 안에 둔다. '첫 보상'을 월드 반응으로 볼지 K4 와 K5(첫 큰 보상 3~4분)가 다르다 — Q4 퍼널 실측으로 판정",
+      "checks": []
+    },
+    {
+      "id": "U12",
+      "source": "K4 §8",
+      "title": "실패 뒤 5초 안에 재도전·힌트",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "Q2 는 다른 결과 1번에 힌트 1단계를 둔다 — 5초는 실행 시간이라 Q4 에서 잰다",
+      "checks": []
+    },
+    {
+      "id": "U13",
+      "source": "K4 §8",
+      "title": "친구 없이 핵심 온보딩 통과",
+      "mode": "covered",
+      "stage": "Q2",
+      "covered_by": [
+        "Q2-C7"
+      ],
+      "reason": "필수 미션 혼자(NPC) 완주와 매칭 대기 끝 NPC 를 잠긴 Q2 가 요구한다",
+      "checks": []
+    },
+    {
+      "id": "U14",
+      "source": "K4 §8",
+      "title": "팀원 상태·준비 조건·다음 행동이 보인다",
+      "mode": "runtime",
+      "stage": "Q4",
+      "reason": "협동 UI 가 Q4 에서 만들어진다",
+      "checks": []
+    },
+    {
+      "id": "INV-3",
+      "source": "intent §5",
+      "title": "엔진 코드에 화면 문구 없음·번역 금지 구간",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "i18n.missing_key",
+        "i18n.hardcoded_text",
+        "i18n.do_not_translate"
+      ],
+      "reason": "저장소 파일만 보고 판정할 수 있다 — 검사 i18n.missing_key, i18n.hardcoded_text, i18n.do_not_translate"
+    },
+    {
+      "id": "INV-4",
+      "source": "intent §5",
+      "title": "서버 권위·공정 보상",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "server.reward_authority",
+        "server.duplicate_reward",
+        "server.remote_validation",
+        "server.remote_cooldown",
+        "server.reward_after_verdict"
+      ],
+      "reason": "저장소 파일만 보고 판정할 수 있다 — 검사 server.reward_authority, server.duplicate_reward, server.remote_validation, server.remote_cooldown, server.reward_after_verdict"
+    },
+    {
+      "id": "INV-10",
+      "source": "intent §5",
+      "title": "아동 개인정보 — 허용 이벤트만",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "analytics.calls",
+        "safety.free_text"
+      ],
+      "reason": "저장소 파일만 보고 판정할 수 있다 — 검사 analytics.calls, safety.free_text"
+    },
+    {
+      "id": "INV-11",
+      "source": "intent §5",
+      "title": "세계관 안전 — 금지어",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "safety.banned_terms"
+      ],
+      "reason": "저장소 파일만 보고 판정할 수 있다 — 검사 safety.banned_terms"
+    },
+    {
+      "id": "INV-12",
+      "source": "intent §5",
+      "title": "공정한 수익화 — 무작위·유료 보상 없음",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "safety.random_or_paid_reward"
+      ],
+      "reason": "저장소 파일만 보고 판정할 수 있다 — 검사 safety.random_or_paid_reward"
+    },
+    {
+      "id": "INV-16",
+      "source": "intent §5",
+      "title": "연령 차단 회피 — 외부 링크·런타임 AI·자유 입력 없음",
+      "mode": "static",
+      "stage": "Q3",
+      "checks": [
+        "safety.url",
+        "safety.external_call",
+        "safety.free_text"
+      ],
+      "reason": "저장소 파일만 보고 판정할 수 있다 — 검사 safety.url, safety.external_call, safety.free_text"
+    }
+  ],
+  "defects": [
+    {
+      "id": "D-client-reward",
+      "class": "클라이언트가 보상을 정하는 코드",
+      "expected": [
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "sendCell(2, 1)\nlocal player = game:GetService(\"Players\").LocalPlayer\nplayer.leaderstats.Stars.Value += 1\n"
+        }
+      ]
+    },
+    {
+      "id": "D-duplicate-reward",
+      "class": "중복 보상",
+      "expected": [
+        "server.duplicate_reward",
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\treturn reached\n",
+          "replace": "\tif reached then\n\t\tRewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n\tend\n\treturn reached\n"
+        }
+      ],
+      "note": "판정 함수(coordinateMove) 안에서 보상을 주므로 '서버 판정 뒤에만 보상' 도 함께 깨진다 — 두 검사가 모두 잡는 것이 맞다"
+    },
+    {
+      "id": "D-unvalidated-remote",
+      "class": "검증 없는 원격 입력",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n",
+          "replace": ""
+        }
+      ]
+    },
+    {
+      "id": "D-remote-no-cooldown",
+      "class": "쿨다운 없는 원격 입력",
+      "expected": [
+        "server.remote_cooldown"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif not Cooldown.allow(player, \"signal\") then return end\n",
+          "replace": ""
+        }
+      ]
+    },
+    {
+      "id": "D-broken-key",
+      "class": "끊긴 번역 키",
+      "expected": [
+        "i18n.missing_key"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "\"goal.signal_2\"",
+          "replace": "\"goal.signal_two\""
+        }
+      ]
+    },
+    {
+      "id": "D-long-translation",
+      "class": "넘치는 긴 번역문",
+      "expected": [
+        "i18n.length_budget"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "[Ŀüɱï ŝïĝñàŀ ķàñ]",
+          "replace": "[Ŝēñð Ŀüɱï ţö ţĥē ŝïĝñàŀ ķàñ ƀēƒöŕē ţĥē ĝàţē čŀöŝēŝ]"
+        }
+      ]
+    },
+    {
+      "id": "D-translated-math",
+      "class": "번역된 수식",
+      "expected": [
+        "i18n.do_not_translate"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "→ (2, 1). Ĉööŕðïñàţē.",
+          "replace": "→ (2; 1). Ĉööŕðïñàţē."
+        }
+      ]
+    },
+    {
+      "id": "D-hardcoded-text",
+      "class": "코드 속 하드코딩 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal.Text = \"루미를 신호 칸으로 보내자\""
+        }
+      ]
+    },
+    {
+      "id": "D-wrong-math",
+      "class": "틀린 수학 대사",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "위 1 → (2, 1). 방금",
+          "replace": "위 1 → (1, 2). 방금"
+        },
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "ûƥ 1 → (2, 1). Ĉ",
+          "replace": "ûƥ 1 → (1, 2). Ĉ"
+        },
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    states: [2, 1]\n",
+          "replace": "    states: [1, 2]\n"
+        }
+      ]
+    },
+    {
+      "id": "D-missing-condition",
+      "class": "조건이 빠진 수학 명제",
+      "expected": [
+        "math.conditions"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    states: 2\n    conditions: {run_nonzero: true, same_unit: grid_cell}\n",
+          "replace": "    states: 2\n    conditions: {same_unit: grid_cell}\n"
+        }
+      ]
+    },
+    {
+      "id": "D-hard-sentence",
+      "class": "어려운 문장",
+      "expected": [
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "이 다리가 옆 다리보다 더 가팔라.",
+          "replace": "이 다리는 옆으로 한 칸씩 갈 때마다 높이가 세 칸씩 꾸준히 올라가서 바로 옆에 있는 다리보다 훨씬 더 가팔라 보여."
+        }
+      ]
+    },
+    {
+      "id": "D-banned-term",
+      "class": "금지어",
+      "expected": [
+        "safety.banned_terms"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "도시 언어 게이트가 열렸어!,",
+          "replace": "도시 언어 게이트 입국심사 통과!,"
+        }
+      ]
+    },
+    {
+      "id": "D-random-reward",
+      "class": "무작위 보상 코드",
+      "expected": [
+        "safety.random_or_paid_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\t\towned:SetAttribute(rewardId, true)\n",
+          "replace": "\t\towned:SetAttribute(rewardId, true)\n\t\tif math.random() < 0.1 then\n\t\t\towned:SetAttribute(\"reward.rare_drop\", true)\n\t\tend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-paid-item",
+      "class": "유료 보상 코드",
+      "expected": [
+        "safety.random_or_paid_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})\n\tgame:GetService(\"MarketplaceService\"):PromptProductPurchase(player, 1234567)"
+        }
+      ]
+    },
+    {
+      "id": "D-url",
+      "class": "URL 문자열",
+      "expected": [
+        "safety.url"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "도시 언어 게이트가 열렸어!,",
+          "replace": "도시 언어 게이트가 열렸어! roblox.com/groups 에서 더 보기,"
+        }
+      ]
+    },
+    {
+      "id": "D-llm-call",
+      "class": "런타임 외부 호출(LLM)",
+      "expected": [
+        "safety.external_call"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "local MissionService = {}\n",
+          "replace": "local MissionService = {}\nlocal HttpService = game:GetService(\"HttpService\")\n\nfunction MissionService.askHint(prompt: string)\n\treturn HttpService:RequestAsync({Url = script:GetAttribute(\"HintEndpoint\"), Method = \"POST\", Body = prompt})\nend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-free-text",
+      "class": "필터 없는 자유 입력",
+      "expected": [
+        "safety.free_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Parent = script.Parent\n",
+          "replace": "goal.Parent = script.Parent\n\nlocal answer = Instance.new(\"TextBox\")\nanswer.Parent = script.Parent\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-pii",
+      "class": "커스텀 필드 개인정보",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = player.Name})"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-unknown-event",
+      "class": "허용 밖 분석 이벤트",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics.funnel(player, \"player_profile\", {play_mode = \"solo_npc\"})"
+        }
+      ]
+    },
+    {
+      "id": "D-client-analytics",
+      "class": "클라이언트 분석 전송",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "sendCell(2, 1)\ngame:GetService(\"AnalyticsService\"):LogCustomEvent(game:GetService(\"Players\").LocalPlayer, \"session_start\", 1)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-mapped-outside-src",
+      "class": "Rojo 가 src 밖을 가리키는 매핑",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "default.project.json",
+          "find": "\"StarterPlayer\"",
+          "replace": "\"StarterGui\": {\"Gate\": {\"$path\": \"ui\"}},\n    \"StarterPlayer\""
+        },
+        {
+          "file": "ui/Answer.client.luau",
+          "create": "--!strict\nlocal answer = Instance.new(\"TextBox\")\nanswer.Parent = script.Parent\n"
+        }
+      ],
+      "note": "소스 폴더 밖 매핑은 그 자체로 거부한다 — 검사 범위 밖에 코드를 두지 못하게"
+    },
+    {
+      "id": "D-unreadable-model",
+      "class": "검사할 수 없는 이진 모델",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Widget.rbxm",
+          "create": "<binary model placeholder>\n"
+        }
+      ]
+    },
+    {
+      "id": "D-broken-claims",
+      "class": "망가진 명제 파일",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "claims:\n",
+          "replace": "claims:\n\t- id: claim.tab\n"
+        }
+      ]
+    },
+    {
+      "id": "D-reward-alias",
+      "class": "별칭으로 부른 중복 보상",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "local RewardService = require(script.Parent.RewardService)\n",
+          "replace": "local RewardService = require(script.Parent.RewardService)\nlocal Rewards = require(script.Parent.RewardService)\n"
+        },
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tRewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n",
+          "replace": "\tRewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n\tRewards.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n"
+        }
+      ]
+    },
+    {
+      "id": "D-reward-bypass",
+      "class": "보상 모듈을 거치지 않은 지급",
+      "expected": [
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tRewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n",
+          "replace": "\tRewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n\tplayer.leaderstats.Stars.Value += 10\n"
+        }
+      ]
+    },
+    {
+      "id": "D-remotefunction",
+      "class": "검증 없는 RemoteFunction",
+      "expected": [
+        "server.remote_validation",
+        "server.remote_cooldown"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
+          "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\n\nlocal AnswerRemote = Instance.new(\"RemoteFunction\")\nAnswerRemote.Name = \"AnswerRemote\"\nAnswerRemote.Parent = ReplicatedStorage\n\nAnswerRemote.OnServerInvoke = function(player: Player, x, y)\n\treturn MissionService.coordinateMove(player, {x = x, y = y})\nend\n"
+        },
+        {
+          "file": "content/remote_contracts.yaml",
+          "find": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n",
+          "replace": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n  AnswerRemote:\n    - {name: x, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.x}\n    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n"
+        }
+      ]
+    },
+    {
+      "id": "D-vararg-handler",
+      "class": "가변 인자 원격 처리",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
+          "replace": "SignalRemote.OnServerEvent:Connect(function(player: Player, ...)\n\tif not Cooldown.allow(player, \"signal\") then return end\n\tonSignal(player, ...)\nend)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-nonblocking-typeof",
+      "class": "막지 않는 typeof 검사",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n",
+          "replace": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then warn(\"bad signal input\") end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-client-completion",
+      "class": "클라이언트 완료 신고로 보상",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
+          "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\n\nlocal GateRemote = Instance.new(\"RemoteEvent\")\nGateRemote.Name = \"GateRemote\"\nGateRemote.Parent = ReplicatedStorage\n\nGateRemote.OnServerEvent:Connect(function(player: Player)\n\tif not Cooldown.allow(player, \"gate\") then return end\n\tMissionService.openGate(player)\nend)\n"
+        },
+        {
+          "file": "content/remote_contracts.yaml",
+          "find": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n",
+          "replace": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n  GateRemote: []\n"
+        }
+      ]
+    },
+    {
+      "id": "D-random-helper",
+      "class": "도우미 모듈로 옮긴 무작위 보상",
+      "expected": [
+        "safety.random_or_paid_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Chance.luau",
+          "create": "--!strict\nlocal Chance = {}\n\nlocal rng = Random.new()\n\nfunction Chance.roll(percent: number): boolean\n\treturn rng:NextInteger(1, 100) <= percent\nend\n\nreturn Chance\n"
+        },
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "local Analytics = require(script.Parent.Analytics)\n",
+          "replace": "local Analytics = require(script.Parent.Analytics)\nlocal Chance = require(script.Parent.Chance)\n"
+        },
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tRewardService.grant(player, \"unlock.light_rail_booster\", \"m.gate_open\")\n",
+          "replace": "\tif Chance.roll(10) then\n\t\tRewardService.grant(player, \"unlock.light_rail_booster\", \"m.gate_open\")\n\tend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-premium-gate",
+      "class": "구독 회원 전용 보상",
+      "expected": [
+        "safety.random_or_paid_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tRewardService.grant(player, \"unlock.light_rail_booster\", \"m.gate_open\")\n",
+          "replace": "\tif player.HasRobloxSubscription then\n\t\tRewardService.grant(player, \"unlock.light_rail_booster\", \"m.gate_open\")\n\tend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-textgenerator",
+      "class": "런타임 생성형 AI 대화(TextGenerator)",
+      "expected": [
+        "safety.external_call"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "local MissionService = {}\n",
+          "replace": "local MissionService = {}\nlocal generator = Instance.new(\"TextGenerator\")\n\nfunction MissionService.hint(prompt: string)\n\treturn generator:GenerateTextAsync({UserPrompt = prompt})\nend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-model-textbox",
+      "class": "데이터 파일로 만든 자유 입력",
+      "expected": [
+        "safety.free_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Answer.model.json",
+          "create": "{\n  \"$className\": \"TextBox\"\n}\n"
+        }
+      ]
+    },
+    {
+      "id": "D-ui-text-literal",
+      "class": "UI 글자 속성에 바로 넣은 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal.Text = \"Start\""
+        }
+      ]
+    },
+    {
+      "id": "D-text-alias",
+      "class": "별칭으로 부른 끊긴 번역 키",
+      "expected": [
+        "i18n.missing_key"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "local Text = require(ReplicatedStorage.Shared.Text)\n",
+          "replace": "local Text = require(ReplicatedStorage.Shared.Text)\nlocal T = require(ReplicatedStorage.Shared.Text)\n"
+        },
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Parent = script.Parent\n",
+          "replace": "goal.Parent = script.Parent\n\nlocal extra = Instance.new(\"TextLabel\")\nextra.Text = T.get(\"goal.missing\")\nextra.Parent = script.Parent\n"
+        }
+      ]
+    },
+    {
+      "id": "D-untied-math-line",
+      "class": "명제 없는 수학 대사",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "resp.gate_open,",
+          "replace": "label.extra.line,옆으로 2칸 가면 3칸 올라가서 기울기는 3야.,이름표 대사,,[Ŕûñ 2 ŕïŝē 3 → ŝŀöƥē 3.]\nresp.gate_open,"
+        }
+      ]
+    },
+    {
+      "id": "D-funnel-as-custom",
+      "class": "퍼널 단계를 사용자 정의로 전송",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics.log(player, \"gate_opened\", {play_mode = \"solo_npc\"})"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-alias",
+      "class": "별칭으로 부른 허용 밖 분석 이벤트",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "local Analytics = require(script.Parent.Analytics)\n",
+          "replace": "local Analytics = require(script.Parent.Analytics)\nlocal tracker = Analytics\n"
+        },
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})\n\ttracker.log(player, \"player_profile\", {play_mode = \"solo_npc\"})"
+        }
+      ]
+    },
+    {
+      "id": "D-unranged-remote",
+      "class": "범위를 검사하지 않는 원격 입력",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n",
+          "replace": ""
+        }
+      ]
+    },
+    {
+      "id": "D-late-guard",
+      "class": "입력을 쓴 뒤에 하는 검증",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n\tif not Cooldown.allow(player, \"signal\") then return end\n",
+          "replace": "\tif not Cooldown.allow(player, \"signal\") then return end\n"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-ignored-cooldown",
+      "class": "결과를 버리는 쿨다운",
+      "expected": [
+        "server.remote_cooldown"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif not Cooldown.allow(player, \"signal\") then return end\n",
+          "replace": "\tCooldown.allow(player, \"signal\")\n"
+        }
+      ]
+    },
+    {
+      "id": "D-late-cooldown",
+      "class": "처리 뒤에 하는 쿨다운",
+      "expected": [
+        "server.remote_cooldown"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif not Cooldown.allow(player, \"signal\") then return end\n",
+          "replace": ""
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\t\tMissionService.openGate(player)\n",
+          "replace": "\t\tMissionService.openGate(player)\n\t\tif not Cooldown.allow(player, \"signal\") then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-concat-authority",
+      "class": "문자열을 쪼개 숨긴 보상 권한",
+      "expected": [
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "sendCell(2, 1)\nlocal player = game:GetService(\"Players\").LocalPlayer\nplayer[\"leader\" .. \"stats\"].Stars.Value += 1\n"
+        }
+      ]
+    },
+    {
+      "id": "D-concat-free-text",
+      "class": "문자열을 쪼개 숨긴 자유 입력",
+      "expected": [
+        "safety.free_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Parent = script.Parent\n",
+          "replace": "goal.Parent = script.Parent\n\nlocal answer = Instance.new(\"Text\" .. \"Box\")\nanswer.Parent = script.Parent\n"
+        }
+      ]
+    },
+    {
+      "id": "D-concat-url",
+      "class": "문자열을 쪼개 숨긴 외부 링크",
+      "expected": [
+        "i18n.hardcoded_text",
+        "safety.url"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "sendCell(2, 1)\nlocal link = \"https\" .. \"://example\" .. \".com/join\"\n"
+        }
+      ],
+      "note": "코드에 적은 URL 은 문구 키를 거치지 않은 문자열이기도 하다 — 두 검사가 모두 잡는 것이 맞다"
+    },
+    {
+      "id": "D-zero-width-banned",
+      "class": "폭 0 문자를 끼운 금지어",
+      "expected": [
+        "safety.banned_terms"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "도시 언어 게이트가 열렸어!,",
+          "replace": "도시 언어 게이트 입​국심사 통과!,"
+        }
+      ]
+    },
+    {
+      "id": "D-bracket-ui-text",
+      "class": "대괄호로 넣은 UI 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal[\"Text\"] = \"Ready\""
+        }
+      ]
+    },
+    {
+      "id": "D-absolute-path",
+      "class": "절대 경로를 쓴 Rojo 프로젝트",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "default.project.json",
+          "find": "\"$path\": \"src/client\"",
+          "replace": "\"$path\": \"/tmp/gate-ui\""
+        }
+      ]
+    },
+    {
+      "id": "D-impossible-range",
+      "class": "성립할 수 없는 범위 조건",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n",
+          "replace": "\tif x < -GRID and x > GRID and y < -GRID and y > GRID then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-one-sided-range",
+      "class": "한쪽만 보는 범위 조건",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n",
+          "replace": "\tif x > GRID or y > GRID then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-inverted-cooldown",
+      "class": "뒤집힌 쿨다운 조건",
+      "expected": [
+        "server.remote_cooldown"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif not Cooldown.allow(player, \"signal\") then return end\n",
+          "replace": "\tif Cooldown.allow(player, \"signal\") then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-bracket-remote",
+      "class": "대괄호로 등록한 원격 처리",
+      "expected": [
+        "server.remote_validation",
+        "server.remote_cooldown"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
+          "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\n\nlocal Extra = Instance.new(\"RemoteEvent\")\nExtra.Name = \"ExtraRemote\"\nExtra.Parent = ReplicatedStorage\nExtra[\"OnServerEvent\"]:Connect(function(player: Player, n)\n\tMissionService.coordinateMove(player, {x = n, y = n})\nend)\n"
+        },
+        {
+          "file": "content/remote_contracts.yaml",
+          "find": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n",
+          "replace": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n  Extra:\n    - {name: n, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.x}\n"
+        }
+      ]
+    },
+    {
+      "id": "D-negated-verdict",
+      "class": "판정이 거짓인 가지에서 보상",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tif not MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-bracket-grant",
+      "class": "대괄호로 부른 보상",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tRewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n",
+          "replace": "\tRewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n\tRewardService[\"grant\"](player, \"reward.explorer_card\", \"m.gate_open\")\n"
+        }
+      ]
+    },
+    {
+      "id": "D-untied-comparison",
+      "class": "대사와 묶이지 않은 비교 명제",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    states_text: 더 가팔라\n",
+          "replace": ""
+        }
+      ]
+    },
+    {
+      "id": "D-untied-fraction",
+      "class": "대사와 묶이지 않은 분수 값",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    rise: 2\n    run: 1\n    states: 2\n",
+          "replace": "    rise: 1\n    run: 3\n    states: '1/3'\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-method-alias",
+      "class": "전송 함수를 담은 이름으로 보낸 분석",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "local Analytics = require(script.Parent.Analytics)\n",
+          "replace": "local Analytics = require(script.Parent.Analytics)\nlocal send = Analytics.log\n"
+        },
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})\n\tsend(player, \"player_profile\", {play_mode = \"solo_npc\"})"
+        }
+      ]
+    },
+    {
+      "id": "D-unknown-analytics-function",
+      "class": "분석 모듈의 모르는 함수",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})\n\tAnalytics.raw(player, \"gate_opened\")"
+        }
+      ]
+    },
+    {
+      "id": "D-ui-text-variable",
+      "class": "변수로 넣은 UI 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "local label = \"Open_Gate\"\ngoal.Text = label"
+        }
+      ]
+    },
+    {
+      "id": "D-content-mapped",
+      "class": "검사 입력 폴더를 Rojo 에 실음",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "default.project.json",
+          "find": "\"ReplicatedStorage\": {\"Shared\": {\"$path\": \"src/shared\"}}",
+          "replace": "\"ReplicatedStorage\": {\"Shared\": {\"$path\": \"src/shared\"}, \"Content\": {\"$path\": \"content\"}}"
+        }
+      ]
+    },
+    {
+      "id": "D-else-reward",
+      "class": "판정의 else 가지에서 보상",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tlocal ok = true\n\telse\n\t\tMissionService.openGate(player)\n\tend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-anonymous-reward-helper",
+      "class": "익명 함수에 담은 보상 도우미",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "local MissionService = {}\n",
+          "replace": "local MissionService = {}\n\nlocal award = function(player: Player)\n\tRewardService.grant(player, \"reward.coop_trail\", \"m.signal_slope\")\nend\n"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n\tMissionService.award(player)\n"
+        },
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "MissionService.award = award\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-nested-guard",
+      "class": "중첩 조건 안에서만 하는 검증",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n",
+          "replace": "\tif player.Parent then\n\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n\tend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-badge-bypass",
+      "class": "보상 모듈을 거치지 않은 자격 발급",
+      "expected": [
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tRewardService.grant(player, \"reward.explorer_badge\", \"m.gate_open\")\n",
+          "replace": "\tRewardService.grant(player, \"reward.explorer_badge\", \"m.gate_open\")\n\tgame:GetService(\"BadgeService\"):AwardBadge(player.UserId, 123)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-module-literal",
+      "class": "분석 모듈이 글자 그대로 보내는 이벤트",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
+          "replace": "\tAnalyticsService:LogCustomEvent(player, \"player_profile\", 1, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-module-pii",
+      "class": "분석 모듈 안의 개인정보",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
+          "replace": "\tfields.who = player.Name\n\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-text-function-alias",
+      "class": "문구 함수를 담은 이름으로 쓴 끊긴 키",
+      "expected": [
+        "i18n.missing_key"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "local Text = require(ReplicatedStorage.Shared.Text)\n",
+          "replace": "local Text = require(ReplicatedStorage.Shared.Text)\nlocal get = Text.get\n"
+        },
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Parent = script.Parent\n",
+          "replace": "goal.Parent = script.Parent\n\nlocal extra = Instance.new(\"TextLabel\")\nextra.Text = get(\"goal.missing\")\nextra.Parent = script.Parent\n"
+        }
+      ]
+    },
+    {
+      "id": "D-wrong-type-guard",
+      "class": "계약과 다른 종류로 한 검사",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n",
+          "replace": "\tif typeof(x) ~= \"string\" or typeof(y) ~= \"string\" then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-wide-range",
+      "class": "계약보다 넓은 범위 가드",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local GRID = 2",
+          "replace": "local GRID = 9999"
+        }
+      ]
+    },
+    {
+      "id": "D-contract-off-canonical",
+      "class": "정본 값과 다른 입력 계약",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "content/remote_contracts.yaml",
+          "find": "min: -2, max: 2, canonical: cv.coordinate_expression.grid.x",
+          "replace": "min: -9, max: 9, canonical: cv.coordinate_expression.grid.x"
+        }
+      ]
+    },
+    {
+      "id": "D-missing-contract",
+      "class": "계약 없는 원격 입력",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "content/remote_contracts.yaml",
+          "find": "  SignalRemote:\n",
+          "replace": "  OtherRemote:\n"
+        }
+      ]
+    },
+    {
+      "id": "D-cooldown-with-extra-condition",
+      "class": "다른 조건과 섞인 쿨다운",
+      "expected": [
+        "server.remote_cooldown"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif not Cooldown.allow(player, \"signal\") then return end\n",
+          "replace": "\tif not Cooldown.allow(player, \"signal\") and player.UserId == 0 then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-alias-grant-in-handler",
+      "class": "처리 함수 안의 별칭 보상",
+      "expected": [
+        "server.reward_after_verdict",
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local MissionService = require(script.Parent.MissionService)\n",
+          "replace": "local MissionService = require(script.Parent.MissionService)\nlocal R = require(script.Parent.RewardService)\n"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n\tR.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n"
+        }
+      ]
+    },
+    {
+      "id": "D-equals-false-verdict",
+      "class": "판정이 거짓(== false)인 가지에서 보상",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) == false then\n\t\tMissionService.openGate(player)\n\tend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-bare-number-math",
+      "class": "명제 없는 숫자 수학 대사",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "resp.gate_open,",
+          "replace": "label.extra.sum,신호 2 + 2 = 4 가 되면 문이 열려.,이름표 대사,,[2 + 2 = 4 öƥēñŝ.]\nresp.gate_open,"
+        }
+      ]
+    },
+    {
+      "id": "D-work-before-guard",
+      "class": "받은 값을 담은 뒤에 하는 검증",
+      "expected": [
+        "server.remote_cooldown",
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n",
+          "replace": "\tlocal sum = x + y\n\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n"
+        }
+      ],
+      "note": "받은 값을 담는 것이 처리의 시작이므로 쿨다운도 '처리 뒤'가 된다 — 두 검사가 모두 잡는 것이 맞다"
+    },
+    {
+      "id": "D-inclusive-bound",
+      "class": "경계를 하나 더 거르는 범위 가드",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n",
+          "replace": "\tif x <= -GRID or x >= GRID or y <= -GRID or y >= GRID then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-verdict-or-true",
+      "class": "다른 조건과 섞인 판정",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) or true then\n\t\tMissionService.openGate(player)\n\tend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-two-step-grant-alias",
+      "class": "두 단계로 넘긴 보상 별칭",
+      "expected": [
+        "server.duplicate_reward",
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local MissionService = require(script.Parent.MissionService)\n",
+          "replace": "local MissionService = require(script.Parent.MissionService)\nlocal R = require(script.Parent.RewardService)\nlocal g = R.grant\nlocal h = g\n"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n\th(player, \"reward.explorer_card\", \"m.gate_open\")\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-dot-call",
+      "class": "점 표기로 부른 플랫폼 분석 API",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
+          "replace": "\tAnalyticsService.LogCustomEvent(AnalyticsService, player, \"player_profile\", 1, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-player-alias-pii",
+      "class": "플레이어 별칭으로 넣은 개인정보",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
+          "replace": "\tlocal p = player\n\tfields.who = p.Name\n\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-text-alias-chain",
+      "class": "두 단계로 넘긴 문구 함수",
+      "expected": [
+        "i18n.missing_key"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "local Text = require(ReplicatedStorage.Shared.Text)\n",
+          "replace": "local Text = require(ReplicatedStorage.Shared.Text)\nlocal get = Text.get\nlocal use = get\n"
+        },
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Parent = script.Parent\n",
+          "replace": "goal.Parent = script.Parent\n\nlocal extra = Instance.new(\"TextLabel\")\nextra.Text = use(\"goal.missing\")\nextra.Parent = script.Parent\n"
+        }
+      ]
+    },
+    {
+      "id": "D-variable-class-name",
+      "class": "변수로 조립한 인스턴스 이름",
+      "expected": [
+        "safety.free_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Parent = script.Parent\n",
+          "replace": "goal.Parent = script.Parent\n\nlocal head = \"Text\"\nlocal tail = \"Box\"\nlocal answer = Instance.new(head .. tail)\nanswer.Parent = script.Parent\n"
+        }
+      ]
+    },
+    {
+      "id": "D-variable-url",
+      "class": "변수로 조립한 외부 링크",
+      "expected": [
+        "i18n.hardcoded_text",
+        "safety.url"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "sendCell(2, 1)\nlocal scheme = \"https\"\nlocal host = \"://example.com\"\nlocal link = scheme .. host\n"
+        }
+      ],
+      "note": "코드에 적은 URL 조각은 문구 키를 거치지 않은 문자열이기도 하다"
+    },
+    {
+      "id": "D-double-mapped-file",
+      "class": "같은 파일을 두 곳에 싣는 매핑",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "default.project.json",
+          "find": "\"StarterPlayer\"",
+          "replace": "\"StarterGui\": {\"Shared\": {\"$path\": \"src/shared\"}},\n    \"StarterPlayer\""
+        }
+      ]
+    },
+    {
+      "id": "D-indirect-reward-helper",
+      "class": "간접 도우미를 거친 보상",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "function MissionService.finish(player: Player)\n\tMissionService.openGate(player)\nend\n\nreturn MissionService\n"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tMissionService.finish(player)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-dynamic-remote-member",
+      "class": "변수로 만든 대괄호 원격 등록",
+      "expected": [
+        "server.remote_validation",
+        "server.remote_cooldown"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
+          "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\n\nlocal Extra = Instance.new(\"RemoteEvent\")\nExtra.Name = \"ExtraRemote\"\nExtra.Parent = ReplicatedStorage\nlocal eventName = \"OnServerEvent\"\nExtra[eventName]:Connect(function(player: Player, n)\n\tMissionService.coordinateMove(player, {x = n, y = n})\nend)\n"
+        },
+        {
+          "file": "content/remote_contracts.yaml",
+          "find": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n",
+          "replace": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n  Extra:\n    - {name: n, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.x}\n"
+        }
+      ]
+    },
+    {
+      "id": "D-unknown-remote-member",
+      "class": "값을 알 수 없는 멤버에 건 원격 처리",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
+          "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\nSignalRemote[pickEvent()]:Connect(onSignal)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-two-step-alias",
+      "class": "두 단계로 넘긴 분석 전송 함수",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "local Analytics = require(script.Parent.Analytics)\n",
+          "replace": "local Analytics = require(script.Parent.Analytics)\nlocal send = Analytics.log\nlocal send2 = send\n"
+        },
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})\n\tsend2(player, \"player_profile\", {play_mode = \"solo_npc\"})"
+        }
+      ]
+    },
+    {
+      "id": "D-dynamic-text-member",
+      "class": "변수로 고른 문구 함수",
+      "expected": [
+        "i18n.missing_key"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Parent = script.Parent\n",
+          "replace": "goal.Parent = script.Parent\n\nlocal method = \"get\"\nlocal extra = Instance.new(\"TextLabel\")\nextra.Text = Text[method](\"goal.missing\")\nextra.Parent = script.Parent\n"
+        }
+      ]
+    },
+    {
+      "id": "D-untied-boolean-claim",
+      "class": "대사와 묶이지 않은 참·거짓 명제",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    states_text: 위에 있어\n",
+          "replace": ""
+        }
+      ]
+    },
+    {
+      "id": "D-same-service-double-map",
+      "class": "같은 서비스 안의 중복 매핑",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "default.project.json",
+          "find": "\"ReplicatedStorage\": {\"Shared\": {\"$path\": \"src/shared\"}}",
+          "replace": "\"ReplicatedStorage\": {\"Shared\": {\"$path\": \"src/shared\"}, \"Again\": {\"$path\": \"src/shared\"}}"
+        }
+      ]
+    },
+    {
+      "id": "D-unresolved-ui-text",
+      "class": "UI 로 흘러가는 알 수 없는 조립 글자",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal.Text = getScheme() .. getHost()"
+        }
+      ]
+    },
+    {
+      "id": "D-claimonce-not-called",
+      "class": "호출하지 않은 중복 방지",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\tif not claimOnce(player, missionId .. \"|\" .. rewardId) then return end\n",
+          "replace": "\tif not claimOnce then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-verdict-then-grant-outside",
+      "class": "판정을 부르고 바깥에서 보상",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\treturn reached\n",
+          "replace": "\tRewardService.grant(player, \"reward.coop_trail\", \"m.signal_slope\")\n\treturn reached\n"
+        }
+      ]
+    },
+    {
+      "id": "D-range-before-type",
+      "class": "타입보다 앞선 범위 검사",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n",
+          "replace": "\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-dynamic-reward-member",
+      "class": "값을 알 수 없는 보상 멤버",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tRewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")\n",
+          "replace": "\tRewardService[pickMethod()](player, \"reward.explorer_card\", \"m.gate_open\")\n"
+        }
+      ]
+    },
+    {
+      "id": "D-dynamic-text-member-unresolved",
+      "class": "값을 알 수 없는 문구 멤버",
+      "expected": [
+        "i18n.hardcoded_text",
+        "i18n.missing_key"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal.Text = Text[pickMethod()](\"goal.signal_2\")"
+        }
+      ],
+      "note": "값을 알 수 없는 멤버 호출이므로 어떤 키인지도, 허용된 문구 키 호출인지도 알 수 없다 — 두 검사가 모두 잡는 것이 맞다"
+    },
+    {
+      "id": "D-dynamic-analytics-member",
+      "class": "값을 알 수 없는 분석 멤버",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics[pickMethod()](player, \"gate_opened\", {play_mode = \"solo_npc\"})"
+        }
+      ]
+    },
+    {
+      "id": "D-platform-api-alias",
+      "class": "플랫폼 전송 함수를 담은 이름",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "local Analytics = require(script.Parent.Analytics)\n",
+          "replace": "local Analytics = require(script.Parent.Analytics)\nlocal AnalyticsService = game:GetService(\"AnalyticsService\")\nlocal send = AnalyticsService.LogCustomEvent\n"
+        },
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})",
+          "replace": "\tAnalytics.funnel(player, \"gate_opened\", {play_mode = \"solo_npc\"})\n\tsend(AnalyticsService, player, \"player_profile\", 1)"
+        }
+      ]
+    },
+    {
+      "id": "D-ftp-url",
+      "class": "다른 스킴의 외부 링크",
+      "expected": [
+        "safety.url"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "도시 언어 게이트가 열렸어!,",
+          "replace": "도시 언어 게이트가 열렸어! ftp://example.xyz 에서 더 보기,"
+        }
+      ]
+    },
+    {
+      "id": "D-double-negated-cooldown",
+      "class": "두 번 뒤집은 쿨다운",
+      "expected": [
+        "server.remote_cooldown"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif not Cooldown.allow(player, \"signal\") then return end\n",
+          "replace": "\tif not not Cooldown.allow(player, \"signal\") then return end\n"
+        }
+      ]
+    },
+    {
+      "id": "D-reassigned-grid",
+      "class": "다시 묶인 범위 상수",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local GRID = 2",
+          "replace": "local GRID = 2\nGRID = 9999"
+        }
+      ]
+    },
+    {
+      "id": "D-dynamic-authority-member",
+      "class": "동적 멤버로 쓴 보상 권한",
+      "expected": [
+        "safety.external_call",
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "sendCell(2, 1)\nlocal player = game:GetService(\"Players\").LocalPlayer\nplayer[pickField()].Value += 1\n"
+        }
+      ],
+      "note": "서비스 멤버를 값을 알 수 없는 방식으로 고르면 보상 권한인지도, 외부 호출인지도 알 수 없다 — 두 검사가 모두 맞다"
+    },
+    {
+      "id": "D-term-line-without-claim",
+      "class": "숫자 없는 용어 대사에 명제 없음",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "resp.gate_open,",
+          "replace": "hint.slope.extra,기울기가 더 가팔라.,힌트,,[Ŝţēēƥēŕ.]\nresp.gate_open,"
+        }
+      ]
+    },
+    {
+      "id": "D-fraction-line-untied",
+      "class": "대사와 묶이지 않은 분수 계수",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    line: {m: 2, b: 1}\n",
+          "replace": "    line: {m: '1/2', b: 4}\n"
+        },
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    point: [2, 5]\n",
+          "replace": "    point: [2, 5]\n"
+        }
+      ]
+    },
+    {
+      "id": "D-interpolated-string",
+      "class": "보간 문자열 안의 코드",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\t\towned:SetAttribute(rewardId, true)\n",
+          "replace": "\t\towned:SetAttribute(rewardId, true)\n\t\tprint(`gave {rewardId}`)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-project-tree-not-object",
+      "class": "구조가 틀린 Rojo 프로젝트",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "default.project.json",
+          "find": "\"tree\": {\n    \"$className\": \"DataModel\",",
+          "replace": "\"tree\": [{\n    \"$className\": \"DataModel\","
+        },
+        {
+          "file": "default.project.json",
+          "find": "{\"Gate\": {\"$path\": \"src/client\"}}}\n  }\n}",
+          "replace": "{\"Gate\": {\"$path\": \"src/client\"}}}\n  }]\n}"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-module-constant-event",
+      "class": "분석 모듈이 상수 변수로 보낸 이벤트",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
+          "replace": "\tlocal BAD = \"not_allowed\"\n\tAnalyticsService:LogCustomEvent(player, BAD, 1, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-random-alias-chain",
+      "class": "별칭으로 부른 난수",
+      "expected": [
+        "safety.random_or_paid_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\t\towned:SetAttribute(rewardId, true)\n",
+          "replace": "\t\towned:SetAttribute(rewardId, true)\n\t\tlocal m = math\n\t\tlocal r = m.random\n\t\tif r() < 0.1 then\n\t\t\towned:SetAttribute(\"reward.rare_drop\", true)\n\t\tend\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-computed-event",
+      "class": "어디서 왔는지 알 수 없는 분석 이벤트",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
+          "replace": "\tAnalyticsService:LogCustomEvent(player, getEvent(), 1, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-ui-text-from-function",
+      "class": "함수가 만든 UI 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "local msg = getA() .. getB()\ngoal.Text = msg"
+        }
+      ]
+    },
+    {
+      "id": "D-player-alias-dynamic-authority",
+      "class": "플레이어 별칭의 동적 권한 접근",
+      "expected": [
+        "i18n.hardcoded_text",
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "sendCell(2, 1)\nlocal player = game:GetService(\"Players\").LocalPlayer\nlocal p = player\nlocal key = getKey()\np[key] = 1\n"
+        }
+      ],
+      "note": "속성 이름을 값을 알 수 없는 방식으로 고르면 보상 권한인지도, 화면 문구 속성인지도 알 수 없다 — 두 검사가 모두 맞다"
+    },
+    {
+      "id": "D-reassigned-grid-after-block",
+      "class": "블록 끝 뒤에 다시 묶인 상수",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
+          "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\nGRID = 9999\n"
+        }
+      ]
+    },
+    {
+      "id": "D-ui-text-from-other-function",
+      "class": "허용 밖 함수가 만든 UI 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal.Text = getText(\"label\")"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-concat-event",
+      "class": "이어 붙인 분석 이벤트 이름",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
+          "replace": "\tAnalyticsService:LogCustomEvent(player, eventName .. \"_bad\", 1, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-coordinate-fractional-move",
+      "class": "대사에 없는 분수 이동량",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    moves: [{dir: right, n: 2}, {dir: up, n: 1}]\n    states: [2, 1]\n",
+          "replace": "    moves: [{dir: right, n: 1/2}, {dir: left, n: 1/2}]\n    states: [0, 0]\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-platform-alias-inside",
+      "class": "분석 모듈 안의 플랫폼 전송 별칭",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\tAnalyticsService:LogOnboardingFunnelStepEvent(player, FUNNEL_STEPS[stepName], stepName, pack(fields))",
+          "replace": "\tlocal send = AnalyticsService.LogOnboardingFunnelStepEvent\n\tsend(AnalyticsService, player, FUNNEL_STEPS[stepName], stepName, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-remote-receiver-unresolved",
+      "class": "값을 알 수 없는 변수에 건 원격 처리",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)\n",
+          "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\nlocal evt = SignalRemote:WaitForChild(\"Extra\")\nevt:Connect(onSignal)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-reward-module-impostor",
+      "class": "이름만 보상 모듈인 Script",
+      "expected": [
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.server.luau",
+          "create": "--!strict\n-- 이름만 보상 모듈인 Script — 권한을 쓰면서 검사를 비켜 간다\nlocal BadgeService = game:GetService(\"BadgeService\")\n\nlocal function give(player: Player)\n\tBadgeService:AwardBadge(player.UserId, 1)\nend\n\ngive(nil)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-dynamic-service-call",
+      "class": "값을 알 수 없는 서비스·메서드 호출",
+      "expected": [
+        "safety.external_call"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\n",
+          "replace": "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\nlocal svc = game:GetService(script.Name)\nsvc[script.ClassName]({})\n"
+        }
+      ]
+    },
+    {
+      "id": "D-client-grant-call",
+      "class": "클라이언트가 부른 보상 지급",
+      "expected": [
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "local RewardService = require(ReplicatedStorage.Shared.RewardService)\nRewardService.grant(nil, \"explorer_card\", \"mission.signal_2\")\nsendCell(2, 1)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-ui-bracket-unresolved-property",
+      "class": "값을 알 수 없는 UI 속성 이름",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal[pickProp()] = Text.get(\"goal.signal_2\")"
+        }
+      ]
+    },
+    {
+      "id": "D-conditions-not-a-table",
+      "class": "표가 아닌 조건",
+      "expected": [
+        "math.conditions"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    conditions: {origin: [0, 0], axes: x_right_y_up}\n",
+          "replace": "    conditions: 1\n"
+        }
+      ]
+    },
+    {
+      "id": "D-bracket-property-non-instance",
+      "class": "비인스턴스 객체의 알 수 없는 속성 이름",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "script.Parent[pickProp()] = Text.get(\"goal.signal_2\")"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-module-impostor",
+      "class": "이름만 분석 모듈인 Script",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.server.luau",
+          "create": "--!strict\n-- 이름만 분석 모듈인 Script — 플랫폼 API 를 직접 쓰면서 검사를 비켜 간다\nlocal AnalyticsService = game:GetService(\"AnalyticsService\")\n\nlocal Analytics = {}\n\nfunction Analytics.send(player: Player, name: string)\n\tAnalyticsService:LogCustomEvent(player, name, 1, {})\nend\n\nreturn Analytics\n"
+        }
+      ]
+    },
+    {
+      "id": "D-random-alias-dynamic-member",
+      "class": "난수 원천 별칭의 동적 멤버",
+      "expected": [
+        "safety.random_or_paid_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local R = math\nlocal method = script.Name\nR[method](1, 2)\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-project-path-not-a-string",
+      "class": "글자가 아닌 Rojo $path",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "default.project.json",
+          "find": "\"$path\": \"src/server\"",
+          "replace": "\"$path\": [\"src/server\"]"
+        }
+      ]
+    },
+    {
+      "id": "D-dynamic-member-handler",
+      "class": "동적 멤버에 대입한 원격 처리",
+      "expected": [
+        "i18n.hardcoded_text",
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)",
+          "replace": "local method = script.Name\nSignalRemote[method] = function(player: Player, x: unknown, y: unknown)\n\tMissionService.openGate(player)\nend"
+        }
+      ],
+      "note": "속성 이름을 알 수 없으면 화면 문구인지도, 어떤 원격인지도 알 수 없다 — 두 검사가 모두 맞다"
+    },
+    {
+      "id": "D-analytics-dynamic-platform-member",
+      "class": "분석 모듈 안의 동적 플랫폼 멤버",
+      "expected": [
+        "analytics.calls",
+        "safety.external_call"
+      ],
+      "note": "플랫폼 서비스의 멤버를 값을 알 수 없는 방식으로 부르면 어떤 전송 함수인지도, 어떤 외부 호출인지도 알 수 없다 — 두 검사가 모두 맞다",
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
+          "replace": "\tlocal method = script.Name\n\tAnalyticsService[method](player, eventName, 1, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-ui-text-from-bracket-call",
+      "class": "대괄호 멤버로 부른 UI 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "local method = script.Name\ngoal.Text = translator[method](\"goal.signal_2\")"
+        }
+      ]
+    },
+    {
+      "id": "D-direct-require-grant",
+      "class": "직접 require 로 부른 보상 지급",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend",
+          "replace": "\trequire(script.Parent.RewardService).grant(player, \"explorer_card\", \"mission.signal_2\")"
+        }
+      ]
+    },
+    {
+      "id": "D-direct-require-analytics",
+      "class": "직접 require 로 부른 분석 이벤트",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "require(script.Parent.Analytics).log(nil, \"not_allowed_event\", {})\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-direct-require-text-key",
+      "class": "직접 require 로 부른 끊긴 번역 키",
+      "expected": [
+        "i18n.missing_key"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local label = require(script.Parent.Parent.shared.Text).get(\"goal.missing_key\")\nprint(label)\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-dynamic-table-field",
+      "class": "값을 알 수 없는 키로 읽은 표 입력",
+      "expected": [
+        "server.remote_validation"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local GRID = 2",
+          "replace": "local PayloadRemote = Instance.new(\"RemoteEvent\")\nPayloadRemote.Name = \"PayloadRemote\"\nPayloadRemote.Parent = ReplicatedStorage\n\nlocal GRID = 2"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)",
+          "replace": "local function onPayload(player: Player, payload: unknown)\n\tif typeof(payload) ~= \"table\" then return end\n\tif not Cooldown.allow(player, \"payload\") then return end\n\tlocal key = script.Name\n\tprint((payload :: any)[key])\nend\nPayloadRemote.OnServerEvent:Connect(onPayload)\nSignalRemote.OnServerEvent:Connect(onSignal)"
+        },
+        {
+          "file": "content/remote_contracts.yaml",
+          "find": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n",
+          "replace": "    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n  PayloadRemote:\n    - {name: payload, type: table, fields: [{name: x, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.x}]}\n"
+        }
+      ]
+    },
+    {
+      "id": "D-assembled-external-name",
+      "class": "조립해 만든 외부 호출 이름",
+      "expected": [
+        "safety.external_call"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local head = \"Text\"\nlocal name = head .. \"Generator\"\nprint(name)\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-assembled-paid-name",
+      "class": "조립해 만든 유료 서비스 이름",
+      "expected": [
+        "safety.random_or_paid_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local head = \"Marketplace\"\nlocal name = head .. \"Service\"\nlocal svc = game:GetService(name)\nsvc:UserOwnsGamePassAsync(1, 2)\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-fullwidth-sentence-count",
+      "class": "전각 종결 부호로 숨긴 긴 문구",
+      "expected": [
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "goal.signal_2,루미를 신호 칸으로 보내자,HUD 목표,,[Ŀüɱï ŝïĝñàŀ ķàñ]",
+          "replace": "goal.signal_2,가자!또!또！또？,HUD 목표,,[Ŀüɱï ŝïĝñàŀ ķàñ]"
+        }
+      ]
+    },
+    {
+      "id": "D-reward-module-in-a-table",
+      "class": "표에 담은 보상 모듈",
+      "expected": [
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local services = {RewardService = require(script.Parent.RewardService)}\nprint(services)\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-module-in-a-table",
+      "class": "표에 담은 분석 모듈",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local services = {Analytics = require(script.Parent.Analytics)}\nprint(services)\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-text-module-in-a-table",
+      "class": "표에 담은 문구 모듈",
+      "expected": [
+        "i18n.missing_key"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "local modules = {Text = require(ReplicatedStorage.Shared.Text)}\nprint(modules)\nsendCell(2, 1)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-mapping-escapes-src",
+      "class": "src 밖으로 빠져나가는 매핑",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "outside/Sneak.luau",
+          "create": "--!strict\n-- 검사 범위 밖에 둔 코드\nreturn {}\n"
+        },
+        {
+          "file": "default.project.json",
+          "find": "\"StarterPlayer\"",
+          "replace": "\"Workspace\": {\"Sneak\": {\"$path\": \"src/../outside\"}},\n    \"StarterPlayer\""
+        }
+      ]
+    },
+    {
+      "id": "D-dynamic-member-handler-name",
+      "class": "동적 멤버에 대입한 처리 함수 이름",
+      "expected": [
+        "i18n.hardcoded_text",
+        "server.remote_validation"
+      ],
+      "note": "속성 이름을 값을 알 수 없는 방식으로 고르면 어떤 원격인지도, 화면 문구 속성인지도 알 수 없다 — 두 검사가 모두 맞다",
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)",
+          "replace": "local method = script.Name\nlocal handler = onSignal\nSignalRemote[method] = handler"
+        }
+      ]
+    },
+    {
+      "id": "D-claim-once-does-nothing",
+      "class": "이름만 맞는 claimOnce",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\tlocal slot = tostring(player.UserId) .. \"|\" .. key\n\tif claimed[slot] then\n\t\treturn false\n\tend\n\tclaimed[slot] = true\n\treturn true\n",
+          "replace": "\treturn true\n"
+        }
+      ]
+    },
+    {
+      "id": "D-key-call-with-extra-assembly",
+      "class": "문구 키 호출 뒤에 덧붙인 조립",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal.Text = Text.get(\"goal.signal_2\") .. a .. b .. c .. d .. e .. unknownValue()"
+        }
+      ]
+    },
+    {
+      "id": "D-unresolved-handler-value",
+      "class": "함수인지 알 수 없는 값을 건 원격 등록",
+      "expected": [
+        "i18n.hardcoded_text",
+        "server.remote_validation"
+      ],
+      "note": "속성 이름도 값도 알 수 없으면 어떤 원격인지도, 화면 문구인지도 알 수 없다 — 두 검사가 모두 맞다",
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)",
+          "replace": "local key = script.Name\nlocal h = require(script.Parent.MissionService).makeHandler()\nSignalRemote[key] = h"
+        }
+      ]
+    },
+    {
+      "id": "D-claim-once-marks-elsewhere",
+      "class": "읽은 자리와 다른 자리에 표시하는 claimOnce",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\tclaimed[slot] = true\n",
+          "replace": "\tclaimed[slot .. \"mark\"] = true\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-extra-field-slot",
+      "class": "분석 모듈이 늘린 플랫폼 칸",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\treturn custom\n",
+          "replace": "\tcustom[Enum.AnalyticsCustomFieldKeys.CustomField04.Name] = \"fixed\"\n\treturn custom\n"
+        }
+      ]
+    },
+    {
+      "id": "D-ui-text-in-parentheses",
+      "class": "괄호로 감싼 UI 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal.Text = (\"Ready\")"
+        }
+      ]
+    },
+    {
+      "id": "D-claim-once-marks-false",
+      "class": "표시를 거짓으로 하는 claimOnce",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\tclaimed[slot] = true\n",
+          "replace": "\tclaimed[slot] = false\n"
+        }
+      ]
+    },
+    {
+      "id": "D-line-text-not-a-string",
+      "class": "글자가 아닌 line_text",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    line: {m: 2, b: 1}\n",
+          "replace": "    line: {m: '1/3', b: '13/3'}\n    line_text: 123\n"
+        }
+      ]
+    },
+    {
+      "id": "D-input-stored-before-guard",
+      "class": "검증 전에 전역에 담은 원격 입력",
+      "expected": [
+        "server.remote_cooldown",
+        "server.remote_validation"
+      ],
+      "note": "검증보다 먼저 담으면 형식·범위·쿨다운이 모두 처리 뒤가 된다 — 두 검사가 모두 맞다",
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local GRID = 2",
+          "replace": "local stash = 0\nlocal GRID = 2"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end",
+          "replace": "\tstash = x\n\tif typeof(x) ~= \"number\" or typeof(y) ~= \"number\" then return end"
+        }
+      ]
+    },
+    {
+      "id": "D-claim-once-undone",
+      "class": "표시를 되돌리는 claimOnce",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\tclaimed[slot] = true\n\treturn true\n",
+          "replace": "\tclaimed[slot] = true\n\tclaimed[slot] = false\n\treturn true\n"
+        }
+      ]
+    },
+    {
+      "id": "D-data-model-ui-text",
+      "class": "데이터 모델의 UI 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Sign.model.json",
+          "create": "{\"ClassName\": \"TextLabel\", \"Properties\": {\"Text\": \"Start\"}}\n"
+        }
+      ]
+    },
+    {
+      "id": "D-text-module-broken-key",
+      "class": "문구 모듈 안의 끊긴 키",
+      "expected": [
+        "i18n.missing_key"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Text.luau",
+          "find": "return Text\n",
+          "replace": "local function broken(found)\n\treturn found:FormatByKey(\"goal.missing\")\nend\n\nreturn Text\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-helper-sender",
+      "class": "분석 모듈의 보조 전송 함수",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "return Analytics\n",
+          "replace": "local function raw(player, eventName)\n\tAnalyticsService:LogCustomEvent(player, eventName, 1, {})\nend\nraw(nil, \"not_allowed\")\n\nreturn Analytics\n"
+        }
+      ]
+    },
+    {
+      "id": "D-multipart-external-service",
+      "class": "여러 조각으로 조립한 외부 서비스",
+      "expected": [
+        "safety.external_call"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local a = \"Text\"\nlocal b = \"Generator\"\nlocal svc = game:GetService(a .. b)\nprint(svc)\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-multipart-paid-service",
+      "class": "여러 조각으로 조립한 유료 서비스",
+      "expected": [
+        "safety.random_or_paid_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local a = \"Marketplace\"\nlocal b = \"Service\"\ngame:GetService(a .. b):UserOwnsGamePassAsync(1, 2)\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-lookalike-sender",
+      "class": "이름만 같은 분석 전송 함수",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "return Analytics\n",
+          "replace": "local function log(player, eventName)\n\tAnalyticsService:LogCustomEvent(player, eventName, 1, {})\nend\nlog(nil, \"not_allowed\")\n\nreturn Analytics\n"
+        }
+      ]
+    },
+    {
+      "id": "D-project-child-not-an-object",
+      "class": "객체가 아닌 Rojo 자식",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "default.project.json",
+          "find": "\"StarterPlayer\"",
+          "replace": "\"Workspace\": {\"Broken\": [\"not\", \"an\", \"object\"]},\n    \"StarterPlayer\""
+        }
+      ]
+    },
+    {
+      "id": "D-unlisted-tld-domain",
+      "class": "허용 목록 밖 도메인",
+      "expected": [
+        "safety.url"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "print(\"example.education\")\nsendCell(2, 1)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-computed-slot",
+      "class": "계산해서 만든 분석 칸",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "\treturn custom\n",
+          "replace": "\tlocal extra = {[pickSlot()] = \"fixed\"}\n\treturn extra\n"
+        }
+      ]
+    },
+    {
+      "id": "D-unknown-tld-domain",
+      "class": "이름 없는 끝의 도메인",
+      "expected": [
+        "safety.url"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "print(\"example.museum\")\nsendCell(2, 1)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-renamed-player-param",
+      "class": "이름 바꾼 플레이어 매개변수의 개인정보",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "function Analytics.log(player: Player, eventName: string, fields: {[string]: string})\n\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
+          "replace": "function Analytics.log(p: Player, eventName: string, fields: {[string]: string})\n\tprint(p.Name)\n\tAnalyticsService:LogCustomEvent(p, eventName, 1, pack(fields))"
+        }
+      ]
+    },
+    {
+      "id": "D-claim-once-marks-after-return",
+      "class": "참을 돌려준 뒤에 표시하는 claimOnce",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\tclaimed[slot] = true\n\treturn true\n",
+          "replace": "\treturn true\n\tclaimed[slot] = true\n"
+        }
+      ]
+    },
+    {
+      "id": "D-dynamic-ui-function",
+      "class": "동적 UI 속성에 대입한 함수",
+      "expected": [
+        "i18n.hardcoded_text",
+        "server.remote_validation"
+      ],
+      "note": "속성 이름을 알 수 없으면 화면 문구인지도, 원격 등록인지도 알 수 없다 — 두 검사가 모두 맞다",
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal[prop] = function() return \"Ready\" end"
+        }
+      ]
+    },
+    {
+      "id": "D-instance-new-alias",
+      "class": "다른 이름에 담은 Instance.new",
+      "expected": [
+        "safety.free_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "local make = Instance.new\nmake(getClass())\nsendCell(2, 1)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-key-prefix-domain",
+      "class": "키 앞머리를 쓴 도메인",
+      "expected": [
+        "safety.url"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "print(\"goal.museum\")\nsendCell(2, 1)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-split-analytics-alias",
+      "class": "나눠 대입한 분석 별칭",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local send\nsend = Analytics.log\nsend(nil, \"player_profile\", {})\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-split-reward-alias",
+      "class": "나눠 대입한 보상 별칭",
+      "expected": [
+        "server.duplicate_reward",
+        "server.reward_after_verdict"
+      ],
+      "note": "별칭으로 준 보상이 두 곳이 되고, 판정 밖에서 보상에 닿는다 — 두 검사가 모두 맞다",
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local MissionService = require(script.Parent.MissionService)",
+          "replace": "local MissionService = require(script.Parent.MissionService)\nlocal RewardService = require(script.Parent.RewardService)"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend",
+          "replace": "\tlocal grant\n\tgrant = RewardService.grant\n\tgrant(player, \"reward.explorer_card\", \"m.gate_open\")"
+        }
+      ]
+    },
+    {
+      "id": "D-split-url-parts",
+      "class": "나눠 대입으로 조립한 외부 링크",
+      "expected": [
+        "safety.url"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "local s\ns = \"https\"\nlocal c\nc = \"://\"\nlocal h\nh = \"example\"\nlocal d\nd = \".\"\nlocal e\ne = \"com\"\nprint(s .. c .. h .. d .. e)\nsendCell(2, 1)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-unclosed-block",
+      "class": "닫히지 않은 블록",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Text.luau",
+          "find": "return Text\n",
+          "replace": "do\nreturn Text\n"
+        }
+      ]
+    },
+    {
+      "id": "D-unbalanced-parenthesis",
+      "class": "짝이 맞지 않는 괄호",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Text.luau",
+          "find": "return Text\n",
+          "replace": "local x = (\nreturn Text\n"
+        }
+      ]
+    },
+    {
+      "id": "D-link-in-reward-id",
+      "class": "보상 id 자리의 외부 링크",
+      "expected": [
+        "i18n.hardcoded_text",
+        "safety.url"
+      ],
+      "note": "스킴이 붙은 링크는 id 자리에 있어도 링크이고, 코드에 쓴 화면 문구이기도 하다 — 두 검사가 모두 맞다",
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "RewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")",
+          "replace": "RewardService.grant(player, \"https://evil.example\", \"m.gate_open\")"
+        }
+      ]
+    },
+    {
+      "id": "D-renamed-player-authority",
+      "class": "이름 바꾼 Player 의 동적 권한 접근",
+      "expected": [
+        "i18n.hardcoded_text",
+        "server.reward_authority"
+      ],
+      "note": "속성 이름을 알 수 없으면 권한인지도, 화면 문구인지도 알 수 없다 — 두 검사가 모두 맞다",
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "local function mutate(actor: Player)\n\tactor[key] = 1\nend\nmutate(nil)\nsendCell(2, 1)\n"
+        }
+      ]
+    }
+  ]
+}

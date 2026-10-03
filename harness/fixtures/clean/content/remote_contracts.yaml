@@ -1,0 +1,6 @@
+# 원격 입력 계약 — 각 RemoteEvent·RemoteFunction 이 player 다음에 받는 값. harness 가 코드의 검증과 대조한다 (INV-4)
+# 범위(min·max)는 잠긴 Q2 정본 값 cv.coordinate_expression.grid 와 같아야 한다
+remotes:
+  SignalRemote:
+    - {name: x, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.x}
+    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}
