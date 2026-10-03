@@ -70,7 +70,10 @@
       "PromptProductPurchase",
       "PromptGamePassPurchase",
       "HasRobloxSubscription",
-      "MembershipType"
+      "MembershipType",
+      "UserOwnsGamePassAsync",
+      "UserOwnsAssetAsync",
+      "PlayerOwnsAsset"
     ],
     "random_allowed_modules": [],
     "funnel_call": "funnel",
@@ -3091,6 +3094,34 @@
           "file": "src/server/Analytics.luau",
           "find": "return Analytics\n",
           "replace": "local function raw(player, eventName)\n\tAnalyticsService:LogCustomEvent(player, eventName, 1, {})\nend\nraw(nil, \"not_allowed\")\n\nreturn Analytics\n"
+        }
+      ]
+    },
+    {
+      "id": "D-multipart-external-service",
+      "class": "여러 조각으로 조립한 외부 서비스",
+      "expected": [
+        "safety.external_call"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local a = \"Text\"\nlocal b = \"Generator\"\nlocal svc = game:GetService(a .. b)\nprint(svc)\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-multipart-paid-service",
+      "class": "여러 조각으로 조립한 유료 서비스",
+      "expected": [
+        "safety.random_or_paid_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local a = \"Marketplace\"\nlocal b = \"Service\"\ngame:GetService(a .. b):UserOwnsGamePassAsync(1, 2)\n\nreturn MissionService\n"
         }
       ]
     }

@@ -1,3 +1,3 @@
-major | harness/checks/i18n.py:35-36,48-64,230-236 | Text 모듈 내부의 끊긴 번역 키를 검사하지 않는다 | `Text` 모듈의 `FormatByKey("goal.missing")`가 `missing_key=[]`, 식별자형 문자열이라 `hardcoded_text=[]` | Text 모듈에서도 리터럴 키 호출은 LocalizationTable 존재 여부를 검사하고, 매개변수 전달만 예외 처리
+major | harness/checks/safety.py:89-94 | 여러 변수로 조립한 `GetService` 외부 서비스명이 통과한다 | `local a="Http"; local b="Service"; game:GetService(a..b)`의 해석값은 문자열이지만 `names`와 대조하지 않는다. 동일 결함이 현재 고정 결함 목록에도 없다(tests/test_harness.py:63) | `GetService` 해석값이 `external_call_names`이면 거부하고 다단계 조립 회귀시험을 추가
 
-major | harness/checks/analytics.py:53-60,132-147 | 신뢰된 Analytics 모듈의 보조 함수가 허용 밖 이벤트를 전송해도 통과한다 | 모듈 내부 `raw(player,eventName)`가 `LogCustomEvent(...,eventName,...)`를 호출하고 `raw(nil,"not_allowed")`를 호출해도 `analytics.calls=[]` | 플랫폼 API 호출을 `Analytics.log`·`Analytics.funnel` 구현으로 제한하거나 보조 함수 호출까지 허용 이벤트로 추적 검사
+major | harness/checks/safety.py:130-133 | 여러 변수로 조립한 유료 서비스와 게임패스 권한 검사가 통과한다 | `game:GetService(a..b):UserOwnsGamePassAsync(...)`에서 분리된 문자열은 `paid_names`에 없고 GetService 인자를 검사하지 않는다. `paid_names`에도 해당 메서드가 없다(harness/manifest.json:67-73) | 유료 서비스명과 권한 메서드의 해석값을 검사 목록에 추가하고 회귀 결함을 추가

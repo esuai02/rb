@@ -86,14 +86,25 @@ def external_call(tree, rules, config) -> list[str]:
                 if t.kind in (NAME, STRING) and t.text in names]
         out += [f"{f.rel} 이름 {name} 가 가리키는 글자가 런타임 외부 호출·생성형 AI {value} 다 — 이름을 조립해도 같다"
                 for name, value in sorted(f.resolved.items()) if isinstance(value, str) and value in names]
-        for i in [k for k, t in enumerate(f.tokens) if t.kind == NAME and t.text == "GetService"
-                  and k + 1 < len(f.tokens) and f.tokens[k + 1].text == "("]:
-            args = luau.call_args(f.tokens, i)
-            value, _ = resolve.expression_value(args[0], 0, f.resolved) if args else (resolve.UNRESOLVED, False)
+        for i, value in _services(f):
             if not isinstance(value, str):
                 out.append(f"{f.rel}:{f.tokens[i].line} 어떤 서비스를 가져오는지 알 수 없다 — GetService 인자는 글자 그대로여야 한다")
+            elif value in names:
+                out.append(f"{f.rel}:{f.tokens[i].line} 런타임 외부 호출·생성형 AI {value} 를 가져온다 — 조각을 나눠 조립해도 같다")
         out += [f"{f.rel}:{f.tokens[i].line} 서비스 {name} 의 멤버를 값을 알 수 없는 방식으로 부른다 — 외부 호출인지 검사할 수 없다"
                 for i, name in resolve.dynamic_member_calls(f, _service_names(f))]
+    return out
+
+
+def _services(f) -> list[tuple[int, object]]:
+    """GetService 호출마다 (토큰 번호, 풀린 서비스 이름). 풀리지 않으면 resolve.UNRESOLVED."""
+    out = []
+    for i, tok in enumerate(f.tokens):
+        if not (tok.kind == NAME and tok.text == "GetService" and i + 1 < len(f.tokens) and f.tokens[i + 1].text == "("):
+            continue
+        args = luau.call_args(f.tokens, i)
+        value, _has_text = resolve.expression_value(args[0], 0, f.resolved) if args else (resolve.UNRESOLVED, False)
+        out.append((i, value))
     return out
 
 
@@ -131,6 +142,8 @@ def random_or_paid_reward(tree, rules, config) -> list[str]:
         out += [f"{f.rel}:{t.line} 결제·구독 조건 {t.text} 를 쓴다 (DEC-5 결정 전 · INV-12)" for t in f.tokens if t.kind in (NAME, STRING) and t.text in paid]
         out += [f"{f.rel} 이름 {name} 가 가리키는 글자가 결제·구독 조건 {value} 다 — 이름을 조립해도 같다 (DEC-5 결정 전 · INV-12)"
                 for name, value in sorted(f.resolved.items()) if isinstance(value, str) and value in paid]
+        out += [f"{f.rel}:{f.tokens[i].line} 결제·구독 서비스 {value} 를 가져온다 — 조각을 나눠 조립해도 같다 (DEC-5 결정 전 · INV-12)"
+                for i, value in _services(f) if isinstance(value, str) and value in paid]
         if f.name in allowed:
             continue
         paths = {path for path in RANDOM_PATHS} | {(alias,) for path in RANDOM_PATHS

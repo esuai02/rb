@@ -188,7 +188,9 @@
  },
  "D-assembled-paid-name": {
   "safety.random_or_paid_reward": [
-   "src/server/MissionService.luau 이름 name 가 가리키는 글자가 결제·구독 조건 MarketplaceService 다 — 이름을 조립해도 같다 (DEC-5 결정 전 · INV-12)"
+   "src/server/MissionService.luau:30 결제·구독 조건 UserOwnsGamePassAsync 를 쓴다 (DEC-5 결정 전 · INV-12)",
+   "src/server/MissionService.luau 이름 name 가 가리키는 글자가 결제·구독 조건 MarketplaceService 다 — 이름을 조립해도 같다 (DEC-5 결정 전 · INV-12)",
+   "src/server/MissionService.luau:29 결제·구독 서비스 MarketplaceService 를 가져온다 — 조각을 나눠 조립해도 같다 (DEC-5 결정 전 · INV-12)"
   ]
  },
  "D-badge-bypass": {
@@ -781,7 +783,8 @@
    "src/server/MissionService.luau:7 런타임 외부 호출·생성형 AI HttpService 를 쓴다",
    "src/server/MissionService.luau:7 런타임 외부 호출·생성형 AI HttpService 를 쓴다",
    "src/server/MissionService.luau:10 런타임 외부 호출·생성형 AI HttpService 를 쓴다",
-   "src/server/MissionService.luau:10 런타임 외부 호출·생성형 AI RequestAsync 를 쓴다"
+   "src/server/MissionService.luau:10 런타임 외부 호출·생성형 AI RequestAsync 를 쓴다",
+   "src/server/MissionService.luau:7 런타임 외부 호출·생성형 AI HttpService 를 가져온다 — 조각을 나눠 조립해도 같다"
   ]
  },
  "D-long-translation": {
@@ -954,6 +957,17 @@
    "src/client/Answer.model.json 데이터 파일이 자유 입력 TextBox 인스턴스를 만든다"
   ]
  },
+ "D-multipart-external-service": {
+  "safety.external_call": [
+   "src/server/MissionService.luau:29 런타임 외부 호출·생성형 AI TextGenerator 를 가져온다 — 조각을 나눠 조립해도 같다"
+  ]
+ },
+ "D-multipart-paid-service": {
+  "safety.random_or_paid_reward": [
+   "src/server/MissionService.luau:29 결제·구독 조건 UserOwnsGamePassAsync 를 쓴다 (DEC-5 결정 전 · INV-12)",
+   "src/server/MissionService.luau:29 결제·구독 서비스 MarketplaceService 를 가져온다 — 조각을 나눠 조립해도 같다 (DEC-5 결정 전 · INV-12)"
+  ]
+ },
  "D-negated-verdict": {
   "server.reward_after_verdict": [
    "src/server/Main.server.luau:22 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다",
@@ -981,7 +995,8 @@
  "D-paid-item": {
   "safety.random_or_paid_reward": [
    "src/server/MissionService.luau:25 결제·구독 조건 MarketplaceService 를 쓴다 (DEC-5 결정 전 · INV-12)",
-   "src/server/MissionService.luau:25 결제·구독 조건 PromptProductPurchase 를 쓴다 (DEC-5 결정 전 · INV-12)"
+   "src/server/MissionService.luau:25 결제·구독 조건 PromptProductPurchase 를 쓴다 (DEC-5 결정 전 · INV-12)",
+   "src/server/MissionService.luau:25 결제·구독 서비스 MarketplaceService 를 가져온다 — 조각을 나눠 조립해도 같다 (DEC-5 결정 전 · INV-12)"
   ]
  },
  "D-platform-api-alias": {
