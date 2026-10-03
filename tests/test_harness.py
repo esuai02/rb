@@ -3,6 +3,7 @@
 깨끗한 고정 데이터는 모든 정적 검사를 통과하고, 심은 결함은 정해진 검사가 정확히 잡는지(기준선 + 변이)를 본다.
 저장소 파일은 쓰지 않는다 — 결함 데이터는 임시 폴더에 매니페스트의 edits 를 적용해 만든다.
 """
+import atexit
 import contextlib
 import copy
 import io
@@ -195,6 +196,22 @@ ITEM_IDS = {f"E{i}" for i in range(1, 7)} | {f"U{i}" for i in range(1, 15)}
 MODES = {"static", "runtime", "human", "covered", "static_later"}
 
 
+_LOCAL_CLEAN: list[Path] = []
+
+
+def local_clean() -> Path:
+    """깨끗한 고정 데이터를 리눅스 디스크에 한 번만 복사해 둔다.
+
+    저장소가 /mnt/d(WSL) 에 있으면 결함마다 거기서 복사하다 `Errno 12 Cannot allocate memory` 가 난다 (리뷰 R-Q3 22차).
+    """
+    if not _LOCAL_CLEAN:
+        base = Path(tempfile.mkdtemp(prefix="rb-clean-"))
+        atexit.register(shutil.rmtree, base, True)
+        shutil.copytree(CLEAN, base, dirs_exist_ok=True)
+        _LOCAL_CLEAN.append(base)
+    return _LOCAL_CLEAN[0]
+
+
 class TreeCase(unittest.TestCase):
     """깨끗한 트리를 임시 폴더에 복사해 고친 뒤 검사한다."""
 
@@ -202,9 +219,18 @@ class TreeCase(unittest.TestCase):
         tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, tmp, True)
         if defect:
-            return run.build_defect(CLEAN, DEFECTS[defect], tmp)
-        shutil.copytree(CLEAN, tmp, dirs_exist_ok=True)
+            return run.build_defect(local_clean(), DEFECTS[defect], tmp)
+        shutil.copytree(local_clean(), tmp, dirs_exist_ok=True)
         return tmp
+
+    @contextlib.contextmanager
+    def scratch(self, defect: str | None = None):
+        """결함 트리를 만들고 쓴 뒤 바로 지운다 — 한 시험 안에서 154개를 쌓아 두지 않는다 (리뷰 R-Q3 22차)."""
+        tree = self.make_tree(defect)
+        try:
+            yield tree
+        finally:
+            shutil.rmtree(tree, ignore_errors=True)
 
     def edit(self, tree: Path, rel: str, old: str, new: str) -> None:
         path = tree / rel
@@ -234,13 +260,15 @@ class PlantedDefectTest(TreeCase):
     def test_each_planted_defect_is_caught_by_exactly_its_checks(self):
         for defect in MANIFEST["defects"]:
             with self.subTest(defect=defect["id"]):
-                self.assertEqual(sorted(self.failing(self.make_tree(defect["id"]))), sorted(defect["expected"]))
+                with self.scratch(defect["id"]) as tree:
+                    self.assertEqual(sorted(self.failing(tree)), sorted(defect["expected"]))
 
     def test_no_check_ever_crashes(self):
         """어떤 결함에서도 검사가 멈추지 않는다 — 멈춘 검사는 '잡았다'처럼 보이지만 이유가 없다 (리뷰 R-Q3 9차)."""
         for defect_id in sorted(EXPECTED_DEFECTS):
             with self.subTest(defect=defect_id):
-                found = run.run_checks(self.make_tree(defect_id), MANIFEST, RULES)
+                with self.scratch(defect_id) as tree:
+                    found = run.run_checks(tree, MANIFEST, RULES)
                 crashed = [f"{k}: {x}" for k, v in found.items() for x in v if "끝까지 돌지 못했다" in x]
                 self.assertEqual(crashed, [])
 
@@ -268,7 +296,8 @@ class PlantedDefectTest(TreeCase):
         """
         for defect_id, (_name, expected, fragment) in sorted(EXPECTED_DEFECTS.items()):
             with self.subTest(defect=defect_id):
-                found = self.failing(self.make_tree(defect_id))
+                with self.scratch(defect_id) as tree:
+                    found = self.failing(tree)
                 self.assertEqual(tuple(sorted(found)), expected)
                 every = [x for check in expected for x in found[check]]
                 self.assertTrue(any(fragment in x for x in every),
@@ -279,8 +308,10 @@ class PlantedDefectTest(TreeCase):
 
         고칠 때는 RB_FREEZE_DIAGNOSES=1 로 다시 적고, 바뀐 줄을 눈으로 확인한 뒤 커밋한다.
         """
-        now = {defect_id: {check: found for check, found in sorted(self.failing(self.make_tree(defect_id)).items())}
-               for defect_id in sorted(EXPECTED_DEFECTS)}
+        now = {}
+        for defect_id in sorted(EXPECTED_DEFECTS):
+            with self.scratch(defect_id) as tree:
+                now[defect_id] = {check: found for check, found in sorted(self.failing(tree).items())}
         if os.environ.get("RB_FREEZE_DIAGNOSES") == "1":
             DIAGNOSES.write_text(json.dumps(now, ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
             self.skipTest("진단 묶음을 다시 적었다")
@@ -788,7 +819,8 @@ class CheckBranchTest(TreeCase):
                               ("D-dynamic-text-member-unresolved", "i18n.missing_key"),
                               ("D-dynamic-analytics-member", "analytics.calls")):
             with self.subTest(defect=defect):
-                self.assertCaught(self.make_tree(defect), check, "값을 알 수 없는")
+                with self.scratch(defect) as tree:
+                    self.assertCaught(tree, check, "값을 알 수 없는")
 
     def test_guard_order_and_claim_once(self):
         self.assertCaught(self.make_tree("D-range-before-type"), "server.remote_validation", "범위 검사보다 뒤에")
@@ -819,7 +851,8 @@ class CheckBranchTest(TreeCase):
                               ("D-two-step-grant-alias", "server.duplicate_reward"), ("D-text-alias-chain", "i18n.missing_key"),
                               ("D-player-alias-pii", "analytics.calls"), ("D-analytics-dot-call", "analytics.calls")):
             with self.subTest(defect=defect):
-                self.assertTrue(run.run_checks(self.make_tree(defect), MANIFEST, RULES)[check])
+                with self.scratch(defect) as tree:
+                    self.assertTrue(run.run_checks(tree, MANIFEST, RULES)[check])
         tree = self.make_tree()
         self.edit(tree, "src/client/Hud.client.luau", "sendCell(2, 1)", 'sendCell(2, 1)\nlocal c = Instance.new(className)')
         self.assertCaught(tree, "safety.free_text", "글자 그대로 알 수 없다")
@@ -831,7 +864,8 @@ class CheckBranchTest(TreeCase):
                                         ("D-player-alias-dynamic-authority", "server.reward_authority", "값을 알 수 없는 방식"),
                                         ("D-reassigned-grid-after-block", "server.remote_validation", "범위")):
             with self.subTest(defect=defect):
-                self.assertCaught(self.make_tree(defect), check, fragment)
+                with self.scratch(defect) as tree:
+                    self.assertCaught(tree, check, fragment)
 
     def test_constant_table_lookup_is_not_refused(self):
         """받은 값으로 상수 표를 조회하는 정상 코드는 막지 않는다."""
