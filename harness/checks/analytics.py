@@ -65,6 +65,8 @@ def calls(tree, rules, config) -> list[str]:
             out.append(f"{f.rel}:1 분석 모듈이 {reason}")
         out += [f"{f.rel}:{t.line} 분석 모듈을 거치지 않고 AnalyticsService 를 쓴다" for t in f.tokens
                 if t.text in ("AnalyticsService", *config["platform_apis"]) and t.kind in (NAME, STRING)]
+        out += [f"{f.rel}:{f.tokens[i].line} 분석 모듈 {module} 을 표·멤버에 담는다 — 이름 하나에 담아야 어떤 이벤트를 보내는지 검사할 수 있다"
+                for i, name in luau.indirect_requires(f.tokens) if name == module]
         names = _aliases(f, module)
         out += [f"{f.rel}:{f.tokens[i].line} 분석 모듈 {name} 의 멤버를 값을 알 수 없는 방식으로 고른다 — 어떤 이벤트를 보내는지 검사할 수 없다"
                 for i, name in resolve.dynamic_member_calls(f, names)]

@@ -2810,6 +2810,83 @@
           "replace": "goal.signal_2,가자!또!또！또？,HUD 목표,,[Ŀüɱï ŝïĝñàŀ ķàñ]"
         }
       ]
+    },
+    {
+      "id": "D-reward-module-in-a-table",
+      "class": "표에 담은 보상 모듈",
+      "expected": [
+        "server.reward_authority"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local services = {RewardService = require(script.Parent.RewardService)}\nprint(services)\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-module-in-a-table",
+      "class": "표에 담은 분석 모듈",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local services = {Analytics = require(script.Parent.Analytics)}\nprint(services)\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-text-module-in-a-table",
+      "class": "표에 담은 문구 모듈",
+      "expected": [
+        "i18n.missing_key"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "local modules = {Text = require(ReplicatedStorage.Shared.Text)}\nprint(modules)\nsendCell(2, 1)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-mapping-escapes-src",
+      "class": "src 밖으로 빠져나가는 매핑",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "outside/Sneak.luau",
+          "create": "--!strict\n-- 검사 범위 밖에 둔 코드\nreturn {}\n"
+        },
+        {
+          "file": "default.project.json",
+          "find": "\"StarterPlayer\"",
+          "replace": "\"Workspace\": {\"Sneak\": {\"$path\": \"src/../outside\"}},\n    \"StarterPlayer\""
+        }
+      ]
     }
   ]
 }

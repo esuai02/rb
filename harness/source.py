@@ -156,6 +156,10 @@ def load_tree(root: Path) -> Tree:
         if not target.exists() or (root.resolve() not in target.parents and target != root.resolve()):
             tree.problems.append(f"Rojo 경로 {shown} 가 트리 안에 없다")
             continue
+        inside = (root / SOURCE_DIR).resolve()
+        if inside not in target.parents and target != inside:
+            tree.problems.append(f"Rojo 경로 {shown} 가 실제로 가리키는 자리는 소스 폴더({SOURCE_DIR}/) 밖이다 — 글자만 src 로 시작하면 안 된다")
+            continue
         for path in sorted(target.rglob("*")) if target.is_dir() else [target]:
             if not path.is_file():
                 continue
@@ -170,9 +174,7 @@ def load_tree(root: Path) -> Tree:
             continue
         owner = owners.get(path.resolve())
         if rel.split("/", 1)[0] in HARNESS_INPUT:
-            if owner is not None:
-                tree.problems.append(f"{rel}: 검사 입력 폴더({'/'.join(HARNESS_INPUT)})는 Rojo 에 싣지 않는다 — 게임에 들어가는 파일과 섞이면 안 된다")
-            continue
+            continue   # 검사 입력 폴더는 Rojo 가 싣지 않는다 — 매핑이 소스 폴더 밖을 가리키지 못하므로 실릴 수 없다
         if owner is None:
             tree.problems.append(f"{rel}: Rojo 프로젝트가 어디에도 넣지 않는 파일이다")
             continue

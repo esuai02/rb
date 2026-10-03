@@ -142,6 +142,32 @@ def fold_require_calls(tokens: list[Token]) -> list[Token]:
     return out
 
 
+def indirect_requires(tokens: list[Token]) -> list[tuple[int, str]]:
+    """`local 이름 = require(…)` 이 아닌 자리에 담은 require — (토큰 번호, 가리키는 모듈 이름).
+
+    표 안(`{M = require(…)}`)이나 멤버(`t.M = require(…)`)에 담으면 이름 추적이 끊긴다. 읽을 수 없으면 거부한다.
+    """
+    out = []
+    for i, tok in enumerate(tokens):
+        if not (tok.kind == NAME and tok.text == "require" and i + 1 < len(tokens) and tokens[i + 1].text == "("):
+            continue
+        names = [x.text for x in balanced(tokens, i + 1) if x.kind == NAME]
+        if not names:
+            continue
+        j = i - 1
+        if j < 0 or not (tokens[j].kind == SYMBOL and tokens[j].text == "="):
+            continue   # 대입이 아니다 — 돌려주거나 바로 넘기는 꼴은 이 규칙이 보지 않는다
+        head = j - 1
+        while head >= 0 and tokens[head].kind in (NAME, SYMBOL) and tokens[head].text not in ("=", ",", "{", "(", ";")                 and not (tokens[head].kind == NAME and tokens[head].text == "local"):
+            head -= 1
+        plain = head >= 0 and tokens[head].kind == NAME and tokens[head].text == "local" and j - head == 2
+        typed = head >= 0 and tokens[head].kind == NAME and tokens[head].text == "local" and j - head > 2 \
+            and any(t.text == ":" for t in tokens[head:j])
+        if not (plain or typed):
+            out.append((i, names[-1]))
+    return out
+
+
 def normalize_index(tokens: list[Token], resolved: dict | None = None) -> list[Token]:
     """값에 붙은 대괄호 접근을 점 접근으로 바꾼다 — R["OnServerEvent"] 와 `local e = "OnServerEvent"; R[e]` 를 R.OnServerEvent 로.
     표를 만들 때 쓰는 { ["a"] = 1 } 은 건드리지 않는다."""

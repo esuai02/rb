@@ -93,6 +93,8 @@ def reward_authority(tree, rules, config) -> list[str]:
     for f in tree.luau:
         if f is trusted:
             continue
+        out += [f"{_at(f, f.tokens[i])} 보상 모듈 {module} 을 표·멤버에 담는다 — 이름 하나에 담아야 어디서 보상을 주는지 검사할 수 있다"
+                for i, name in luau.indirect_requires(f.tokens) if name == module]
         if f.client_visible:
             out += [f"{_at(f, f.tokens[i])} 클라이언트가 볼 수 있는 코드가 보상 지급 {module}.grant 를 부른다 — 보상은 서버만 정한다"
                     for i in grant_calls(f, module)]

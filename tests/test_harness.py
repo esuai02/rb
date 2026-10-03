@@ -60,6 +60,10 @@ EXPECTED_DEFECTS = {
     "D-assembled-external-name": ("조립해 만든 외부 호출 이름", ("safety.external_call",), "런타임 외부 호출·생성형 AI TextGenerator 다 — 이름을 조립해도 같다"),
     "D-assembled-paid-name": ("조립해 만든 유료 서비스 이름", ("safety.random_or_paid_reward",), "결제·구독 조건 MarketplaceService 다 — 이름을 조립해도 같다"),
     "D-fullwidth-sentence-count": ("전각 종결 부호로 숨긴 긴 문구", ("text.readability",), "문장이 4개다"),
+    "D-reward-module-in-a-table": ("표에 담은 보상 모듈", ("server.reward_authority",), "보상 모듈 RewardService 을 표·멤버에 담는다"),
+    "D-analytics-module-in-a-table": ("표에 담은 분석 모듈", ("analytics.calls",), "분석 모듈 Analytics 을 표·멤버에 담는다"),
+    "D-text-module-in-a-table": ("표에 담은 문구 모듈", ("i18n.missing_key",), "문구 모듈 Text 을 표·멤버에 담는다"),
+    "D-mapping-escapes-src": ("src 밖으로 빠져나가는 매핑", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "실제로 가리키는 자리는 소스 폴더(src/) 밖이다"),
     "D-analytics-concat-event": ("이어 붙인 분석 이벤트 이름", ("analytics.calls",), "분석 모듈이 LogCustomEvent 의 이벤트 이름 자리에 'eventNam"),
     "D-analytics-dot-call": ("점 표기로 부른 플랫폼 분석 API", ("analytics.calls",), "분석 모듈이 LogCustomEvent 에 정해진 값 ['player_profi"),
     "D-analytics-method-alias": ("전송 함수를 담은 이름으로 보낸 분석", ("analytics.calls",), "이벤트 player_profile 가 허용 목록(specs/analytics/e"),
@@ -1012,11 +1016,12 @@ class DiagnosisCoverageTest(TreeCase):
                   '"ServerScriptService": {"Gate": {"$path": {"optional": []}}}')
         self.assertCaught(tree, "safety.url", "$path 는 글자여야 한다")
 
-    def test_harness_input_folder_must_not_ship(self):
+    def test_mapping_cannot_escape_the_source_folder(self):
+        """글자만 src 로 시작하고 실제로는 밖(검사 입력 폴더 등)을 가리키는 매핑은 거부한다."""
         tree = self.make_tree()
         self.edit(tree, "default.project.json", '"ReplicatedStorage": {"Shared": {"$path": "src/shared"}}',
                   '"ReplicatedStorage": {"Shared": {"$path": "src/shared"}, "Rules": {"$path": "src/../content"}}')
-        self.assertCaught(tree, "safety.url", "Rojo 에 싣지 않는다")
+        self.assertCaught(tree, "safety.url", "실제로 가리키는 자리는 소스 폴더(src/) 밖이다")
 
     def test_claims_must_be_a_list(self):
         tree = self.make_tree()
