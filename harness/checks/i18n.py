@@ -105,33 +105,17 @@ def _string_constants(f) -> dict:
             if toks[i].kind == NAME and toks[i].text == "local" and toks[i + 1].kind == NAME and toks[i + 2].text == "=" and toks[i + 3].kind == STRING}
 
 
-def _ui_text_literals(f, config) -> list:
-    """UI 글자 속성에 들어가는 문자열 — 바로 쓴 것도, 문자열 상수에 담아 쓴 것도 문구 키를 거쳐야 한다."""
-    toks, out, constants = f.tokens, [], _string_constants(f)
-    for i in range(len(toks) - 2):
-        dotted = toks[i].text == "." and toks[i + 1].kind == NAME and toks[i + 1].text in config["ui_text_properties"] and toks[i + 2].text == "="
-        bracket = (toks[i].text == "[" and toks[i + 1].kind == STRING and toks[i + 1].text in config["ui_text_properties"]
-                   and i + 3 < len(toks) and toks[i + 2].text == "]" and toks[i + 3].text == "=")
-        if not (dotted or bracket):
+def _ui_texts(f, start: int, end: int) -> list:
+    """오른쪽 식 안의 글자 — 괄호 안이든 상수에 담았든 화면에 닿는 것은 같다 (리뷰 R-Q3 21차)."""
+    constants = _string_constants(f)
+    out = [t for t in f.tokens[start:end] if t.kind == STRING]
+    for t in f.tokens[start:end]:
+        if t.kind != NAME:
             continue
-        prop = toks[i + 1].text
-        depth, j = 0, i + 3 + (1 if bracket else 0)
-        while j < len(toks) and not (toks[j].kind == NAME and toks[j].text in ("local", "function", "end", "return")):
-            if toks[j].kind == luau.SYMBOL and toks[j].text in ("(", "{", "["):
-                depth += 1
-            elif toks[j].kind == luau.SYMBOL and toks[j].text in (")", "}", "]"):
-                if depth == 0:
-                    break
-                depth -= 1
-            elif toks[j].kind == STRING and depth == 0:
-                out.append((prop, toks[j]))
-            elif toks[j].kind == NAME and depth == 0 and toks[j].text in constants:
-                out.append((prop, constants[toks[j].text]))
-            elif toks[j].kind == NAME and depth == 0 and isinstance(f.resolved.get(toks[j].text), str):
-                out.append((prop, luau.Token(STRING, f.resolved[toks[j].text], toks[j].line)))
-            elif toks[j].line > toks[i].line and depth == 0:
-                break
-            j += 1
+        if t.text in constants:
+            out.append(constants[t.text])
+        elif isinstance(f.resolved.get(t.text), str):
+            out.append(luau.Token(STRING, f.resolved[t.text], t.line))
     return out
 
 
@@ -227,15 +211,18 @@ def unresolved_ui_text(f, config) -> list[str]:
     out, key_calls = [], {i for i, _args in _key_calls(f, config)}
     for prop, start in _ui_assignments(f, config):
         end = _expression_end(f.tokens, start)
-        rhs = f.tokens[start:end]
         if _is_only_key_call(f, start, end, key_calls):
             continue
         calls = [k for k in range(start, end)
                  if k + 1 < len(f.tokens) and f.tokens[k + 1].text == "("
                  and (f.tokens[k].kind == NAME or (f.tokens[k].kind == SYMBOL and f.tokens[k].text == "]"))]
+        texts = _ui_texts(f, start, end)
         if calls:
+            # 호출이 섞였다면 그 안의 글자는 문구 키일 수 있으므로 화면 문구로 부르지 않는다
             out.append(f"{f.rel}:{f.tokens[start].line} UI 글자 속성 .{prop} 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다 — 문구 키를 거쳐야 한다")
-        elif not any(t.kind == STRING for t in rhs) and not any(isinstance(f.resolved.get(t.text), str) for t in rhs if t.kind == NAME):
+        elif texts:
+            out += [f"{f.rel}:{t.line} UI 글자 속성 .{prop} 에 문구 '{t.text[:20]}' 를 바로 넣었다 — 문구 키로 바꿔야 한다" for t in texts]
+        else:
             out.append(f"{f.rel}:{f.tokens[start].line} UI 글자 속성 .{prop} 에 값을 알 수 없는 글자를 넣는다 — 문구 키를 거치거나 풀리는 값이어야 한다")
     return out
 
@@ -245,8 +232,6 @@ def hardcoded_text(tree, rules, config) -> list[str]:
     out = []
     for f in tree.luau:
         dev = _dev_strings(f)
-        out += [f"{f.rel}:{t.line} UI 글자 속성 .{prop} 에 문구 '{t.text[:20]}' 를 바로 넣었다 — 문구 키로 바꿔야 한다"
-                for prop, t in _ui_text_literals(f, config)]
         out += [f"{f.rel}:{t.line} 코드에 화면 문구 '{t.text[:20]}' 가 있다 — 문구 키로 바꿔야 한다" for t in f.tokens
                 if t.kind == STRING and id(t) not in dev and LETTER.search(t.text) and not IDENTIFIER.fullmatch(t.text)]
     for f in tree.luau:

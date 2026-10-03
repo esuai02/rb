@@ -185,6 +185,11 @@ def _fractional_line(claim: dict) -> bool:
         return False
 
 
+def _said(value) -> bool:
+    """대사에 있어야 할 말로 쓸 수 있는가 — 비어 있지 않은 글자여야 한다(수를 적으면 묶이지 않는다)."""
+    return isinstance(value, str) and bool(value.strip())
+
+
 def truth(tree, rules, config) -> list[str]:
     """E1 — 수학 대사의 명제가 실제로 맞고, 대사가 그 명제를 말한다. 수학이 든 대사는 모두 명제를 가진다."""
     if not tree.claims:
@@ -204,10 +209,10 @@ def truth(tree, rules, config) -> list[str]:
             continue
         tied.add(claim.get("line_key"))
         source = row.get("Source", "")
-        if needs_states_text(claim) and not str(claim.get("states_text") or "").strip():
-            out.append(f"{cid}: 수만으로는 대사와 묶을 수 없는 명제다 — states_text 에 대사가 반드시 말해야 할 말을 적어야 한다 (E1)")
-        if _fractional_line(claim) and not str(claim.get("line_text") or "").strip():
-            out.append(f"{cid}: 분수 계수는 수로 대사와 묶을 수 없다 — line_text 에 대사가 말하는 식을 적어야 한다 (E1)")
+        if needs_states_text(claim) and not _said(claim.get("states_text")):
+            out.append(f"{cid}: 수만으로는 대사와 묶을 수 없는 명제다 — states_text 에 대사가 반드시 말해야 할 말을 글자로 적어야 한다 (E1)")
+        if _fractional_line(claim) and not _said(claim.get("line_text")):
+            out.append(f"{cid}: 분수 계수는 수로 대사와 묶을 수 없다 — line_text 에 대사가 말하는 식을 글자로 적어야 한다 (E1)")
         out += [f"{cid}: 대사 {claim.get('line_key')} 가 명제의 '{shown}' 을 말하지 않는다 — 명제와 대사가 따로 논다"
                 for shown, pattern in stated_patterns(claim, rules) if not re.search(pattern, source)]
     terms = _math_terms(rules)

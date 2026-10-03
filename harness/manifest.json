@@ -2975,6 +2975,48 @@
           "replace": "\tcustom[Enum.AnalyticsCustomFieldKeys.CustomField04.Name] = \"fixed\"\n\treturn custom\n"
         }
       ]
+    },
+    {
+      "id": "D-ui-text-in-parentheses",
+      "class": "괄호로 감싼 UI 문구",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal.Text = (\"Ready\")"
+        }
+      ]
+    },
+    {
+      "id": "D-claim-once-marks-false",
+      "class": "표시를 거짓으로 하는 claimOnce",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\tclaimed[slot] = true\n",
+          "replace": "\tclaimed[slot] = false\n"
+        }
+      ]
+    },
+    {
+      "id": "D-line-text-not-a-string",
+      "class": "글자가 아닌 line_text",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    line: {m: 2, b: 1}\n",
+          "replace": "    line: {m: '1/3', b: '13/3'}\n    line_text: 123\n"
+        }
+      ]
     }
   ]
 }

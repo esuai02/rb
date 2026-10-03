@@ -289,12 +289,17 @@
  },
  "D-claim-once-does-nothing": {
   "server.duplicate_reward": [
-   "src/server/RewardService.luau:7 claimOnce 가 이미 준 적 있는지 읽기 · 준 것을 표시해 두기 · 이미 줬으면 거짓 돌려주기 · 읽은 자리와 같은 자리에 표시하기 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"
+   "src/server/RewardService.luau:7 claimOnce 가 이미 준 적 있는지 읽기 · 준 것을 표시해 두기(참으로) · 이미 줬으면 거짓 돌려주기 · 읽고 → 거부하고 → 같은 자리에 표시하기 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"
   ]
  },
  "D-claim-once-marks-elsewhere": {
   "server.duplicate_reward": [
-   "src/server/RewardService.luau:7 claimOnce 가 읽은 자리와 같은 자리에 표시하기 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"
+   "src/server/RewardService.luau:7 claimOnce 가 읽고 → 거부하고 → 같은 자리에 표시하기 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"
+  ]
+ },
+ "D-claim-once-marks-false": {
+  "server.duplicate_reward": [
+   "src/server/RewardService.luau:7 claimOnce 가 준 것을 표시해 두기(참으로) · 읽고 → 거부하고 → 같은 자리에 표시하기 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"
   ]
  },
  "D-claimonce-not-called": {
@@ -418,7 +423,7 @@
  },
  "D-coordinate-fractional-move": {
   "math.truth": [
-   "claim.coordinate.label: 수만으로는 대사와 묶을 수 없는 명제다 — states_text 에 대사가 반드시 말해야 할 말을 적어야 한다 (E1)",
+   "claim.coordinate.label: 수만으로는 대사와 묶을 수 없는 명제다 — states_text 에 대사가 반드시 말해야 할 말을 글자로 적어야 한다 (E1)",
    "claim.coordinate.label: 대사 label.coordinate.line 가 명제의 '(0, 0)' 을 말하지 않는다 — 명제와 대사가 따로 논다"
   ]
  },
@@ -602,7 +607,7 @@
  },
  "D-fraction-line-untied": {
   "math.truth": [
-   "claim.line.point: 분수 계수는 수로 대사와 묶을 수 없다 — line_text 에 대사가 말하는 식을 적어야 한다 (E1)",
+   "claim.line.point: 분수 계수는 수로 대사와 묶을 수 없다 — line_text 에 대사가 말하는 식을 글자로 적어야 한다 (E1)",
    "claim.line.point: 대사 label.line.point 가 명제의 'b=4' 을 말하지 않는다 — 명제와 대사가 따로 논다"
   ]
  },
@@ -634,8 +639,8 @@
  },
  "D-hardcoded-text": {
   "i18n.hardcoded_text": [
-   "src/client/Hud.client.luau:8 UI 글자 속성 .Text 에 문구 '루미를 신호 칸으로 보내자' 를 바로 넣었다 — 문구 키로 바꿔야 한다",
-   "src/client/Hud.client.luau:8 코드에 화면 문구 '루미를 신호 칸으로 보내자' 가 있다 — 문구 키로 바꿔야 한다"
+   "src/client/Hud.client.luau:8 코드에 화면 문구 '루미를 신호 칸으로 보내자' 가 있다 — 문구 키로 바꿔야 한다",
+   "src/client/Hud.client.luau:8 UI 글자 속성 .Text 에 문구 '루미를 신호 칸으로 보내자' 를 바로 넣었다 — 문구 키로 바꿔야 한다"
   ]
  },
  "D-ignored-cooldown": {
@@ -738,6 +743,11 @@
    "src/server/Main.server.luau:22 원격 입력 x 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)",
    "src/server/Main.server.luau:22 원격 입력 y 의 형식 검사가 처리를 시작한 뒤에 있다 — 쓰기 전에 걸러야 한다",
    "src/server/Main.server.luau:22 원격 입력 y 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)"
+  ]
+ },
+ "D-line-text-not-a-string": {
+  "math.truth": [
+   "claim.line.point: 분수 계수는 수로 대사와 묶을 수 없다 — line_text 에 대사가 말하는 식을 글자로 적어야 한다 (E1)"
   ]
  },
  "D-llm-call": {
@@ -1406,6 +1416,11 @@
    "src/client/Hud.client.luau:8 UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다 — 문구 키를 거쳐야 한다"
   ]
  },
+ "D-ui-text-in-parentheses": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:8 UI 글자 속성 .Text 에 문구 'Ready' 를 바로 넣었다 — 문구 키로 바꿔야 한다"
+  ]
+ },
  "D-ui-text-literal": {
   "i18n.hardcoded_text": [
    "src/client/Hud.client.luau:8 UI 글자 속성 .Text 에 문구 'Start' 를 바로 넣었다 — 문구 키로 바꿔야 한다"
@@ -1503,17 +1518,17 @@
  },
  "D-untied-boolean-claim": {
   "math.truth": [
-   "claim.line.point: 수만으로는 대사와 묶을 수 없는 명제다 — states_text 에 대사가 반드시 말해야 할 말을 적어야 한다 (E1)"
+   "claim.line.point: 수만으로는 대사와 묶을 수 없는 명제다 — states_text 에 대사가 반드시 말해야 할 말을 글자로 적어야 한다 (E1)"
   ]
  },
  "D-untied-comparison": {
   "math.truth": [
-   "claim.slope.compare: 수만으로는 대사와 묶을 수 없는 명제다 — states_text 에 대사가 반드시 말해야 할 말을 적어야 한다 (E1)"
+   "claim.slope.compare: 수만으로는 대사와 묶을 수 없는 명제다 — states_text 에 대사가 반드시 말해야 할 말을 글자로 적어야 한다 (E1)"
   ]
  },
  "D-untied-fraction": {
   "math.truth": [
-   "claim.slope.example: 수만으로는 대사와 묶을 수 없는 명제다 — states_text 에 대사가 반드시 말해야 할 말을 적어야 한다 (E1)"
+   "claim.slope.example: 수만으로는 대사와 묶을 수 없는 명제다 — states_text 에 대사가 반드시 말해야 할 말을 글자로 적어야 한다 (E1)"
   ]
  },
  "D-untied-math-line": {
