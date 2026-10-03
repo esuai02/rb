@@ -1008,6 +1008,15 @@ class DiagnosisCoverageTest(TreeCase):
         (tree / "src/server/RewardService.luau").unlink()
         self.assertCaught(tree, "server.reward_authority", "보상 모듈은 src/server/RewardService.luau 의 ModuleScript 하나여야 한다")
 
+    def test_reward_module_without_claim_once(self):
+        """grant 는 claimOnce 를 부르는데 그 함수가 아예 없으면 중복 지급을 막는 자리를 검사할 수 없다."""
+        tree = self.make_tree()
+        self.edit(tree, "src/server/RewardService.luau",
+                  'local function claimOnce(player: Player, key: string): boolean\n'
+                  '\tlocal slot = tostring(player.UserId) .. "|" .. key\n'
+                  '\tif claimed[slot] then\n\t\treturn false\n\tend\n\tclaimed[slot] = true\n\treturn true\nend\n\n', "")
+        self.assertCaught(tree, "server.duplicate_reward", "claimOnce 함수가 없다")
+
     def test_handler_argument_count_must_match_the_contract(self):
         tree = self.make_tree()
         self.edit(tree, "src/server/Main.server.luau", "local function onSignal(player: Player, x: unknown, y: unknown)",
