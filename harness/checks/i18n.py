@@ -32,9 +32,12 @@ def _aliases(f, module: str) -> set[str]:
 
 def _key_calls(f, config) -> list[tuple[int, list]]:
     """문구 키를 쓰는 호출 — <문구 모듈>.get("키") 와 translator:FormatByKey("키")."""
-    if f.name == config["text_module"]:
-        return []   # 문구 모듈 자신은 받은 키를 그대로 넘긴다 — 그 모듈을 부르는 쪽을 검사한다
     out, toks = [], f.tokens
+    if f.name == config["text_module"]:
+        # 문구 모듈은 받은 키를 그대로 넘기는 것이 일이다. 다만 모듈 안에서 글자 그대로 적은 키는 표에 있어야 한다.
+        return [(i, luau.call_args(toks, i)) for i, t in enumerate(toks)
+                if t.kind == NAME and t.text in config["text_key_methods"] and i and toks[i - 1].text == ":"
+                and (args := luau.call_args(toks, i)) and len(args[0]) == 1 and args[0][0].kind == STRING]
     modules = _aliases(f, config["text_module"])
     direct = {alias for name in modules for alias in resolve.names_for(f.resolved, (name, "get")) if alias != name}
     for path in [(name, "get") for name in modules] + [(name,) for name in direct]:

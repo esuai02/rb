@@ -3065,6 +3065,34 @@
           "create": "{\"ClassName\": \"TextLabel\", \"Properties\": {\"Text\": \"Start\"}}\n"
         }
       ]
+    },
+    {
+      "id": "D-text-module-broken-key",
+      "class": "문구 모듈 안의 끊긴 키",
+      "expected": [
+        "i18n.missing_key"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Text.luau",
+          "find": "return Text\n",
+          "replace": "local function broken(found)\n\treturn found:FormatByKey(\"goal.missing\")\nend\n\nreturn Text\n"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-helper-sender",
+      "class": "분석 모듈의 보조 전송 함수",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "return Analytics\n",
+          "replace": "local function raw(player, eventName)\n\tAnalyticsService:LogCustomEvent(player, eventName, 1, {})\nend\nraw(nil, \"not_allowed\")\n\nreturn Analytics\n"
+        }
+      ]
     }
   ]
 }

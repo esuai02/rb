@@ -79,6 +79,8 @@ EXPECTED_DEFECTS = {
     "D-input-stored-before-guard": ("검증 전에 전역에 담은 원격 입력", ("server.remote_cooldown", "server.remote_validation"), "형식 검사가 처리를 시작한 뒤에 있다"),
     "D-claim-once-undone": ("표시를 되돌리는 claimOnce", ("server.duplicate_reward",), "표시한 자리를 다시 거짓으로 되돌린다"),
     "D-data-model-ui-text": ("데이터 모델의 UI 문구", ("i18n.hardcoded_text",), "데이터 파일의 UI 글자 속성 Text 에 'Start' 가 있다"),
+    "D-text-module-broken-key": ("문구 모듈 안의 끊긴 키", ("i18n.missing_key",), "문구 키 goal.missing 가 LocalizationTable 에 없다"),
+    "D-analytics-helper-sender": ("분석 모듈의 보조 전송 함수", ("analytics.calls",), "밖(raw)에서 부른다"),
     "D-analytics-concat-event": ("이어 붙인 분석 이벤트 이름", ("analytics.calls",), "분석 모듈이 LogCustomEvent 의 이벤트 이름 자리에 'eventNam"),
     "D-analytics-dot-call": ("점 표기로 부른 플랫폼 분석 API", ("analytics.calls",), "분석 모듈이 LogCustomEvent 에 정해진 값 ['player_profi"),
     "D-analytics-method-alias": ("전송 함수를 담은 이름으로 보낸 분석", ("analytics.calls",), "이벤트 player_profile 가 허용 목록(specs/analytics/e"),
