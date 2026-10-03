@@ -196,6 +196,9 @@ def _load_file(tree: Tree, path: Path, rel: str, owner: str) -> None:
             tokens = luau.normalize_index(folded, resolve.resolve_names(folded))   # 이름이 가리키는 값을 먼저 풀어야 대괄호를 바꿀 수 있다
             tree.luau.append(LuauFile(rel, owner, kind, tokens, resolve.resolve_names(tokens)))
             tree.problems += [f"{rel}:{x.line} 보간 문자열(`…{{…}}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다" for x in tokens if x.kind == luau.INTERP]
+            paired = luau.delimiter_problem(tokens)
+            if paired:
+                tree.problems.append(f"{rel}: {paired} — 끝까지 읽을 수 없는 코드는 검사할 수 없다")
             left = luau.block_balance(tokens)
             if left:
                 tree.problems.append(f"{rel}: 블록이 {abs(left)}개 {'닫히지 않았다' if left > 0 else '더 닫혔다'} — 끝까지 읽을 수 없는 코드는 검사할 수 없다")

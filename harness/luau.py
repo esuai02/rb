@@ -294,6 +294,26 @@ def _then_starts_statement(tokens: list[Token], k: int) -> bool:
     return True
 
 
+PAIRS = {"(": ")", "[": "]", "{": "}"}
+
+
+def delimiter_problem(tokens: list[Token]) -> str | None:
+    """괄호·대괄호·중괄호의 짝 — 맞지 않으면 그 자리를 알려 준다 (리뷰 R-Q3 30차)."""
+    stack = []
+    for tok in tokens:
+        if tok.kind != SYMBOL:
+            continue
+        if tok.text in PAIRS:
+            stack.append(tok)
+        elif tok.text in PAIRS.values():
+            if not stack:
+                return f"{tok.line}행에서 열지 않은 '{tok.text}' 를 닫는다"
+            if PAIRS[stack[-1].text] != tok.text:
+                return f"{tok.line}행에서 '{stack[-1].text}'({stack[-1].line}행)를 '{tok.text}' 로 닫는다"
+            stack.pop()
+    return f"{stack[-1].line}행의 '{stack[-1].text}' 가 닫히지 않았다" if stack else None
+
+
 def block_balance(tokens: list[Token]) -> int:
     """파일 맨 끝에서 남은 블록 깊이 — 0 이 아니면 do·if·function 이 end 로 닫히지 않았다 (리뷰 R-Q3 29차).
 

@@ -58,14 +58,18 @@ def known_ids(tree, rules) -> set[str]:
     return ids
 
 
-def _domain(text: str, ids: set[str]) -> str | None:
-    """글자 안의 도메인. 잠긴 명세에 그대로 적힌 식별자는 도메인으로 세지 않는다."""
+def _domain(text: str, ids: set[str], id_position: bool = False) -> str | None:
+    """글자 안의 도메인. 잠긴 명세에 그대로 적힌 식별자는 도메인으로 세지 않는다.
+
+    id 자리(문구 키·보상 id·분석 이벤트)의 글자는 '맨 호스트 이름' 규칙에서만 빼 준다 —
+    스킴이 붙은 링크는 id 자리에 있어도 링크다 (리뷰 R-Q3 30차).
+    """
     plain = unicodedata.normalize("NFKC", text)
-    if plain.strip() in ids:
-        return None
     found = URL.search(plain)
     if found:
         return found.group()
+    if id_position or plain.strip() in ids:
+        return None
     host = HOST.search(plain)
     return host.group() if host and host.group() not in ids else None
 
@@ -75,7 +79,7 @@ def url(tree, rules, config) -> list[str]:
     ids = known_ids(tree, rules)
     skip = {(f"{f.rel}:{f.tokens[k].line}", f.tokens[k].text) for f in tree.luau for k in _id_argument_strings(f, config)}
     out = [f"{where} URL 이나 도메인 '{found}' 이 있다" for where, text in tree.texts()
-           for found in [_domain(text, ids)] if found and (where, text) not in skip]
+           for found in [_domain(text, ids, (where, text) in skip)] if found]
     for f in tree.luau:
         for name, value in sorted(f.resolved.items()):
             if isinstance(value, str) and _domain(value, ids):

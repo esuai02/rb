@@ -114,9 +114,16 @@ def _trusted_reward_file(tree, config):
     return source.trusted_module(tree, config["reward_module_path"], config["reward_module"])
 
 
+def _player_params(f) -> set[str]:
+    """`function f(actor: Player, …)` 처럼 Player 로 적은 매개변수 — 이름을 바꿔도 플레이어다 (리뷰 R-Q3 30차)."""
+    toks = f.tokens
+    return {toks[i - 2].text for i in range(2, len(toks))
+            if toks[i].kind == NAME and toks[i].text == "Player" and toks[i - 1].text == ":" and toks[i - 2].kind == NAME}
+
+
 def _player_like(f, config) -> set[str]:
-    """플레이어·서비스를 가리키는 이름 — 설정의 이름과 거기에 담긴 다른 이름(`local p = player`)."""
-    base = set(config["player_variable_names"]) | {"game", "workspace"}
+    """플레이어·서비스를 가리키는 이름 — 설정의 이름, Player 매개변수, 거기에 담긴 다른 이름."""
+    base = set(config["player_variable_names"]) | {"game", "workspace"} | _player_params(f)
     return base | {name for name, value in f.resolved.items() if isinstance(value, tuple) and len(value) == 1 and value[0] in base}
 
 
@@ -502,6 +509,9 @@ def remote_validation(tree, rules, config) -> list[str]:
             ranges, work = _range_positions(body, constants), _first_work(body, cooldown)
             for n, p in enumerate([p for p in params[1:] if p != "..."]):
                 want = contract[n] if n < len(contract) else {}
+                if not isinstance(want, dict):
+                    out.append(f"{where} 원격 {remote} 의 {n + 1}번째 받는 값 계약이 이름 = 값 표가 아니다 — 형식·범위를 검사할 수 없다")
+                    continue
                 out += _param_errors(where, p, want, guarded, positions, ranges, work, body, constants)
     return out
 

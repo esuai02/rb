@@ -96,6 +96,9 @@ EXPECTED_DEFECTS = {
     "D-split-reward-alias": ("나눠 대입한 보상 별칭", ("server.duplicate_reward", "server.reward_after_verdict"), "주는 호출이 2곳이다"),
     "D-split-url-parts": ("나눠 대입으로 조립한 외부 링크", ("safety.url",), "이어 붙인 글자가 URL 이 된다"),
     "D-unclosed-block": ("닫히지 않은 블록", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "블록이 1개 닫히지 않았다"),
+    "D-unbalanced-parenthesis": ("짝이 맞지 않는 괄호", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "'(' 가 닫히지 않았다"),
+    "D-link-in-reward-id": ("보상 id 자리의 외부 링크", ("i18n.hardcoded_text", "safety.url"), "URL 이나 도메인 'https://' 이 있다"),
+    "D-renamed-player-authority": ("이름 바꾼 Player 의 동적 권한 접근", ("i18n.hardcoded_text", "server.reward_authority"), "actor 의 멤버를 값을 알 수 없는 방식으로 고른다"),
     "D-analytics-concat-event": ("이어 붙인 분석 이벤트 이름", ("analytics.calls",), "분석 모듈이 LogCustomEvent 의 이벤트 이름 자리에 'eventNam"),
     "D-analytics-dot-call": ("점 표기로 부른 플랫폼 분석 API", ("analytics.calls",), "분석 모듈이 LogCustomEvent 에 정해진 값 ['player_profi"),
     "D-analytics-method-alias": ("전송 함수를 담은 이름으로 보낸 분석", ("analytics.calls",), "이벤트 player_profile 가 허용 목록(specs/analytics/e"),
@@ -305,6 +308,7 @@ FROZEN_CLASSES = frozenset({
     "별칭으로 부른 중복 보상",
     "별칭으로 부른 허용 밖 분석 이벤트",
     "보간 문자열 안의 코드",
+    "보상 id 자리의 외부 링크",
     "보상 모듈을 거치지 않은 자격 발급",
     "보상 모듈을 거치지 않은 지급",
     "분석 모듈 안의 개인정보",
@@ -324,6 +328,7 @@ FROZEN_CLASSES = frozenset({
     "여러 조각으로 조립한 외부 서비스",
     "여러 조각으로 조립한 유료 서비스",
     "유료 보상 코드",
+    "이름 바꾼 Player 의 동적 권한 접근",
     "이름 바꾼 플레이어 매개변수의 개인정보",
     "이름 없는 끝의 도메인",
     "이름만 같은 분석 전송 함수",
@@ -347,6 +352,7 @@ FROZEN_CLASSES = frozenset({
     "직접 require 로 부른 끊긴 번역 키",
     "직접 require 로 부른 보상 지급",
     "직접 require 로 부른 분석 이벤트",
+    "짝이 맞지 않는 괄호",
     "참을 돌려준 뒤에 표시하는 claimOnce",
     "처리 뒤에 하는 쿨다운",
     "처리 함수 안의 별칭 보상",
@@ -1289,6 +1295,13 @@ class DiagnosisCoverageTest(TreeCase):
         self.add(tree, "content/remote_contracts.yaml", "remotes:\n  SignalRemote: 1\n")
         self.assertCaught(tree, "server.remote_validation", "받는 값 목록이어야 한다")
         self.assertCaught(tree, "server.remote_validation", "입력 계약을 받는 값 목록으로 읽을 수 없다")
+
+    def test_contract_entry_that_is_not_a_table(self):
+        """계약 항목이 이름 = 값 표가 아니면 그 항목만 진단하고 검사는 끝까지 돈다."""
+        tree = self.make_tree()
+        self.add(tree, "content/remote_contracts.yaml",
+                 "remotes:\n  SignalRemote:\n    - 1\n    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n")
+        self.assertCaught(tree, "server.remote_validation", "번째 받는 값 계약이 이름 = 값 표가 아니다")
 
     def test_contract_params_need_a_name_and_a_type(self):
         tree = self.make_tree()

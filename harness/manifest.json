@@ -3370,6 +3370,69 @@
           "replace": "do\nreturn Text\n"
         }
       ]
+    },
+    {
+      "id": "D-unbalanced-parenthesis",
+      "class": "짝이 맞지 않는 괄호",
+      "expected": [
+        "analytics.calls",
+        "i18n.do_not_translate",
+        "i18n.hardcoded_text",
+        "i18n.length_budget",
+        "i18n.missing_key",
+        "math.conditions",
+        "math.truth",
+        "safety.banned_terms",
+        "safety.external_call",
+        "safety.free_text",
+        "safety.random_or_paid_reward",
+        "safety.url",
+        "server.duplicate_reward",
+        "server.remote_cooldown",
+        "server.remote_validation",
+        "server.reward_after_verdict",
+        "server.reward_authority",
+        "text.readability"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Text.luau",
+          "find": "return Text\n",
+          "replace": "local x = (\nreturn Text\n"
+        }
+      ]
+    },
+    {
+      "id": "D-link-in-reward-id",
+      "class": "보상 id 자리의 외부 링크",
+      "expected": [
+        "i18n.hardcoded_text",
+        "safety.url"
+      ],
+      "note": "스킴이 붙은 링크는 id 자리에 있어도 링크이고, 코드에 쓴 화면 문구이기도 하다 — 두 검사가 모두 맞다",
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "RewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")",
+          "replace": "RewardService.grant(player, \"https://evil.example\", \"m.gate_open\")"
+        }
+      ]
+    },
+    {
+      "id": "D-renamed-player-authority",
+      "class": "이름 바꾼 Player 의 동적 권한 접근",
+      "expected": [
+        "i18n.hardcoded_text",
+        "server.reward_authority"
+      ],
+      "note": "속성 이름을 알 수 없으면 권한인지도, 화면 문구인지도 알 수 없다 — 두 검사가 모두 맞다",
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "local function mutate(actor: Player)\n\tactor[key] = 1\nend\nmutate(nil)\nsendCell(2, 1)\n"
+        }
+      ]
     }
   ]
 }
