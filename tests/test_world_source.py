@@ -92,6 +92,38 @@ class CanonicalValueTest(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertIn(f'["{key}"]', text, "기울기 선택지는 잠긴 Q2 표현 키만 쓴다")
 
+    def test_coop_switch_ids(self):
+        text = luau_text("server/WorldBuilder.luau")
+        for name in CANONICAL["cv.coop_switch_ids"]:
+            if not name.startswith("gate_prism"):
+                continue   # 광장 다리 2개는 선택 미션(Q4 범위 밖)
+            with self.subTest(name=name):
+                self.assertIn(f'"{name}"', text, "협동 프리즘 이름은 잠긴 Q2 목록과 같아야 한다")
+
+    def test_server_check_distance(self):
+        studs = CANONICAL["cv.server_distance"]["server_check_studs"]
+        self.assertIn(f"local REACH = {studs}", luau_text("server/Main.server.luau"))
+
+    def test_prompt_activation_distance(self):
+        studs = CANONICAL["cv.server_distance"]["prompt_activation_studs"]
+        self.assertIn(f"MaxActivationDistance = {studs}", luau_text("server/WorldBuilder.luau"))
+
+    def test_hint_idle_seconds(self):
+        seconds = CANONICAL["cv.hint_ladder"]["first_trigger"]["idle_seconds"]
+        self.assertIn(f"local HINT_IDLE_SECONDS = {seconds}", luau_text("client/Hud.client.luau"))
+
+    def test_grid_half_width_in_layout(self):
+        grid = CANONICAL["cv.coordinate_expression"]["grid"]
+        self.assertIn(f"Layout.GRID_HALF = {grid['x'][1]}", luau_text("shared/Layout.luau"))
+
+    def test_hint_ladder_never_reveals_the_answer(self):
+        """정본 값 cv.hint_ladder.reveals_answer = false — 힌트 세 단계만 쓰고 정답 문구는 없다."""
+        self.assertFalse(CANONICAL["cv.hint_ladder"]["reveals_answer"])
+        used = set(re.findall(r'Text\.get\("(hint\.[^"]+)"\)', luau_text("client/Hud.client.luau")))
+        allowed = {key for ladder in GRAPH["hint_ladders"] for key in ladder["keys"]}
+        self.assertTrue(used)
+        self.assertEqual(sorted(used - allowed), [])
+
     def test_first_rewards(self):
         rewards = [r["id"] for r in GRAPH["rewards"] if r["mission"] == "m.gate_open"]
         self.assertEqual(sorted(rewards), sorted(CANONICAL["cv.first_rewards"]))
