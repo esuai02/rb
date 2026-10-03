@@ -32,13 +32,49 @@ def banned_terms(tree, rules, config) -> list[str]:
     return out
 
 
+def _dotted_ids(node, out: set[str]) -> None:
+    if isinstance(node, dict):
+        for key, child in node.items():
+            if isinstance(key, str) and "." in key:
+                out.add(key)
+            _dotted_ids(child, out)
+    elif isinstance(node, list):
+        for child in node:
+            _dotted_ids(child, out)
+    elif isinstance(node, str) and "." in node:
+        out.add(node)
+
+
+def known_ids(tree, rules) -> set[str]:
+    """점이 찍힌 식별자의 앞머리 — 번역표의 키와 잠긴 Q2 명세의 id 에서 뽑는다 (리뷰 R-Q3 27차).
+
+    `goal.signal_2` 같은 키는 도메인이 아니다. 아직 표에 없는 키(`goal.missing`)도 앞머리로 가려낸다 —
+    그래서 id 전체가 아니라 첫 칸(goal·term·m·cv …)을 모은다.
+    """
+    ids = set(tree.strings)
+    for spec in (rules.events, rules.glossary, rules.world_spec, rules.canonical):
+        _dotted_ids(spec, ids)
+    return {i.split(".", 1)[0] for i in ids if "." in i}
+
+
+def _domain(text: str, prefixes: set[str]) -> str | None:
+    """글자 안의 도메인. 첫 칸이 잠긴 명세의 식별자 앞머리면 키로 보고 도메인으로 세지 않는다."""
+    plain = unicodedata.normalize("NFKC", text)
+    found = URL.search(plain)
+    if found:
+        return found.group()   # 스킴·www·알려진 도메인 끝은 식별자와 겹치지 않는다
+    host = HOST.search(plain)
+    return host.group() if host and host.group().split(".", 1)[0] not in prefixes else None
+
+
 def url(tree, rules, config) -> list[str]:
     """게임 안 외부 링크 없음 (INV-16). 글자를 이어 붙여 만든 값도 풀어서 보고, 풀 수 없으면 거부한다."""
-    out = [f"{where} URL 이나 도메인 '{m.group()}' 이 있다" for where, text in tree.texts()
-           for m in [URL.search(unicodedata.normalize("NFKC", text))] if m]
+    prefixes = known_ids(tree, rules)
+    out = [f"{where} URL 이나 도메인 '{found}' 이 있다" for where, text in tree.texts()
+           for found in [_domain(text, prefixes)] if found]
     for f in tree.luau:
         for name, value in sorted(f.resolved.items()):
-            if isinstance(value, str) and URL.search(unicodedata.normalize("NFKC", value)):
+            if isinstance(value, str) and _domain(value, prefixes):
                 out.append(f"{f.rel} 이름 {name} 가 가리키는 글자에 URL 이 있다 ('{value[:40]}')")
         for i, tok in enumerate(f.tokens):
             if not (tok.kind == SYMBOL and tok.text == ".." and i):
@@ -46,12 +82,15 @@ def url(tree, rules, config) -> list[str]:
             start = _start_of(f.tokens, i)
             value, _has_text = resolve.expression_value(f.tokens, start, f.resolved)
             if isinstance(value, str):
-                if URL.search(unicodedata.normalize("NFKC", value)):
+                if _domain(value, prefixes):
                     out.append(f"{f.rel}:{tok.line} 이어 붙인 글자가 URL 이 된다 ('{value[:40]}')")
             elif _url_like_part(f, start, i):
                 out.append(f"{f.rel}:{tok.line} URL 조각을 이어 붙이는데 값을 알 수 없다 — 외부 링크인지 검사할 수 없으므로 쓰지 않는다")
     return sorted(set(out))
 
+
+# 일반 호스트 이름. 점 찍힌 식별자(문구 키·미션 id)와 겹치므로 known_ids 로 걸러 쓴다.
+HOST = re.compile(r"(?i)\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,24}\b")
 
 URL_PART = re.compile(r"(?i)https?|ftp|://|www\.|\.(?:com|net|org|gg|io|kr|ly|me|co|xyz|app|dev|link|site|online|info|biz|tv|cc|to|ai|education|edu|gov|academy|school|shop|store|blog|page|cloud|tech|zone|world|games|fun|live|news|wiki|uk|jp|cn|de|fr|eu|us|ca|au|in|br|ru)\b")
 

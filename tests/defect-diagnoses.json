@@ -1361,6 +1361,11 @@
    "src/server/Main.server.luau:28 원격 입력 y 를 막는 형태의 typeof 검사로 거르지 않는다"
   ]
  },
+ "D-renamed-player-param": {
+  "analytics.calls": [
+   "src/server/Analytics.luau:40 분석 모듈이 플레이어 개인정보 속성 Name 를 쓴다 (INV-10)"
+  ]
+ },
  "D-reward-alias": {
   "server.duplicate_reward": [
    "src/server/MissionService.luau:23 보상 reward.explorer_card(m.gate_open)를 주는 호출이 2곳이다 (src/server/MissionService.luau:22, src/server/MissionService.luau:23) — 한 곳에서만"
@@ -1551,6 +1556,11 @@
  "D-unknown-remote-member": {
   "server.remote_validation": [
    "src/server/Main.server.luau:23 값을 알 수 없는 멤버에 처리 함수를 이었다 — 어떤 원격인지 검사할 수 없다"
+  ]
+ },
+ "D-unknown-tld-domain": {
+  "safety.url": [
+   "src/client/Hud.client.luau:15 URL 이나 도메인 'example.museum' 이 있다"
   ]
  },
  "D-unlisted-tld-domain": {

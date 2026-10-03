@@ -3202,6 +3202,34 @@
           "replace": "\tlocal extra = {[pickSlot()] = \"fixed\"}\n\treturn extra\n"
         }
       ]
+    },
+    {
+      "id": "D-unknown-tld-domain",
+      "class": "이름 없는 끝의 도메인",
+      "expected": [
+        "safety.url"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "print(\"example.museum\")\nsendCell(2, 1)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-renamed-player-param",
+      "class": "이름 바꾼 플레이어 매개변수의 개인정보",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "function Analytics.log(player: Player, eventName: string, fields: {[string]: string})\n\tAnalyticsService:LogCustomEvent(player, eventName, 1, pack(fields))",
+          "replace": "function Analytics.log(p: Player, eventName: string, fields: {[string]: string})\n\tprint(p.Name)\n\tAnalyticsService:LogCustomEvent(p, eventName, 1, pack(fields))"
+        }
+      ]
     }
   ]
 }

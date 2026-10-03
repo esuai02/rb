@@ -86,6 +86,8 @@ EXPECTED_DEFECTS = {
     "D-project-child-not-an-object": ("객체가 아닌 Rojo 자식", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "가 객체가 아니다 (list)"),
     "D-unlisted-tld-domain": ("허용 목록 밖 도메인", ("safety.url",), "URL 이나 도메인 'example.education' 이 있다"),
     "D-analytics-computed-slot": ("계산해서 만든 분석 칸", ("analytics.calls",), "표 칸을 계산해서 만든다"),
+    "D-unknown-tld-domain": ("이름 없는 끝의 도메인", ("safety.url",), "도메인 'example.museum' 이 있다"),
+    "D-renamed-player-param": ("이름 바꾼 플레이어 매개변수의 개인정보", ("analytics.calls",), "플레이어 개인정보 속성 Name 를 쓴다"),
     "D-analytics-concat-event": ("이어 붙인 분석 이벤트 이름", ("analytics.calls",), "분석 모듈이 LogCustomEvent 의 이벤트 이름 자리에 'eventNam"),
     "D-analytics-dot-call": ("점 표기로 부른 플랫폼 분석 API", ("analytics.calls",), "분석 모듈이 LogCustomEvent 에 정해진 값 ['player_profi"),
     "D-analytics-method-alias": ("전송 함수를 담은 이름으로 보낸 분석", ("analytics.calls",), "이벤트 player_profile 가 허용 목록(specs/analytics/e"),
