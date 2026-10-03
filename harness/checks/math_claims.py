@@ -20,7 +20,8 @@ REQUIRED = {"coordinate": ("origin", "axes"), "slope": ("run_nonzero", "same_uni
 AXES = "x_right_y_up"   # 정본 값 cv.coordinate_expression: 세로 신호판, 오른쪽·위가 양수
 DOMAINS = ("real", "grid_integer")
 NEAR = r"\s*[^\d\n]{0,4}\s*"   # 낱말과 수 사이에 올 수 있는 짧은 사이(조사·공백 등)
-MATH_SHAPE = r"\d\s*[+\-×÷*/=<>]\s*\d|\(\s*-?\d+\s*,\s*-?\d+\s*\)"   # 식 모양 — 수끼리 셈하거나 좌표꼴이면 수학 대사로 본다
+MATH_SHAPE = r"\d\s*[+\-×÷*=<>]\s*\d|\(\s*-?\d+\s*,\s*-?\d+\s*\)"   # 식 모양 — 수끼리 셈하거나 좌표꼴이면 수학 대사로 본다
+FRACTION = r"\d\s*/\s*\d"   # 분수 꼴. 진행 표시('신호 2/3')와 섞이므로 수학 용어가 함께 있을 때만 수학 대사로 본다
 
 
 class ClaimError(ValueError):
@@ -212,7 +213,11 @@ def truth(tree, rules, config) -> list[str]:
     terms = _math_terms(rules)
     for key, row in sorted(tree.strings.items()):
         source = row.get("Source", "")
-        has_math = bool(_fragments(source, rules)) or any(t in source for t in terms) or bool(re.search(MATH_SHAPE, source))
+        has_term = any(t in source for t in terms)
+        if has_term and source.strip() in terms:
+            continue   # 용어의 이름 자체다 — 대사가 아니므로 명제를 요구하지 않는다
+        has_math = (bool(_fragments(source, rules)) or has_term or bool(re.search(MATH_SHAPE, source))
+                    or (bool(re.search(FRACTION, source)) and has_term))
         if has_math and key not in tied:
             out.append(f"{key}: 수학이 든 대사인데 명제가 없다 — content/math_claims.yaml 에 적어야 검사할 수 있다 (E1)")
     return out

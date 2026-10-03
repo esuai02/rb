@@ -1,0 +1,16 @@
+# 수학 대사의 구조화된 명제 — Harness 의 E1(참/거짓)·E2(조건) 검사 대상. 문구는 LocalizationTable 의 line_key
+claims:
+  - id: claim.coordinate.label
+    line_key: label.coordinate.line
+    kind: coordinate
+    origin: [0, 0]
+    moves: [{dir: right, n: 2}, {dir: up, n: 1}]
+    states: [2, 1]
+    conditions: {origin: [0, 0], axes: x_right_y_up}
+  - id: claim.slope.flat
+    line_key: label.slope.line
+    kind: slope
+    rise: 0
+    run: 1
+    states: 0
+    conditions: {run_nonzero: true, same_unit: grid_cell}

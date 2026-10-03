@@ -433,6 +433,9 @@ def remote_validation(tree, rules, config) -> list[str]:
             if contract is None:
                 out.append(f"{where} 원격 {remote} 의 입력 계약이 content/remote_contracts.yaml 에 없다")
                 contract = []
+            elif not isinstance(contract, list):
+                out.append(f"{where} 원격 {remote} 의 입력 계약을 받는 값 목록으로 읽을 수 없다 — 형식·범위를 검사할 수 없다")
+                contract = []
             elif len(contract) != len([p for p in params[1:] if p != "..."]):
                 out.append(f"{where} 원격 {remote} 가 받는 값의 수가 계약({len(contract)})과 다르다")
             guarded, positions = _guards(body), _guard_positions(body)

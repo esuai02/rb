@@ -540,6 +540,28 @@ return M
                     luau.function_bodies(luau.tokenize(src))
 
 
+class LuauSyntaxTest(unittest.TestCase):
+    """읽을 수 없는 코드는 조용히 넘기지 않고 멈춘다 — 멈춤 문구마다 그것을 내게 하는 코드가 있다."""
+
+    def test_unclosed_string(self):
+        with self.assertRaisesRegex(luau.LuauSyntaxError, "문자열이 닫히지 않음"):
+            luau.tokenize('local a = "열린 채로\nlocal b = 1\n')
+
+    def test_unclosed_call(self):
+        tokens = luau.tokenize("f(1, 2\n")
+        with self.assertRaisesRegex(luau.LuauSyntaxError, "닫히지 않은 호출"):
+            luau.call_args(tokens, 0)
+
+    def test_unclosed_bracket(self):
+        tokens = luau.tokenize("local t = {1, 2\n")
+        with self.assertRaisesRegex(luau.LuauSyntaxError, "닫히지 않은 괄호"):
+            luau.balanced(tokens, 3)
+
+    def test_function_without_parameter_parentheses(self):
+        with self.assertRaisesRegex(luau.LuauSyntaxError, "매개변수 괄호가 없음"):
+            luau.function_bodies(luau.tokenize("local function f\n\treturn 1\nend\n"))
+
+
 class CheckBranchTest(TreeCase):
     """검사 함수의 갈래마다 — 결함 데이터가 닿지 않는 경우를 변이로 본다."""
 
@@ -831,3 +853,185 @@ class CheckBranchTest(TreeCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DiagnosisCoverageTest(TreeCase):
+    """진단 문구마다 그것을 내게 하는 상황이 하나씩 있다 (변이 시험 생존 32건을 닫는다).
+
+    심은 결함 표(EXPECTED_DEFECTS)가 덮지 못한 진단은 조용히 망가져도 아무도 모른다 — 여기서 하나씩 묶는다.
+    """
+
+    # --- 분석 ---
+    def test_analytics_module_must_be_the_one_server_module(self):
+        tree = self.make_tree()
+        (tree / "src/server/Analytics.luau").unlink()
+        self.assertCaught(tree, "analytics.calls", "분석 모듈은 src/server/Analytics.luau 의 서버 전용 ModuleScript 하나여야 한다")
+
+    def test_platform_sender_alias_outside_the_module(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/server/MissionService.luau", "return MissionService\n",
+                  'local send = AnalyticsService.LogCustomEvent\nsend(nil, "session_start", 1, {})\n\nreturn MissionService\n')
+        self.assertCaught(tree, "analytics.calls", "플랫폼 전송 함수를 다른 이름(send)에 담아 부른다")
+
+    def test_client_must_not_send_analytics(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/client/Hud.client.luau", "sendCell(2, 1)\n",
+                  'local Analytics = require(ReplicatedStorage.Shared.Analytics)\n'
+                  'Analytics.log(nil, "session_start", {input = "touch"})\nsendCell(2, 1)\n')
+        self.assertCaught(tree, "analytics.calls", "클라이언트 코드가 분석을 보낸다")
+
+    # --- 문구 ---
+    def test_ui_text_from_a_resolved_name(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/client/Hud.client.luau", 'goal.Text = Text.get("goal.signal_2")',
+                  'local part = "준비"\nlocal label = part .. " 완료"\ngoal.Text = label')
+        self.assertCaught(tree, "i18n.hardcoded_text", "문구 키로 바꿔야 한다")
+
+    def test_bracket_ui_property_resolved_to_text(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/client/Hud.client.luau", 'goal.Text = Text.get("goal.signal_2")',
+                  'local prop = "Text"\ngoal[prop] = makeLabel()')
+        self.assertCaught(tree, "i18n.hardcoded_text", "허용된 문구 키 호출이 아닌 함수의 결과를 넣는다")
+
+    def test_ui_text_that_cannot_be_resolved(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/client/Hud.client.luau", "sendCell(2, 1)\n", "goal.Text = unknownValue\n")
+        self.assertCaught(tree, "i18n.hardcoded_text", "값을 알 수 없는 글자를 넣는다")
+
+    def test_screen_text_in_a_data_file(self):
+        tree = self.make_tree()
+        self.add(tree, "src/shared/Sign.model.json", '{"ClassName": "TextLabel", "Properties": {"Text": "문이 열렸어"}}\n')
+        self.assertCaught(tree, "i18n.hardcoded_text", "데이터 파일에 화면 문구")
+
+    # --- 수학 ---
+    def test_coordinate_pattern_must_appear_in_the_line(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/shared/Localization.csv", "오른쪽 2, 위 1 → (2, 1)", "오른쪽 2, 위 1 → 저기")
+        self.edit(tree, "src/shared/Localization.csv", "ûƥ 1 → (2, 1)", "ûƥ 1 → ţĥēŕē")
+        self.assertCaught(tree, "math.truth", "을 말하지 않는다")
+
+    def test_line_point_coordinate_must_appear_in_the_line(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/shared/Localization.csv", "점 (2, 5) 는", "점 (9, 9) 는")
+        self.assertCaught(tree, "math.truth", "을 말하지 않는다")
+
+    def test_line_coefficients_must_appear_in_the_line(self):
+        tree = self.make_tree()
+        self.edit(tree, "content/math_claims.yaml", "    line: {m: 2, b: 1}\n", "    line: {m: 3, b: 1}\n")
+        self.edit(tree, "content/math_claims.yaml", "    point: [2, 5]\n", "    point: [2, 7]\n")
+        self.assertCaught(tree, "math.truth", "을 말하지 않는다")
+
+    def test_states_text_must_appear_in_the_line(self):
+        tree = self.make_tree()
+        self.edit(tree, "content/math_claims.yaml", "    states_text: 더 가팔라\n", "    states_text: 더 완만해\n")
+        self.assertCaught(tree, "math.truth", "을 말하지 않는다")
+
+    def test_conditions_that_cannot_be_compared(self):
+        tree = self.make_tree()
+        self.edit(tree, "content/math_claims.yaml", "    conditions: {origin: [0, 0], axes: x_right_y_up}\n",
+                  "    conditions: {origin: 'a', axes: x_right_y_up}\n")
+        self.assertCaught(tree, "math.conditions", "조건을 값으로 대조할 수 없다")
+
+    def test_progress_counter_is_not_a_math_line(self):
+        """'신호 2/3' 같은 진행 표시는 분수가 아니다 — 명제를 요구하지 않는다 (Q4 첫 실행에서 드러난 오탐)."""
+        tree = self.make_tree()
+        self.edit(tree, "src/shared/Localization.csv", "resp.gate_open,", "resp.progress,신호 2/3 복구.,월드 반응,,[2/3 ðöñē.]\nresp.gate_open,")
+        self.assertNotIn("math.truth", self.failing(tree))
+
+    def test_a_term_name_entry_is_not_a_math_line(self):
+        """용어의 이름 자체('좌표')는 대사가 아니다 — 명제를 요구하지 않는다 (Q4 첫 실행에서 드러난 오탐)."""
+        tree = self.make_tree()
+        self.edit(tree, "src/shared/Localization.csv", "resp.gate_open,", "term.coordinate.name,좌표,수학 용어 이름,,[Ĉööŕðïñàţē]\nresp.gate_open,")
+        self.assertNotIn("math.truth", self.failing(tree))
+
+    # --- 안전 ---
+    def test_name_pointing_at_a_url(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/client/Hud.client.luau", "sendCell(2, 1)\n", 'local site = "https://example.com"\nprint(site)\nsendCell(2, 1)\n')
+        self.assertCaught(tree, "safety.url", "가리키는 글자에 URL 이 있다")
+
+    def test_concatenation_that_becomes_a_url(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/client/Hud.client.luau", "sendCell(2, 1)\n", 'local head = "https://exa"\nprint(head .. "mple.com")\nsendCell(2, 1)\n')
+        self.assertCaught(tree, "safety.url", "이어 붙인 글자가 URL 이 된다")
+
+    def test_url_fragment_that_cannot_be_resolved(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/client/Hud.client.luau", "sendCell(2, 1)\n", 'print("https://" .. pickHost())\nsendCell(2, 1)\n')
+        self.assertCaught(tree, "safety.url", "URL 조각을 이어 붙이는데 값을 알 수 없다")
+
+    def test_random_method_call(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/server/MissionService.luau", "return MissionService\n",
+                  "local generator = Random.new(1)\nprint(generator:NextInteger(1, 2))\n\nreturn MissionService\n")
+        self.assertCaught(tree, "safety.random_or_paid_reward", "난수 메서드 NextInteger 를 쓴다")
+
+    # --- 서버·계약 ---
+    def test_reward_module_must_be_the_one_server_module(self):
+        tree = self.make_tree()
+        (tree / "src/server/RewardService.luau").unlink()
+        self.assertCaught(tree, "server.reward_authority", "보상 모듈은 src/server/RewardService.luau 의 ModuleScript 하나여야 한다")
+
+    def test_handler_argument_count_must_match_the_contract(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/server/Main.server.luau", "local function onSignal(player: Player, x: unknown, y: unknown)",
+                  "local function onSignal(player: Player, x: unknown)")
+        self.edit(tree, "src/server/Main.server.luau",
+                  '\tif typeof(x) ~= "number" or typeof(y) ~= "number" then return end\n', '\tif typeof(x) ~= "number" then return end\n')
+        self.edit(tree, "src/server/Main.server.luau", "\tif x < -GRID or x > GRID or y < -GRID or y > GRID then return end\n",
+                  "\tif x < -GRID or x > GRID then return end\n")
+        self.edit(tree, "src/server/Main.server.luau", "{x = x :: number, y = y :: number}", "{x = x :: number, y = x :: number}")
+        self.assertCaught(tree, "server.remote_validation", "받는 값의 수가 계약")
+
+    def test_contract_params_must_be_a_list(self):
+        tree = self.make_tree()
+        self.add(tree, "content/remote_contracts.yaml", "remotes:\n  SignalRemote: 1\n")
+        self.assertCaught(tree, "server.remote_validation", "받는 값 목록이어야 한다")
+
+    def test_contract_params_need_a_name_and_a_type(self):
+        tree = self.make_tree()
+        self.add(tree, "content/remote_contracts.yaml", "remotes:\n  SignalRemote:\n    - {min: -2, max: 2}\n")
+        self.assertCaught(tree, "server.remote_validation", "받는 값마다 이름과 종류를 적어야 한다")
+
+    def test_numeric_contract_needs_a_canonical_range(self):
+        tree = self.make_tree()
+        self.edit(tree, "content/remote_contracts.yaml", ", canonical: cv.coordinate_expression.grid.x}", "}")
+        self.assertCaught(tree, "server.remote_validation", "정본 값(canonical)의 범위를 가리켜야 한다")
+
+    # --- 트리 읽기 ---
+    def test_broken_project_structure(self):
+        tree = self.make_tree()
+        self.edit(tree, "default.project.json", '"ServerScriptService": {"Gate": {"$path": "src/server"}}',
+                  '"ServerScriptService": {"Gate": {"$path": {"optional": []}}}')
+        self.assertCaught(tree, "safety.url", "$path 는 글자여야 한다")
+
+    def test_harness_input_folder_must_not_ship(self):
+        tree = self.make_tree()
+        self.edit(tree, "default.project.json", '"ReplicatedStorage": {"Shared": {"$path": "src/shared"}}',
+                  '"ReplicatedStorage": {"Shared": {"$path": "src/shared"}, "Rules": {"$path": "src/../content"}}')
+        self.assertCaught(tree, "safety.url", "Rojo 에 싣지 않는다")
+
+    def test_claims_must_be_a_list(self):
+        tree = self.make_tree()
+        self.add(tree, "content/math_claims.yaml", "claims: 1\n")
+        self.assertCaught(tree, "math.truth", "claims 는 목록이어야 한다")
+
+    def test_unreadable_remote_contracts(self):
+        tree = self.make_tree()
+        self.add(tree, "content/remote_contracts.yaml", "remotes:\n\t- broken\n")
+        self.assertCaught(tree, "server.remote_validation", "읽지 못했다")
+
+    def test_remotes_must_be_a_mapping(self):
+        tree = self.make_tree()
+        self.add(tree, "content/remote_contracts.yaml", "remotes: [1, 2]\n")
+        self.assertCaught(tree, "server.remote_validation", "remotes 는 이름 → 받는 값 목록이어야 한다")
+
+    def test_csv_row_width_must_match_the_header(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/shared/Localization.csv", "resp.gate_open,", "resp.extra,하나\nresp.gate_open,")
+        self.assertCaught(tree, "i18n.missing_key", "칸 수가 머리줄과 다르다")
+
+    def test_duplicate_csv_key(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/shared/Localization.csv", "resp.gate_open,", "goal.signal_2,다른 목표,HUD 목표,,[Öţĥēŕ]\nresp.gate_open,")
+        self.assertCaught(tree, "i18n.missing_key", "가 겹친다")
