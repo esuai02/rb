@@ -294,6 +294,14 @@ def _then_starts_statement(tokens: list[Token], k: int) -> bool:
     return True
 
 
+def block_balance(tokens: list[Token]) -> int:
+    """파일 맨 끝에서 남은 블록 깊이 — 0 이 아니면 do·if·function 이 end 로 닫히지 않았다 (리뷰 R-Q3 29차).
+
+    문장 자리의 if 와 if 식을 가르는 일은 _block_delta 가 한다.
+    """
+    return sum(_block_delta(tokens, k) for k in range(len(tokens)))
+
+
 def function_bodies(tokens: list[Token]) -> list[tuple[list[str], list[Token], int]]:
     """function(...) ... end 묶음마다 (매개변수 이름, 본문 토큰, 시작 토큰 번호). 중첩 블록을 센다."""
     out = []

@@ -1490,6 +1490,24 @@
    "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
   ]
  },
+ "D-split-analytics-alias": {
+  "analytics.calls": [
+   "src/server/MissionService.luau:29 이벤트 player_profile 가 허용 목록(specs/analytics/events.yaml)에 없다"
+  ]
+ },
+ "D-split-reward-alias": {
+  "server.duplicate_reward": [
+   "src/server/MissionService.luau:21 보상 reward.explorer_card(m.gate_open)를 주는 호출이 2곳이다 (src/server/Main.server.luau:20, src/server/MissionService.luau:21) — 한 곳에서만"
+  ],
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:23 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
+  ]
+ },
+ "D-split-url-parts": {
+  "safety.url": [
+   "src/client/Hud.client.luau:25 이어 붙인 글자가 URL 이 된다 ('https://example.com')"
+  ]
+ },
  "D-term-line-without-claim": {
   "math.truth": [
    "hint.slope.extra: 수학이 든 대사인데 명제가 없다 — content/math_claims.yaml 에 적어야 검사할 수 있다 (E1)"
@@ -1572,6 +1590,62 @@
  "D-ui-text-variable": {
   "i18n.hardcoded_text": [
    "src/client/Hud.client.luau:8 UI 글자 속성 .Text 에 문구 'Open_Gate' 를 바로 넣었다 — 문구 키로 바꿔야 한다"
+  ]
+ },
+ "D-unclosed-block": {
+  "analytics.calls": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "i18n.do_not_translate": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "i18n.hardcoded_text": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "i18n.length_budget": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "i18n.missing_key": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "math.conditions": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "math.truth": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "safety.banned_terms": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "safety.external_call": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "safety.free_text": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "safety.random_or_paid_reward": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "safety.url": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "server.duplicate_reward": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "server.remote_cooldown": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "server.remote_validation": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "server.reward_after_verdict": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "server.reward_authority": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ],
+  "text.readability": [
+   "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
   ]
  },
  "D-unknown-analytics-function": {

@@ -57,8 +57,10 @@ def resolve_names(tokens: list[Token]) -> dict[str, object]:
     assigned: dict[str, list[list[Token]]] = {}
     for name, rhs in _statements(tokens):
         assigned.setdefault(name, []).append(rhs)
+    for name, rhs in _split_assignments(tokens):
+        assigned.setdefault(name, []).append(rhs)
     known: dict[str, object] = {name: UNRESOLVED for name, rhs in assigned.items() if len(rhs) > 1}
-    for name in _reassigned(tokens):
+    for name in _reassigned(tokens) - set(_declared_empty(tokens)):
         known[name] = UNRESOLVED   # 나중에 다시 묶이는 이름은 값을 하나로 볼 수 없다
         assigned.pop(name, None)
     for _round in range(4):   # 몇 단계를 거쳐도 끝까지 따라간다
@@ -70,6 +72,54 @@ def resolve_names(tokens: list[Token]) -> dict[str, object]:
         if known == before:
             break
     return known
+
+
+def _declared_empty(tokens: list[Token]) -> set[str]:
+    """`local x` 처럼 값 없이 선언한 이름 — 뒤에서 한 번만 대입하면 그 값으로 본다."""
+    out = set()
+    for i in range(len(tokens) - 1):
+        if not (tokens[i].kind == NAME and tokens[i].text == "local" and tokens[i + 1].kind == NAME):
+            continue
+        after = tokens[i + 2] if i + 2 < len(tokens) else None
+        if after is None or after.line > tokens[i + 1].line or (after.kind == NAME and after.text in KEYWORDS):
+            out.add(tokens[i + 1].text)
+    return out
+
+
+def _split_assignments(tokens: list[Token]) -> list[tuple[str, list[Token]]]:
+    """값 없이 선언한 이름에 뒤에서 한 번 대입하는 꼴 — `local x` … `x = Y.z` (리뷰 R-Q3 29차).
+
+    두 번 이상 대입하면 여기에 넣지 않으므로 UNRESOLVED 로 남는다.
+    """
+    empty, counts, out = _declared_empty(tokens), {}, []
+    for i in range(1, len(tokens) - 1):
+        if not (tokens[i].kind == NAME and tokens[i].text in empty
+                and tokens[i + 1].kind == SYMBOL and tokens[i + 1].text == "="):
+            continue
+        prev = tokens[i - 1]
+        if prev.kind == NAME and prev.text == "local":
+            continue
+        counts[tokens[i].text] = counts.get(tokens[i].text, 0) + 1
+        out.append((tokens[i].text, _rhs_from(tokens, i + 2)))
+    return [(name, rhs) for name, rhs in out if counts[name] == 1]
+
+
+def _rhs_from(tokens: list[Token], start: int) -> list[Token]:
+    """start 부터 그 문장의 오른쪽 식 토큰."""
+    depth, j, rhs = 0, start, []
+    while j < len(tokens):
+        tok = tokens[j]
+        if tok.kind == SYMBOL and tok.text in ("(", "{", "["):
+            depth += 1
+        elif tok.kind == SYMBOL and tok.text in (")", "}", "]"):
+            if depth == 0:
+                break
+            depth -= 1
+        elif depth == 0 and j > start and (tok.line > tokens[j - 1].line or (tok.kind == NAME and tok.text in KEYWORDS)):
+            break
+        rhs.append(tok)
+        j += 1
+    return rhs
 
 
 def _value(rhs: list[Token], known: dict[str, object]) -> object:

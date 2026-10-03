@@ -73,7 +73,7 @@ def _domain(text: str, ids: set[str]) -> str | None:
 def url(tree, rules, config) -> list[str]:
     """게임 안 외부 링크 없음 (INV-16). 글자를 이어 붙여 만든 값도 풀어서 보고, 풀 수 없으면 거부한다."""
     ids = known_ids(tree, rules)
-    skip = {(f"{f.rel}:{f.tokens[k].line}", f.tokens[k].text) for f in tree.luau for k in i18n.text_call_strings(f, config)}
+    skip = {(f"{f.rel}:{f.tokens[k].line}", f.tokens[k].text) for f in tree.luau for k in _id_argument_strings(f, config)}
     out = [f"{where} URL 이나 도메인 '{found}' 이 있다" for where, text in tree.texts()
            for found in [_domain(text, ids)] if found and (where, text) not in skip]
     for f in tree.luau:
@@ -95,6 +95,21 @@ def url(tree, rules, config) -> list[str]:
 
 # 일반 호스트 이름. 점 찍힌 식별자(문구 키·미션 id)와 겹치므로 known_ids 로 걸러 쓴다.
 HOST = re.compile(r"(?i)\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,24}\b")
+
+def _id_argument_strings(f, config) -> set[int]:
+    """이미 다른 검사가 허용 목록과 대조하는 id 자리의 글자 — 문구 키·보상 id·분석 이벤트 (리뷰 R-Q3 28·29차).
+
+    `reward.explorer_card` 처럼 점이 찍힌 id 를 도메인으로 세지 않는다. 목록 대조는 그 검사들이 한다.
+    """
+    toks = i18n.text_call_strings(f, config)
+    names = {"grant", config["funnel_call"], config["custom_call"]}
+    for i, tok in enumerate(f.tokens):
+        if not (tok.kind == NAME and tok.text in names and i + 1 < len(f.tokens) and f.tokens[i + 1].text == "("):
+            continue
+        opened = i + 1
+        toks |= {k for k in range(opened, opened + len(luau.balanced(f.tokens, opened))) if f.tokens[k].kind == STRING}
+    return toks
+
 
 URL_PART = re.compile(r"(?i)https?|ftp|://|www\.|\.(?:com|net|org|gg|io|kr|ly|me|co|xyz|app|dev|link|site|online|info|biz|tv|cc|to|ai|education|edu|gov|academy|school|shop|store|blog|page|cloud|tech|zone|world|games|fun|live|news|wiki|uk|jp|cn|de|fr|eu|us|ca|au|in|br|ru)\b")
 

@@ -1,7 +1,9 @@
-major | harness/checks/server.py:161-192 | `claimOnce`가 실제 중복 방지를 보장하지 않는 코드도 통과한다 | 토큰 순서만 확인해 `return true` 뒤의 `claimed[slot] = true`를 유효한 기록으로 인정하며 제어흐름을 검사하지 않음 | 쓰기 연산이 모든 성공 반환을 지배하는지 제어흐름 분석으로 검증
+major | harness/checks/analytics.py:92-95 | 분리 대입한 분석 함수 별칭이 허용 이벤트·필드 검사를 우회한다 | `local send; send = Analytics.log; send(..., "player_profile", ...)`에서 `analytics.calls`가 `[]`이며 `resolve`가 비지역 재대입을 추적하지 않는다 | 분리 대입도 추적하거나 해석 불가 함수 호출을 거부
 
-major | harness/checks/safety.py:48-67,70-74 | 알려진 키 접두어를 가진 외부 도메인이 URL 검사에서 누락된다 | `known_ids()`가 `goal`을 접두어로 만들고 `_domain()`이 `goal.museum`을 도메인이 아니라고 반환함 | 전체 식별자와 도메인을 구분하거나, 접두어만 같아도 미확인 도메인은 거부
+major | harness/checks/server.py:20-30 | 분리 대입한 보상 별칭이 중복 보상·판정 후 보상 검사를 우회한다 | `local grant; grant = RewardService.grant; grant(...)`인 원격 처리에서 `server.duplicate_reward`와 `server.reward_after_verdict`가 모두 `[]` | 별칭 해석을 보강하거나 해석 불가 보상 호출을 거부
 
-major | harness/checks/i18n.py:167-172,233-239 | 동적 UI 속성에 함수 결과를 대입하면 화면 문구 검사를 우회한다 | `goal[prop] = function() return "Ready" end`에서 함수 대입을 무조건 예외 처리하고, `"Ready"`도 식별자 형태라 하드코딩 검사에서 제외됨 | 원격 이벤트에 대한 예외만 허용하고 동적 UI 속성은 항상 거부
+major | harness/checks/safety.py:84-93 | 여러 분리 대입으로 조립한 외부 링크가 통과한다 | `https`, `://`, `example`, `.`, `com`을 각각 대입해 연결하면 `safety.url`이 `[]`; 미해석 연결식에는 URL 조각이 없어 거부하지 않는다 | 상수 대입을 추적하거나 미해석 문자열 연결을 URL 여부와 무관하게 거부
 
-major | harness/checks/safety.py:164-175 | `Instance.new` 별칭을 통한 알 수 없는 자유 입력 인스턴스 생성이 통과한다 | `local make = Instance.new; make(getClass())`는 직접 `Instance.new` 호출도 `TextBox` 토큰도 없어 결과가 빈 목록임 | `Instance.new` 별칭을 추적하고 클래스명이 해석되지 않으면 거부
+major | harness/source.py:191-211 | 문법적으로 닫히지 않은 최상위 Luau 블록을 읽기 성공으로 처리한다 | `_load_file`은 토큰화만 하고 전체 블록 검사를 호출하지 않으며, `function_bodies`는 함수 내부만 검사한다 | 모든 Luau 파일에 블록·구문 검증을 적용하고 실패를 `Tree.problems`로 기록
+
+major | tests/test_harness.py:290-341 | Q3-C1의 168 결함 종류 완전성은 검증되지 않는다 | `REQUIRED_CLASSES`는 20종뿐이고, 나머지는 현재 매니페스트 클래스가 기준문에 포함되는지만 검사한다. 기준문에 적힌 결함을 매니페스트·독립표에서 함께 제거해도 통과 가능하다 | 전체 168종의 별도 고정 집합과 매니페스트·진단표의 정확한 동치 검증 추가
