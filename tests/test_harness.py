@@ -83,6 +83,7 @@ EXPECTED_DEFECTS = {
     "D-analytics-helper-sender": ("분석 모듈의 보조 전송 함수", ("analytics.calls",), "밖(raw)에서 부른다"),
     "D-multipart-external-service": ("여러 조각으로 조립한 외부 서비스", ("safety.external_call",), "TextGenerator 를 가져온다 — 조각을 나눠 조립해도 같다"),
     "D-multipart-paid-service": ("여러 조각으로 조립한 유료 서비스", ("safety.random_or_paid_reward",), "MarketplaceService 를 가져온다 — 조각을 나눠 조립해도 같다"),
+    "D-analytics-lookalike-sender": ("이름만 같은 분석 전송 함수", ("analytics.calls",), "이름만 같은 보조 함수를 거치면"),
     "D-analytics-concat-event": ("이어 붙인 분석 이벤트 이름", ("analytics.calls",), "분석 모듈이 LogCustomEvent 의 이벤트 이름 자리에 'eventNam"),
     "D-analytics-dot-call": ("점 표기로 부른 플랫폼 분석 API", ("analytics.calls",), "분석 모듈이 LogCustomEvent 에 정해진 값 ['player_profi"),
     "D-analytics-method-alias": ("전송 함수를 담은 이름으로 보낸 분석", ("analytics.calls",), "이벤트 player_profile 가 허용 목록(specs/analytics/e"),

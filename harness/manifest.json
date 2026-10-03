@@ -3124,6 +3124,20 @@
           "replace": "local a = \"Marketplace\"\nlocal b = \"Service\"\ngame:GetService(a .. b):UserOwnsGamePassAsync(1, 2)\n\nreturn MissionService\n"
         }
       ]
+    },
+    {
+      "id": "D-analytics-lookalike-sender",
+      "class": "이름만 같은 분석 전송 함수",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Analytics.luau",
+          "find": "return Analytics\n",
+          "replace": "local function log(player, eventName)\n\tAnalyticsService:LogCustomEvent(player, eventName, 1, {})\nend\nlog(nil, \"not_allowed\")\n\nreturn Analytics\n"
+        }
+      ]
     }
   ]
 }

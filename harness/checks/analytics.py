@@ -129,38 +129,40 @@ def _player_names(f, config) -> set[str]:
     return base | {name for name, value in f.resolved.items() if isinstance(value, tuple) and len(value) == 1 and value[0] in base}
 
 
-def _declared_name(tokens, start: int) -> str | None:
-    """`function Analytics.log( … ` 에서 선언된 이름(log). 이름 없는 function 이면 None."""
+def _declared_path(tokens, start: int) -> tuple[str, ...]:
+    """`function Analytics.log( … ` 에서 선언된 이름 경로 ('Analytics', 'log'). 이름 없는 function 이면 비어 있다."""
     j, names = start + 1, []
     while j < len(tokens) and tokens[j].text != "(":
         if tokens[j].kind == NAME:
             names.append(tokens[j].text)
         j += 1
-    return names[-1] if names else None
+    return tuple(names)
 
 
-def _enclosing_function(f, index: int) -> str | None:
-    """index 를 품은 가장 안쪽 함수의 선언 이름."""
-    found = None
+def _enclosing_path(f, index: int) -> tuple[str, ...]:
+    """index 를 품은 가장 안쪽 함수의 선언 이름 경로."""
+    found = ()
     for _params, body, start in luau.function_bodies(f.tokens):
         if body and start <= index <= f.tokens.index(body[-1], start):
-            found = _declared_name(f.tokens, start)
+            found = _declared_path(f.tokens, start)
     return found
 
 
 def _check_module(f, rules, config) -> list[str]:
     """분석 모듈 자신도 믿지 않는다 — 이벤트 이름은 받은 값이어야 하고, 플레이어 개인정보 속성을 쓰지 않는다 (INV-10)."""
-    out, senders = [], {config["funnel_call"], config["custom_call"]}
+    module = config["analytics_module"]
+    out, senders = [], {(module, config["funnel_call"]), (module, config["custom_call"])}
     for api in config["platform_apis"]:
         for i in [k for k in range(len(f.tokens) - 1) if f.tokens[k].kind == NAME and f.tokens[k].text == api
                   and f.tokens[k + 1].text == "(" and (k == 0 or f.tokens[k - 1].text in (":", "."))]:
             args = luau.call_args(f.tokens, i)
             literals = [a[0].text for a in args if len(a) == 1 and a[0].kind == STRING]
             literals += [f.resolved[a[0].text] for a in args if len(a) == 1 and a[0].kind == NAME and isinstance(f.resolved.get(a[0].text), str)]
-            inside = _enclosing_function(f, i)
+            inside = _enclosing_path(f, i)
             if inside not in senders:
-                out.append(f"{f.rel}:{f.tokens[i].line} 분석 모듈이 {api} 를 {sender_names(config)} 밖({inside or '모듈 맨 바깥'})에서 부른다 "
-                           f"— 보조 함수를 거치면 허용 이벤트 검사를 비켜 간다")
+                shown = ".".join(inside) if inside else "모듈 맨 바깥"
+                out.append(f"{f.rel}:{f.tokens[i].line} 분석 모듈이 {api} 를 {sender_names(config)} 밖({shown})에서 부른다 "
+                           f"— 이름만 같은 보조 함수를 거치면 허용 이벤트 검사를 비켜 간다")
             params, slot = _function_params(f, i), config["platform_event_arg"].get(api)
             name_arg = args[slot] if slot is not None and slot < len(args) else None
             if name_arg is not None and not _plain_name(f, name_arg, params):
