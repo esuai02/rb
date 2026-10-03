@@ -913,6 +913,20 @@ class DiagnosisCoverageTest(TreeCase):
                   'Analytics.log(nil, "session_start", {input = "touch"})\nsendCell(2, 1)\n')
         self.assertCaught(tree, "analytics.calls", "클라이언트 코드가 분석을 보낸다")
 
+    def test_analytics_field_slot_written_directly(self):
+        """칸 이름을 직접 적으면 열거형 검사를 비켜 간다 — 거부한다 (글자 그대로 쓴 대괄호도 여기로 접힌다)."""
+        tree = self.make_tree()
+        self.edit(tree, "src/server/Analytics.luau", "\treturn custom\n",
+                  '\tcustom["CustomField01"] = "fixed"\n\treturn custom\n')
+        self.assertCaught(tree, "analytics.calls", "플랫폼 칸 CustomField01 에 직접 적는다")
+
+    def test_analytics_field_slot_with_a_non_identifier_key(self):
+        """식별자가 아닌 칸 이름은 점 접근으로 접히지 않는다 — 대괄호 글자 그대로를 거부한다."""
+        tree = self.make_tree()
+        self.edit(tree, "src/server/Analytics.luau", "\treturn custom\n",
+                  '\tcustom["field one"] = "fixed"\n\treturn custom\n')
+        self.assertCaught(tree, "analytics.calls", "표 칸 이름을 글자 그대로")
+
     # --- 문구 ---
     def test_ui_text_from_a_resolved_name(self):
         tree = self.make_tree()

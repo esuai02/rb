@@ -1,7 +1,5 @@
-critical | harness/checks/server.py:166-172,198-205 | 미해석 대괄호에 함수 이름을 대입한 원격 처리(`Remote[method] = handler`)를 핸들러로 수집하지 않아 타입·범위·쿨다운 검사를 모두 우회한다 | 대괄호 RHS가 `function`일 때만 거부하고 이름 RHS는 무시한다 | 미해석 대괄호 대입은 RHS가 함수 이름이어도 무조건 거부한다
+critical | harness/checks/server.py:217-223 | 미해석 동적 원격 멤버에 미해석 핸들러를 대입해도 원격 검사가 생략된다 | `local h = require(...).makeHandler(); SignalRemote[key] = h`에서 `_is_function_value`가 거짓이어서 `_handlers`가 빈 결과를 반환한다 | 동적 멤버 대입의 RHS가 확정적으로 비함수임을 증명하지 못하면 무조건 거부한다
 
-critical | harness/checks/server.py:134-139 | `claimOnce`라는 이름의 호출 모양만 확인해 실제 구현이 항상 `true`를 반환하는 no-op이어도 중복 보상 검사를 통과한다 | `local function claimOnce(...) return true end`를 둔 `grant`가 빈 결과가 된다 | `claimOnce` 구현의 상태·재호출 차단을 구조적으로 검증하거나 검증 불가 시 거부한다
+major | harness/checks/server.py:161-179 | `claimOnce`가 읽는 키와 기록하는 키의 동일성을 검사하지 않아 중복 보상을 통과시킨다 | `if claimed[slot] then return false end; claimed[slot .. "|mark"] = true; return true`가 오류 없이 통과한다 | 읽기·쓰기 키 식과 제어 흐름이 동일한지 검증하고 불명확하면 거부한다
 
-major | harness/checks/i18n.py:198-202 | 유효한 문구 키 호출이 RHS 앞 12토큰 안에 있으면 뒤의 미해석 조립·함수 결과를 전부 건너뛴다 | `Text.get("goal.signal_2") .. a .. b .. c .. d .. e .. unknownValue()`가 `i18n.hardcoded_text`에서 검출되지 않는다 | RHS 전체가 허용된 단일 키 호출인지 확인하고, 뒤의 미해석 토큰은 거부한다
-
-minor | tests/test_harness.py:250-257 | 진단 문구 검사가 각 검사 결과의 전체 진단을 검증하지 않고 첫 예상 검사에서 한 조각만 찾으므로, 의도하지 않은 진단이 추가되어도 통과한다 | `found[expected[0]]`에서 `fragment` 포함 여부만 검사한다 | 결함별 기대 진단 ID·메시지 집합을 비교해 추가·대체 진단을 실패시킨다
+major | harness/checks/analytics.py:50-60,126-156 | 신뢰된 분석 모듈의 `pack`이 허용 목록 밖 필드나 4번째 필드를 추가해도 검출하지 못한다 | `custom["CustomField04"] = "fixed"`를 `pack`에 추가한 변형에서 `analytics.calls`가 빈 결과를 반환한다 | 분석 모듈의 최종 전송 표를 분석해 허용 필드·최대 3개·열거형 값만 허용한다

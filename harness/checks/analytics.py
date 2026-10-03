@@ -171,6 +171,10 @@ def _custom_field_errors(f, rules) -> list[str]:
             for k in range(len(toks) - 4)
             if toks[k].kind == NAME and toks[k + 1].text == "[" and toks[k + 2].kind == STRING
             and toks[k + 3].text == "]" and toks[k + 4].text == "="]
+    out += [f"{f.rel}:{toks[k + 2].line} 분석 모듈이 플랫폼 칸 {toks[k + 2].text} 에 직접 적는다 — 칸은 열거형으로만 고른다 (F10)"
+            for k in range(len(toks) - 3)
+            if toks[k].kind == NAME and toks[k + 1].text == "." and toks[k + 2].kind == NAME
+            and toks[k + 2].text.startswith("CustomField") and toks[k + 3].text == "="]
     return out
 
 
