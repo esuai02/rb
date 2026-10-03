@@ -1,8 +1,8 @@
 criterion: Q3-C2 — 수학 검사 E1(참/거짓)·E2(조건 완전성)는 모델 없이 정확한 유리수 계산으로 판정하는 결정론 관문이다 — 같은 입력은 같은 결과, 틀린 명제(내리막 기울기 비교 포함)·빠진 조건(기준점·축·단위·가로 변화 0 아님·정의역)은 실패하고, 명제가 말하는 값이 대사에 없으면 실패한다. 수만으로 묶을 수 없는 명제(비교 방향·분수)는 대사가 말해야 할 말을 데이터에 적어야 하고 검사기에는 특정 언어의 말을 두지 않는다, 맞는 명제는 통과 (INV-7)
 command: python3 -m unittest tests.test_harness.MathClaimTest -v
 exit: 0
-binding: b649f2ed03fa22d5f6087b9fd611561feff457a4b5e43e915daa3586603f22df
-time: 2026-10-02T16:24:50.533547+00:00
+binding: f8a205705a88ecf09c4033a09e33b56f894ab6bff3341a4e65ec71cd3717cad0
+time: 2026-10-03T08:39:41.826569+00:00
 
 test_claim_problems_inside_a_tree (tests.test_harness.MathClaimTest.test_claim_problems_inside_a_tree) ... ok
 test_claims_required (tests.test_harness.MathClaimTest.test_claims_required) ... ok
@@ -16,6 +16,6 @@ test_true_and_false_claims (tests.test_harness.MathClaimTest.test_true_and_false
 test_undecidable_claims_raise (tests.test_harness.MathClaimTest.test_undecidable_claims_raise) ... ok
 
 ----------------------------------------------------------------------
-Ran 9 tests in 1.593s
+Ran 9 tests in 1.579s
 
 OK

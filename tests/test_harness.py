@@ -925,6 +925,13 @@ class DiagnosisCoverageTest(TreeCase):
         self.edit(tree, "content/math_claims.yaml", "    states_text: 더 가팔라\n", "    states_text: 더 완만해\n")
         self.assertCaught(tree, "math.truth", "'더 완만해' 을 말하지 않는다")
 
+    def test_line_text_must_appear_in_the_line(self):
+        """분수 계수는 수로 묶을 수 없다 — line_text 에 적은 말이 대사에 실제로 있어야 한다."""
+        tree = self.make_tree()
+        self.edit(tree, "content/math_claims.yaml", "    line: {m: 2, b: 1}\n",
+                  "    line: {m: '1/2', b: 4}\n    line_text: y = 1/2 x + 4\n")
+        self.assertCaught(tree, "math.truth", "'y = 1/2 x + 4' 을 말하지 않는다")
+
     def test_conditions_that_cannot_be_compared(self):
         tree = self.make_tree()
         self.edit(tree, "content/math_claims.yaml", "    conditions: {origin: [0, 0], axes: x_right_y_up}\n",
