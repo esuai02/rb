@@ -7,6 +7,7 @@ import contextlib
 import copy
 import io
 import json
+import os
 import re
 import shutil
 import sys
@@ -26,6 +27,7 @@ MANIFEST = run.load_manifest()
 RULES = source.load_rules(ROOT)
 GRAPH = json.loads((ROOT / "graph.json").read_text(encoding="utf-8"))
 DEFECTS = {d["id"]: d for d in MANIFEST["defects"]}
+DIAGNOSES = ROOT / "tests" / "defect-diagnoses.json"   # 결함마다 나오는 진단 전부를 묶어 둔 것
 # 작업 Graph Q3-C1 이 이름으로 든 결함 종류 전부 — 매니페스트의 결함이 하나도 빠짐없이 덮어야 한다
 REQUIRED_CLASSES = {"클라이언트가 보상을 정하는 코드", "중복 보상", "검증 없는 원격 입력", "끊긴 번역 키", "넘치는 긴 번역문", "번역된 수식",
                     "코드 속 하드코딩 문구", "틀린 수학 대사", "조건이 빠진 수학 명제", "어려운 문장", "금지어", "무작위 보상 코드",
@@ -64,6 +66,9 @@ EXPECTED_DEFECTS = {
     "D-analytics-module-in-a-table": ("표에 담은 분석 모듈", ("analytics.calls",), "분석 모듈 Analytics 을 표·멤버에 담는다"),
     "D-text-module-in-a-table": ("표에 담은 문구 모듈", ("i18n.missing_key",), "문구 모듈 Text 을 표·멤버에 담는다"),
     "D-mapping-escapes-src": ("src 밖으로 빠져나가는 매핑", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "실제로 가리키는 자리는 소스 폴더(src/) 밖이다"),
+    "D-dynamic-member-handler-name": ("동적 멤버에 대입한 처리 함수 이름", ("i18n.hardcoded_text", "server.remote_validation"), "값을 알 수 없는 멤버(SignalRemote[…])에 처리 함수를 대입했다"),
+    "D-claim-once-does-nothing": ("이름만 맞는 claimOnce", ("server.duplicate_reward",), "claimOnce 가 이미 준 적 있는지 읽기"),
+    "D-key-call-with-extra-assembly": ("문구 키 호출 뒤에 덧붙인 조립", ("i18n.hardcoded_text",), "허용된 문구 키 호출이 아닌 함수의 결과를 넣는다"),
     "D-analytics-concat-event": ("이어 붙인 분석 이벤트 이름", ("analytics.calls",), "분석 모듈이 LogCustomEvent 의 이벤트 이름 자리에 'eventNam"),
     "D-analytics-dot-call": ("점 표기로 부른 플랫폼 분석 API", ("analytics.calls",), "분석 모듈이 LogCustomEvent 에 정해진 값 ['player_profi"),
     "D-analytics-method-alias": ("전송 함수를 담은 이름으로 보낸 분석", ("analytics.calls",), "이벤트 player_profile 가 허용 목록(specs/analytics/e"),
@@ -151,7 +156,7 @@ EXPECTED_DEFECTS = {
     "D-textgenerator": ("런타임 생성형 AI 대화(TextGenerator)", ("safety.external_call",), "런타임 외부 호출·생성형 AI TextGenerator 를 쓴다"),
     "D-translated-math": ("번역된 수식", ("i18n.do_not_translate",), "label.coordinate.line[qps-ploc] 번역 금지 조각이 원문"),
     "D-two-step-grant-alias": ("두 단계로 넘긴 보상 별칭", ("server.duplicate_reward", "server.reward_after_verdict"), "보상 reward.explorer_card(m.gate_open)를 주는 호출이"),
-    "D-ui-text-from-function": ("함수가 만든 UI 문구", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다"),
+    "D-ui-text-from-function": ("함수가 만든 UI 문구", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 값을 알 수 없는 글자를 넣는다"),
     "D-ui-text-from-other-function": ("허용 밖 함수가 만든 UI 문구", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다"),
     "D-ui-text-literal": ("UI 글자 속성에 바로 넣은 문구", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 문구 'Start' 를 바로 넣었다"),
     "D-ui-text-variable": ("변수로 넣은 UI 문구", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 문구 'Open_Gate' 를 바로 넣었다"),
@@ -248,13 +253,34 @@ class PlantedDefectTest(TreeCase):
                          {i: (name, checks) for i, (name, checks, _frag) in EXPECTED_DEFECTS.items()})
 
     def test_each_defect_is_caught_by_the_listed_checks_with_the_intended_diagnosis(self):
-        """결함마다 정해진 검사만 잡고, 그 이유(진단 문구)도 의도한 것이어야 한다 (리뷰 R-Q3 11차)."""
+        """결함마다 정해진 검사만 잡고, 그 이유(진단 문구)도 의도한 것이어야 한다 (리뷰 R-Q3 11차).
+
+        진단 문구는 정해진 검사 어디에 있어도 된다 — 한 결함이 두 검사에 걸리는 경우가 있다.
+        """
         for defect_id, (_name, expected, fragment) in sorted(EXPECTED_DEFECTS.items()):
             with self.subTest(defect=defect_id):
                 found = self.failing(self.make_tree(defect_id))
                 self.assertEqual(tuple(sorted(found)), expected)
-                self.assertTrue(any(fragment in x for x in found[expected[0]]),
-                                f"{defect_id}: '{fragment}' 가 진단에 없다 — {found[expected[0]][:2]}")
+                every = [x for check in expected for x in found[check]]
+                self.assertTrue(any(fragment in x for x in every),
+                                f"{defect_id}: '{fragment}' 가 진단에 없다 — {every[:2]}")
+
+    def test_defect_diagnoses_match_the_frozen_snapshot(self):
+        """결함마다 나오는 진단 전부를 묶어 둔다 — 뜻하지 않은 진단이 끼어들면 실패한다 (리뷰 R-Q3 19차).
+
+        고칠 때는 RB_FREEZE_DIAGNOSES=1 로 다시 적고, 바뀐 줄을 눈으로 확인한 뒤 커밋한다.
+        """
+        now = {defect_id: {check: found for check, found in sorted(self.failing(self.make_tree(defect_id)).items())}
+               for defect_id in sorted(EXPECTED_DEFECTS)}
+        if os.environ.get("RB_FREEZE_DIAGNOSES") == "1":
+            DIAGNOSES.write_text(json.dumps(now, ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+            self.skipTest("진단 묶음을 다시 적었다")
+        self.assertTrue(DIAGNOSES.exists(), "진단 묶음 파일이 없다 — RB_FREEZE_DIAGNOSES=1 로 만든다")
+        frozen = json.loads(DIAGNOSES.read_text(encoding="utf-8"))
+        self.assertEqual(sorted(now), sorted(frozen), "결함 목록이 묶어 둔 것과 다르다")
+        for defect_id in sorted(now):
+            with self.subTest(defect=defect_id):
+                self.assertEqual(now[defect_id], frozen[defect_id])
 
     def test_every_defect_class_is_named_in_the_criterion(self):
         """기준 Q3-C1 문장이 결함 종류를 하나도 빠짐없이 이름으로 든다 (리뷰 R-Q3 11차)."""
@@ -792,7 +818,7 @@ class CheckBranchTest(TreeCase):
     def test_decision_values_must_be_known_or_refused(self):
         """값을 쓰는 판단 지점마다 — 글자 그대로이거나 풀리는 값이어야 하고, 아니면 거부한다 (전수 점검, 리뷰 R-Q3 10차)."""
         for defect, check, fragment in (("D-analytics-computed-event", "analytics.calls", "이벤트 이름 자리에"),
-                                        ("D-ui-text-from-function", "i18n.hardcoded_text", "문구 키 호출이 아닌 함수"),
+                                        ("D-ui-text-from-function", "i18n.hardcoded_text", "값을 알 수 없는 글자"),
                                         ("D-player-alias-dynamic-authority", "server.reward_authority", "값을 알 수 없는 방식"),
                                         ("D-reassigned-grid-after-block", "server.remote_validation", "범위")):
             with self.subTest(defect=defect):

@@ -193,14 +193,44 @@ def _ui_assignments(f, config) -> list:
     return out   # 글자로 풀리는 대괄호 키는 luau.normalize_index 가 이미 점 접근으로 바꿔 두므로 위 고리가 함께 본다
 
 
+def _expression_end(tokens, start: int) -> int:
+    """start 에서 시작하는 식의 끝(뒤쪽 경계, 미포함). 괄호 안은 줄이 바뀌어도 이어진다."""
+    depth, j = 0, start
+    while j < len(tokens):
+        tok = tokens[j]
+        if tok.kind == SYMBOL and tok.text in ("(", "{", "["):
+            depth += 1
+        elif tok.kind == SYMBOL and tok.text in (")", "}", "]"):
+            if depth == 0:
+                break
+            depth -= 1
+        elif depth == 0 and j > start and (tok.line > tokens[j - 1].line
+                                           or (tok.kind == NAME and tok.text in ("local", "function", "end", "return"))):
+            break
+        j += 1
+    return j
+
+
+def _is_only_key_call(f, start: int, end: int, key_calls: set[int]) -> bool:
+    """오른쪽 식 전체가 허용된 문구 키 호출 하나인가 — 뒤에 덧붙인 조립이 있으면 아니다."""
+    if start not in key_calls:
+        return False   # 키 호출이 식의 맨 앞이 아니면 앞뒤로 덧붙인 것이 있다
+    opened = next((k for k in range(start, end) if f.tokens[k].kind == SYMBOL and f.tokens[k].text == "("), None)
+    if opened is None:
+        return False
+    close = opened + len(luau.balanced(f.tokens, opened)) - 1
+    return close == end - 1
+
+
 def unresolved_ui_text(f, config) -> list[str]:
-    """UI 에 들어가는 값은 문구 키 호출이거나 풀 수 있는 값이어야 한다 — 알 수 없는 조립은 검사할 수 없으므로 거부한다."""
+    """UI 에 들어가는 값은 문구 키 호출 하나이거나 풀 수 있는 값이어야 한다 — 알 수 없는 조립은 거부한다."""
     out, key_calls = [], {i for i, _args in _key_calls(f, config)}
     for prop, start in _ui_assignments(f, config):
-        rhs = f.tokens[start:start + 12]
-        if any(k in key_calls for k in range(start, start + 12)):
+        end = _expression_end(f.tokens, start)
+        rhs = f.tokens[start:end]
+        if _is_only_key_call(f, start, end, key_calls):
             continue
-        calls = [k for k in range(start, min(start + 12, len(f.tokens)))
+        calls = [k for k in range(start, end)
                  if k + 1 < len(f.tokens) and f.tokens[k + 1].text == "("
                  and (f.tokens[k].kind == NAME or (f.tokens[k].kind == SYMBOL and f.tokens[k].text == "]"))]
         if calls:

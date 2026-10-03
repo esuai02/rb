@@ -2887,6 +2887,50 @@
           "replace": "\"Workspace\": {\"Sneak\": {\"$path\": \"src/../outside\"}},\n    \"StarterPlayer\""
         }
       ]
+    },
+    {
+      "id": "D-dynamic-member-handler-name",
+      "class": "동적 멤버에 대입한 처리 함수 이름",
+      "expected": [
+        "i18n.hardcoded_text",
+        "server.remote_validation"
+      ],
+      "note": "속성 이름을 값을 알 수 없는 방식으로 고르면 어떤 원격인지도, 화면 문구 속성인지도 알 수 없다 — 두 검사가 모두 맞다",
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)",
+          "replace": "local method = script.Name\nlocal handler = onSignal\nSignalRemote[method] = handler"
+        }
+      ]
+    },
+    {
+      "id": "D-claim-once-does-nothing",
+      "class": "이름만 맞는 claimOnce",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/RewardService.luau",
+          "find": "\tlocal slot = tostring(player.UserId) .. \"|\" .. key\n\tif claimed[slot] then\n\t\treturn false\n\tend\n\tclaimed[slot] = true\n\treturn true\n",
+          "replace": "\treturn true\n"
+        }
+      ]
+    },
+    {
+      "id": "D-key-call-with-extra-assembly",
+      "class": "문구 키 호출 뒤에 덧붙인 조립",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "goal.Text = Text.get(\"goal.signal_2\")",
+          "replace": "goal.Text = Text.get(\"goal.signal_2\") .. a .. b .. c .. d .. e .. unknownValue()"
+        }
+      ]
     }
   ]
 }

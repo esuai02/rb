@@ -1,0 +1,1584 @@
+{
+ "D-absolute-path": {
+  "analytics.calls": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "i18n.do_not_translate": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "i18n.hardcoded_text": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "i18n.length_budget": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "i18n.missing_key": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "math.conditions": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "math.truth": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.banned_terms": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.external_call": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.free_text": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.random_or_paid_reward": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.url": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.duplicate_reward": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.remote_cooldown": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.remote_validation": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.reward_after_verdict": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.reward_authority": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "text.readability": [
+   "트리 읽기: Rojo 경로(StarterPlayer/StarterPlayerScripts/Gate)는 트리 기준 상대 경로여야 한다 — 절대 경로는 사람마다 달라 쓸 수 없다",
+   "트리 읽기: src/client/Hud.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ]
+ },
+ "D-alias-grant-in-handler": {
+  "server.duplicate_reward": [
+   "src/server/MissionService.luau:21 보상 reward.explorer_card(m.gate_open)를 주는 호출이 2곳이다 (src/server/Main.server.luau:21, src/server/MissionService.luau:21) — 한 곳에서만"
+  ],
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:24 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
+  ]
+ },
+ "D-analytics-alias": {
+  "analytics.calls": [
+   "src/server/MissionService.luau:26 이벤트 player_profile 가 허용 목록(specs/analytics/events.yaml)에 없다"
+  ]
+ },
+ "D-analytics-computed-event": {
+  "analytics.calls": [
+   "src/server/Analytics.luau:40 분석 모듈이 LogCustomEvent 의 이벤트 이름 자리에 'getEvent ( )' 을 넣는다 — 글자 그대로이거나 받은 값이어야 한다"
+  ]
+ },
+ "D-analytics-concat-event": {
+  "analytics.calls": [
+   "src/server/Analytics.luau:40 분석 모듈이 LogCustomEvent 의 이벤트 이름 자리에 'eventName .. _bad' 을 넣는다 — 글자 그대로이거나 받은 값이어야 한다"
+  ]
+ },
+ "D-analytics-dot-call": {
+  "analytics.calls": [
+   "src/server/Analytics.luau:40 분석 모듈이 LogCustomEvent 에 정해진 값 ['player_profile'] 를 넣는다 — 이벤트 이름·필드는 받은 값이어야 한다"
+  ]
+ },
+ "D-analytics-dynamic-platform-member": {
+  "analytics.calls": [
+   "src/server/Analytics.luau:1 분석 모듈이 플랫폼 전송 함수 LogCustomEvent 를 쓰지 않는다 (퍼널·사용자 정의를 모두 보내야 한다, F11)",
+   "src/server/Analytics.luau:41 분석 모듈이 AnalyticsService 의 멤버를 값을 알 수 없는 방식으로 부른다 — 어떤 전송 함수인지 검사할 수 없다"
+  ],
+  "safety.external_call": [
+   "src/server/Analytics.luau:41 서비스 AnalyticsService 의 멤버를 값을 알 수 없는 방식으로 부른다 — 외부 호출인지 검사할 수 없다"
+  ]
+ },
+ "D-analytics-method-alias": {
+  "analytics.calls": [
+   "src/server/MissionService.luau:26 이벤트 player_profile 가 허용 목록(specs/analytics/events.yaml)에 없다"
+  ]
+ },
+ "D-analytics-module-constant-event": {
+  "analytics.calls": [
+   "src/server/Analytics.luau:41 분석 모듈이 LogCustomEvent 에 정해진 값 ['not_allowed'] 를 넣는다 — 이벤트 이름·필드는 받은 값이어야 한다"
+  ]
+ },
+ "D-analytics-module-impostor": {
+  "analytics.calls": [
+   "src/server/Analytics.server.luau:1 분석 모듈이 정해진 자리(src/server/Analytics.luau)의 ModuleScript 가 아니다 — 이름만으로 믿지 않는다",
+   "src/server/Analytics.server.luau:3 분석 모듈을 거치지 않고 AnalyticsService 를 쓴다",
+   "src/server/Analytics.server.luau:3 분석 모듈을 거치지 않고 AnalyticsService 를 쓴다",
+   "src/server/Analytics.server.luau:8 분석 모듈을 거치지 않고 AnalyticsService 를 쓴다",
+   "src/server/Analytics.server.luau:8 분석 모듈을 거치지 않고 AnalyticsService 를 쓴다",
+   "src/server/Analytics.server.luau:7 분석 모듈의 모르는 함수 send 를 부른다 — Analytics.log · Analytics.funnel 만 쓴다"
+  ]
+ },
+ "D-analytics-module-in-a-table": {
+  "analytics.calls": [
+   "src/server/MissionService.luau:27 분석 모듈 Analytics 을 표·멤버에 담는다 — 이름 하나에 담아야 어떤 이벤트를 보내는지 검사할 수 있다"
+  ]
+ },
+ "D-analytics-module-literal": {
+  "analytics.calls": [
+   "src/server/Analytics.luau:40 분석 모듈이 LogCustomEvent 에 정해진 값 ['player_profile'] 를 넣는다 — 이벤트 이름·필드는 받은 값이어야 한다"
+  ]
+ },
+ "D-analytics-module-pii": {
+  "analytics.calls": [
+   "src/server/Analytics.luau:40 분석 모듈이 플레이어 개인정보 속성 Name 를 쓴다 (INV-10)"
+  ]
+ },
+ "D-analytics-pii": {
+  "analytics.calls": [
+   "src/server/MissionService.luau:24 필드 play_mode 의 값 'player . Name' 이 열거형 글자 그대로가 아니다 (개인정보·자유 값 금지, INV-10)"
+  ]
+ },
+ "D-analytics-platform-alias-inside": {
+  "analytics.calls": [
+   "src/server/Analytics.luau:1 분석 모듈이 플랫폼 전송 함수 LogOnboardingFunnelStepEvent 를 다른 이름(send)에 담는다 — 모듈 안에서는 직접 불러야 검사할 수 있다"
+  ]
+ },
+ "D-analytics-two-step-alias": {
+  "analytics.calls": [
+   "src/server/MissionService.luau:27 이벤트 player_profile 가 허용 목록(specs/analytics/events.yaml)에 없다"
+  ]
+ },
+ "D-analytics-unknown-event": {
+  "analytics.calls": [
+   "src/server/MissionService.luau:24 이벤트 player_profile 가 허용 목록(specs/analytics/events.yaml)에 없다"
+  ]
+ },
+ "D-anonymous-reward-helper": {
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:23 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다",
+   "src/server/Main.server.luau:23 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
+  ]
+ },
+ "D-assembled-external-name": {
+  "safety.external_call": [
+   "src/server/MissionService.luau 이름 name 가 가리키는 글자가 런타임 외부 호출·생성형 AI TextGenerator 다 — 이름을 조립해도 같다"
+  ]
+ },
+ "D-assembled-paid-name": {
+  "safety.random_or_paid_reward": [
+   "src/server/MissionService.luau 이름 name 가 가리키는 글자가 결제·구독 조건 MarketplaceService 다 — 이름을 조립해도 같다 (DEC-5 결정 전 · INV-12)"
+  ]
+ },
+ "D-badge-bypass": {
+  "server.reward_authority": [
+   "src/server/MissionService.luau:23 보상 모듈 밖 서버 코드가 보상·저장 권한 BadgeService 를 쓴다 — 보상은 RewardService 만 정한다",
+   "src/server/MissionService.luau:23 보상 모듈 밖 서버 코드가 보상·저장 권한 AwardBadge 를 쓴다 — 보상은 RewardService 만 정한다"
+  ]
+ },
+ "D-banned-term": {
+  "safety.banned_terms": [
+   "resp.gate_open[Source] 금지어 ['입국', '심사']"
+  ]
+ },
+ "D-bare-number-math": {
+  "math.truth": [
+   "label.extra.sum: 수학이 든 대사인데 명제가 없다 — content/math_claims.yaml 에 적어야 검사할 수 있다 (E1)"
+  ]
+ },
+ "D-bracket-grant": {
+  "server.duplicate_reward": [
+   "src/server/MissionService.luau:22 보상 reward.explorer_card(m.gate_open)를 주는 호출이 2곳이다 (src/server/MissionService.luau:21, src/server/MissionService.luau:22) — 한 곳에서만"
+  ]
+ },
+ "D-bracket-property-non-instance": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:8 script 의 속성 이름을 값을 알 수 없는 방식으로 고른다 — 화면 문구 속성인지 검사할 수 없으므로 쓰지 않는다"
+  ]
+ },
+ "D-bracket-remote": {
+  "server.remote_cooldown": [
+   "src/server/Main.server.luau:27 원격 이벤트 처리가 Cooldown.allow 를 거치지 않는다 (연타·자동 반복 방지)"
+  ],
+  "server.remote_validation": [
+   "src/server/Main.server.luau:27 원격 입력 n 를 막는 형태의 typeof 검사로 거르지 않는다"
+  ]
+ },
+ "D-bracket-ui-text": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:8 UI 글자 속성 .Text 에 문구 'Ready' 를 바로 넣었다 — 문구 키로 바꿔야 한다"
+  ]
+ },
+ "D-broken-claims": {
+  "analytics.calls": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ],
+  "i18n.do_not_translate": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ],
+  "i18n.hardcoded_text": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ],
+  "i18n.length_budget": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ],
+  "i18n.missing_key": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ],
+  "math.conditions": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ],
+  "math.truth": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)",
+   "수학 명제(content/math_claims.yaml)가 없다"
+  ],
+  "safety.banned_terms": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ],
+  "safety.external_call": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ],
+  "safety.free_text": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ],
+  "safety.random_or_paid_reward": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ],
+  "safety.url": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ],
+  "server.duplicate_reward": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ],
+  "server.remote_cooldown": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ],
+  "server.remote_validation": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ],
+  "server.reward_after_verdict": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ],
+  "server.reward_authority": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ],
+  "text.readability": [
+   "트리 읽기: content/math_claims.yaml: 읽지 못했다 (ScannerError)"
+  ]
+ },
+ "D-broken-key": {
+  "i18n.missing_key": [
+   "src/client/Hud.client.luau:8 문구 키 goal.signal_two 가 LocalizationTable 에 없다"
+  ]
+ },
+ "D-claim-once-does-nothing": {
+  "server.duplicate_reward": [
+   "src/server/RewardService.luau:7 claimOnce 가 이미 준 적 있는지 읽기 · 준 것을 표시해 두기 · 이미 줬으면 거짓 돌려주기 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"
+  ]
+ },
+ "D-claimonce-not-called": {
+  "server.duplicate_reward": [
+   "src/server/RewardService.luau:16 grant 가 맨 앞에서 'if not claimOnce(…) then return' 으로 중복 지급을 막지 않는다(실제 호출이어야 한다)"
+  ]
+ },
+ "D-client-analytics": {
+  "analytics.calls": [
+   "src/client/Hud.client.luau:16 분석 모듈을 거치지 않고 AnalyticsService 를 쓴다",
+   "src/client/Hud.client.luau:16 분석 모듈을 거치지 않고 AnalyticsService 를 쓴다"
+  ]
+ },
+ "D-client-completion": {
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:28 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다",
+   "src/server/Main.server.luau:28 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
+  ]
+ },
+ "D-client-grant-call": {
+  "server.reward_authority": [
+   "src/client/Hud.client.luau:16 클라이언트가 볼 수 있는 코드가 보상 지급 RewardService.grant 를 부른다 — 보상은 서버만 정한다"
+  ]
+ },
+ "D-client-reward": {
+  "server.reward_authority": [
+   "src/client/Hud.client.luau:17 클라이언트 코드가 보상·저장 권한 leaderstats 를 쓴다 — 보상은 RewardService 만 정한다"
+  ]
+ },
+ "D-concat-authority": {
+  "server.reward_authority": [
+   "src/client/Hud.client.luau:17 클라이언트 코드가 보상·저장 권한 leaderstats 를 쓴다 — 보상은 RewardService 만 정한다"
+  ]
+ },
+ "D-concat-free-text": {
+  "safety.free_text": [
+   "src/client/Hud.client.luau:11 자유 입력 TextBox 를 쓴다",
+   "src/client/Hud.client.luau:11 자유 입력 TextBox 를 만든다"
+  ]
+ },
+ "D-concat-url": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:16 코드에 화면 문구 'https://example.com/' 가 있다 — 문구 키로 바꿔야 한다"
+  ],
+  "safety.url": [
+   "src/client/Hud.client.luau 이름 link 가 가리키는 글자에 URL 이 있다 ('https://example.com/join')",
+   "src/client/Hud.client.luau:16 URL 이나 도메인 'https://' 이 있다"
+  ]
+ },
+ "D-conditions-not-a-table": {
+  "math.conditions": [
+   "claim.coordinate.label: 조건(conditions)은 '이름: 값' 표여야 한다 — 1 로는 명제와 대조할 수 없다 (E2)"
+  ]
+ },
+ "D-content-mapped": {
+  "analytics.calls": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "i18n.do_not_translate": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "i18n.hardcoded_text": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "i18n.length_budget": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "i18n.missing_key": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "math.conditions": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "math.truth": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "safety.banned_terms": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "safety.external_call": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "safety.free_text": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "safety.random_or_paid_reward": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "safety.url": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "server.duplicate_reward": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "server.remote_cooldown": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "server.remote_validation": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "server.reward_after_verdict": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "server.reward_authority": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ],
+  "text.readability": [
+   "트리 읽기: Rojo 경로 content 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다"
+  ]
+ },
+ "D-contract-off-canonical": {
+  "server.remote_validation": [
+   "원격 계약 SignalRemote.x: 범위(-9~9)가 정본 값 cv.coordinate_expression.grid.x([-2, 2])와 다르다",
+   "src/server/Main.server.luau:22 원격 입력 x 의 범위 가드(-2.0~2.0)가 계약(-9~9)과 다르다"
+  ]
+ },
+ "D-cooldown-with-extra-condition": {
+  "server.remote_cooldown": [
+   "src/server/Main.server.luau:22 쿨다운 결과로 멈추지 않는다 — if not Cooldown.allow(…) then return end 꼴이어야 한다"
+  ]
+ },
+ "D-coordinate-fractional-move": {
+  "math.truth": [
+   "claim.coordinate.label: 수만으로는 대사와 묶을 수 없는 명제다 — states_text 에 대사가 반드시 말해야 할 말을 적어야 한다 (E1)",
+   "claim.coordinate.label: 대사 label.coordinate.line 가 명제의 '(0, 0)' 을 말하지 않는다 — 명제와 대사가 따로 논다"
+  ]
+ },
+ "D-direct-require-analytics": {
+  "analytics.calls": [
+   "src/server/MissionService.luau:27 이벤트 not_allowed_event 가 허용 목록(specs/analytics/events.yaml)에 없다"
+  ]
+ },
+ "D-direct-require-grant": {
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:20 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
+  ]
+ },
+ "D-direct-require-text-key": {
+  "i18n.missing_key": [
+   "src/server/MissionService.luau:27 문구 키 goal.missing_key 가 LocalizationTable 에 없다"
+  ]
+ },
+ "D-double-mapped-file": {
+  "analytics.calls": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "i18n.do_not_translate": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "i18n.hardcoded_text": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "i18n.length_budget": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "i18n.missing_key": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "math.conditions": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "math.truth": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "safety.banned_terms": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "safety.external_call": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "safety.free_text": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "safety.random_or_paid_reward": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "safety.url": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "server.duplicate_reward": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "server.remote_cooldown": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "server.remote_validation": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "server.reward_after_verdict": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "server.reward_authority": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "text.readability": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 StarterGui/Shared 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ]
+ },
+ "D-double-negated-cooldown": {
+  "server.remote_cooldown": [
+   "src/server/Main.server.luau:22 쿨다운 결과로 멈추지 않는다 — if not Cooldown.allow(…) then return end 꼴이어야 한다"
+  ]
+ },
+ "D-duplicate-reward": {
+  "server.duplicate_reward": [
+   "src/server/MissionService.luau:24 보상 reward.explorer_card(m.gate_open)를 주는 호출이 2곳이다 (src/server/MissionService.luau:18, src/server/MissionService.luau:24) — 한 곳에서만"
+  ],
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:22 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다",
+   "src/server/Main.server.luau:22 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
+  ]
+ },
+ "D-dynamic-analytics-member": {
+  "analytics.calls": [
+   "src/server/MissionService.luau:24 분석 모듈 Analytics 의 멤버를 값을 알 수 없는 방식으로 고른다 — 어떤 이벤트를 보내는지 검사할 수 없다"
+  ]
+ },
+ "D-dynamic-authority-member": {
+  "safety.external_call": [
+   "src/client/Hud.client.luau:17 서비스 player 의 멤버를 값을 알 수 없는 방식으로 부른다 — 외부 호출인지 검사할 수 없다"
+  ],
+  "server.reward_authority": [
+   "src/client/Hud.client.luau:17 클라이언트 코드가 player 의 멤버를 값을 알 수 없는 방식으로 고른다 — 보상·저장 권한인지 검사할 수 없다"
+  ]
+ },
+ "D-dynamic-member-handler": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:23 값을 알 수 없는 멤버(SignalRemote[…])에 처리 함수를 대입했다 — 어떤 원격인지 검사할 수 없다"
+  ]
+ },
+ "D-dynamic-member-handler-name": {
+  "i18n.hardcoded_text": [
+   "src/server/Main.server.luau:24 SignalRemote 의 속성 이름을 값을 알 수 없는 방식으로 고른다 — 화면 문구 속성인지 검사할 수 없으므로 쓰지 않는다"
+  ],
+  "server.remote_validation": [
+   "src/server/Main.server.luau:24 값을 알 수 없는 멤버(SignalRemote[…])에 처리 함수를 대입했다 — 어떤 원격인지 검사할 수 없다"
+  ]
+ },
+ "D-dynamic-remote-member": {
+  "server.remote_cooldown": [
+   "src/server/Main.server.luau:28 원격 이벤트 처리가 Cooldown.allow 를 거치지 않는다 (연타·자동 반복 방지)"
+  ],
+  "server.remote_validation": [
+   "src/server/Main.server.luau:28 원격 입력 n 를 막는 형태의 typeof 검사로 거르지 않는다"
+  ]
+ },
+ "D-dynamic-reward-member": {
+  "server.duplicate_reward": [
+   "src/server/MissionService.luau:21 보상 모듈 RewardService 의 멤버를 값을 알 수 없는 방식으로 고른다 — 어떤 함수인지 검사할 수 없다"
+  ]
+ },
+ "D-dynamic-service-call": {
+  "safety.external_call": [
+   "src/server/Main.server.luau:4 어떤 서비스를 가져오는지 알 수 없다 — GetService 인자는 글자 그대로여야 한다",
+   "src/server/Main.server.luau:5 서비스 svc 의 멤버를 값을 알 수 없는 방식으로 부른다 — 외부 호출인지 검사할 수 없다"
+  ]
+ },
+ "D-dynamic-table-field": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:32 받은 입력을 값을 알 수 없는 키로 읽는다 — 계약의 어느 필드인지 검사할 수 없다"
+  ]
+ },
+ "D-dynamic-text-member": {
+  "i18n.missing_key": [
+   "src/client/Hud.client.luau:13 문구 키 goal.missing 가 LocalizationTable 에 없다"
+  ]
+ },
+ "D-dynamic-text-member-unresolved": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:8 UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다 — 문구 키를 거쳐야 한다"
+  ],
+  "i18n.missing_key": [
+   "src/client/Hud.client.luau:8 문구 모듈 Text 의 멤버를 값을 알 수 없는 방식으로 고른다 — 어떤 키를 쓰는지 검사할 수 없다"
+  ]
+ },
+ "D-else-reward": {
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:24 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다",
+   "src/server/Main.server.luau:24 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
+  ]
+ },
+ "D-equals-false-verdict": {
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:22 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다",
+   "src/server/Main.server.luau:22 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
+  ]
+ },
+ "D-fraction-line-untied": {
+  "math.truth": [
+   "claim.line.point: 분수 계수는 수로 대사와 묶을 수 없다 — line_text 에 대사가 말하는 식을 적어야 한다 (E1)",
+   "claim.line.point: 대사 label.line.point 가 명제의 'b=4' 을 말하지 않는다 — 명제와 대사가 따로 논다"
+  ]
+ },
+ "D-free-text": {
+  "safety.free_text": [
+   "src/client/Hud.client.luau:11 자유 입력 TextBox 를 쓴다",
+   "src/client/Hud.client.luau:11 자유 입력 TextBox 를 만든다"
+  ]
+ },
+ "D-ftp-url": {
+  "safety.url": [
+   "resp.gate_open[Source] URL 이나 도메인 'ftp://' 이 있다"
+  ]
+ },
+ "D-fullwidth-sentence-count": {
+  "text.readability": [
+   "goal.signal_2[Source] 문장이 4개다 — 3개 이하"
+  ]
+ },
+ "D-funnel-as-custom": {
+  "analytics.calls": [
+   "src/server/MissionService.luau:24 gate_opened 는 온보딩 퍼널 단계인데 다른 전송 함수(log)로 보낸다 (F11)"
+  ]
+ },
+ "D-hard-sentence": {
+  "text.readability": [
+   "hint.slope.compare[Source] 문장 폭이 110 다 — 90 이하"
+  ]
+ },
+ "D-hardcoded-text": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:8 UI 글자 속성 .Text 에 문구 '루미를 신호 칸으로 보내자' 를 바로 넣었다 — 문구 키로 바꿔야 한다",
+   "src/client/Hud.client.luau:8 코드에 화면 문구 '루미를 신호 칸으로 보내자' 가 있다 — 문구 키로 바꿔야 한다"
+  ]
+ },
+ "D-ignored-cooldown": {
+  "server.remote_cooldown": [
+   "src/server/Main.server.luau:22 쿨다운 결과로 멈추지 않는다 — if not Cooldown.allow(…) then return end 꼴이어야 한다"
+  ]
+ },
+ "D-impossible-range": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:22 원격 입력 x 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)",
+   "src/server/Main.server.luau:22 원격 입력 y 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)"
+  ]
+ },
+ "D-inclusive-bound": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:22 원격 입력 x 의 범위 가드(-1.0~1.0)가 계약(-2~2)과 다르다",
+   "src/server/Main.server.luau:22 원격 입력 y 의 범위 가드(-1.0~1.0)가 계약(-2~2)과 다르다"
+  ]
+ },
+ "D-indirect-reward-helper": {
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:20 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다",
+   "src/server/Main.server.luau:20 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
+  ]
+ },
+ "D-interpolated-string": {
+  "analytics.calls": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "i18n.do_not_translate": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "i18n.hardcoded_text": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "i18n.length_budget": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "i18n.missing_key": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "math.conditions": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "math.truth": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "safety.banned_terms": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "safety.external_call": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "safety.free_text": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "safety.random_or_paid_reward": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "safety.url": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "server.duplicate_reward": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "server.remote_cooldown": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "server.remote_validation": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "server.reward_after_verdict": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "server.reward_authority": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ],
+  "text.readability": [
+   "트리 읽기: src/server/RewardService.luau:21 보간 문자열(`…{…}`)은 안의 코드를 검사할 수 없다 — 쓰지 않는다"
+  ]
+ },
+ "D-inverted-cooldown": {
+  "server.remote_cooldown": [
+   "src/server/Main.server.luau:22 쿨다운 결과로 멈추지 않는다 — if not Cooldown.allow(…) then return end 꼴이어야 한다"
+  ]
+ },
+ "D-key-call-with-extra-assembly": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:8 UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다 — 문구 키를 거쳐야 한다"
+  ]
+ },
+ "D-late-cooldown": {
+  "server.remote_cooldown": [
+   "src/server/Main.server.luau:22 쿨다운 결과로 멈추지 않는다 — if not Cooldown.allow(…) then return end 꼴이어야 한다"
+  ]
+ },
+ "D-late-guard": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:22 원격 입력 x 의 형식 검사가 처리를 시작한 뒤에 있다 — 쓰기 전에 걸러야 한다",
+   "src/server/Main.server.luau:22 원격 입력 x 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)",
+   "src/server/Main.server.luau:22 원격 입력 y 의 형식 검사가 처리를 시작한 뒤에 있다 — 쓰기 전에 걸러야 한다",
+   "src/server/Main.server.luau:22 원격 입력 y 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)"
+  ]
+ },
+ "D-llm-call": {
+  "safety.external_call": [
+   "src/server/MissionService.luau:7 런타임 외부 호출·생성형 AI HttpService 를 쓴다",
+   "src/server/MissionService.luau:7 런타임 외부 호출·생성형 AI HttpService 를 쓴다",
+   "src/server/MissionService.luau:10 런타임 외부 호출·생성형 AI HttpService 를 쓴다",
+   "src/server/MissionService.luau:10 런타임 외부 호출·생성형 AI RequestAsync 를 쓴다"
+  ]
+ },
+ "D-long-translation": {
+  "i18n.length_budget": [
+   "goal.signal_2[qps-ploc] 폭 52 — 상한 40 을 넘는다"
+  ]
+ },
+ "D-mapped-outside-src": {
+  "analytics.calls": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "i18n.do_not_translate": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "i18n.hardcoded_text": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "i18n.length_budget": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "i18n.missing_key": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "math.conditions": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "math.truth": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.banned_terms": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.external_call": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.free_text": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.random_or_paid_reward": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.url": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.duplicate_reward": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.remote_cooldown": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.remote_validation": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.reward_after_verdict": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.reward_authority": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "text.readability": [
+   "트리 읽기: Rojo 경로 ui 는 소스 폴더(src/) 안이어야 한다 — 검사 범위 밖에 코드를 두지 않는다",
+   "트리 읽기: ui/Answer.client.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ]
+ },
+ "D-mapping-escapes-src": {
+  "analytics.calls": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "i18n.do_not_translate": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "i18n.hardcoded_text": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "i18n.length_budget": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "i18n.missing_key": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "math.conditions": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "math.truth": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.banned_terms": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.external_call": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.free_text": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.random_or_paid_reward": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.url": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.duplicate_reward": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.remote_cooldown": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.remote_validation": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.reward_after_verdict": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.reward_authority": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "text.readability": [
+   "트리 읽기: Rojo 경로 src/../outside 가 실제로 가리키는 자리는 소스 폴더(src/) 밖이다 — 글자만 src 로 시작하면 안 된다",
+   "트리 읽기: outside/Sneak.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ]
+ },
+ "D-missing-condition": {
+  "math.conditions": [
+   "claim.slope.example: 조건 run_nonzero 가 빠졌다 (E2)"
+  ]
+ },
+ "D-missing-contract": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:22 원격 SignalRemote 의 입력 계약이 content/remote_contracts.yaml 에 없다",
+   "src/server/Main.server.luau:22 원격 입력 x 의 범위 가드(-2.0~2.0)가 계약(None~None)과 다르다",
+   "src/server/Main.server.luau:22 원격 입력 y 의 범위 가드(-2.0~2.0)가 계약(None~None)과 다르다"
+  ]
+ },
+ "D-model-textbox": {
+  "safety.free_text": [
+   "src/client/Answer.model.json 데이터 파일이 자유 입력 TextBox 인스턴스를 만든다"
+  ]
+ },
+ "D-negated-verdict": {
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:22 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다",
+   "src/server/Main.server.luau:22 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
+  ]
+ },
+ "D-nested-guard": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:24 원격 입력 x 를 막는 형태의 typeof 검사로 거르지 않는다",
+   "src/server/Main.server.luau:24 원격 입력 y 를 막는 형태의 typeof 검사로 거르지 않는다"
+  ]
+ },
+ "D-nonblocking-typeof": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:22 원격 입력 x 를 막는 형태의 typeof 검사로 거르지 않는다",
+   "src/server/Main.server.luau:22 원격 입력 y 를 막는 형태의 typeof 검사로 거르지 않는다"
+  ]
+ },
+ "D-one-sided-range": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:22 원격 입력 x 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)",
+   "src/server/Main.server.luau:22 원격 입력 y 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)"
+  ]
+ },
+ "D-paid-item": {
+  "safety.random_or_paid_reward": [
+   "src/server/MissionService.luau:25 결제·구독 조건 MarketplaceService 를 쓴다 (DEC-5 결정 전 · INV-12)",
+   "src/server/MissionService.luau:25 결제·구독 조건 PromptProductPurchase 를 쓴다 (DEC-5 결정 전 · INV-12)"
+  ]
+ },
+ "D-platform-api-alias": {
+  "analytics.calls": [
+   "src/server/MissionService.luau:5 분석 모듈을 거치지 않고 AnalyticsService 를 쓴다",
+   "src/server/MissionService.luau:5 분석 모듈을 거치지 않고 AnalyticsService 를 쓴다",
+   "src/server/MissionService.luau:6 분석 모듈을 거치지 않고 AnalyticsService 를 쓴다",
+   "src/server/MissionService.luau:6 분석 모듈을 거치지 않고 AnalyticsService 를 쓴다",
+   "src/server/MissionService.luau:27 분석 모듈을 거치지 않고 AnalyticsService 를 쓴다",
+   "src/server/MissionService.luau:27 플랫폼 전송 함수를 다른 이름(send)에 담아 부른다 — 분석 모듈을 거쳐야 한다"
+  ]
+ },
+ "D-player-alias-dynamic-authority": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:19 p 의 속성 이름을 값을 알 수 없는 방식으로 고른다 — 화면 문구 속성인지 검사할 수 없으므로 쓰지 않는다"
+  ],
+  "server.reward_authority": [
+   "src/client/Hud.client.luau:19 클라이언트 코드가 p 의 멤버를 값을 알 수 없는 방식으로 고른다 — 보상·저장 권한인지 검사할 수 없다"
+  ]
+ },
+ "D-player-alias-pii": {
+  "analytics.calls": [
+   "src/server/Analytics.luau:41 분석 모듈이 플레이어 개인정보 속성 Name 를 쓴다 (INV-10)"
+  ]
+ },
+ "D-premium-gate": {
+  "safety.random_or_paid_reward": [
+   "src/server/MissionService.luau:23 결제·구독 조건 HasRobloxSubscription 를 쓴다 (DEC-5 결정 전 · INV-12)"
+  ]
+ },
+ "D-project-path-not-a-string": {
+  "analytics.calls": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "분석 모듈은 src/server/Analytics.luau 의 서버 전용 ModuleScript 하나여야 한다 — 그 파일만 플랫폼 분석 API 를 쓸 수 있다"
+  ],
+  "i18n.do_not_translate": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "i18n.hardcoded_text": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "i18n.length_budget": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "i18n.missing_key": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "math.conditions": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "math.truth": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.banned_terms": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.external_call": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.free_text": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.random_or_paid_reward": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "safety.url": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.duplicate_reward": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "보상 모듈 RewardService 이 없다 (정해진 자리 src/server/RewardService.luau 의 ModuleScript 하나여야 한다)"
+  ],
+  "server.remote_cooldown": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.remote_validation": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.reward_after_verdict": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ],
+  "server.reward_authority": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "보상 모듈은 src/server/RewardService.luau 의 ModuleScript 하나여야 한다 — 그 파일만 보상·저장 권한을 쓸 수 있다"
+  ],
+  "text.readability": [
+   "트리 읽기: Rojo 경로(ServerScriptService/Gate)의 $path 는 글자여야 한다 — list 으로는 어느 파일인지 알 수 없다",
+   "트리 읽기: src/server/Analytics.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Cooldown.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/Main.server.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/MissionService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다",
+   "트리 읽기: src/server/RewardService.luau: Rojo 프로젝트가 어디에도 넣지 않는 파일이다"
+  ]
+ },
+ "D-project-tree-not-object": {
+  "analytics.calls": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다",
+   "분석 모듈은 src/server/Analytics.luau 의 서버 전용 ModuleScript 하나여야 한다 — 그 파일만 플랫폼 분석 API 를 쓸 수 있다"
+  ],
+  "i18n.do_not_translate": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다"
+  ],
+  "i18n.hardcoded_text": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다"
+  ],
+  "i18n.length_budget": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다"
+  ],
+  "i18n.missing_key": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다",
+   "LocalizationTable(CSV)이 없다"
+  ],
+  "math.conditions": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다"
+  ],
+  "math.truth": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다",
+   "수학 명제(content/math_claims.yaml)가 없다"
+  ],
+  "safety.banned_terms": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다"
+  ],
+  "safety.external_call": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다"
+  ],
+  "safety.free_text": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다"
+  ],
+  "safety.random_or_paid_reward": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다"
+  ],
+  "safety.url": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다"
+  ],
+  "server.duplicate_reward": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다",
+   "보상 모듈 RewardService 이 없다 (정해진 자리 src/server/RewardService.luau 의 ModuleScript 하나여야 한다)"
+  ],
+  "server.remote_cooldown": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다"
+  ],
+  "server.remote_validation": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다"
+  ],
+  "server.reward_after_verdict": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다"
+  ],
+  "server.reward_authority": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다",
+   "보상 모듈은 src/server/RewardService.luau 의 ModuleScript 하나여야 한다 — 그 파일만 보상·저장 권한을 쓸 수 있다"
+  ],
+  "text.readability": [
+   "트리 읽기: default.project.json: tree 는 객체여야 한다"
+  ]
+ },
+ "D-random-alias-chain": {
+  "safety.random_or_paid_reward": [
+   "src/server/RewardService.luau:23 난수를 쓴다 — 보상·진행은 완주·기여로만 정한다 (허용 모듈: 없음)"
+  ]
+ },
+ "D-random-alias-dynamic-member": {
+  "safety.random_or_paid_reward": [
+   "src/server/MissionService.luau:29 난수 원천 R 의 멤버를 값을 알 수 없는 방식으로 고른다 — 난수를 쓰는지 검사할 수 없다"
+  ]
+ },
+ "D-random-helper": {
+  "safety.random_or_paid_reward": [
+   "src/server/Chance.luau:4 난수를 쓴다 — 보상·진행은 완주·기여로만 정한다 (허용 모듈: 없음)",
+   "src/server/Chance.luau:7 난수 메서드 NextInteger 를 쓴다 — 보상·진행은 완주·기여로만 정한다"
+  ]
+ },
+ "D-random-reward": {
+  "safety.random_or_paid_reward": [
+   "src/server/RewardService.luau:21 난수를 쓴다 — 보상·진행은 완주·기여로만 정한다 (허용 모듈: 없음)"
+  ]
+ },
+ "D-range-before-type": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:22 원격 입력 x 의 형식 검사가 범위 검사보다 뒤에 있다 — 수인지 먼저 확인해야 한다",
+   "src/server/Main.server.luau:22 원격 입력 y 의 형식 검사가 범위 검사보다 뒤에 있다 — 수인지 먼저 확인해야 한다"
+  ]
+ },
+ "D-reassigned-grid": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:23 원격 입력 x 의 범위 가드(None~None)가 계약(-2~2)과 다르다",
+   "src/server/Main.server.luau:23 원격 입력 y 의 범위 가드(None~None)가 계약(-2~2)과 다르다"
+  ]
+ },
+ "D-reassigned-grid-after-block": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:22 원격 입력 x 의 범위 가드(None~None)가 계약(-2~2)과 다르다",
+   "src/server/Main.server.luau:22 원격 입력 y 의 범위 가드(None~None)가 계약(-2~2)과 다르다"
+  ]
+ },
+ "D-remote-no-cooldown": {
+  "server.remote_cooldown": [
+   "src/server/Main.server.luau:21 원격 이벤트 처리가 Cooldown.allow 를 거치지 않는다 (연타·자동 반복 방지)"
+  ]
+ },
+ "D-remote-receiver-unresolved": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:24 연결 대상 evt 가 멤버 경로가 아니다 — 어떤 신호에 이은 것인지 검사할 수 없다"
+  ]
+ },
+ "D-remotefunction": {
+  "server.remote_cooldown": [
+   "src/server/Main.server.luau:28 원격 이벤트 처리가 Cooldown.allow 를 거치지 않는다 (연타·자동 반복 방지)"
+  ],
+  "server.remote_validation": [
+   "src/server/Main.server.luau:28 원격 입력 x 를 막는 형태의 typeof 검사로 거르지 않는다",
+   "src/server/Main.server.luau:28 원격 입력 y 를 막는 형태의 typeof 검사로 거르지 않는다"
+  ]
+ },
+ "D-reward-alias": {
+  "server.duplicate_reward": [
+   "src/server/MissionService.luau:23 보상 reward.explorer_card(m.gate_open)를 주는 호출이 2곳이다 (src/server/MissionService.luau:22, src/server/MissionService.luau:23) — 한 곳에서만"
+  ]
+ },
+ "D-reward-bypass": {
+  "server.reward_authority": [
+   "src/server/MissionService.luau:22 보상 모듈 밖 서버 코드가 보상·저장 권한 leaderstats 를 쓴다 — 보상은 RewardService 만 정한다"
+  ]
+ },
+ "D-reward-module-impostor": {
+  "server.reward_authority": [
+   "src/server/RewardService.server.luau:1 보상 모듈과 같은 이름인데 정해진 자리(src/server/RewardService.luau)의 ModuleScript 가 아니다 — 권한을 믿을 수 없다",
+   "src/server/RewardService.server.luau:3 보상 모듈 밖 서버 코드가 보상·저장 권한 BadgeService 를 쓴다 — 보상은 RewardService 만 정한다",
+   "src/server/RewardService.server.luau:3 보상 모듈 밖 서버 코드가 보상·저장 권한 BadgeService 를 쓴다 — 보상은 RewardService 만 정한다",
+   "src/server/RewardService.server.luau:6 보상 모듈 밖 서버 코드가 보상·저장 권한 BadgeService 를 쓴다 — 보상은 RewardService 만 정한다",
+   "src/server/RewardService.server.luau:6 보상 모듈 밖 서버 코드가 보상·저장 권한 AwardBadge 를 쓴다 — 보상은 RewardService 만 정한다"
+  ]
+ },
+ "D-reward-module-in-a-table": {
+  "server.reward_authority": [
+   "src/server/MissionService.luau:27 보상 모듈 RewardService 을 표·멤버에 담는다 — 이름 하나에 담아야 어디서 보상을 주는지 검사할 수 있다"
+  ]
+ },
+ "D-same-service-double-map": {
+  "analytics.calls": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "i18n.do_not_translate": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "i18n.hardcoded_text": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "i18n.length_budget": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "i18n.missing_key": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "math.conditions": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "math.truth": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "safety.banned_terms": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "safety.external_call": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "safety.free_text": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "safety.random_or_paid_reward": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "safety.url": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "server.duplicate_reward": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "server.remote_cooldown": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "server.remote_validation": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "server.reward_after_verdict": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "server.reward_authority": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ],
+  "text.readability": [
+   "트리 읽기: src/shared/Localization.csv: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다",
+   "트리 읽기: src/shared/Text.luau: 같은 파일을 ReplicatedStorage/Shared 와 ReplicatedStorage/Again 두 곳에 싣는다 — 어디에 있는지 하나여야 한다"
+  ]
+ },
+ "D-term-line-without-claim": {
+  "math.truth": [
+   "hint.slope.extra: 수학이 든 대사인데 명제가 없다 — content/math_claims.yaml 에 적어야 검사할 수 있다 (E1)"
+  ]
+ },
+ "D-text-alias": {
+  "i18n.missing_key": [
+   "src/client/Hud.client.luau:13 문구 키 goal.missing 가 LocalizationTable 에 없다"
+  ]
+ },
+ "D-text-alias-chain": {
+  "i18n.missing_key": [
+   "src/client/Hud.client.luau:14 문구 키 goal.missing 가 LocalizationTable 에 없다"
+  ]
+ },
+ "D-text-function-alias": {
+  "i18n.missing_key": [
+   "src/client/Hud.client.luau:13 문구 키 goal.missing 가 LocalizationTable 에 없다"
+  ]
+ },
+ "D-text-module-in-a-table": {
+  "i18n.missing_key": [
+   "src/client/Hud.client.luau:15 문구 모듈 Text 을 표·멤버에 담는다 — 이름 하나에 담아야 어떤 키를 쓰는지 검사할 수 있다"
+  ]
+ },
+ "D-textgenerator": {
+  "safety.external_call": [
+   "src/server/MissionService.luau:7 런타임 외부 호출·생성형 AI TextGenerator 를 쓴다",
+   "src/server/MissionService.luau:10 런타임 외부 호출·생성형 AI GenerateTextAsync 를 쓴다"
+  ]
+ },
+ "D-translated-math": {
+  "i18n.do_not_translate": [
+   "label.coordinate.line[qps-ploc] 번역 금지 조각이 원문과 다르다 (원문 ['(2, 1)'] · 번역 [])"
+  ]
+ },
+ "D-two-step-grant-alias": {
+  "server.duplicate_reward": [
+   "src/server/MissionService.luau:21 보상 reward.explorer_card(m.gate_open)를 주는 호출이 2곳이다 (src/server/Main.server.luau:23, src/server/MissionService.luau:21) — 한 곳에서만"
+  ],
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:26 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
+  ]
+ },
+ "D-ui-bracket-unresolved-property": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:8 goal 의 속성 이름을 값을 알 수 없는 방식으로 고른다 — 화면 문구 속성인지 검사할 수 없으므로 쓰지 않는다"
+  ]
+ },
+ "D-ui-text-from-bracket-call": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:9 UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다 — 문구 키를 거쳐야 한다"
+  ]
+ },
+ "D-ui-text-from-function": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:9 UI 글자 속성 .Text 에 값을 알 수 없는 글자를 넣는다 — 문구 키를 거치거나 풀리는 값이어야 한다"
+  ]
+ },
+ "D-ui-text-from-other-function": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:8 UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다 — 문구 키를 거쳐야 한다"
+  ]
+ },
+ "D-ui-text-literal": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:8 UI 글자 속성 .Text 에 문구 'Start' 를 바로 넣었다 — 문구 키로 바꿔야 한다"
+  ]
+ },
+ "D-ui-text-variable": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:8 UI 글자 속성 .Text 에 문구 'Open_Gate' 를 바로 넣었다 — 문구 키로 바꿔야 한다"
+  ]
+ },
+ "D-unknown-analytics-function": {
+  "analytics.calls": [
+   "src/server/MissionService.luau:25 분석 모듈의 모르는 함수 raw 를 부른다 — Analytics.log · Analytics.funnel 만 쓴다"
+  ]
+ },
+ "D-unknown-remote-member": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:23 값을 알 수 없는 멤버에 처리 함수를 이었다 — 어떤 원격인지 검사할 수 없다"
+  ]
+ },
+ "D-unranged-remote": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:21 원격 입력 x 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)",
+   "src/server/Main.server.luau:21 원격 입력 y 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)"
+  ]
+ },
+ "D-unreadable-model": {
+  "analytics.calls": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "i18n.do_not_translate": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "i18n.hardcoded_text": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "i18n.length_budget": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "i18n.missing_key": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "math.conditions": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "math.truth": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "safety.banned_terms": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "safety.external_call": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "safety.free_text": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "safety.random_or_paid_reward": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "safety.url": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "server.duplicate_reward": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "server.remote_cooldown": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "server.remote_validation": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "server.reward_after_verdict": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "server.reward_authority": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ],
+  "text.readability": [
+   "트리 읽기: src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사할 수 없다 — 소스는 파일로 두어야 한다(DEC-8)"
+  ]
+ },
+ "D-unresolved-ui-text": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:8 UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다 — 문구 키를 거쳐야 한다"
+  ]
+ },
+ "D-untied-boolean-claim": {
+  "math.truth": [
+   "claim.line.point: 수만으로는 대사와 묶을 수 없는 명제다 — states_text 에 대사가 반드시 말해야 할 말을 적어야 한다 (E1)"
+  ]
+ },
+ "D-untied-comparison": {
+  "math.truth": [
+   "claim.slope.compare: 수만으로는 대사와 묶을 수 없는 명제다 — states_text 에 대사가 반드시 말해야 할 말을 적어야 한다 (E1)"
+  ]
+ },
+ "D-untied-fraction": {
+  "math.truth": [
+   "claim.slope.example: 수만으로는 대사와 묶을 수 없는 명제다 — states_text 에 대사가 반드시 말해야 할 말을 적어야 한다 (E1)"
+  ]
+ },
+ "D-untied-math-line": {
+  "math.truth": [
+   "label.extra.line: 수학이 든 대사인데 명제가 없다 — content/math_claims.yaml 에 적어야 검사할 수 있다 (E1)"
+  ]
+ },
+ "D-unvalidated-remote": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:21 원격 입력 x 를 막는 형태의 typeof 검사로 거르지 않는다",
+   "src/server/Main.server.luau:21 원격 입력 y 를 막는 형태의 typeof 검사로 거르지 않는다"
+  ]
+ },
+ "D-url": {
+  "safety.url": [
+   "resp.gate_open[Source] URL 이나 도메인 'roblox.com' 이 있다"
+  ]
+ },
+ "D-vararg-handler": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:22 가변 인자(...)는 형식을 검사할 수 없다 — 받는 값을 이름으로 적어야 한다",
+   "src/server/Main.server.luau:22 원격 SignalRemote 가 받는 값의 수가 계약(2)과 다르다"
+  ]
+ },
+ "D-variable-class-name": {
+  "safety.free_text": [
+   "src/client/Hud.client.luau:13 자유 입력 TextBox 를 만든다"
+  ]
+ },
+ "D-variable-url": {
+  "i18n.hardcoded_text": [
+   "src/client/Hud.client.luau:17 코드에 화면 문구 '://example.com' 가 있다 — 문구 키로 바꿔야 한다"
+  ],
+  "safety.url": [
+   "src/client/Hud.client.luau 이름 host 가 가리키는 글자에 URL 이 있다 ('://example.com')",
+   "src/client/Hud.client.luau 이름 link 가 가리키는 글자에 URL 이 있다 ('https://example.com')",
+   "src/client/Hud.client.luau:17 URL 이나 도메인 'example.com' 이 있다",
+   "src/client/Hud.client.luau:18 이어 붙인 글자가 URL 이 된다 ('https://example.com')"
+  ]
+ },
+ "D-verdict-or-true": {
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:22 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다",
+   "src/server/Main.server.luau:22 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
+  ]
+ },
+ "D-verdict-then-grant-outside": {
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:22 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다",
+   "src/server/Main.server.luau:22 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
+  ]
+ },
+ "D-wide-range": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:22 원격 입력 x 의 범위 가드(-9999.0~9999.0)가 계약(-2~2)과 다르다",
+   "src/server/Main.server.luau:22 원격 입력 y 의 범위 가드(-9999.0~9999.0)가 계약(-2~2)과 다르다"
+  ]
+ },
+ "D-work-before-guard": {
+  "server.remote_cooldown": [
+   "src/server/Main.server.luau:23 쿨다운 검사가 처리를 시작한 뒤에 있다"
+  ],
+  "server.remote_validation": [
+   "src/server/Main.server.luau:23 원격 입력 x 의 형식 검사가 처리를 시작한 뒤에 있다 — 쓰기 전에 걸러야 한다",
+   "src/server/Main.server.luau:23 원격 입력 x 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)",
+   "src/server/Main.server.luau:23 원격 입력 y 의 형식 검사가 처리를 시작한 뒤에 있다 — 쓰기 전에 걸러야 한다",
+   "src/server/Main.server.luau:23 원격 입력 y 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)"
+  ]
+ },
+ "D-wrong-math": {
+  "math.truth": [
+   "claim.coordinate.label: 명제가 거짓이다 (E1) — 문구 label.coordinate.line"
+  ]
+ },
+ "D-wrong-type-guard": {
+  "server.remote_validation": [
+   "src/server/Main.server.luau:22 원격 입력 x 를 string 로 검사하지만 계약은 number 다",
+   "src/server/Main.server.luau:22 원격 입력 y 를 string 로 검사하지만 계약은 number 다"
+  ]
+ },
+ "D-zero-width-banned": {
+  "safety.banned_terms": [
+   "resp.gate_open[Source] 금지어 ['입국', '심사']"
+  ]
+ }
+}

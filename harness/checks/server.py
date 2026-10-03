@@ -128,6 +128,7 @@ def duplicate_reward(tree, rules, config) -> list[str]:
     if trusted is None:
         out.append(f"보상 모듈 {module} 이 없다 (정해진 자리 {config['reward_module_path']} 의 ModuleScript 하나여야 한다)")
     for f in owners:
+        out += _claim_once_errors(f)
         grants = [(p, body, i) for p, body, i in luau.function_bodies(f.tokens) if _names_grant(f.tokens, i)]
         if not grants:
             out.append(f"{f.rel}:1 {module}.grant 함수가 없다")
@@ -152,9 +153,58 @@ def duplicate_reward(tree, rules, config) -> list[str]:
     return out
 
 
+def _indexes(body, tables: set[str]) -> list[int]:
+    """body 안에서 표를 대괄호로 쓰는 자리."""
+    return [k for k in range(len(body) - 1) if body[k].kind == NAME and body[k].text in tables and body[k + 1].text == "["]
+
+
+def _claim_once_errors(f) -> list[str]:
+    """claimOnce 가 실제로 '한 번만'을 지키는지 — 표를 읽고, 이미 있으면 거짓을 돌려주고, 준 것을 표시해 둬야 한다.
+
+    이름과 호출 모양만 맞으면 `return true` 한 줄로도 중복 보상 검사를 지나갈 수 있다(리뷰 R-Q3 19차).
+    """
+    tables = i18n._table_names(f)
+    for _params, body, i in luau.function_bodies(f.tokens):
+        if _declared_name(f.tokens, i) != "claimOnce":
+            continue
+        texts = [t.text for t in body]
+        spots = _indexes(body, tables)
+        writes = [k for k in spots if (close := k + 1 + len(luau.balanced(body, k + 1))) < len(body) and body[close].text == "="]
+        denies = any(texts[k] == "return" and texts[k + 1:k + 2] == ["false"] for k in range(len(texts) - 1))
+        missing = [name for name, ok in (("이미 준 적 있는지 읽기", bool(spots)), ("준 것을 표시해 두기", bool(writes)),
+                                         ("이미 줬으면 거짓 돌려주기", denies)) if not ok]
+        if missing:
+            return [f"{_at(f, f.tokens[i])} claimOnce 가 {' · '.join(missing)} 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"]
+        return []
+    return [f"{f.rel}:1 보상 모듈에 claimOnce 함수가 없다 — 중복 지급을 막는 자리를 검사할 수 없다"]
+
+
 def _names_grant(tokens, i: int) -> bool:
     """function M.grant( / function M:grant( / function grant( 처럼 grant 를 정의하는 function 인가."""
     return _declared_name(tokens, i) == "grant"
+
+
+def _function_names(tokens) -> set[str]:
+    """이 파일이 선언한 함수 이름 — `local function f` · `function M.f` · `local f = function`."""
+    out = set()
+    for i in range(len(tokens) - 2):
+        if tokens[i].kind == NAME and tokens[i].text == "function" and tokens[i + 1].kind == NAME:
+            out.add(tokens[i + 1].text if tokens[i + 2].text != "." else tokens[i + 2].text)
+        if tokens[i].kind == NAME and tokens[i].text == "local" and tokens[i + 1].kind == NAME \
+                and tokens[i + 2].text == "=" and i + 3 < len(tokens) and tokens[i + 3].text == "function":
+            out.add(tokens[i + 1].text)
+    return out
+
+
+def _is_function_value(f, start: int, functions: set[str]) -> bool:
+    """그 자리에 놓인 값이 함수인가 — 함수 리터럴, 선언한 함수 이름, 또는 그 함수를 담은 이름."""
+    tok = f.tokens[start]
+    if tok.kind != NAME:
+        return False
+    if tok.text == "function" or tok.text in functions:
+        return True
+    value = f.resolved.get(tok.text)
+    return isinstance(value, tuple) and bool(value) and value[-1] in functions
 
 
 def _handlers(f) -> list[tuple[list[str], list, int, str]]:
@@ -163,12 +213,13 @@ def _handlers(f) -> list[tuple[list[str], list, int, str]]:
     보는 꼴: X.OnServerEvent:Connect(function…) · :Connect(이름) · X.OnServerInvoke = function… · = 이름
     """
     toks, bodies, out = f.tokens, luau.function_bodies(f.tokens), []
+    functions = _function_names(toks)
     for i, _rhs, key in i18n._bracket_assignments(f):
         close = i + 1
         while close < len(toks) and not (toks[close].kind == SYMBOL and toks[close].text == "["):
             close += 1
         rhs = close + len(luau.balanced(toks, close)) + 1
-        if not isinstance(key, str) and rhs < len(toks) and toks[rhs].kind == NAME and toks[rhs].text == "function":
+        if not isinstance(key, str) and rhs < len(toks) and _is_function_value(f, rhs, functions):
             out.append(("?", [], [], i, f"값을 알 수 없는 멤버({toks[i].text}[…])에 처리 함수를 대입했다 — 어떤 원격인지 검사할 수 없다"))
     for i, tok in enumerate(toks):
         if not (tok.kind == NAME and tok.text in ("Connect", "Once", "ConnectParallel") and i and toks[i - 1].text == ":"):
