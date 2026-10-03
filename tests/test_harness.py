@@ -97,8 +97,12 @@ EXPECTED_DEFECTS = {
     "D-split-url-parts": ("나눠 대입으로 조립한 외부 링크", ("safety.url",), "이어 붙인 글자가 URL 이 된다"),
     "D-unclosed-block": ("닫히지 않은 블록", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "블록이 1개 닫히지 않았다"),
     "D-unbalanced-parenthesis": ("짝이 맞지 않는 괄호", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "'(' 가 닫히지 않았다"),
-    "D-link-in-reward-id": ("보상 id 자리의 외부 링크", ("i18n.hardcoded_text", "safety.url"), "URL 이나 도메인 'https://' 이 있다"),
+    "D-link-in-reward-id": ("보상 id 자리의 외부 링크", ("i18n.hardcoded_text", "safety.url", "server.duplicate_reward"), "URL 이나 도메인 'https://' 이 있다"),
     "D-renamed-player-authority": ("이름 바꾼 Player 의 동적 권한 접근", ("i18n.hardcoded_text", "server.reward_authority"), "actor 의 멤버를 값을 알 수 없는 방식으로 고른다"),
+    "D-data-model-ui-key": ("데이터 모델 UI 속성에 넣은 문구 키", ("i18n.hardcoded_text",), "키를 넣으면 키가 그대로 보인다"),
+    "D-undeclared-reward-id": ("명세에 없는 보상 id", ("safety.url", "server.duplicate_reward"), "보상 evil.museum 가 잠긴 명세의 보상 목록"),
+    "D-grant-passed-as-value": ("값으로 넘긴 보상 지급 함수", ("server.duplicate_reward",), "보상 지급 함수를 부르지 않고 값으로 넘긴다"),
+    "D-analytics-passed-as-value": ("값으로 넘긴 분석 전송 함수", ("analytics.calls",), "분석 전송 함수를 부르지 않고 값으로 넘긴다"),
     "D-analytics-concat-event": ("이어 붙인 분석 이벤트 이름", ("analytics.calls",), "분석 모듈이 LogCustomEvent 의 이벤트 이름 자리에 'eventNam"),
     "D-analytics-dot-call": ("점 표기로 부른 플랫폼 분석 API", ("analytics.calls",), "분석 모듈이 LogCustomEvent 에 정해진 값 ['player_profi"),
     "D-analytics-method-alias": ("전송 함수를 담은 이름으로 보낸 분석", ("analytics.calls",), "이벤트 player_profile 가 허용 목록(specs/analytics/e"),
@@ -221,6 +225,8 @@ FROZEN_CLASSES = frozenset({
     "src 밖으로 빠져나가는 매핑",
     "가변 인자 원격 처리",
     "간접 도우미를 거친 보상",
+    "값으로 넘긴 보상 지급 함수",
+    "값으로 넘긴 분석 전송 함수",
     "값을 알 수 없는 UI 속성 이름",
     "값을 알 수 없는 멤버에 건 원격 처리",
     "값을 알 수 없는 문구 멤버",
@@ -270,6 +276,7 @@ FROZEN_CLASSES = frozenset({
     "대사와 묶이지 않은 분수 계수",
     "대사와 묶이지 않은 비교 명제",
     "대사와 묶이지 않은 참·거짓 명제",
+    "데이터 모델 UI 속성에 넣은 문구 키",
     "데이터 모델의 UI 문구",
     "데이터 파일로 만든 자유 입력",
     "도우미 모듈로 옮긴 무작위 보상",
@@ -286,6 +293,7 @@ FROZEN_CLASSES = frozenset({
     "런타임 외부 호출(LLM)",
     "막지 않는 typeof 검사",
     "망가진 명제 파일",
+    "명세에 없는 보상 id",
     "명제 없는 수학 대사",
     "명제 없는 숫자 수학 대사",
     "무작위 보상 코드",
@@ -1279,6 +1287,13 @@ class DiagnosisCoverageTest(TreeCase):
                   '\tif claimed[slot] then\n\t\treturn false\n\tend\n\tclaimed[slot] = true\n\treturn true\nend\n\n', "")
         self.assertCaught(tree, "server.duplicate_reward", "claimOnce 함수가 없다")
 
+    def test_grant_mission_must_be_declared(self):
+        """보상을 주는 미션 id 도 잠긴 명세의 미션 목록에 있어야 한다 (리뷰 R-Q3 31차)."""
+        tree = self.make_tree()
+        self.edit(tree, "src/server/MissionService.luau", 'RewardService.grant(player, "reward.explorer_card", "m.gate_open")',
+                  'RewardService.grant(player, "reward.explorer_card", "m.unknown_mission")')
+        self.assertCaught(tree, "server.duplicate_reward", "미션 m.unknown_mission 가 잠긴 명세의 미션 목록에 없다")
+
     def test_handler_argument_count_must_match_the_contract(self):
         tree = self.make_tree()
         self.edit(tree, "src/server/Main.server.luau", "local function onSignal(player: Player, x: unknown, y: unknown)",
@@ -1302,6 +1317,21 @@ class DiagnosisCoverageTest(TreeCase):
         self.add(tree, "content/remote_contracts.yaml",
                  "remotes:\n  SignalRemote:\n    - 1\n    - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}\n")
         self.assertCaught(tree, "server.remote_validation", "번째 받는 값 계약이 이름 = 값 표가 아니다")
+
+    def test_table_field_contract_needs_a_canonical_range(self):
+        """표로 받는 값의 필드 계약도 정본 값을 가리켜야 한다 (리뷰 R-Q3 31차)."""
+        tree = self.make_tree()
+        self.add(tree, "content/remote_contracts.yaml",
+                 "remotes:\n  SignalRemote:\n    - name: payload\n      type: table\n      fields:\n"
+                 "        - {name: x, type: number, min: -2, max: 2}\n")
+        self.assertCaught(tree, "server.remote_validation", "SignalRemote.payload.x: 수 입력은 정본 값(canonical)의 범위를 가리켜야 한다")
+
+    def test_table_field_contract_range_must_match_the_canonical_value(self):
+        tree = self.make_tree()
+        self.add(tree, "content/remote_contracts.yaml",
+                 "remotes:\n  SignalRemote:\n    - name: payload\n      type: table\n      fields:\n"
+                 "        - {name: x, type: number, min: -9, max: 9, canonical: cv.coordinate_expression.grid.x}\n")
+        self.assertCaught(tree, "server.remote_validation", "SignalRemote.payload.x: 범위(-9~9)가 정본 값")
 
     def test_contract_params_need_a_name_and_a_type(self):
         tree = self.make_tree()

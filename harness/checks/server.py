@@ -130,6 +130,10 @@ def _player_like(f, config) -> set[str]:
 def duplicate_reward(tree, rules, config) -> list[str]:
     """보상 모듈의 grant 는 맨 앞에서 claimOnce 로 한 번만 지급을 보장하고, 같은 보상 id 를 주는 호출 자리는 하나뿐이다."""
     module, out, sites = config["reward_module"], [], {}
+    values = {v["id"]: v.get("value") for v in rules.canonical.get("values", []) if isinstance(v, dict)}
+    named = {k[: -len(".name")] for k in (rules.glossary.get("strings") or {}) if k.startswith(("reward.", "unlock.")) and k.endswith(".name")}
+    rewards = set(values.get("cv.first_rewards") or []) | named
+    missions = set((rules.events.get("fields") or {}).get("mission") or [])
     trusted = _trusted_reward_file(tree, config)
     owners = [trusted] if trusted is not None else []
     if trusted is None:
@@ -148,13 +152,20 @@ def duplicate_reward(tree, rules, config) -> list[str]:
     for f in tree.luau:
         out += [f"{f.rel}:{f.tokens[i].line} 보상 모듈 {name} 의 멤버를 값을 알 수 없는 방식으로 고른다 — 어떤 함수인지 검사할 수 없다"
                 for i, name in resolve.dynamic_member_calls(f, _module_names(f, module))]
+        out += [f"{f.rel}:{f.tokens[i].line} 보상 지급 함수를 부르지 않고 값으로 넘긴다 — 어디서·어떤 판정 뒤에 주는지 검사할 수 없다"
+                for i in resolve.passed_as_value(f, {(name, "grant") for name in _module_names(f, module)})]
         for i in grant_calls(f, module):
             args = luau.call_args(f.tokens, i)
             literal = [a[0] if len(a) == 1 and a[0].kind == STRING else None for a in args]
             if len(args) < 3 or literal[1] is None or literal[2] is None:
                 out.append(f"{_at(f, f.tokens[i])} 보상 id 와 미션 id 는 글자 그대로 써야 한다(누구에게 무엇을 주는지 정적으로 알 수 있게)")
                 continue
-            sites.setdefault((literal[1].text, literal[2].text), []).append(_at(f, f.tokens[i]))
+            reward_id, mission_id = literal[1].text, literal[2].text
+            if reward_id not in rewards:
+                out.append(f"{_at(f, f.tokens[i])} 보상 {reward_id} 가 잠긴 명세의 보상 목록(cv.first_rewards · 용어집의 보상 이름)에 없다")
+            if mission_id not in missions:
+                out.append(f"{_at(f, f.tokens[i])} 미션 {mission_id} 가 잠긴 명세의 미션 목록에 없다")
+            sites.setdefault((reward_id, mission_id), []).append(_at(f, f.tokens[i]))
     out += [f"{where[1]} 보상 {rid}({mid})를 주는 호출이 {len(where)}곳이다 ({', '.join(where)}) — 한 곳에서만"
             for (rid, mid), where in sites.items() if len(where) > 1]
     return out
@@ -551,6 +562,7 @@ def _param_errors(where, name, want, guarded, positions, ranges, work, body, con
         elif (got[1], got[2]) != (want.get("min"), want.get("max")):
             out.append(f"{where} 원격 입력 {name} 의 범위 가드({got[1]}~{got[2]})가 계약({want.get('min')}~{want.get('max')})과 다르다")
     if guarded[name] == "table":
+        # 표 필드의 범위 가드는 아직 경계 수를 읽지 못한다 — 그래서 넓든 좁든 '처리 전에 검사하지 않는다' 로 거부된다(보수적)
         for field in sorted(_fields_used(body, name)):
             if field not in guarded:
                 out.append(f"{where} 표로 받은 {field} 의 형식을 검사하지 않는다")
@@ -571,6 +583,8 @@ def _contract_errors(tree, rules) -> list[str]:
             if not isinstance(want, dict) or not want.get("name") or not want.get("type"):
                 out.append(f"원격 계약 {remote}: 받는 값마다 이름과 종류를 적어야 한다")
                 continue
+            nested = [dict(x, name=f"{want['name']}.{x.get('name')}") for x in (want.get("fields") or []) if isinstance(x, dict)]
+            out += _contract_errors_for(remote, nested, values)
             if want["type"] != "number":
                 continue
             ref = want.get("canonical")
@@ -579,6 +593,21 @@ def _contract_errors(tree, rules) -> list[str]:
                 out.append(f"원격 계약 {remote}.{want['name']}: 수 입력은 정본 값(canonical)의 범위를 가리켜야 한다")
             elif [want.get("min"), want.get("max")] != list(bounds):
                 out.append(f"원격 계약 {remote}.{want['name']}: 범위({want.get('min')}~{want.get('max')})가 정본 값 {ref}({bounds})와 다르다")
+    return out
+
+
+def _contract_errors_for(remote: str, params: list[dict], values: dict) -> list[str]:
+    """표로 받는 값의 필드 계약도 정본 값과 대조한다 (리뷰 R-Q3 31차)."""
+    out = []
+    for want in params:
+        if want.get("type") != "number":
+            continue
+        ref = want.get("canonical")
+        bounds = _dotted(values, ref) if ref else None
+        if not (isinstance(bounds, list) and len(bounds) == 2):
+            out.append(f"원격 계약 {remote}.{want['name']}: 수 입력은 정본 값(canonical)의 범위를 가리켜야 한다")
+        elif [want.get("min"), want.get("max")] != list(bounds):
+            out.append(f"원격 계약 {remote}.{want['name']}: 범위({want.get('min')}~{want.get('max')})가 정본 값 {ref}({bounds})와 다르다")
     return out
 
 

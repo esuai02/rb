@@ -259,9 +259,10 @@ def hardcoded_text(tree, rules, config) -> list[str]:
         out += unresolved_ui_text(f, config) + unresolved_ui_property(f, config)
     out += [f"{d.rel} 데이터 파일에 화면 문구 '{text[:20]}' 가 있다 — 문구 키로 바꿔야 한다" for d in tree.data for text in d.strings
             if LETTER.search(text) and not IDENTIFIER.fullmatch(text)]
-    out += [f"{d.rel} 데이터 파일의 UI 글자 속성 {name} 에 '{value[:20]}' 가 있다 — LocalizationTable 의 키여야 한다"
+    out += [f"{d.rel} 데이터 파일의 UI 글자 속성 {name} 에 '{value[:20]}' 가 있다 — 비워 두고 실행 중에 Text.get 으로 넣는다 "
+            f"(Roblox 는 키가 아니라 원문으로 번역을 찾아 키를 넣으면 키가 그대로 보인다)"
             for d in tree.data for name, value in d.properties
-            if name in config["ui_text_properties"] and value not in tree.strings]
+            if name in config["ui_text_properties"] and value.strip()]
     return out
 
 

@@ -2563,7 +2563,7 @@
         {
           "file": "src/client/Hud.client.luau",
           "find": "sendCell(2, 1)\n",
-          "replace": "local RewardService = require(ReplicatedStorage.Shared.RewardService)\nRewardService.grant(nil, \"explorer_card\", \"mission.signal_2\")\nsendCell(2, 1)\n"
+          "replace": "local RewardService = require(ReplicatedStorage.Shared.RewardService)\nRewardService.grant(nil, \"reward.explorer_card\", \"m.signal_coordinate\")\nsendCell(2, 1)\n"
         }
       ]
     },
@@ -2723,7 +2723,7 @@
         {
           "file": "src/server/Main.server.luau",
           "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend",
-          "replace": "\trequire(script.Parent.RewardService).grant(player, \"explorer_card\", \"mission.signal_2\")"
+          "replace": "\trequire(script.Parent.RewardService).grant(player, \"reward.explorer_card\", \"m.signal_coordinate\")"
         }
       ]
     },
@@ -3407,9 +3407,10 @@
       "class": "보상 id 자리의 외부 링크",
       "expected": [
         "i18n.hardcoded_text",
-        "safety.url"
+        "safety.url",
+        "server.duplicate_reward"
       ],
-      "note": "스킴이 붙은 링크는 id 자리에 있어도 링크이고, 코드에 쓴 화면 문구이기도 하다 — 두 검사가 모두 맞다",
+      "note": "링크는 id 자리에 있어도 링크이고, 코드에 쓴 화면 문구이며, 명세에 없는 보상 id 다 — 세 검사가 모두 맞다",
       "edits": [
         {
           "file": "src/server/MissionService.luau",
@@ -3431,6 +3432,68 @@
           "file": "src/client/Hud.client.luau",
           "find": "sendCell(2, 1)\n",
           "replace": "local function mutate(actor: Player)\n\tactor[key] = 1\nend\nmutate(nil)\nsendCell(2, 1)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-data-model-ui-key",
+      "class": "데이터 모델 UI 속성에 넣은 문구 키",
+      "expected": [
+        "i18n.hardcoded_text"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Sign.model.json",
+          "create": "{\"ClassName\": \"TextLabel\", \"Properties\": {\"Text\": \"goal.signal_2\"}}\n"
+        }
+      ]
+    },
+    {
+      "id": "D-undeclared-reward-id",
+      "class": "명세에 없는 보상 id",
+      "expected": [
+        "safety.url",
+        "server.duplicate_reward"
+      ],
+      "note": "명세에 없는 보상 id 이면서 도메인 꼴이다 — 두 검사가 모두 맞다",
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "RewardService.grant(player, \"reward.explorer_card\", \"m.gate_open\")",
+          "replace": "RewardService.grant(player, \"evil.museum\", \"m.gate_open\")"
+        }
+      ]
+    },
+    {
+      "id": "D-grant-passed-as-value",
+      "class": "값으로 넘긴 보상 지급 함수",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local MissionService = require(script.Parent.MissionService)",
+          "replace": "local MissionService = require(script.Parent.MissionService)\nlocal RewardService = require(script.Parent.RewardService)"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend",
+          "replace": "\tpcall(RewardService.grant, player, \"reward.explorer_card\", \"m.gate_open\")"
+        }
+      ]
+    },
+    {
+      "id": "D-analytics-passed-as-value",
+      "class": "값으로 넘긴 분석 전송 함수",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "pcall(Analytics.log, nil, \"not_allowed\", {})\n\nreturn MissionService\n"
         }
       ]
     }

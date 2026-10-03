@@ -165,6 +165,11 @@
    "src/server/Analytics.luau:40 분석 모듈이 플레이어 개인정보 속성 Name 를 쓴다 (INV-10)"
   ]
  },
+ "D-analytics-passed-as-value": {
+  "analytics.calls": [
+   "src/server/MissionService.luau:27 분석 전송 함수를 부르지 않고 값으로 넘긴다 — 어떤 이벤트를 보내는지 검사할 수 없다"
+  ]
+ },
  "D-analytics-pii": {
   "analytics.calls": [
    "src/server/MissionService.luau:24 필드 play_mode 의 값 'player . Name' 이 열거형 글자 그대로가 아니다 (개인정보·자유 값 금지, INV-10)"
@@ -454,9 +459,14 @@
    "claim.coordinate.label: 대사 label.coordinate.line 가 명제의 '(0, 0)' 을 말하지 않는다 — 명제와 대사가 따로 논다"
   ]
  },
+ "D-data-model-ui-key": {
+  "i18n.hardcoded_text": [
+   "src/shared/Sign.model.json 데이터 파일의 UI 글자 속성 Text 에 'goal.signal_2' 가 있다 — 비워 두고 실행 중에 Text.get 으로 넣는다 (Roblox 는 키가 아니라 원문으로 번역을 찾아 키를 넣으면 키가 그대로 보인다)"
+  ]
+ },
  "D-data-model-ui-text": {
   "i18n.hardcoded_text": [
-   "src/shared/Sign.model.json 데이터 파일의 UI 글자 속성 Text 에 'Start' 가 있다 — LocalizationTable 의 키여야 한다"
+   "src/shared/Sign.model.json 데이터 파일의 UI 글자 속성 Text 에 'Start' 가 있다 — 비워 두고 실행 중에 Text.get 으로 넣는다 (Roblox 는 키가 아니라 원문으로 번역을 찾아 키를 넣으면 키가 그대로 보인다)"
   ]
  },
  "D-direct-require-analytics": {
@@ -675,6 +685,11 @@
    "src/server/MissionService.luau:24 gate_opened 는 온보딩 퍼널 단계인데 다른 전송 함수(log)로 보낸다 (F11)"
   ]
  },
+ "D-grant-passed-as-value": {
+  "server.duplicate_reward": [
+   "src/server/Main.server.luau:18 보상 지급 함수를 부르지 않고 값으로 넘긴다 — 어디서·어떤 판정 뒤에 주는지 검사할 수 없다"
+  ]
+ },
  "D-hard-sentence": {
   "text.readability": [
    "hint.slope.compare[Source] 문장 폭이 110 다 — 90 이하"
@@ -820,6 +835,9 @@
   ],
   "safety.url": [
    "src/server/MissionService.luau:21 URL 이나 도메인 'https://' 이 있다"
+  ],
+  "server.duplicate_reward": [
+   "src/server/MissionService.luau:21 보상 https://evil.example 가 잠긴 명세의 보상 목록(cv.first_rewards · 용어집의 보상 이름)에 없다"
   ]
  },
  "D-llm-call": {
@@ -1718,6 +1736,14 @@
   ],
   "text.readability": [
    "트리 읽기: src/shared/Text.luau: 블록이 1개 닫히지 않았다 — 끝까지 읽을 수 없는 코드는 검사할 수 없다"
+  ]
+ },
+ "D-undeclared-reward-id": {
+  "safety.url": [
+   "src/server/MissionService.luau:21 URL 이나 도메인 'evil.museum' 이 있다"
+  ],
+  "server.duplicate_reward": [
+   "src/server/MissionService.luau:21 보상 evil.museum 가 잠긴 명세의 보상 목록(cv.first_rewards · 용어집의 보상 이름)에 없다"
   ]
  },
  "D-unknown-analytics-function": {

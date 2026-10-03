@@ -204,6 +204,35 @@ def names_for(known: dict[str, object], path: tuple[str, ...]) -> set[str]:
     return {path[0]} | {name for name, value in known.items() if isinstance(value, tuple) and tuple(value) == tuple(path)}
 
 
+def passed_as_value(f, paths: set[tuple[str, ...]]) -> list[int]:
+    """경로(예: RewardService.grant)를 부르지 않고 값으로 넘기는 자리 (리뷰 R-Q3 31차).
+
+    `pcall(RewardService.grant, …)` 처럼 넘기면 호출 자리를 찾는 검사들이 모두 비켜 간다.
+    별칭 선언(`local g = M.f`)과 함수 정의(`function M.f(`)는 뺀다 — 별칭은 따로 추적한다.
+    """
+    toks, out = f.tokens, []
+    for path in paths:
+        for i in range(len(toks)):
+            j, ok = i, True
+            for k, part in enumerate(path):
+                if k:
+                    if j >= len(toks) or toks[j].text not in (".", ":"):
+                        ok = False
+                        break
+                    j += 1
+                if j >= len(toks) or toks[j].kind != NAME or toks[j].text != part:
+                    ok = False
+                    break
+                j += 1
+            if not ok or (j < len(toks) and toks[j].text == "("):
+                continue
+            before = toks[i - 1].text if i else ""
+            if before in ("=", ".", ":", "function"):
+                continue
+            out.append(i)
+    return sorted(set(out))
+
+
 def dynamic_member_calls(f, module_names: set[str]) -> list[tuple[int, str]]:
     """모듈에 대괄호로 멤버를 골라 부르는데 값을 알 수 없는 자리 — (토큰 번호, 모듈 이름).
 

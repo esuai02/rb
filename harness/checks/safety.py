@@ -105,14 +105,8 @@ def _id_argument_strings(f, config) -> set[int]:
 
     `reward.explorer_card` 처럼 점이 찍힌 id 를 도메인으로 세지 않는다. 목록 대조는 그 검사들이 한다.
     """
-    toks = i18n.text_call_strings(f, config)
-    names = {"grant", config["funnel_call"], config["custom_call"]}
-    for i, tok in enumerate(f.tokens):
-        if not (tok.kind == NAME and tok.text in names and i + 1 < len(f.tokens) and f.tokens[i + 1].text == "("):
-            continue
-        opened = i + 1
-        toks |= {k for k in range(opened, opened + len(luau.balanced(f.tokens, opened))) if f.tokens[k].kind == STRING}
-    return toks
+    # 보상·분석 id 는 빼 주지 않는다 — 잠긴 명세에 적힌 id 는 known_ids 가 전체로 맞춰 본다 (리뷰 R-Q3 31차)
+    return i18n.text_call_strings(f, config)
 
 
 URL_PART = re.compile(r"(?i)https?|ftp|://|www\.|\.(?:com|net|org|gg|io|kr|ly|me|co|xyz|app|dev|link|site|online|info|biz|tv|cc|to|ai|education|edu|gov|academy|school|shop|store|blog|page|cloud|tech|zone|world|games|fun|live|news|wiki|uk|jp|cn|de|fr|eu|us|ca|au|in|br|ru)\b")

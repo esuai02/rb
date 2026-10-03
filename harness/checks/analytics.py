@@ -68,6 +68,8 @@ def calls(tree, rules, config) -> list[str]:
         out += [f"{f.rel}:{f.tokens[i].line} 분석 모듈 {module} 을 표·멤버에 담는다 — 이름 하나에 담아야 어떤 이벤트를 보내는지 검사할 수 있다"
                 for i, name in luau.indirect_requires(f.tokens) if name == module]
         names = _aliases(f, module)
+        out += [f"{f.rel}:{f.tokens[i].line} 분석 전송 함수를 부르지 않고 값으로 넘긴다 — 어떤 이벤트를 보내는지 검사할 수 없다"
+                for i in resolve.passed_as_value(f, {(name, sender) for name in names for sender in senders.values()})]
         out += [f"{f.rel}:{f.tokens[i].line} 분석 모듈 {name} 의 멤버를 값을 알 수 없는 방식으로 고른다 — 어떤 이벤트를 보내는지 검사할 수 없다"
                 for i, name in resolve.dynamic_member_calls(f, names)]
         out += [f"{f.rel}:{f.tokens[i].line} 플랫폼 전송 함수를 다른 이름({alias})에 담아 부른다 — 분석 모듈을 거쳐야 한다"

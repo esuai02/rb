@@ -1,7 +1,11 @@
-major | harness/source.py:194 | 짝이 맞지 않는 `()[]{}`를 읽기 성공으로 처리한다 | `local x = (`는 `block_balance`가 0이고 `Tree.problems`도 없어, 깨끗한 트리에 추가해 18개 검사가 모두 빈 결과를 냈다 | 파일 적재 전에 구분자 스택을 검사해 불일치·미종결이면 거부
+major | harness/checks/i18n.py:46-48,235-236 | 임의 객체의 `:FormatByKey("goal.signal_2")`를 LocalizationTable 경유로 오인해 UI 문구 우회가 통과한다 | `Other:FormatByKey("goal.signal_2")`가 `i18n.hardcoded_text`·`i18n.missing_key` 모두 빈 결과 | 수신 객체를 신뢰된 Text/translator 경로로 제한하고 미확인 수신자는 거부
 
-major | harness/checks/safety.py:76 | `grant` 호출의 모든 문자열을 URL 검사에서 제외한다 | `RewardService.grant(..., "https://evil.example", ...)`를 넣어도 `safety.url` 결과가 `[]`이며, `server.duplicate_reward`는 임의 문자열 ID를 허용한다 | 허용된 보상·미션 ID만 제외하고 나머지 인자는 URL 검사
+major | harness/checks/i18n.py:262-264 | 데이터 모델 UI 속성에 Localization 키를 직접 넣어도 통과한다 | `Text = "goal.signal_2"`인 `TextLabel`이 `i18n.hardcoded_text`에서 검출되지 않음 | 데이터 모델의 UI 문구 속성은 키 여부와 무관하게 거부하거나 명시적 런타임 바인딩만 허용
 
-major | harness/checks/server.py:117 | 이름을 바꾼 `Player` 매개변수의 동적 권한 접근이 통과한다 | 클라이언트 코드에 `function mutate(actor: Player) actor[key] = 1 end`를 추가해도 `server.reward_authority`가 빈 결과를 냈다 | 타입이 `Player`인 매개변수와 별칭도 `_player_like`에 포함하고 미해결 멤버를 거부
+major | harness/checks/safety.py:103-115; harness/checks/server.py:151-158 | `grant` 인자의 모든 문자열을 URL 검사에서 제외해 도메인형 보상 ID가 통과한다 | `RewardService.grant(player, "evil.museum", "m.gate_open")`에서 `safety.url`·`server.duplicate_reward` 모두 빈 결과 | 허용된 보상/미션 ID만 예외 처리하고 미등록 ID의 도메인은 URL로 거부
 
-minor | harness/checks/server.py:503 | 잘못된 원격 계약 항목에서 검사기가 예외로 중단된다 | `tree.contracts={"SignalRemote":[1]}`에서 `remote_validation`이 `AttributeError: 'int' object has no attribute 'get'`를 냈다 | 비객체 계약 항목은 진단 후 해당 파라미터 검사를 건너뛰어 검사 중단을 없앰
+major | harness/checks/server.py:28-30,151-157,653-657 | 함수값으로 넘긴 보상 호출을 추적하지 않아 판정 없는 보상이 통과한다 | `pcall(RewardService.grant, player, "reward.explorer_card", "m.gate_open")`가 `server.duplicate_reward`·`server.reward_after_verdict` 모두 빈 결과 | 호출식이 아닌 trusted module 멤버 참조도 추적하거나, 고차 함수 인자로 넘긴 미해석 함수는 거부
+
+major | harness/checks/analytics.py:227-252 | 함수값으로 넘긴 분석 전송을 검사하지 않아 허용 밖 이벤트가 통과한다 | `pcall(Analytics.log, player, "not_allowed", {})`가 `analytics.calls`에서 검출되지 않음 | 분석 sender 멤버의 고차 함수 전달·호출 경로를 추적하거나 미해석 전달을 거부
+
+major | harness/checks/server.py:553-558,574-580 | table 원격 입력의 중첩 필드 범위를 계약과 비교하지 않는다 | 계약 `payload.x: -2..2`에 코드 가드 `-9999..9999`를 둬도 `server.remote_validation`이 빈 결과 | 중첩 `fields`에도 canonical/min/max를 검증하고 코드 가드와 정확히 대조
