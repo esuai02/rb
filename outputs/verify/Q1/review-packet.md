@@ -6,7 +6,7 @@ INVARIANTS: 수정하지 말 것(읽기 전용). 합격 기준:
 - Q1-C3: 언어·시장·교육과정 키가 나뉜다: locale 은 BCP-47, market 은 지역 포함, 엔진은 시장 중립 grade_band 만 쓴다 (INV-3) (목표: 섞인 키 실패, 올바른 키 통과)
 - Q1-C4: B안 언어 우선 필드가 있다: 용어마다 일상 표현·행동·이름표 순서와 재사용 맥락 자리 (INV-15) (목표: 필드 누락 시 실패)
 - (Q1-6V 는 잠그기 직전에 기록하는 6방향 검토라 이 리뷰의 대상이 아니다 — intent r4 §11)
-EVIDENCE: 자동 검사 결과(binding fce35d598dcf):
+EVIDENCE: 자동 검사 결과(binding f6689fbe8dd9):
 - Q1-C1: PASS — exit 0; OK
 - Q1-C2: PASS — exit 0; OK
 - Q1-C3: PASS — exit 0; OK
@@ -21,5 +21,7 @@ STAGE SCOPE: 이 단계가 맡는 불변식: INV-3 키 분리, INV-9 협동 선�
 REVIEW QUESTION: Q1 명세 형식에 꼭 들어가야 할 항목이 더 있습니까?
 HUMAN DECISIONS(이 단계에 대한 사람 결정 — 리뷰 범위를 정한다):
 - (없음)
+이전 리뷰에서 근거와 함께 INVALID 로 판정한 것(새 근거 없이 다시 적지 않는다 — 반박하려면 evidence 에 새 근거를 적는다):
+- major Q1-6V 가 충족되지 않음: INVALID(설계상) — intent r4 §11 은 6방향을 잠그기 직전에 쓰는 잠금 조건으로 정했다. 원인은 리뷰 요청서가 6V 를 실패한 기준으로 보여 준 것 → 요청서에서 6V 를 빼고 이유를 밝히도록 고침(시험 추가)
 ASK: 각 합격 기준이 실제로 참인지, 테스트가 기준이 말하는 것을 정말로 검사하는지(빈 검사, 정직한 실수로 나올 꼴을 놓치는 검사 포함), 이 단계가 맡는 불변식을 산출물이 어기는지 찾아라. 넘긴 항목은 지적하지 말고, 넘긴 단계의 기준으로 덮이지 않는 빈틈만 지적하라. 추측은 근거와 함께만.
 RETURN: lines of `severity | file:line | claim | evidence | minimal fix` (severity = critical|major|minor), or exactly NO_FINDINGS

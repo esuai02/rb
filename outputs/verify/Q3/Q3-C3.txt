@@ -1,8 +1,8 @@
 criterion: Q3-C3 — 실행기가 검사마다 기록(명령·결과·시각·대상 데이터 지문)을 하나씩 남기고 기록에 로컬 경로가 없다
 command: python3 -m unittest tests.test_harness.RecordTest -v
 exit: 0
-binding: 863a0d1bb74c7e770de8d4418f6cac29f746eb6026349853b52dc871e533571e
-time: 2026-10-04T13:56:31.560069+00:00
+binding: 80f5cb7209c8af5dc267020dfede3b244f4906481a8a5c2deddf35fb08f789fd
+time: 2026-10-04T14:27:48.491842+00:00
 
 test_broken_check_is_recorded_as_failure (tests.test_harness.RecordTest.test_broken_check_is_recorded_as_failure) ... ok
 test_cli_exit_codes (tests.test_harness.RecordTest.test_cli_exit_codes) ... ok
@@ -13,6 +13,6 @@ test_scrub_removes_every_absolute_path_shape (tests.test_harness.RecordTest.test
 Windows 드라이브·UNC·공백 낀 디렉터리·따옴표 안 경로·저장소 경로가 기록에 남지 않는다 (리뷰 R-Q3 33차). ... ok
 
 ----------------------------------------------------------------------
-Ran 6 tests in 0.294s
+Ran 6 tests in 0.260s
 
 OK
