@@ -37,15 +37,13 @@ def reward_reaching(tree, module: str) -> set[str]:
     for f in tree.luau:
         calls, spans = set(grant_calls(f, module)), _function_spans(f.tokens)
         for start, end in spans:
-            named = _declared_name(f.tokens, start)
-            if not named and start >= 2 and f.tokens[start - 1].text == "=" and f.tokens[start - 2].kind == NAME:
-                named = f.tokens[start - 2].text
+            named = _function_name(f.tokens, start)
             if not named:
                 continue
             bodies.append((named, start, end, f))
             if any(start <= i < end for i in calls):
                 names.add(named)
-    for _round in range(6):
+    while True:   # 더 늘지 않을 때까지 — 몇 단계를 거쳐도 끝까지 따라간다 (리뷰 R-Q3 34차: 6번만 돌면 7단계 사슬을 놓쳤다)
         before = set(names)
         for named, start, end, f in bodies:
             if named in names:
@@ -57,6 +55,25 @@ def reward_reaching(tree, module: str) -> set[str]:
         if names == before:
             break
     return names
+
+
+def _function_name(tokens, start: int) -> str | None:
+    """함수의 이름 — `function M.f(` 의 f, 또는 `f = function(` 의 f. 이름이 없으면 None."""
+    named = _declared_name(tokens, start)
+    if not named and start >= 2 and tokens[start - 1].text == "=" and tokens[start - 2].kind == NAME:
+        named = tokens[start - 2].text
+    return named
+
+
+def _definition_counts(tree) -> dict[str, int]:
+    """함수 이름마다 정의된 횟수 (모든 파일)."""
+    counts: dict[str, int] = {}
+    for f in tree.luau:
+        for start, _end in _function_spans(f.tokens):
+            named = _function_name(f.tokens, start)
+            if named:
+                counts[named] = counts.get(named, 0) + 1
+    return counts
 
 
 def _declared_name(tokens, start: int) -> str | None:
@@ -266,17 +283,38 @@ def _handlers(f, config) -> list[tuple[list[str], list, int, str]]:
         if target is None or target >= len(toks):
             out.append((remote, [], [], i, f"{t.text} 를 Connect(함수)·= 함수 가 아닌 방식({' '.join(shape[:2])})으로 이었다 — 처리 함수를 검사할 수 없다"))
             continue
-        arg = toks[target + 1] if toks[target].text == "(" else toks[target]
-        if arg.kind == NAME and arg.text == "function":
-            found = [b for b in bodies if b[2] == (target + 1 if toks[target].text == "(" else target)]
-        elif arg.kind == NAME:
-            found = [b for b in bodies if b[2] + 1 < len(toks) and toks[b[2] + 1].text == arg.text]
-        else:
-            found = []
+        found = _connected_bodies(toks, bodies, target)
         if not found:
             out.append((remote, [], [], i, "처리 함수를 찾지 못했다"))
         else:
             out += [(remote, params, body, i, "") for params, body, _ in found]
+    return out
+
+
+def _connected_bodies(toks, bodies, target: int) -> list:
+    """`Connect(…)` · `= …` 의 대상 자리에서 처리 함수 본문들 — 그 자리에 쓴 function, 또는 그 이름으로 정의한 함수."""
+    arg = toks[target + 1] if toks[target].text == "(" else toks[target]
+    if arg.kind == NAME and arg.text == "function":
+        return [b for b in bodies if b[2] == (target + 1 if toks[target].text == "(" else target)]
+    if arg.kind == NAME:
+        return [b for b in bodies if b[2] + 1 < len(toks) and toks[b[2] + 1].text == arg.text]
+    return []
+
+
+def _input_handlers(f, events: set[str]) -> list[tuple[str, list, int, str]]:
+    """플레이어 동작 이벤트(프롬프트·클릭·접촉)의 처리 함수 — (이벤트, 본문, 알림 위치, 문제).
+
+    원격 이벤트처럼 클라이언트의 동작이 일으키므로 같은 규칙(판정 뒤에만 보상)을 따른다 (리뷰 R-Q3 34차 형제 변형).
+    """
+    toks, bodies, out = f.tokens, luau.function_bodies(f.tokens), []
+    for i, t in enumerate(toks):
+        if not (t.kind == NAME and t.text in events and i and toks[i - 1].text == "." and i + 3 < len(toks)
+                and toks[i + 1].text == ":" and toks[i + 2].text in ("Connect", "Once", "ConnectParallel")):
+            continue
+        found = _connected_bodies(toks, bodies, i + 3)
+        if not found:
+            out.append((t.text, [], i, "처리 함수를 찾지 못했다 — 보상에 닿는지 검사할 수 없다"))
+        out += [(t.text, body, i, "") for _params, body, _ in found]
     return out
 
 
@@ -658,9 +696,7 @@ def self_verdicting(tree, verdicts, module: str, reaching: set[str]) -> set[str]
     for f in tree.luau:
         aliases = _grant_aliases(f, _module_names(f, module))
         for start, end in _function_spans(f.tokens):
-            named = _declared_name(f.tokens, start)
-            if not named and start >= 2 and f.tokens[start - 1].text == "=" and f.tokens[start - 2].kind == NAME:
-                named = f.tokens[start - 2].text
+            named = _function_name(f.tokens, start)
             body = f.tokens[start:end]
             rewards = {k for alias in aliases for k in luau.find_calls(body, alias)}
             rewards |= {k for k, tok in enumerate(body) if tok.kind == NAME and tok.text in reaching and tok.text != named
@@ -675,18 +711,62 @@ def reward_after_verdict(tree, rules, config) -> list[str]:
     """원격 처리에서 보상에 닿는 호출은 서버 판정의 결과 안에서만 — 클라이언트가 '다 했다'고 알린다고 보상하지 않는다 (INV-4)."""
     module, verdicts, out = config["reward_module"], [tuple(v) for v in config["verdict_calls"]], []
     reaching_all = reward_reaching(tree, module)
-    reaching = reaching_all - self_verdicting(tree, verdicts, module, reaching_all)
+    once = {name for name, count in _definition_counts(tree).items() if count == 1}
+    # 스스로 판정하는 함수라는 판단은 이름에 붙는다 — 같은 이름의 다른 함수가 그 판단을 빌려 쓰지 못하게 한 번만 정의된 이름만 (리뷰 R-Q3 34차)
+    reaching = reaching_all - (self_verdicting(tree, verdicts, module, reaching_all) & once)
+    events = set(config["player_input_events"])
+    shown = ' · '.join('.'.join(v) for v in verdicts)
+    for f in tree.luau:
+        out += [f"{f.rel}:{f.tokens[k].line} 보상에 닿는 함수 {f.tokens[k].text} 를 부르지 않고 다른 이름·표에 담거나 값으로 넘긴다 "
+                f"— 원격 처리에서 서버 판정을 거치는지 따라갈 수 없다(바로 부른다)" for k in _reaching_values(f, reaching_all, events)]
     for f in tree.luau:
         for remote, _params, body, i, problem in _handlers(f, config):
             if problem:
                 continue
-            calls = {k for alias in _grant_aliases(f, _module_names(f, module)) for k in luau.find_calls(body, alias)} | {k for k in range(len(body))
-                       if body[k].kind == NAME and body[k].text in reaching and k + 1 < len(body) and body[k + 1].text == "("}
-            calls |= {k for k in range(len(body) - 2) if body[k + 2].kind == NAME and body[k + 2].text in reaching and body[k + 1].text == "."}
-            for k in sorted(calls):
+            for k in _reward_points(f, body, module, reaching):
                 if not _inside_verdict(body, k, verdicts):
-                    out.append(f"{_at(f, f.tokens[i])} 원격 처리가 서버 판정({' · '.join('.'.join(v) for v in verdicts)}) 없이 보상에 닿는다 "
+                    out.append(f"{_at(f, f.tokens[i])} 원격 처리가 서버 판정({shown}) 없이 보상에 닿는다 "
                                f"— 클라이언트가 완료를 정하면 안 된다")
+        for event, body, i, problem in _input_handlers(f, events):
+            if problem:
+                out.append(f"{_at(f, f.tokens[i])} 플레이어 동작({event}) {problem}")
+                continue
+            if any(not _inside_verdict(body, k, verdicts) for k in _reward_points(f, body, module, reaching)):
+                out.append(f"{_at(f, f.tokens[i])} 플레이어 동작({event}) 처리가 서버 판정({shown}) 없이 보상에 닿는다 "
+                           f"— 누르거나 닿았다고 보상하지 않는다")
+    return out
+
+
+def _reward_points(f, body, module: str, reaching: set[str]) -> list[int]:
+    """본문에서 보상에 닿는 자리 — 보상 지급 호출과, 보상에 닿는 함수를 부르거나 멤버로 꺼내는 자리."""
+    calls = {k for alias in _grant_aliases(f, _module_names(f, module)) for k in luau.find_calls(body, alias)}
+    calls |= {k for k in range(len(body)) if body[k].kind == NAME and body[k].text in reaching and k + 1 < len(body) and body[k + 1].text == "("}
+    calls |= {k for k in range(len(body) - 2) if body[k + 2].kind == NAME and body[k + 2].text in reaching and body[k + 1].text == "."}
+    return sorted(calls)
+
+
+def _reaching_values(f, reaching: set[str], events: set[str]) -> list[int]:
+    """보상에 닿는 함수를 부르지 않고 꺼내는 자리 — 정의·대입의 왼쪽과 처리 등록(`OnServerEvent`·플레이어 동작 이벤트의
+    `:Connect(이름)` · `OnServerInvoke = 이름`)은 뺀다.
+
+    별칭·표·값 전달로 옮기면 원격 처리에서 판정을 거치는지 이름으로 따라갈 수 없다 — 신뢰 모듈과 같은 모양 규칙이다
+    (사람 결정 Q3-SHAPE-RULES 의 방식 · 리뷰 R-Q3 34차 형제 변형). 등록한 처리 함수는 본문을 따로 검사한다.
+    """
+    toks, out = f.tokens, []
+    for k, tok in enumerate(toks):
+        if tok.kind != NAME or tok.text not in reaching:
+            continue
+        prev, nxt = (toks[k - 1] if k else None), (toks[k + 1] if k + 1 < len(toks) else None)
+        if nxt is not None and (nxt.text in ("(", "{") or nxt.kind == STRING):
+            continue   # 바로 부른다 · `function M.f(` 정의
+        if nxt is not None and nxt.kind == SYMBOL and nxt.text == "=":
+            continue   # 정의(`f = function(`)·대입의 왼쪽 — 오른쪽에 담는 값이 있으면 그 자리가 따로 걸린다
+        registered = (prev is not None and prev.text == "(" and nxt is not None and nxt.text == ")" and k >= 4
+                      and toks[k - 2].text in ("Connect", "Once", "ConnectParallel") and toks[k - 3].text == ":"
+                      and (toks[k - 4].text == "OnServerEvent" or toks[k - 4].text in events))
+        if registered or (prev is not None and prev.text == "=" and k >= 2 and toks[k - 2].text == "OnServerInvoke"):
+            continue
+        out.append(k)
     return out
 
 

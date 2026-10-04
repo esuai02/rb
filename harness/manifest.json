@@ -134,7 +134,17 @@
       "LogOnboardingFunnelStepEvent": 2
     },
     "reward_module_path": "src/server/RewardService.luau",
-    "analytics_module_path": "src/server/Analytics.luau"
+    "analytics_module_path": "src/server/Analytics.luau",
+    "player_input_events": [
+      "Triggered",
+      "TriggerEnded",
+      "PromptTriggered",
+      "PromptTriggerEnded",
+      "MouseClick",
+      "RightMouseClick",
+      "Touched",
+      "TouchEnded"
+    ]
   },
   "checks": [
     {
@@ -2006,7 +2016,8 @@
       "class": "값을 알 수 없는 멤버에 건 원격 처리",
       "expected": [
         "safety.external_call",
-        "server.remote_validation"
+        "server.remote_validation",
+        "server.reward_after_verdict"
       ],
       "edits": [
         {
@@ -2520,7 +2531,8 @@
       "id": "D-remote-receiver-unresolved",
       "class": "값을 알 수 없는 변수에 건 원격 처리",
       "expected": [
-        "server.remote_validation"
+        "server.remote_validation",
+        "server.reward_after_verdict"
       ],
       "edits": [
         {
@@ -2911,7 +2923,8 @@
       "class": "동적 멤버에 대입한 처리 함수 이름",
       "expected": [
         "i18n.hardcoded_text",
-        "server.remote_validation"
+        "server.remote_validation",
+        "server.reward_after_verdict"
       ],
       "note": "속성 이름을 값을 알 수 없는 방식으로 고르면 어떤 원격인지도, 화면 문구 속성인지도 알 수 없다 — 두 검사가 모두 맞다",
       "edits": [
@@ -3728,6 +3741,126 @@
           "file": "src/server/Main.server.luau",
           "find": "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\n",
           "replace": "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\nlocal T = {}\nsetmetatable(T, {__index = game})\nT[script.ClassName]({})\n"
+        }
+      ]
+    },
+    {
+      "id": "D-long-helper-chain",
+      "class": "여덟 단계 도우미 사슬을 거친 보상",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "function MissionService.h0(p: Player)\n\tMissionService.h1(p)\nend\nfunction MissionService.h1(p: Player)\n\tMissionService.h2(p)\nend\nfunction MissionService.h2(p: Player)\n\tMissionService.h3(p)\nend\nfunction MissionService.h3(p: Player)\n\tMissionService.h4(p)\nend\nfunction MissionService.h4(p: Player)\n\tMissionService.h5(p)\nend\nfunction MissionService.h5(p: Player)\n\tMissionService.h6(p)\nend\nfunction MissionService.h6(p: Player)\n\tMissionService.h7(p)\nend\nfunction MissionService.h7(p: Player)\n\tMissionService.openGate(p)\nend\n\nreturn MissionService\n"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n\tMissionService.h0(player)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-same-name-unverified-helper",
+      "class": "판정하는 함수와 이름이 같은 판정 없는 도우미",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "function MissionService.finish(player: Player, cell: {x: number, y: number})\n\tif MissionService.coordinateMove(player, cell) then\n\t\tMissionService.openGate(player)\n\tend\nend\n\nreturn MissionService\n"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local GRID = 2",
+          "replace": "local GRID = 2\nlocal function finish(player: Player)\n\tMissionService.openGate(player)\nend\n"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tfinish(player)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-file-level-helper-alias",
+      "class": "파일 위 별칭으로 부른 보상 도우미",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local GRID = 2",
+          "replace": "local GRID = 2\nlocal go = MissionService.openGate"
+        },
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n",
+          "replace": "\tgo(player)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-prompt-reward-without-verdict",
+      "class": "프롬프트를 누르면 판정 없이 주는 보상",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)",
+          "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\nlocal prompt = Instance.new(\"ProximityPrompt\")\nprompt.Parent = workspace\nprompt.Triggered:Connect(function(player: Player)\n\tMissionService.openGate(player)\nend)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-prompt-named-reward-handler",
+      "class": "프롬프트에 이름으로 이은 판정 없는 보상",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "SignalRemote.OnServerEvent:Connect(onSignal)",
+          "replace": "SignalRemote.OnServerEvent:Connect(onSignal)\nlocal function give(player: Player)\n\tMissionService.openGate(player)\nend\nlocal prompt = Instance.new(\"ProximityPrompt\")\nprompt.Parent = workspace\nprompt.Triggered:Connect(give)\n"
+        }
+      ]
+    },
+    {
+      "id": "D-claim-line-key-list",
+      "class": "목록으로 적은 명제 문구 키",
+      "expected": [
+        "math.conditions",
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "line_key: label.coordinate.line",
+          "replace": "line_key: [label.coordinate.line]"
+        }
+      ]
+    },
+    {
+      "id": "D-claim-compare-term-not-table",
+      "class": "표가 아닌 기울기 비교 항",
+      "expected": [
+        "math.conditions",
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "content/math_claims.yaml",
+          "find": "    this: {rise: 3, run: 1}\n",
+          "replace": "    this: [3, 1]\n"
         }
       ]
     }

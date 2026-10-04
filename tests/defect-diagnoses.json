@@ -197,6 +197,7 @@
  },
  "D-anonymous-reward-helper": {
   "server.reward_after_verdict": [
+   "src/server/MissionService.luau:31 보상에 닿는 함수 award 를 부르지 않고 다른 이름·표에 담거나 값으로 넘긴다 — 원격 처리에서 서버 판정을 거치는지 따라갈 수 없다(바로 부른다)",
    "src/server/Main.server.luau:23 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다",
    "src/server/Main.server.luau:23 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
   ]
@@ -312,6 +313,23 @@
  "D-broken-key": {
   "i18n.missing_key": [
    "src/client/Hud.client.luau:8 문구 키 goal.signal_two 가 LocalizationTable 에 없다"
+  ]
+ },
+ "D-claim-compare-term-not-table": {
+  "math.conditions": [
+   "claim.slope.compare: 명제의 꼴이 틀렸다 — this 은 '이름: 값' 표여야 한다 ([3, 1])"
+  ],
+  "math.truth": [
+   "claim.slope.compare: 명제의 꼴이 틀렸다 — this 은 '이름: 값' 표여야 한다 ([3, 1])"
+  ]
+ },
+ "D-claim-line-key-list": {
+  "math.conditions": [
+   "claim.coordinate.label: 명제의 꼴이 틀렸다 — line_key 은 글자여야 한다 (['label.coordinate.line'])"
+  ],
+  "math.truth": [
+   "claim.coordinate.label: 명제의 꼴이 틀렸다 — line_key 은 글자여야 한다 (['label.coordinate.line'])",
+   "label.coordinate.line: 수학이 든 대사인데 명제가 없다 — content/math_claims.yaml 에 적어야 검사할 수 있다 (E1)"
   ]
  },
  "D-claim-once-does-nothing": {
@@ -612,6 +630,9 @@
   ],
   "server.remote_validation": [
    "src/server/Main.server.luau:24 값을 알 수 없는 멤버(SignalRemote[…])에 처리 함수를 대입했다 — 어떤 원격인지 검사할 수 없다"
+  ],
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:23 보상에 닿는 함수 onSignal 를 부르지 않고 다른 이름·표에 담거나 값으로 넘긴다 — 원격 처리에서 서버 판정을 거치는지 따라갈 수 없다(바로 부른다)"
   ]
  },
  "D-dynamic-remote-member": {
@@ -678,6 +699,11 @@
   "server.reward_after_verdict": [
    "src/server/Main.server.luau:22 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다",
    "src/server/Main.server.luau:22 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
+  ]
+ },
+ "D-file-level-helper-alias": {
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:12 보상에 닿는 함수 openGate 를 부르지 않고 다른 이름·표에 담거나 값으로 넘긴다 — 원격 처리에서 서버 판정을 거치는지 따라갈 수 없다(바로 부른다)"
   ]
  },
  "D-fraction-line-untied": {
@@ -873,6 +899,12 @@
    "src/server/MissionService.luau:10 런타임 외부 호출·생성형 AI HttpService 를 쓴다",
    "src/server/MissionService.luau:10 런타임 외부 호출·생성형 AI RequestAsync 를 쓴다",
    "src/server/MissionService.luau:7 런타임 외부 호출·생성형 AI HttpService 를 가져온다 — 조각을 나눠 조립해도 같다"
+  ]
+ },
+ "D-long-helper-chain": {
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:23 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다",
+   "src/server/Main.server.luau:23 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
   ]
  },
  "D-long-translation": {
@@ -1423,6 +1455,16 @@
    "트리 읽기: default.project.json: tree 는 객체여야 한다"
   ]
  },
+ "D-prompt-named-reward-handler": {
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:28 플레이어 동작(Triggered) 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 누르거나 닿았다고 보상하지 않는다"
+  ]
+ },
+ "D-prompt-reward-without-verdict": {
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:25 플레이어 동작(Triggered) 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 누르거나 닿았다고 보상하지 않는다"
+  ]
+ },
  "D-random-alias-chain": {
   "safety.random_or_paid_reward": [
    "src/server/RewardService.luau:23 난수를 쓴다 — 보상·진행은 완주·기여로만 정한다 (허용 모듈: 없음)"
@@ -1473,6 +1515,9 @@
  "D-remote-receiver-unresolved": {
   "server.remote_validation": [
    "src/server/Main.server.luau:24 연결 대상 evt 가 멤버 경로가 아니다 — 어떤 신호에 이은 것인지 검사할 수 없다"
+  ],
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:24 보상에 닿는 함수 onSignal 를 부르지 않고 다른 이름·표에 담거나 값으로 넘긴다 — 원격 처리에서 서버 판정을 거치는지 따라갈 수 없다(바로 부른다)"
   ]
  },
  "D-remotefunction": {
@@ -1522,6 +1567,11 @@
   ],
   "server.reward_authority": [
    "src/server/MissionService.luau:27 보상 모듈 RewardService 을 표·멤버에 담는다 — 이름 하나에 담아야 어디서 보상을 주는지 검사할 수 있다"
+  ]
+ },
+ "D-same-name-unverified-helper": {
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:24 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
   ]
  },
  "D-same-service-double-map": {
@@ -1868,6 +1918,9 @@
   ],
   "server.remote_validation": [
    "src/server/Main.server.luau:23 값을 알 수 없는 멤버에 처리 함수를 이었다 — 어떤 원격인지 검사할 수 없다"
+  ],
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:23 보상에 닿는 함수 onSignal 를 부르지 않고 다른 이름·표에 담거나 값으로 넘긴다 — 원격 처리에서 서버 판정을 거치는지 따라갈 수 없다(바로 부른다)"
   ]
  },
  "D-unknown-tld-domain": {

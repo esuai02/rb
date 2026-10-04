@@ -43,7 +43,7 @@ EXPECTED_DEFECTS = {
     "D-analytics-computed-event": ("어디서 왔는지 알 수 없는 분석 이벤트", ("analytics.calls",), "분석 모듈이 LogCustomEvent 의 이벤트 이름 자리에 'getEvent"),
     "D-coordinate-fractional-move": ("대사에 없는 분수 이동량", ("math.truth",), "수만으로는 대사와 묶을 수 없는 명제다"),
     "D-analytics-platform-alias-inside": ("분석 모듈 안의 플랫폼 전송 별칭", ("analytics.calls",), "다른 이름(send)에 담는다 — 모듈 안에서는 직접 불러야"),
-    "D-remote-receiver-unresolved": ("값을 알 수 없는 변수에 건 원격 처리", ("server.remote_validation",), "연결 대상 evt 가 멤버 경로가 아니다"),
+    "D-remote-receiver-unresolved": ("값을 알 수 없는 변수에 건 원격 처리", ("server.remote_validation", "server.reward_after_verdict"), "연결 대상 evt 가 멤버 경로가 아니다"),
     "D-reward-module-impostor": ("이름만 보상 모듈인 Script", ("server.reward_authority",), "보상 모듈과 같은 이름인데 정해진 자리"),
     "D-dynamic-service-call": ("값을 알 수 없는 서비스·메서드 호출", ("safety.external_call",), "어떤 서비스를 가져오는지 알 수 없다"),
     "D-client-grant-call": ("클라이언트가 부른 보상 지급", ("server.reward_authority",), "클라이언트가 볼 수 있는 코드가 보상 지급 RewardService.grant 를 부른다"),
@@ -67,7 +67,7 @@ EXPECTED_DEFECTS = {
     "D-analytics-module-in-a-table": ("표에 담은 분석 모듈", ("analytics.calls",), "분석 모듈 Analytics 을 표·멤버에 담는다"),
     "D-text-module-in-a-table": ("표에 담은 문구 모듈", ("i18n.missing_key",), "문구 모듈 Text 을 표·멤버에 담는다"),
     "D-mapping-escapes-src": ("src 밖으로 빠져나가는 매핑", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "실제로 가리키는 자리는 소스 폴더(src/) 밖이다"),
-    "D-dynamic-member-handler-name": ("동적 멤버에 대입한 처리 함수 이름", ("i18n.hardcoded_text", "server.remote_validation"), "값을 알 수 없는 멤버(SignalRemote[…])에 처리 함수를 대입했다"),
+    "D-dynamic-member-handler-name": ("동적 멤버에 대입한 처리 함수 이름", ("i18n.hardcoded_text", "server.remote_validation", "server.reward_after_verdict"), "값을 알 수 없는 멤버(SignalRemote[…])에 처리 함수를 대입했다"),
     "D-claim-once-does-nothing": ("이름만 맞는 claimOnce", ("server.duplicate_reward",), "claimOnce 가 정해진 꼴이 아니다"),
     "D-key-call-with-extra-assembly": ("문구 키 호출 뒤에 덧붙인 조립", ("i18n.hardcoded_text",), "허용된 문구 키 호출이 아닌 함수의 결과를 넣는다"),
     "D-unresolved-handler-value": ("함수인지 알 수 없는 값을 건 원격 등록", ("i18n.hardcoded_text", "server.remote_validation"), "에 처리 함수를 대입했다"),
@@ -201,7 +201,7 @@ EXPECTED_DEFECTS = {
     "D-ui-text-literal": ("UI 글자 속성에 바로 넣은 문구", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 문구 'Start' 를 바로 넣었다"),
     "D-ui-text-variable": ("변수로 넣은 UI 문구", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 문구 'Open_Gate' 를 바로 넣었다"),
     "D-unknown-analytics-function": ("분석 모듈의 모르는 함수", ("analytics.calls",), "분석 모듈의 모르는 함수 raw 를 부른다"),
-    "D-unknown-remote-member": ("값을 알 수 없는 멤버에 건 원격 처리", ("safety.external_call", "server.remote_validation"), "값을 알 수 없는 멤버에 처리 함수를 이었다"),
+    "D-unknown-remote-member": ("값을 알 수 없는 멤버에 건 원격 처리", ("safety.external_call", "server.remote_validation", "server.reward_after_verdict"), "값을 알 수 없는 멤버에 처리 함수를 이었다"),
     "D-unranged-remote": ("범위를 검사하지 않는 원격 입력", ("server.remote_validation",), "원격 입력 x 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)"),
     "D-unreadable-model": ("검사할 수 없는 이진 모델", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사"),
     "D-unresolved-ui-text": ("UI 로 흘러가는 알 수 없는 조립 글자", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다"),
@@ -232,6 +232,13 @@ EXPECTED_DEFECTS = {
     "D-multi-local-random-alias": ("여러 이름 local 에 담은 난수 원천", ("safety.random_or_paid_reward",), "난수 원천을 부르지 않고 다른 이름·표에 담거나 값으로 넘긴다"),
     "D-param-shadowed-class-name": ("매개변수가 가린 상수로 만든 인스턴스", ("safety.free_text",), "클래스 이름을 글자 그대로 알 수 없다"),
     "D-metatable-table-read": ("메타표를 건 표의 동적 읽기", ("safety.external_call",), "T 의 멤버를 값을 알 수 없는 키로 꺼낸다"),
+    "D-long-helper-chain": ("여덟 단계 도우미 사슬을 거친 보상", ("server.reward_after_verdict",), "원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다"),
+    "D-same-name-unverified-helper": ("판정하는 함수와 이름이 같은 판정 없는 도우미", ("server.reward_after_verdict",), "원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다"),
+    "D-file-level-helper-alias": ("파일 위 별칭으로 부른 보상 도우미", ("server.reward_after_verdict",), "보상에 닿는 함수 openGate 를 부르지 않고"),
+    "D-prompt-reward-without-verdict": ("프롬프트를 누르면 판정 없이 주는 보상", ("server.reward_after_verdict",), "플레이어 동작(Triggered) 처리가 서버 판정"),
+    "D-prompt-named-reward-handler": ("프롬프트에 이름으로 이은 판정 없는 보상", ("server.reward_after_verdict",), "플레이어 동작(Triggered) 처리가 서버 판정"),
+    "D-claim-line-key-list": ("목록으로 적은 명제 문구 키", ("math.conditions", "math.truth"), "line_key 은 글자여야 한다"),
+    "D-claim-compare-term-not-table": ("표가 아닌 기울기 비교 항", ("math.conditions", "math.truth"), "this 은 '이름: 값' 표여야 한다"),
 }
 # 심은 결함 종류 전체 — 매니페스트와 따로 둔다. 하나를 지우면 이 묶음과 어긋나 시험이 실패한다 (리뷰 R-Q3 29차)
 FROZEN_CLASSES = frozenset({
@@ -430,6 +437,13 @@ FROZEN_CLASSES = frozenset({
     "여러 이름 local 에 담은 난수 원천",
     "매개변수가 가린 상수로 만든 인스턴스",
     "메타표를 건 표의 동적 읽기",
+    "여덟 단계 도우미 사슬을 거친 보상",
+    "판정하는 함수와 이름이 같은 판정 없는 도우미",
+    "파일 위 별칭으로 부른 보상 도우미",
+    "프롬프트를 누르면 판정 없이 주는 보상",
+    "프롬프트에 이름으로 이은 판정 없는 보상",
+    "목록으로 적은 명제 문구 키",
+    "표가 아닌 기울기 비교 항",
 })
 
 ITEM_IDS = {f"E{i}" for i in range(1, 7)} | {f"U{i}" for i in range(1, 15)}
@@ -948,6 +962,38 @@ class ResolveTest(unittest.TestCase):
                 self.assertEqual(len(found), len(fragments), found)
                 for fragment, what in zip(fragments, found):
                     self.assertIn(fragment, what)
+
+
+class RewardPathTest(TreeCase):
+    """보상 경로 — 스스로 판정하는 도우미는 무조건 불러도 되고, 명제의 꼴이 틀려도 검사가 멈추지 않는다 (리뷰 R-Q3 34차)."""
+
+    CALL = "\tif MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then\n\t\tMissionService.openGate(player)\n\tend\n"
+
+    def test_self_verdicting_helper_may_be_called_unconditionally(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/server/MissionService.luau", "return MissionService\n", "function MissionService.finish(player: Player, cell: {x: number, y: number})\n\tif MissionService.coordinateMove(player, cell) then\n\t\tMissionService.openGate(player)\n\tend\nend\n" + "\nreturn MissionService\n")
+        self.edit(tree, "src/server/Main.server.luau", self.CALL, "\tMissionService.finish(player, {x = x :: number, y = y :: number})\n")
+        self.assertEqual(self.failing(tree), {})
+
+    def test_prompt_reward_inside_verdict_passes(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/server/Main.server.luau", "SignalRemote.OnServerEvent:Connect(onSignal)",
+                  "SignalRemote.OnServerEvent:Connect(onSignal)\nlocal prompt = Instance.new(\"ProximityPrompt\")\nprompt.Parent = workspace\n"
+                  "prompt.Triggered:Connect(function(player: Player)\n\tif MissionService.coordinateMove(player, {x = 2, y = 1}) then\n"
+                  "\t\tMissionService.openGate(player)\n\tend\nend)\n")
+        self.assertEqual(self.failing(tree), {})
+
+    def test_prompt_connected_to_an_unknown_handler(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/server/Main.server.luau", "SignalRemote.OnServerEvent:Connect(onSignal)",
+                  "SignalRemote.OnServerEvent:Connect(onSignal)\nlocal prompt = Instance.new(\"ProximityPrompt\")\nprompt.Parent = workspace\n"
+                  "prompt.Triggered:Connect(handlers.give)\n")
+        self.assertCaught(tree, "server.reward_after_verdict", "플레이어 동작(Triggered) 처리 함수를 찾지 못했다")
+
+    def test_claim_shape_problems(self):
+        self.assertEqual(math_claims.shape_problems({"kind": "slope", "line_key": "a.b", "this": None}), [])
+        found = math_claims.shape_problems({"kind": ["slope"], "line_key": {"k": 1}, "this": 3, "other": "x", "line": [1]})
+        self.assertEqual(len(found), 5, found)
 
 
 class LuauSyntaxTest(unittest.TestCase):

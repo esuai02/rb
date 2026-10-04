@@ -204,6 +204,20 @@ def _said(value) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
+def shape_problems(claim: dict) -> list[str]:
+    """명제를 읽기 전에 꼴부터 본다 — 틀린 꼴은 검사가 멈추는 대신 진단으로 남긴다 (리뷰 R-Q3 34차).
+
+    키로 찾는 값(kind·line_key)은 글자여야 하고, 안을 열어 읽는 값(this·other·line)은 표여야 한다.
+    """
+    out = []
+    for name in ("kind", "line_key"):
+        if claim.get(name) is not None and not isinstance(claim[name], str):
+            out.append(f"{name} 은 글자여야 한다 ({claim[name]!r})")
+    out += [f"{name} 은 '이름: 값' 표여야 한다 ({claim[name]!r})" for name in ("this", "other", "line")
+            if claim.get(name) is not None and not isinstance(claim[name], dict)]
+    return out
+
+
 def truth(tree, rules, config) -> list[str]:
     """E1 — 수학 대사의 명제가 실제로 맞고, 대사가 그 명제를 말한다. 수학이 든 대사는 모두 명제를 가진다."""
     if not tree.claims:
@@ -211,6 +225,10 @@ def truth(tree, rules, config) -> list[str]:
     out, tied = [], set()
     for claim in tree.claims:
         cid = claim.get("id", "?") if isinstance(claim, dict) else "?"
+        problems = shape_problems(claim) if isinstance(claim, dict) else []
+        if problems:
+            out += [f"{cid}: 명제의 꼴이 틀렸다 — {problem}" for problem in problems]
+            continue
         try:
             if not evaluate(claim):
                 out.append(f"{cid}: 명제가 거짓이다 (E1) — 문구 {claim.get('line_key') if isinstance(claim, dict) else '?'}")
@@ -254,6 +272,10 @@ def conditions(tree, rules, config) -> list[str]:
             out.append("명제는 객체여야 한다")
             continue
         cid, kind, raw = claim.get("id", "?"), claim.get("kind"), claim.get("conditions")
+        problems = shape_problems(claim)
+        if problems:
+            out += [f"{cid}: 명제의 꼴이 틀렸다 — {problem}" for problem in problems]
+            continue
         if raw is not None and not isinstance(raw, dict):
             out.append(f"{cid}: 조건(conditions)은 '이름: 값' 표여야 한다 — {raw!r} 로는 명제와 대조할 수 없다 (E2)")
             continue
