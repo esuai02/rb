@@ -664,8 +664,7 @@
  },
  "D-fraction-line-untied": {
   "math.truth": [
-   "claim.line.point: 분수 계수는 수로 대사와 묶을 수 없다 — line_text 에 대사가 말하는 식을 글자로 적어야 한다 (E1)",
-   "claim.line.point: 대사 label.line.point 가 명제의 'b=4' 을 말하지 않는다 — 명제와 대사가 따로 논다"
+   "claim.line.point: 분수 계수는 수로 대사와 묶을 수 없다 — line_text 에 대사가 말하는 식을 글자로 적어야 한다 (E1)"
   ]
  },
  "D-free-text": {
@@ -826,6 +825,11 @@
    "src/server/Main.server.luau:22 원격 입력 x 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)",
    "src/server/Main.server.luau:22 원격 입력 y 의 형식 검사가 처리를 시작한 뒤에 있다 — 쓰기 전에 걸러야 한다",
    "src/server/Main.server.luau:22 원격 입력 y 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)"
+  ]
+ },
+ "D-line-coefficients-swapped": {
+  "math.truth": [
+   "claim.line.point: 대사 label.line.point 가 명제의 'y = 2x + 1' 을 말하지 않는다 — 명제와 대사가 따로 논다"
   ]
  },
  "D-line-text-not-a-string": {

@@ -106,6 +106,21 @@ def _direction_words(rules) -> dict[str, str]:
     return out
 
 
+def _line_expression(m: int, b: int) -> tuple[str, str]:
+    """정수 계수 직선식은 식 전체가 대사에 있어야 한다 — `y = 2x + 1` (사람 결정 Q3-SHAPE-RULES).
+
+    숫자가 따로따로 나오는지만 보면 계수를 바꿔 적은 대사(`y = 1x + 2`)가 통과한다 (리뷰 R-Q3 32차).
+    """
+    coeff = {1: "", -1: "-"}.get(m, str(m))
+    if b:
+        shown = f"y = {coeff}x {'+' if b > 0 else '-'} {abs(b)}"
+        pattern = rf"y\s*=\s*{re.escape(coeff)}\s*x\s*{'\\+' if b > 0 else '-'}\s*{abs(b)}(?![\d.])"
+    else:
+        shown = f"y = {coeff}x"
+        pattern = rf"y\s*=\s*{re.escape(coeff)}\s*x(?!\s*[+\-]\s*\d)"
+    return shown, pattern
+
+
 def stated_patterns(claim: dict, rules) -> list[tuple[str, str]]:
     """원문에 그대로 있어야 하는 것 — (설명, 정규식).
 
@@ -136,10 +151,9 @@ def stated_patterns(claim: dict, rules) -> list[tuple[str, str]]:
         if x.denominator == y.denominator == 1:
             out.append((f"({x}, {y})", rf"\(\s*{x.numerator}\s*,\s*{y.numerator}\s*\)"))
         line = claim.get("line") or {}
-        for name in ("m", "b"):
-            value = _number_re(_num(line.get(name)))
-            if value:
-                out.append((f"{name}={line.get(name)}", value))
+        m, b = _num(line.get("m")), _num(line.get("b"))
+        if m.denominator == b.denominator == 1:
+            out.append(_line_expression(int(m), int(b)))
         if any(_num(line.get(n)).denominator != 1 for n in ("m", "b")):
             stated = claim.get("line_text")
             if isinstance(stated, str) and stated.strip():

@@ -107,6 +107,7 @@ EXPECTED_DEFECTS = {
     "D-two-level-grant-value": ("두 단계 별칭으로 값 전달한 보상 지급", ("server.duplicate_reward",), "RewardService.grant 를 다른 이름(g)에 담는다"),
     "D-two-level-analytics-value": ("두 단계 별칭으로 값 전달한 분석 전송", ("analytics.calls",), "Analytics.log 를 다른 이름(send)에 담는다"),
     "D-two-level-text-value": ("두 단계 별칭으로 값 전달한 문구 조회", ("i18n.missing_key", "safety.url"), "Text.get 를 다른 이름(get)에 담는다"),
+    "D-line-coefficients-swapped": ("계수를 바꿔 적은 직선식 대사", ("math.truth",), "'y = 2x + 1' 을 말하지 않는다"),
     "D-analytics-concat-event": ("이어 붙인 분석 이벤트 이름", ("analytics.calls",), "분석 모듈이 LogCustomEvent 의 이벤트 이름 자리에 'eventNam"),
     "D-analytics-dot-call": ("점 표기로 부른 플랫폼 분석 API", ("analytics.calls",), "분석 모듈이 LogCustomEvent 에 정해진 값 ['player_profi"),
     "D-analytics-method-alias": ("전송 함수를 담은 이름으로 보낸 분석", ("analytics.calls",), "이벤트 player_profile 가 허용 목록(specs/analytics/e"),
@@ -250,6 +251,7 @@ FROZEN_CLASSES = frozenset({
     "결과를 버리는 쿨다운",
     "경계를 하나 더 거르는 범위 가드",
     "계산해서 만든 분석 칸",
+    "계수를 바꿔 적은 직선식 대사",
     "계약 없는 원격 입력",
     "계약과 다른 종류로 한 검사",
     "계약보다 넓은 범위 가드",
@@ -1226,7 +1228,7 @@ class DiagnosisCoverageTest(TreeCase):
     def test_line_coefficients_must_appear_in_the_line(self):
         tree = self.make_tree()
         self.edit(tree, "content/math_claims.yaml", "    line: {m: 2, b: 1}\n", "    line: {m: 1, b: 3}\n")
-        self.assertCaught(tree, "math.truth", "'b=3' 을 말하지 않는다")
+        self.assertCaught(tree, "math.truth", "'y = x + 3' 을 말하지 않는다")
 
     def test_states_text_must_appear_in_the_line(self):
         tree = self.make_tree()

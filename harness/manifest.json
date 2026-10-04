@@ -3554,6 +3554,20 @@
           "replace": "local get = Text.get\nlocal use = get\npcall(use, \"goal.missing\")\nsendCell(2, 1)\n"
         }
       ]
+    },
+    {
+      "id": "D-line-coefficients-swapped",
+      "class": "계수를 바꿔 적은 직선식 대사",
+      "expected": [
+        "math.truth"
+      ],
+      "edits": [
+        {
+          "file": "src/shared/Localization.csv",
+          "find": "label.line.point,\"점 (2, 5) 는 직선 y = 2x + 1 위에 있어.\",이름표 대사,,\"[Ƥöïñţ (2, 5) ïŝ öñ y = 2x + 1.]\"",
+          "replace": "label.line.point,\"점 (2, 5) 는 직선 y = 1x + 2 위에 있어.\",이름표 대사,,\"[Ƥöïñţ (2, 5) ïŝ öñ y = 1x + 2.]\""
+        }
+      ]
     }
   ]
 }
