@@ -7,7 +7,7 @@
   "intent_file": "intent.md",
   "intent_sha256": "31116e96b8627d1d88e8409bff9ce6caf96bb2fdf1da48e5d02da57071fc28aa",
   "mission": "Neo Seoul 의 도시 언어 게이트에서 시작하는, 수학을 잘하지 않아도 수학적 언어로 친구와 도시를 움직이는 글로벌 소셜 어드벤처 (DEC-10 B안·DEC-1)",
-  "focus": "Q1",
+  "focus": "Q4",
   "nodes": [
     {
       "id": "Q1",
