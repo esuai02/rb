@@ -38,15 +38,28 @@ STAGES_BY_BRANCH = {
     "feat/q2-world-graph": ["Q2", "Q3", "Q4"],   # Q2 잠금 뒤 Q3·Q4 작업도 이 브랜치에 쌓였다
 }
 PROTECTED = {"main", "master"}
-GATE_BUDGET_S = 480       # Stop 훅 시간 제한(600초) 안에 반드시 끝나게 — 넘으면 검사 실패로 본다
-SECRET = re.compile(r"AKIA[0-9A-Z]{16}|\b(?:api[_-]?key|passwd|password|secret|token)\s*[:=]\s*['\"][^'\"]{6,}", re.I)
+SAVE_BUDGET_S = 540       # Stop 훅 시간 제한(600초) 안에 save 전체가 반드시 끝나게
+GATE_BUDGET_S = 420       # 그 가운데 자동 검사 몫 — 넘으면 검사 실패로 본다
+SECRET = re.compile(
+    r"AKIA[0-9A-Z]{16}"                                   # AWS 접근 키
+    r"|gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{22,}"   # GitHub 토큰
+    r"|xox[baprs]-[A-Za-z0-9-]{10,}"                      # Slack 토큰
+    r"|sk-[A-Za-z0-9_-]{20,}"                             # API 비밀 키 꼴
+    r"|-----BEGIN [A-Z ]*PRIVATE KEY-----"                # 개인 키
+    r"|\bBearer\s+[A-Za-z0-9._~+/=-]{20,}"                # 인증 머리
+    r"|\b(?:api[_-]?key|passwd|password|secret|token)\s*[:=]\s*(?:['\"][^'\"]{6,}|[A-Za-z0-9_\-+/=]{16,})",
+    re.I)
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
 ATTRIBUTION = "noreply@anthropic.com"   # 커밋 메시지의 공동 작성자 표기 — 이 주소 하나만 허용한다
 RESERVED = re.compile(r"@(?:[\w-]+\.)*(?:example\.(?:com|org|net)|[\w-]+\.(?:example|test|invalid))$", re.I)   # RFC 2606: 실제로 없는 주소
 
 
+DEADLINE = [time.monotonic() + SAVE_BUDGET_S]   # save 를 시작할 때 다시 잡는다
+
+
 def git(*args: str, check: bool = True) -> str:
-    done = subprocess.run(["git", *args], cwd=REPO, capture_output=True, text=True)
+    left = max(5.0, DEADLINE[0] - time.monotonic())
+    done = subprocess.run(["git", *args], cwd=REPO, capture_output=True, text=True, timeout=left)
     if check and done.returncode != 0:
         raise RuntimeError(done.stderr.strip() or f"git {' '.join(args)} 실패")
     return done.stdout
@@ -134,62 +147,62 @@ def summary(paths: list[str]) -> str:
     return f"chore(자동 저장): {'·'.join(areas)} — 파일 {len(paths)}개"
 
 
-def outgoing(branch: str) -> tuple[str, str, list[str], int]:
-    """아직 올리지 않은 것 전부 — (바뀐 내용, 커밋 메시지들, 바뀐 파일, 커밋 수). 원격 브랜치가 없으면 main 부터."""
+def outgoing(branch: str) -> tuple[str, list[str], int]:
+    """아직 올리지 않은 것 전부 — (커밋마다의 patch 와 메시지를 '더하는 줄' 꼴로, 커밋들이 건드린 파일 전부, 커밋 수).
+
+    최종 결과의 차이만 보면 중간 커밋에 넣었다가 지운 비밀값을 놓친다 — 그래도 이력에는 남는다 (리뷰 SHIP 2차).
+    원격 브랜치가 없으면 main 부터 센다.
+    """
     base = f"origin/{branch}" if git("rev-parse", "--verify", "-q", f"origin/{branch}", check=False).strip() else "origin/main"
     count = int(git("rev-list", "--count", f"{base}..HEAD").strip() or "0")
     if not count:
-        return "", "", [], 0
-    diff = git("diff", "--text", f"{base}..HEAD")
-    messages = git("log", "--format=%B", f"{base}..HEAD")
-    files = [p for p in git("diff", "--name-only", "-z", f"{base}..HEAD").split("\0") if p]
-    return diff, messages, files, count
+        return "", [], 0
+    patches = git("log", "-p", "--text", "--format=%n%B", f"{base}..HEAD")
+    added = "\n".join(line if line.startswith(("+", "-", "@", " ", "diff ", "index ")) else "+" + line
+                      for line in patches.splitlines())   # 메시지 줄도 '더하는 줄' 로 검사받게
+    files = sorted({p for p in git("log", "--name-only", "--format=", "-z", f"{base}..HEAD").replace("\n", "\0").split("\0") if p})
+    return added, files, count
 
 
 def save(message: str | None, quiet: bool) -> int:
+    """돌려주는 값: 0 올라가 있음(이번에 올렸거나 이미 올라가 있음) · 1 멈춤 · 2 보호 브랜치라 하지 않음."""
+    DEADLINE[0] = time.monotonic() + SAVE_BUDGET_S
     branch = git("rev-parse", "--abbrev-ref", "HEAD").strip()
     if branch in PROTECTED:
         print(f"[자동 저장] {branch} 에는 직접 커밋하지 않는다 — 작업 브랜치에서 한다")
-        return 0
+        return 2
     if git("diff", "--cached", "--name-only").strip():
         print("[자동 저장] 사람이 미리 staging 한 변경이 있어 건드리지 않는다 — 직접 커밋하거나 staging 을 풀면 이어서 한다")
         return 1
-    private, checked = private_values(), False
+    private = private_values()
     paths = candidates(git("status", "--porcelain", "-z"))
+    before, before_files, _ = outgoing(branch)
+    # 올라갈 것 전부(이미 있는 커밋들 + 이번 변경)에 코드가 하나라도 있으면 최종 상태로 검사를 돌린다 — 커밋하기 전에
+    failed = gates(sorted(set(paths) | set(before_files)), min(GATE_BUDGET_S, DEADLINE[0] - time.monotonic() - 60))
+    if failed:
+        print("[자동 저장] 멈춤 — 자동 검사가 통과하지 않아 커밋·푸시하지 않았다:\n  " + "\n  ".join(failed))
+        return 1
+    found = leaks(before, private)
     if paths:
         msg = message or summary(paths)
         committed = False
-        git("add", "--", *paths)
         try:
-            found = leaks(git("diff", "--cached", "--text"), private) + leaks(as_added(msg), private)
-            if found:
-                print("[자동 저장] 멈춤 — 공개 저장소에 올리면 안 되는 값이 있다:\n  " + "\n  ".join(found[:5]))
-                return 1
-            failed = gates(paths)
-            if failed:
-                print("[자동 저장] 멈춤 — 자동 검사가 통과하지 않아 커밋하지 않았다:\n  " + "\n  ".join(failed))
-                return 1
-            checked = True
-            git("commit", "-q", "-m", msg)
-            committed = True
+            git("add", "--", *paths)
+            found += leaks(git("diff", "--cached", "--text"), private) + leaks(as_added(msg), private)
+            if not found:
+                git("commit", "-q", "-m", msg)
+                committed = True
         finally:
-            if not committed:
-                git("reset", "-q", check=False)   # 시작할 때 인덱스가 비어 있었으므로 통째로 되돌려도 남의 것을 지우지 않는다
-    diff, messages, files, count = outgoing(branch)
+            if not committed and git("diff", "--cached", "--name-only", check=False).strip():
+                git("reset", "-q")   # 시작할 때 인덱스가 비어 있었으므로 통째로 되돌려도 남의 것을 지우지 않는다
+    if found:
+        print("[자동 저장] 멈춤 — 공개 저장소에 올리면 안 되는 값이 있다(커밋하거나 올리지 않았다):\n  " + "\n  ".join(found[:5]))
+        return 1
+    _after, _files, count = outgoing(branch)
     if not count:
         if not quiet:
-            print("[자동 저장] 바뀐 것이 없다")
+            print("[자동 저장] 바뀐 것이 없다 — 원격과 같다")
         return 0
-    # 이번에 만든 커밋만이 아니라 올라가는 것 전부를 본다 — 앞서 손으로 만든 커밋도 같은 검사를 받는다
-    found = leaks(diff, private) + leaks(as_added(messages), private)
-    if found:
-        print(f"[자동 저장] 멈춤 — 올라갈 커밋 {count}개에 공개 저장소에 올리면 안 되는 값이 있다(커밋은 로컬에 남는다):\n  "
-              + "\n  ".join(found[:5]))
-        return 1
-    failed = [] if checked else gates(files)
-    if failed:
-        print(f"[자동 저장] 멈춤 — 올라갈 커밋 {count}개가 자동 검사를 통과하지 않는다(커밋은 로컬에 남는다):\n  " + "\n  ".join(failed))
-        return 1
     has_upstream = git("rev-parse", "--abbrev-ref", f"{branch}@{{upstream}}", check=False).strip()
     git("push", "-q", *([] if has_upstream else ["-u"]), "origin", branch)
     head = git("log", "--oneline", "-1").strip()
@@ -198,14 +211,23 @@ def save(message: str | None, quiet: bool) -> int:
 
 
 def locked_at(sha: str, stages: list[str]) -> tuple[bool, str]:
-    """그 커밋에서 담은 단계가 모두 사람이 잠갔는가 — 지금 체크아웃이 아니라 PR 머리 커밋을 따로 꺼내 본다."""
+    """그 커밋에서 담은 단계가 모두 사람이 잠갔는가.
+
+    PR 머리 커밋을 임시 작업 폴더로 꺼내되, 판정은 PR 쪽 코드가 아니라 이 저장소의 신뢰하는 검증기
+    (verify.helper_gate → 저장소 밖 masterwork 도구)로 한다 — PR 은 데이터만 내놓는다 (리뷰 SHIP 2차).
+    """
+    sys.path.insert(0, str(REPO / "tools"))
+    import verify   # noqa: E402 — 이 저장소의 검증기
     with tempfile.TemporaryDirectory(prefix="rb-ship-pr-") as tmp:
         tree = Path(tmp) / "head"
         git("worktree", "add", "-q", "--detach", str(tree), sha)
         try:
             for stage in stages:
-                done = subprocess.run([sys.executable, "tools/verify.py", "gate", stage], cwd=tree, capture_output=True, text=True)
-                if "locked=True" not in done.stdout:
+                try:
+                    result = verify.helper_gate(tree, stage)
+                except (SystemExit, subprocess.SubprocessError, ValueError) as exc:
+                    return False, f"머리 커밋 {sha[:8]} 의 {stage} 잠금을 판정하지 못했다 ({exc})"
+                if not (result.get("verdict") == "PASS" and result.get("locked") is True):
                     return False, f"머리 커밋 {sha[:8]} 에서 {stage} 가 잠기지 않았다"
             return True, f"머리 커밋 {sha[:8]} 에서 {', '.join(stages)} 가 모두 사람이 잠갔다"
         finally:
@@ -274,7 +296,7 @@ def merge(yes: bool) -> int:
 
 def status() -> int:
     branch = git("rev-parse", "--abbrev-ref", "HEAD").strip()
-    _diff, _messages, _files, count = outgoing(branch)
+    _added, _files, count = outgoing(branch)
     paths = candidates(git("status", "--porcelain", "-z"))
     print(f"[상태] 브랜치 {branch} · 올리지 않은 커밋 {count}개 · 올릴 변경 {len(paths)}개")
     return merge(yes=False)
@@ -299,7 +321,7 @@ def main(argv: list[str]) -> int:
         if args.command == "merge":
             return merge(args.yes)
         return status()
-    except (RuntimeError, subprocess.SubprocessError, OSError) as exc:
+    except (RuntimeError, subprocess.SubprocessError, subprocess.TimeoutExpired, OSError) as exc:
         print(f"[ship] 멈춤 — {exc}")
         return 0 if getattr(args, "quiet", False) else 1
 

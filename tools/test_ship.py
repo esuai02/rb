@@ -33,6 +33,16 @@ class LeakTest(unittest.TestCase):
         self.assertTrue(ship.leaks("+" + "api" + "_key = 'abcdef123456'\n", []))
         self.assertTrue(ship.leaks("+" + "AKIA" + "ABCDEFGHIJKLMNOP" + "\n", []))
 
+    def test_more_secret_shapes_are_refused(self):
+        """토큰·인증 머리·개인 키 꼴 (리뷰 SHIP 2차). 꼴은 실행 중에 조립한다."""
+        for shape in ("gh" + "p_" + "a" * 36, "Bear" + "er " + "b" * 24, "-----BEGIN " + "RSA PRIVATE KEY-----",
+                      "tok" + "en=" + "c" * 20, "xo" + "xb-" + "1234567890ab", "s" + "k-" + "d" * 24):
+            with self.subTest(shape=shape[:12]):
+                self.assertTrue(ship.leaks("+" + shape + "\n", []))
+
+    def test_code_words_are_not_secrets(self):
+        self.assertEqual(ship.leaks("+token = tokens[j]\n+local tokens = luau.tokenize(src)\n", []), [])
+
     def test_ordinary_lines_pass(self):
         diff = "+Co-Authored-By: Claude <noreply@anthropic.com>\n+cmd = '/mnt/c/Windows/System32/cmd.exe'\n-removed /home/someone\n"
         self.assertEqual(ship.leaks(diff, self.PRIVATE), [])

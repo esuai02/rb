@@ -339,8 +339,8 @@ def ship_locked(node: str) -> int:
     """사람이 잠근 단계는 바로 내보낸다 — 잠금 기록을 커밋·푸시하고, 그것이 성공했을 때만 잠긴 단계의 PR 을 병합한다."""
     ship = [sys.executable, str(ROOT / "tools" / "ship.py")]
     saved = subprocess.run([*ship, "save", "-m", f"chore: {node} 잠금 기록"], cwd=ROOT).returncode
-    if saved:
-        print("저장·푸시가 실패해 병합하지 않았다")
+    if saved:   # 1 멈춤 · 2 보호 브랜치라 저장하지 않음 — 어느 쪽이든 잠금 기록이 원격에 없으므로 병합하지 않는다
+        print("저장·푸시가 끝나지 않아 병합하지 않았다")
         return saved
     return subprocess.run([*ship, "merge", "--yes"], cwd=ROOT).returncode
 
