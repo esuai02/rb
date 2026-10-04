@@ -613,6 +613,8 @@ class DesignRulesTest(CheckCase):
         ("첫 힌트 조건", lambda b: setv(value(b, "cv.hint_ladder")["value"], "first_trigger", {})),
         ("힌트 문구 수가", lambda b: b.graph["hint_ladders"][0]["keys"].pop()),
         ("수학 미션에 목표(target)가 없어", lambda b: mission(b, "m.signal_slope").pop("target")),
+        ("목표가 아닌 결과의 월드 반응", lambda b: next(s for s in mission(b, "m.signal_slope")["steps"] if s["kind"] == "world_response").pop("other_result_key")),
+        ("목표가 아닌 결과의 월드 반응", lambda b: b.glossary["strings"].pop("resp.coordinate.other_spot")),
         ("max_players 를 넘는다", lambda b: setv(b.graph["coop"][0], "max_players", 8)),
         ("순서대로 늘어야", lambda b: setv(mission(b, "m.gate_open"), "target_end_s", 100)),
         ("마지막 미션에 정지점", lambda b: setv(b.graph["pacing"]["stop_point"], "mission", "m.gate_open")),

@@ -246,6 +246,9 @@ def review_packet(root: Path, graph: dict, node: dict, binding: str) -> str:
     decisions = "\n".join(f"- {r.get('decision_id', r['id'])}: {r.get('value', '')}" for r in rows
                           if r.get("kind") == "human_decision" and r.get("node_id") == node["id"]) or "- (없음)"
     question = node.get("review_question") or "이 단계의 산출물이 합격 기준을 만족하는가?"
+    rejected = "\n".join(f"- {k}: {v}" for r in rows if r.get("kind") == "review_triage"
+                         and (r.get("node_id") == node["id"] or node["id"] in (r.get("applies_to") or []))
+                         for k, v in (r.get("classification") or {}).items() if str(v).startswith("INVALID")) or "- (없음)"
     policy = node.get("review_policy") or {}
     if policy.get("scope") == "fixed":
         last = latest_review(rows, node["id"])
@@ -279,6 +282,8 @@ STAGE SCOPE: 이 단계가 맡는 불변식: {owned}
 REVIEW QUESTION: {question}
 HUMAN DECISIONS(이 단계에 대한 사람 결정 — 리뷰 범위를 정한다):
 {decisions}
+이전 리뷰에서 근거와 함께 INVALID 로 판정한 것(새 근거 없이 다시 적지 않는다 — 반박하려면 evidence 에 새 근거를 적는다):
+{rejected}
 {extra}ASK: {ask}
 RETURN: lines of `severity | file:line | claim | evidence | minimal fix` (severity = {severities}), or exactly NO_FINDINGS
 """

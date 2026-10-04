@@ -873,6 +873,10 @@ def check_design_rules(b: Bundle) -> list[str]:
         line = next((s.get("line_key") for s in m.get("steps", []) if s.get("kind") == "math_label"), "")
         actions = [k for s in m.get("steps", []) if s.get("kind") == "player_action" for k in s.get("keys", [])]
         errors += target_errors(b, f"missions/{m['id']}", m["new_term"], m.get("target"), ladder, actions, line)
+        other = next((s.get("other_result_key") for s in m.get("steps", []) if s.get("kind") == "world_response"), None)
+        if not other or other not in strings:
+            errors.append(f"missions/{m['id']}: 수학 미션이 목표가 아닌 결과의 월드 반응(world_response.other_result_key)을 용어집 문구로 정하지 않았다 "
+                          f"— 다른 결과 재도전(other_result_x3)이 일어날 수 없다 (INV-8)")
     for c in g.get("reuse_contexts", []):
         ladder = ladders.get(c.get("hint_ladder"), {})
         if ladder.get("term") != c.get("term_id"):

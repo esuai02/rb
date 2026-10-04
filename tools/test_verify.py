@@ -131,6 +131,14 @@ class GateFlowTest(unittest.TestCase):
         self.assertNotIn("- Q1-6V: FAIL", packet)
         self.assertIn("Q1-6V 는 잠그기 직전에 기록하는 6방향 검토", packet)
 
+    def test_packet_lists_previously_rejected_findings(self):
+        verify.append(self.root, {"id": "T-1", "kind": "review_triage", "node_id": "Q1",
+                                  "classification": {"major 횟수": "INVALID — 기준이 요구하지 않는다", "major 경로": "VALID — 고침"}})
+        graph = verify.load_graph(self.root)
+        packet = verify.review_packet(self.root, graph, verify.node_of(graph, "Q1"), self.gate()["binding"])
+        self.assertIn("- major 횟수: INVALID — 기준이 요구하지 않는다", packet)
+        self.assertNotIn("major 경로", packet)
+
     def test_claude_fallback_is_fresh_context_not_external(self):
         self.ready()
         self.fake_reviewer("NO_FINDINGS", tool="claude")
