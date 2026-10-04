@@ -1,5 +1,5 @@
 hold: DEC-8
 node: Q3
-binding: 6cd6b70f54e2d9f505cba3ebe890b6fff7f16dbc187972e91ca227a9c8f9446c
-time: 2026-10-04T11:23:26.026497+00:00
-source: 사용자 메시지 2026-10-04 "잠금 승인" — Q3 잠금 승인 요청(DEC-8 하네스는 저장소 파일을 검사한다를 이 버전에 재확인 포함)에 대한 답
+binding: 80f5cb7209c8af5dc267020dfede3b244f4906481a8a5c2deddf35fb08f789fd
+time: 2026-10-04T20:33:20.914404+00:00
+source: 사용자 메시지 2026-10-05 "잠금 승인" — intent r4 뒤 Q1~Q3 재잠금 요청(리뷰 CLEAR·6방향 새로 작성·남은 위험 표시, DEC-8 재확인 포함)에 대한 답
