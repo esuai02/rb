@@ -3496,6 +3496,20 @@
           "replace": "pcall(Analytics.log, nil, \"not_allowed\", {})\n\nreturn MissionService\n"
         }
       ]
+    },
+    {
+      "id": "D-verdict-equals-nil",
+      "class": "판정을 nil 과 비교한 가지의 보상",
+      "expected": [
+        "server.reward_after_verdict"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "if MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then",
+          "replace": "if MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) == nil then"
+        }
+      ]
     }
   ]
 }

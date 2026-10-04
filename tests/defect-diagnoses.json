@@ -1894,6 +1894,12 @@
    "src/client/Hud.client.luau:18 이어 붙인 글자가 URL 이 된다 ('https://example.com')"
   ]
  },
+ "D-verdict-equals-nil": {
+  "server.reward_after_verdict": [
+   "src/server/Main.server.luau:22 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다",
+   "src/server/Main.server.luau:22 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다"
+  ]
+ },
  "D-verdict-or-true": {
   "server.reward_after_verdict": [
    "src/server/Main.server.luau:22 원격 처리가 서버 판정(MissionService.coordinateMove · MissionService.slopeSet) 없이 보상에 닿는다 — 클라이언트가 완료를 정하면 안 된다",

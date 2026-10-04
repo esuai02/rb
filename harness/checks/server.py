@@ -689,14 +689,17 @@ def reward_after_verdict(tree, rules, config) -> list[str]:
     return out
 
 
-def _negated(cond) -> bool:
-    """판정 결과를 뒤집는 조건인가 — not · == false · ~= true."""
-    if any(x.kind == NAME and x.text == "not" for x in cond):
-        return True
-    for k in range(len(cond) - 1):
-        if cond[k].text == "==" and cond[k + 1].kind == NAME and cond[k + 1].text == "false":
-            return True
-        if cond[k].text == "~=" and cond[k + 1].kind == NAME and cond[k + 1].text == "true":
+def _is_exact_verdict(cond, verdicts) -> bool:
+    """조건이 판정 호출 하나뿐인가 — `if M.verdict(…) then` 만 판정 성공으로 본다 (사람 결정 Q3-SHAPE-RULES).
+
+    부정·비교(== nil · == false · ~= true …)·다른 조건과 섞은 꼴은 모두 판정 성공으로 보지 않는다.
+    하나씩 막던 변형을 '검사할 수 있는 꼴 하나' 로 바꾼 것이다.
+    """
+    for v in verdicts:
+        if luau.find_calls(cond, v) != [0]:
+            continue
+        opened = next((k for k in range(len(cond)) if cond[k].kind == SYMBOL and cond[k].text == "("), None)
+        if opened is not None and opened + len(luau.balanced(cond, opened)) == len(cond):
             return True
     return False
 
@@ -709,10 +712,8 @@ def _inside_verdict(body, index: int, verdicts) -> bool:
         j = start + 1
         while j < len(body) and not (body[j].kind == NAME and body[j].text == "then"):
             j += 1
-        cond = body[start + 1:j]
-        if not any(luau.find_calls(cond, v) for v in verdicts) or _negated(cond) \
-                or any(x.kind == NAME and x.text in ("and", "or") for x in cond):
-            continue   # 판정이 거짓이거나 다른 조건과 섞인 가지는 보상 자리가 아니다
+        if not _is_exact_verdict(body[start + 1:j], verdicts):
+            continue   # 조건이 판정 호출 하나가 아니면 보상 자리가 아니다
         depth, k = 1, j + 1
         while k < len(body) and depth:
             if body[k].kind == NAME and body[k].text in ("if", "do", "function", "repeat"):
