@@ -137,13 +137,16 @@ def check_vectors(root: Path, node_id: str, binding: str) -> tuple[bool, str]:
     intent, _ = flow_guard.load(root)
     wanted = sorted((intent or {}).get("vectors", {}))
     found = {}
-    incomplete = []
-    for row in ledger(root):
-        if row.get("kind") != "vector_review" or row.get("stage") != node_id:
-            continue
+    incomplete, copied = [], []
+    rows = [r for r in ledger(root) if r.get("kind") == "vector_review" and r.get("stage") == node_id]
+    for row in rows:
         approved = approval_time(root, node_id, binding)
         before_approval = approved is None or str(row.get("timestamp", "")) <= approved  # "잠그기 전에" (Codex 리뷰 R-Q1 3차 minor)
-        if row.get("binding") == binding and row.get("vector") in wanted and complete(row) and before_approval:  # 2차 minor
+        same_text = any(r.get("binding") != row.get("binding") and r.get("vector") == row.get("vector")
+                        and (r.get("observed"), r.get("proposal")) == (row.get("observed"), row.get("proposal")) for r in rows)
+        if row.get("binding") == binding and same_text:
+            copied.append(row.get("id"))   # 다른 버전의 기록을 그대로 다시 찍은 것은 검토가 아니다 (AUDIT-PROCESS-1: 222건 중 복사본)
+        elif row.get("binding") == binding and row.get("vector") in wanted and complete(row) and before_approval:  # 2차 minor
             found.setdefault(row.get("vector"), []).append(row.get("id"))
         else:
             incomplete.append(row.get("id"))
@@ -151,6 +154,8 @@ def check_vectors(root: Path, node_id: str, binding: str) -> tuple[bool, str]:
     lines = [f"{v}: {', '.join(found.get(v, [])) or '없음'}" for v in wanted]
     if incomplete:
         lines.append(f"세지 않은 기록(다른 버전이거나 내용이 빠짐): {', '.join(incomplete)} (필수: 지금 binding, {', '.join(VECTOR_FIELDS)})")
+    if copied:
+        lines.append(f"세지 않은 기록(다른 버전과 관찰·제안이 글자 그대로 같음 — 다시 검토해 지금 상태로 적는다): {', '.join(copied)}")
     return (not missing and bool(wanted)), "\n".join(lines) + (f"\n빠진 방향: {', '.join(missing)}" if missing else "")
 
 

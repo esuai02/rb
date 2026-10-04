@@ -189,6 +189,19 @@ class GateFlowTest(unittest.TestCase):
         (self.root / "a.txt").write_text("artifact v2", encoding="utf-8")
         self.assertFalse(verify.check_vectors(self.root, "Q1", self.gate()["binding"])[0])
 
+    def test_copied_vector_reviews_do_not_count(self):
+        """다른 버전의 6방향 기록을 글자 그대로 다시 찍으면 세지 않는다 — 검토가 아니라 복사다 (AUDIT-PROCESS-1)."""
+        self.add_vectors("V-FWD", "V-LEFT")
+        (self.root / "a.txt").write_text("artifact v2", encoding="utf-8")
+        self.add_vectors("V-FWD", "V-LEFT")   # 같은 관찰·제안을 새 binding 에 다시 찍음
+        ok, summary = verify.check_vectors(self.root, "Q1", self.gate()["binding"])
+        self.assertFalse(ok)
+        self.assertIn("글자 그대로 같음", summary)
+        for v in ("V-FWD", "V-LEFT"):
+            verify.append(self.root, {"id": f"VR-new-{v}", "kind": "vector_review", "vector": v, "stage": "Q1", "observed": "지금 상태",
+                                      "proposal": "새 제안", "next": "n", "sources": ["s"], "binding": self.gate()["binding"]})
+        self.assertTrue(verify.check_vectors(self.root, "Q1", self.gate()["binding"])[0])
+
     def test_lock_refuses_evidence_recorded_after_approval(self):
         self.add_vectors("V-FWD", "V-LEFT")
         verify.cmd_run(self.root, "Q1")
