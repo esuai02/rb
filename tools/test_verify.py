@@ -273,6 +273,22 @@ class GateFlowTest(unittest.TestCase):
         verify.cmd_approve(self.root, "Q1", "사용자 메시지 테스트 '잠금 승인'", None)
         self.assertEqual(self.gate()["verdict"], "PASS")
 
+    def test_review_budget_refuses_after_the_cap(self):
+        """intent §8 리뷰 상한 — 줄고 있어도 마지막 사람 결정 뒤 5회를 넘으면 멈춘다."""
+        self.ready()
+        for n in (5, 4, 3, 2, 1):
+            self.fake_reviewer("\n".join(f"major | a:{k} | 지적 {k} | e | m" for k in range(n)))
+            self.assertEqual(verify.cmd_review(self.root, "Q1"), 1)
+        self.fake_reviewer("NO_FINDINGS")
+        self.assertEqual(verify.cmd_review(self.root, "Q1"), 2)
+        self.assertTrue(any("상한" in r.get("observed", "") for r in self.rows("observation")))
+
+    def test_vectors_are_not_required_before_review(self):
+        """6방향은 잠금 조건이다 — 리뷰 전에는 다른 자동 검사만 PASS 이면 된다."""
+        self.assertEqual(verify.cmd_run(self.root, "Q1"), 1)   # Q1-C1 PASS, Q1-6V FAIL
+        self.fake_reviewer("NO_FINDINGS")
+        self.assertEqual(verify.cmd_review(self.root, "Q1"), 0)
+
     def test_residual_outside_a_fixed_scope_blocks(self):
         self.ready()
         self.fake_reviewer("residual | a.txt:3 | 고정 범위가 아닌데 residual | e | m")

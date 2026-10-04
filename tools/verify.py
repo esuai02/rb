@@ -30,6 +30,7 @@ TRI_TOOL = Path.home() / ".claude/scripts/tri_tool.py"
 MAKER = "claude-code main session"
 CHECK_TIMEOUT_SEC = 600
 REVIEW_TIMEOUT_SEC = 900
+REVIEW_BUDGET = 5   # intent §8: 마지막 사람 결정 뒤 같은 단계의 독립 리뷰 상한 (단계마다 graph 의 review_budget 로 바꿀 수 있다)
 VECTOR_FIELDS = ("observed", "proposal", "next", "sources")
 BLOCKER_RE = re.compile(r"^\s*[-*]?\s*\**(critical|major|minor|residual)\**\s*\|\s*([^|]*)\|\s*([^|]+)", re.IGNORECASE | re.MULTILINE)
 
@@ -290,19 +291,23 @@ def review_refusal(root: Path, node: dict, binding: str) -> str | None:
     """리뷰를 받기 전에 기계로 지키는 규칙 — 지키지 못하면 이유를 돌려준다 (근거 원장 AUDIT-PROCESS-1).
 
     ① 지금 binding 의 자동 검사가 기준마다 있고 모두 PASS 여야 한다 — 실패한 상태로 리뷰를 보내지 않는다.
-    ② intent §8 멈춤: 마지막 사람 결정 뒤의 리뷰가 BLOCK 으로 세 번 이어지면서 막는 지적 수가 두 번 연속 줄지 않았으면
-       리뷰를 더 보내지 않고 멈춤 기록을 남긴다. 사람 결정이 다음 창을 연다.
+       6방향 기준(vectors)은 잠금 조건이라 여기서 보지 않는다 — 리뷰 라운드마다 다시 쓰게 만들면 복사가 된다(intent §8·§11).
+    ② intent §8 멈춤: 마지막 사람 결정 뒤의 리뷰가 BLOCK 으로 세 번 이어지면서 막는 지적 수가 두 번 연속 줄지 않았거나,
+       리뷰 상한(REVIEW_BUDGET)을 다 썼으면 리뷰를 더 보내지 않고 멈춤 기록을 남긴다. 사람 결정이 다음 창을 연다.
     """
     rows = ledger(root)
     latest = {r["criterion_id"]: r for r in rows
               if r.get("kind") == "verification" and r.get("node_id") == node["id"] and r.get("binding") == binding}
-    checked = [c["id"] for c in node["criteria"] if c.get("check")]
+    checked = [c["id"] for c in node["criteria"] if c.get("check") and c["check"].get("type") != "vectors"]
     missing = [c for c in checked if c not in latest]
     failing = [c for c in checked if c in latest and latest[c].get("result") != "PASS"]
     if missing or failing:
         return f"지금 버전의 자동 검사가 {'없거나 ' if missing else ''}실패했다({', '.join(missing + failing)}) — verify.py run 을 먼저 통과시킨다"
     decided = max((str(r.get("timestamp", "")) for r in rows if r.get("kind") == "human_decision" and r.get("node_id") == node["id"]), default="")
     window = [r for r in rows if r.get("kind") == "devil_review" and r.get("node_id") == node["id"] and str(r.get("timestamp", "")) > decided]
+    budget = node.get("review_budget", REVIEW_BUDGET)
+    if len(window) >= budget:
+        return f"intent §8 멈춤 — 마지막 사람 결정 뒤 리뷰 상한 {budget}회를 다 썼다. 사람 결정(남은 위험 기록 후 잠금·범위 축소·계속 투자)이 있어야 다음 리뷰를 보낸다"
     counts = [sum(b.get("severity") in {"critical", "major"} for b in r.get("blockers", [])) for r in window[-3:]]
     if len(counts) == 3 and all(r.get("verdict") == "BLOCK" for r in window[-3:]) and counts[1] >= counts[0] and counts[2] >= counts[1]:
         return f"intent §8 멈춤 — 막는 지적 수 {counts[0]}→{counts[1]}→{counts[2]} 로 두 번 연속 줄지 않았다. 사람 결정이 있어야 다음 리뷰를 보낸다"
