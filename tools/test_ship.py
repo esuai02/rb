@@ -40,6 +40,12 @@ class LeakTest(unittest.TestCase):
             with self.subTest(shape=shape[:12]):
                 self.assertTrue(ship.leaks("+" + shape + "\n", []))
 
+    def test_underscored_token_names_are_refused(self):
+        self.assertTrue(ship.leaks("+ACCESS_" + "TOKEN=" + "e" * 20 + "\n", []))
+
+    def test_message_lines_starting_with_a_dash_are_scanned(self):
+        self.assertTrue(ship.leaks(ship.as_added("- /home/private/" + "notes.txt"), ["/home/private"]))
+
     def test_code_words_are_not_secrets(self):
         self.assertEqual(ship.leaks("+token = tokens[j]\n+local tokens = luau.tokenize(src)\n", []), [])
 

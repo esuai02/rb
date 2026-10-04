@@ -47,7 +47,7 @@ SECRET = re.compile(
     r"|sk-[A-Za-z0-9_-]{20,}"                             # API 비밀 키 꼴
     r"|-----BEGIN [A-Z ]*PRIVATE KEY-----"                # 개인 키
     r"|\bBearer\s+[A-Za-z0-9._~+/=-]{20,}"                # 인증 머리
-    r"|\b(?:api[_-]?key|passwd|password|secret|token)\s*[:=]\s*(?:['\"][^'\"]{6,}|[A-Za-z0-9_\-+/=]{16,})",
+    r"|(?:\b|_)(?:api[_-]?key|passwd|password|secret|token|key)\s*[:=]\s*(?:['\"][^'\"]{6,}|[A-Za-z0-9_\-+/=]{16,})",
     re.I)
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
 ATTRIBUTION = "noreply@anthropic.com"   # 커밋 메시지의 공동 작성자 표기 — 이 주소 하나만 허용한다
@@ -157,9 +157,9 @@ def outgoing(branch: str) -> tuple[str, list[str], int]:
     count = int(git("rev-list", "--count", f"{base}..HEAD").strip() or "0")
     if not count:
         return "", [], 0
-    patches = git("log", "-p", "--text", "--format=%n%B", f"{base}..HEAD")
-    added = "\n".join(line if line.startswith(("+", "-", "@", " ", "diff ", "index ")) else "+" + line
-                      for line in patches.splitlines())   # 메시지 줄도 '더하는 줄' 로 검사받게
+    patches = git("log", "-p", "--text", "--format=", f"{base}..HEAD")
+    messages = git("log", "--format=%B", f"{base}..HEAD")
+    added = patches + "\n" + as_added(messages)   # 메시지는 따로 — '-' 로 시작하는 메시지 줄도 빠짐없이 검사받게
     files = sorted({p for p in git("log", "--name-only", "--format=", "-z", f"{base}..HEAD").replace("\n", "\0").split("\0") if p})
     return added, files, count
 
@@ -190,11 +190,17 @@ def save(message: str | None, quiet: bool) -> int:
             git("add", "--", *paths)
             found += leaks(git("diff", "--cached", "--text"), private) + leaks(as_added(msg), private)
             if not found:
-                git("commit", "-q", "-m", msg)
+                checked_tree = git("write-tree").strip()
+                git("commit", "-q", "-m", msg)   # 커밋 훅은 건너뛰지 않는다(사용자 정책)
                 committed = True
+                if git("rev-parse", "HEAD^{tree}").strip() != checked_tree:   # 훅이 내용을 바꿨다면 검사한 것이 아니다
+                    raise RuntimeError("커밋된 내용이 검사한 내용과 다르다(커밋 훅이 바꿨다) — 올리지 않는다")
         finally:
-            if not committed and git("diff", "--cached", "--name-only", check=False).strip():
-                git("reset", "-q")   # 시작할 때 인덱스가 비어 있었으므로 통째로 되돌려도 남의 것을 지우지 않는다
+            if not committed:
+                try:
+                    git("reset", "-q", check=False)   # 시작할 때 인덱스가 비어 있었으므로 통째로 되돌려도 남의 것을 지우지 않는다
+                except (subprocess.SubprocessError, OSError) as exc:
+                    print(f"[자동 저장] 인덱스를 되돌리지 못했다 — git status 로 확인한다 ({exc})")
     if found:
         print("[자동 저장] 멈춤 — 공개 저장소에 올리면 안 되는 값이 있다(커밋하거나 올리지 않았다):\n  " + "\n  ".join(found[:5]))
         return 1
@@ -263,7 +269,15 @@ def open_prs() -> list[dict]:
     return json.loads(done.stdout)
 
 
+TRUSTED = ("tools/verify.py", "tools/flow_guard.py", "tools/ship.py")
+ALLOWED_BASES = {"main"}
+
+
 def merge(yes: bool) -> int:
+    dirty = git("status", "--porcelain", "--", *TRUSTED).strip()
+    if dirty:
+        print("[병합] 잠금을 판정하는 도구가 작업 폴더에서 바뀌어 있다 — 커밋한 뒤에 병합한다")
+        return 1
     git("fetch", "-q", "origin")
     prs = open_prs()
     verdicts = {}
@@ -280,8 +294,16 @@ def merge(yes: bool) -> int:
     for pr, action, _reason in steps:
         if action != "병합":
             continue
+        now = subprocess.run(["gh", "pr", "view", str(pr["number"]), "--json", "baseRefName,headRefOid,mergeStateStatus"],
+                             cwd=REPO, capture_output=True, text=True, timeout=60)
+        fresh = json.loads(now.stdout) if now.returncode == 0 else {}
+        if (fresh.get("baseRefName") not in ALLOWED_BASES or fresh.get("headRefOid") != pr["headRefOid"]
+                or fresh.get("mergeStateStatus") != "CLEAN"):
+            print(f"[병합] #{pr['number']} 병합 직전에 바탕·머리·상태가 달라졌다(또는 허용한 바탕이 아니다) — 병합하지 않는다")
+            failed += 1
+            continue
         done = subprocess.run(["gh", "pr", "merge", str(pr["number"]), "--merge", "--match-head-commit", pr["headRefOid"]],
-                              cwd=REPO, capture_output=True, text=True)
+                              cwd=REPO, capture_output=True, text=True, timeout=120)
         if done.returncode != 0:
             print(f"[병합] #{pr['number']} 병합 실패 — {done.stderr.strip()[:160]}")
             failed += 1
