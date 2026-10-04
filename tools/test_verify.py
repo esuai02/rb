@@ -273,6 +273,12 @@ class GateFlowTest(unittest.TestCase):
         verify.cmd_approve(self.root, "Q1", "사용자 메시지 테스트 '잠금 승인'", None)
         self.assertEqual(self.gate()["verdict"], "PASS")
 
+    def test_residual_outside_a_fixed_scope_blocks(self):
+        self.ready()
+        self.fake_reviewer("residual | a.txt:3 | 고정 범위가 아닌데 residual | e | m")
+        self.assertEqual(verify.cmd_review(self.root, "Q1"), 1)
+        self.assertEqual(self.rows("devil_review")[-1]["verdict"], "BLOCK")
+
     def test_approve_rejects_unknown_hold_and_empty_source(self):
         with self.assertRaises(SystemExit):
             verify.cmd_approve(self.root, "Q1", "말", "DEC-99")
@@ -295,8 +301,10 @@ class ParseTest(unittest.TestCase):
     def test_parse_review_lines(self):
         verdict, blockers, residual = verify.parse_review("- **minor** | spec.yaml:3 | 오타 | x | y\nNO_FINDINGS")
         self.assertEqual((verdict, blockers[0]["severity"], blockers[0]["location"], residual), ("CLEAR", "minor", "spec.yaml:3", []))
-        verdict, blockers, residual = verify.parse_review("residual | f:2 | 새 계열 | e | m")
+        verdict, blockers, residual = verify.parse_review("residual | f:2 | 새 계열 | e | m", fixed_scope=True)
         self.assertEqual((verdict, blockers, residual[0]["claim"]), ("CLEAR", [], "새 계열"))
+        verdict, blockers, residual = verify.parse_review("residual | f:2 | 새 계열 | e | m")   # 고정 범위가 아니면 막는 지적
+        self.assertEqual((verdict, blockers[0]["severity"], residual), ("BLOCK", "major", []))
         self.assertEqual(verify.parse_review("critical | f:1 | c | e | m")[0], "BLOCK")
         self.assertEqual(verify.parse_review("모르겠음")[0], "UNPARSED")
 

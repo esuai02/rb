@@ -264,9 +264,16 @@ def run_reviewer(root: Path, packet: Path, out: Path) -> tuple[bool, str, str]:
     return proc.returncode == 0 and match is not None, match.group(1) if match else "-", (proc.stdout + proc.stderr).strip()[:400]
 
 
-def parse_review(text: str) -> tuple[str, list[dict], list[dict]]:
-    """(판정, 막는 지적, 남은 위험). residual 은 고정 범위 밖의 새 계열 — 잠금을 막지 않고 따로 기록한다(사람 결정 Q3-FIXED-SCOPE)."""
+def parse_review(text: str, fixed_scope: bool = False) -> tuple[str, list[dict], list[dict]]:
+    """(판정, 막는 지적, 남은 위험). residual 은 고정 범위 밖의 새 계열 — 잠금을 막지 않고 따로 기록한다(DEC-18).
+
+    고정 범위가 아닌 리뷰에서 residual 을 쓰면 막는 지적(major)으로 센다 — 형식만 바꿔 지적을 빼는 길을 막는다
+    (verify.py 독립 리뷰 2026-10-04 major).
+    """
     found = [{"severity": m.group(1).lower(), "location": m.group(2).strip(), "claim": m.group(3).strip()} for m in BLOCKER_RE.finditer(text)]
+    if not fixed_scope:
+        found = [{**b, "severity": "major", "claim": f"(residual 로 적었지만 고정 범위가 아니라 막는 지적으로 본다) {b['claim']}"}
+                 if b["severity"] == "residual" else b for b in found]
     blockers = [b for b in found if b["severity"] != "residual"]
     residual = [b for b in found if b["severity"] == "residual"]
     if not found and "NO_FINDINGS" not in text:
@@ -319,7 +326,8 @@ def cmd_review(root: Path, node_id: str) -> int:
     if not ok or not out.is_file():
         print(f"ESCALATE 독립 리뷰를 받지 못했습니다: {message}")
         return 2
-    verdict, blockers, residual = parse_review(out.read_text(encoding="utf-8"))
+    fixed = (node.get("review_policy") or {}).get("scope") == "fixed"
+    verdict, blockers, residual = parse_review(out.read_text(encoding="utf-8"), fixed)
     if verdict == "UNPARSED":
         print(f"ESCALATE 리뷰 결과 형식을 읽을 수 없습니다 — {out.relative_to(root)} 를 사람이 보고 판단해야 합니다.")
         return 2
