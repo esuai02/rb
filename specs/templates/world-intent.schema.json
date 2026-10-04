@@ -1,0 +1,420 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:rb:schema:world-intent:1",
+  "title": "rb 월드 의도 명세",
+  "description": "월드 하나의 의도 (intent.md §3 Q1). 규칙 근거: INV-3 키 분리, INV-9 혼자서도·어떤 기기로도, INV-10 개인정보·소통, INV-11 세계관 안전, INV-15 언어 우선, INV-16 연령 차단 회피. 화면 문구는 직접 쓰지 않고 키만 쓴다.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "title_key",
+    "world_role",
+    "setting",
+    "audience",
+    "maturity",
+    "localization",
+    "market",
+    "session",
+    "coop",
+    "input_methods",
+    "language_goals",
+    "do_not_translate",
+    "safety"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{2,63}$"
+    },
+    "title_key": {
+      "type": "string",
+      "pattern": "^world\\.[a-z0-9_.]+$"
+    },
+    "world_role": {
+      "enum": [
+        "onboarding_gate",
+        "unit_world"
+      ],
+      "description": "진단·온보딩 관문인지 단원 학습 월드인지"
+    },
+    "setting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "world_id",
+        "world_name_key"
+      ],
+      "properties": {
+        "world_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]+$"
+        },
+        "world_name_key": {
+          "type": "string",
+          "pattern": "^world\\.[a-z0-9_.]+\\.name$"
+        }
+      }
+    },
+    "audience": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "age_min",
+        "age_max",
+        "grade_band"
+      ],
+      "properties": {
+        "age_min": {
+          "type": "integer",
+          "minimum": 9,
+          "maximum": 14,
+          "description": "DEC-9: 전 세계 9~14세 범위 안"
+        },
+        "age_max": {
+          "type": "integer",
+          "minimum": 9,
+          "maximum": 14,
+          "description": "DEC-9: 전 세계 9~14세 범위 안"
+        },
+        "grade_band": {
+          "type": "string",
+          "pattern": "^gb_age_([0-9]|1[0-8])_([0-9]|1[0-8])$",
+          "description": "시장 중립 학년대 = 연령 범위(gb_age_<최소>_<최대>). '중2'·시장 코드는 구조상 들어갈 수 없다 (INV-3)"
+        }
+      }
+    },
+    "maturity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_label",
+        "questionnaire"
+      ],
+      "properties": {
+        "target_label": {
+          "const": "Minimal",
+          "description": "DEC-9"
+        },
+        "questionnaire": {
+          "type": "object",
+          "description": "Roblox 성숙도 설문 예상 답. 16세 이상 전용이 되는 항목은 모두 false 여야 한다 (INV-16, evidence F8)",
+          "additionalProperties": false,
+          "required": [
+            "social_hangout",
+            "free_form_user_creation",
+            "sensitive_issues",
+            "generative_ai_extended_interaction",
+            "paid_random_items",
+            "paid_item_trading"
+          ],
+          "properties": {
+            "social_hangout": {
+              "const": false
+            },
+            "free_form_user_creation": {
+              "const": false
+            },
+            "sensitive_issues": {
+              "const": false
+            },
+            "generative_ai_extended_interaction": {
+              "const": false
+            },
+            "paid_random_items": {
+              "const": false
+            },
+            "paid_item_trading": {
+              "const": false
+            }
+          }
+        }
+      }
+    },
+    "localization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_locale",
+        "planned_locales"
+      ],
+      "properties": {
+        "source_locale": {
+          "$ref": "#/$defs/locale"
+        },
+        "planned_locales": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/locale"
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        }
+      }
+    },
+    "market": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "market_id",
+        "curriculum_id",
+        "resolution"
+      ],
+      "properties": {
+        "market_id": {
+          "$ref": "#/$defs/market"
+        },
+        "curriculum_id": {
+          "type": "string",
+          "pattern": "^[a-z]{2}-[A-Z]{2}\\.[a-z0-9_.]+$",
+          "description": "시장.교육과정.버전"
+        },
+        "resolution": {
+          "enum": [
+            "pending_dec11",
+            "player_choice",
+            "platform_locale",
+            "separate_experience"
+          ],
+          "description": "플레이어가 어느 시장 팩을 받는지 (DEC-11)"
+        }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_minutes",
+        "first_world_reaction_s",
+        "first_math_success_s"
+      ],
+      "properties": {
+        "target_minutes": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "first_world_reaction_s": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60,
+          "description": "첫 플레이 이탈 60초 구간 (evidence F7)"
+        },
+        "first_math_success_s": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 180,
+          "description": "첫 플레이 이탈 61~180초 구간 (evidence F7)"
+        }
+      }
+    },
+    "coop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mandatory",
+        "npc_fallback",
+        "max_players",
+        "free_text_required"
+      ],
+      "properties": {
+        "mandatory": {
+          "const": false,
+          "description": "협동은 입장 조건이 아니다 (INV-9)"
+        },
+        "npc_fallback": {
+          "type": "string",
+          "pattern": "^npc\\.[a-z0-9_.]+$"
+        },
+        "max_players": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6
+        },
+        "free_text_required": {
+          "const": false,
+          "description": "자유 채팅 없이 협동이 된다 (INV-10)"
+        }
+      }
+    },
+    "input_methods": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "touch",
+          "keyboard_mouse",
+          "gamepad"
+        ]
+      },
+      "uniqueItems": true,
+      "allOf": [
+        {
+          "contains": {
+            "const": "touch"
+          }
+        },
+        {
+          "contains": {
+            "const": "keyboard_mouse"
+          }
+        },
+        {
+          "contains": {
+            "const": "gamepad"
+          }
+        }
+      ]
+    },
+    "language_goals": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/term_goal"
+      }
+    },
+    "do_not_translate": {
+      "type": "array",
+      "minItems": 1,
+      "description": "번역하지 않는 구간(수식·좌표 등)의 정규식. 검사기는 수학 표본(좌표·일차식)을 모두 잡고 일상 문장은 잡지 않는지, ID 가 고유한지 본다",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "pattern"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "pattern": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_generative_ai",
+        "free_text_input",
+        "external_links",
+        "banned_terms_ref"
+      ],
+      "properties": {
+        "runtime_generative_ai": {
+          "const": false,
+          "description": "NPC 는 미리 쓴 대사·규칙 (INV-16)"
+        },
+        "free_text_input": {
+          "const": false,
+          "description": "필터 없는 자유 입력 없음 (INV-16)"
+        },
+        "external_links": {
+          "const": false,
+          "description": "게임 안 외부 링크 없음 (INV-16)"
+        },
+        "banned_terms_ref": {
+          "type": "string",
+          "pattern": "^specs/localization/terms/[a-z]{2}-[A-Z]{2}\\.yaml$",
+          "description": "금지어·대체어 용어집 경로. 이 명세의 market_id 용어집이어야 한다(검사기). 파일 존재는 Q2 기준 Q2-C5 가 검사한다 (INV-11)"
+        }
+      },
+      "description": "INV-16 안전 플래그. 개인정보·분석 이벤트 규칙(INV-10)은 이 명세가 아니라 Q2-C3(이벤트 허용 목록)·Q3-C1(PII 검사)이 맡는다"
+    }
+  },
+  "$defs": {
+    "locale": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?$",
+      "description": "언어 축: BCP-47 언어(+문자 체계)만. 지역은 market 축이다 (INV-3)"
+    },
+    "market": {
+      "type": "string",
+      "pattern": "^[a-z]{2}-[A-Z]{2}$",
+      "description": "시장 축: 언어-지역"
+    },
+    "term_goal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "term_id",
+        "concept",
+        "everyday_expression_keys",
+        "everyday_action_keys",
+        "label_key",
+        "sequence",
+        "reuse_contexts"
+      ],
+      "properties": {
+        "term_id": {
+          "type": "string",
+          "pattern": "^term\\.[a-z0-9_]+$"
+        },
+        "concept": {
+          "enum": [
+            "position",
+            "change",
+            "relation",
+            "pattern"
+          ]
+        },
+        "everyday_expression_keys": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^expr\\.[a-z0-9_.]+$"
+          },
+          "description": "플레이어가 고르거나 듣는 일상 표현(예: '더 올라가게')의 문구 키 — 수학 용어보다 먼저 나온다 (INV-15)"
+        },
+        "everyday_action_keys": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^action\\.[a-z0-9_.]+$"
+          },
+          "uniqueItems": true,
+          "description": "일상 표현을 고르면 월드에서 일어나는 행동 키"
+        },
+        "label_key": {
+          "type": "string",
+          "pattern": "^term\\.[a-z0-9_]+\\.name$"
+        },
+        "sequence": {
+          "const": [
+            "situation",
+            "everyday_expression",
+            "player_action",
+            "world_response",
+            "math_label",
+            "reuse"
+          ],
+          "description": "INV-15 언어 우선 순서"
+        },
+        "reuse_contexts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^ctx\\.[a-z0-9_.]+$"
+          },
+          "uniqueItems": true,
+          "description": "Q2 에서 3개 이상 채운다"
+        }
+      }
+    }
+  }
+}

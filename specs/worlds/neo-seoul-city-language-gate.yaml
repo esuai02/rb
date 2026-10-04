@@ -1,0 +1,76 @@
+# 원본 월드 의도 명세 — Neo Seoul 의 도시 언어 게이트 (DEC-1)
+# 형식: specs/templates/world-intent.schema.json · 검사: python3 tools/validate_spec.py
+# 화면 문구는 쓰지 않고 키만 쓴다. 실제 문구·이름은 Q2 용어집(specs/localization)에서 정한다.
+schema_version: 1
+id: neo_seoul_city_language_gate
+title_key: world.city_language_gate.title
+world_role: onboarding_gate        # 단원 학습이 아니라 "도시가 내 말을 알아듣는 첫 성공"을 주는 입장 관문 (intent §10)
+
+setting:
+  world_id: neo_seoul
+  world_name_key: world.neo_seoul.name
+
+audience:                          # DEC-9: 전 세계 9~14세
+  age_min: 9
+  age_max: 14
+  grade_band: gb_age_9_14          # 시장 중립. 학년 표기는 시장 팩에만
+
+maturity:                          # DEC-9: Minimal. 설문 예상 답 (INV-16, evidence F8)
+  target_label: Minimal
+  questionnaire:
+    social_hangout: false                       # 대화가 주 활동인 공간 없음 — 목표 지향 미션
+    free_form_user_creation: false              # 자유 그리기·아무 칸이나 칠하는 격자 없음 — 정해진 지점만 고른다
+    sensitive_issues: false                     # 현실 출입국·국적·국경 재현 없음 (INV-11)
+    generative_ai_extended_interaction: false   # NPC 는 미리 쓴 대사·규칙
+    paid_random_items: false                    # INV-12
+    paid_item_trading: false
+
+localization:                      # 언어 축 (INV-3). 다른 언어는 Q7 — 지금은 원본 하나 (INV-2)
+  source_locale: ko
+  planned_locales: [ko]
+
+market:                            # 시장 축 (INV-3)
+  market_id: ko-KR
+  curriculum_id: ko-KR.math_language.v1
+  resolution: pending_dec11        # 플레이어가 어느 시장 팩을 받는지는 DEC-11
+
+session:                           # K5·F7: 첫 반응 60초, 첫 수학 행동 성공 180초, 게이트 3~5분
+  target_minutes: [3, 5]
+  first_world_reaction_s: 60
+  first_math_success_s: 180
+
+coop:                              # INV-9·INV-10
+  mandatory: false
+  npc_fallback: npc.signal_drone
+  max_players: 4
+  free_text_required: false
+
+input_methods: [touch, keyboard_mouse, gamepad]
+
+language_goals:                    # INV-15. 한 상호작용에 새 용어 하나 — 게이트는 위치 다음 변화 순서
+  - term_id: term.coordinate
+    concept: position
+    everyday_expression_keys: [expr.position.right, expr.position.left, expr.position.up, expr.position.down]
+    everyday_action_keys: [action.position.move_right, action.position.move_left, action.position.move_up, action.position.move_down]
+    label_key: term.coordinate.name
+    sequence: [situation, everyday_expression, player_action, world_response, math_label, reuse]
+    reuse_contexts: []             # Q2 에서 3개 이상
+  - term_id: term.slope
+    concept: change
+    everyday_expression_keys: [expr.slope.rise_more, expr.slope.rise_less, expr.slope.flat]   # '평평하게' = 기울기 0 (K0 §3 정리)
+    everyday_action_keys: [action.slope.increase, action.slope.decrease, action.slope.set_zero]
+    label_key: term.slope.name
+    sequence: [situation, everyday_expression, player_action, world_response, math_label, reuse]
+    reuse_contexts: []
+
+do_not_translate:                  # 번역하지 않는 구간 (intent §4)
+  - id: coordinate_pair
+    pattern: '\(\s*-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?\s*\)'
+  - id: linear_expression       # 우변은 수(계수+변수 가능) 또는 변수 하나 — 'x = today' 같은 문장은 잡지 않는다
+    pattern: '\b[a-z]\s*=\s*-?(\d+(\.\d+)?\s*[a-z]?|[a-z])(?![a-z])(\s*[+-]\s*\d+(\.\d+)?)?(?!\w)'
+
+safety:                            # INV-16
+  runtime_generative_ai: false
+  free_text_input: false
+  external_links: false
+  banned_terms_ref: specs/localization/terms/ko-KR.yaml

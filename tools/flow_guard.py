@@ -291,6 +291,8 @@ def studio_gate(decisions: dict | None, what: str) -> dict:
 
 
 def pre_bash(command: str, decisions: dict | None) -> dict | None:
+    if re.search(r"verify\.py\s+approve\b", command):
+        return ask("[W7] 사람 승인 기록(verify.py approve)을 남기려 합니다. 사람이 대화에서 직접 승인한 내용인지 확인하세요. 계속할까요?")
     if DECISIONS_SHELL_WRITE_RE.search(command):
         return ask("[W7] 셸 명령으로 decisions.md(사람의 결정 기록)를 바꾸려 합니다. 사람이 실제로 정한 내용인지 확인하세요. 계속할까요?")
     if STUDIO_SHELL_RE.search(command):
