@@ -334,7 +334,7 @@ def function_bodies(tokens: list[Token]) -> list[tuple[list[str], list[Token], i
         if j >= len(tokens):
             raise LuauSyntaxError(f"function 에 매개변수 괄호가 없음 ({tok.line}행)")
         params_tokens = balanced(tokens, j)
-        params = _param_names(params_tokens)
+        params = param_names(params_tokens)
         depth, k = 1, j + len(params_tokens)
         while k < len(tokens) and depth:
             depth += _block_delta(tokens, k)
@@ -345,7 +345,7 @@ def function_bodies(tokens: list[Token]) -> list[tuple[list[str], list[Token], i
     return out
 
 
-def _param_names(params_tokens: list[Token]) -> list[str]:
+def param_names(params_tokens: list[Token]) -> list[str]:
     """(a: number, b: {x: T}, ...) 에서 매개변수 이름만 — 괄호 바로 안에서 ( 나 , 바로 뒤에 오는 이름. 타입 표기는 건너뛴다."""
     names, depth = [], 0
     for k, t in enumerate(params_tokens):

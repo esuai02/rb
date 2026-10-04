@@ -3702,6 +3702,34 @@
           "replace": "local last: {[string]: number} = {}\nlocal roll, spare = math.random, 0\n"
         }
       ]
+    },
+    {
+      "id": "D-param-shadowed-class-name",
+      "class": "매개변수가 가린 상수로 만든 인스턴스",
+      "expected": [
+        "safety.free_text"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local KIND = \"Frame\"\nlocal function make(KIND: string)\n\treturn Instance.new(KIND)\nend\nmake(script.Name)\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-metatable-table-read",
+      "class": "메타표를 건 표의 동적 읽기",
+      "expected": [
+        "safety.external_call"
+      ],
+      "edits": [
+        {
+          "file": "src/server/Main.server.luau",
+          "find": "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\n",
+          "replace": "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\nlocal T = {}\nsetmetatable(T, {__index = game})\nT[script.ClassName]({})\n"
+        }
+      ]
     }
   ]
 }

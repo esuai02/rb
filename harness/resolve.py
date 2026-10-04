@@ -6,7 +6,7 @@
 """
 from __future__ import annotations
 
-from harness.luau import INTERP, NAME, NUMBER, STRING, SYMBOL, Token, balanced
+from harness.luau import INTERP, NAME, NUMBER, STRING, SYMBOL, LuauSyntaxError, Token, param_names, balanced
 
 UNRESOLVED = object()   # 여러 번 묶였거나 알 수 없는 값
 
@@ -34,11 +34,13 @@ def _is_local(tokens: list[Token], i: int) -> bool:
 
 
 def _declaration(tokens: list[Token], i: int) -> tuple[list[str], int | None]:
-    """`local a [: 형], b … = …` — (이름들, `=` 자리 또는 None). 형 표기는 건너뛰고, 줄이 바뀌어도 선언이 이어지면 따라간다.
+    """`local a [: 형], b … = …` — (이름들, `=` 자리 또는 None). 줄이 바뀌어도 선언이 이어지면 따라간다.
 
-    `local g` 다음 줄의 `= M.f` 도 같은 선언이다 (리뷰 R-Q3 33차).
+    `local g` 다음 줄의 `= M.f` 도 같은 선언이다 (리뷰 R-Q3 33차). 이름 뒤에는 `=`·`,`·`:`(형 표기)만 올 수 있다 —
+    그 밖의 것이 오면 값 없는 선언이 끝난 것이다(`local x⏎(f).y = 1` 의 `=` 는 x 의 것이 아니다).
+    형 표기 안에서만 괄호·`<>` 깊이를 센다.
     """
-    names, j, depth, want_name = [tokens[i + 1].text], i + 2, 0, False
+    names, j, depth, want_name, typed = [tokens[i + 1].text], i + 2, 0, False, False
     while j < len(tokens):
         tok = tokens[j]
         if want_name:
@@ -46,18 +48,60 @@ def _declaration(tokens: list[Token], i: int) -> tuple[list[str], int | None]:
                 return names, None
             names.append(tok.text)
             want_name = False
+        elif depth == 0 and tok.kind == SYMBOL and tok.text == "=":
+            return names, j
+        elif depth == 0 and tok.kind == SYMBOL and tok.text == ",":
+            want_name, typed = True, False
+        elif not typed:
+            if not (tok.kind == SYMBOL and tok.text == ":"):
+                return names, None
+            typed = True
         elif tok.kind == SYMBOL and tok.text in ("(", "{", "[", "<"):
             depth += 1
         elif tok.kind == SYMBOL and tok.text in (")", "}", "]", ">"):
             depth -= 1
-        elif depth == 0 and tok.kind == SYMBOL and tok.text == "=":
-            return names, j
-        elif depth == 0 and tok.kind == SYMBOL and tok.text == ",":
-            want_name = True
         elif depth == 0 and (_starts_statement(tok) or (tok.line > tokens[j - 1].line and not _continues(tokens[j - 1], tok))):
             return names, None
         j += 1
     return names, None
+
+
+def _bindings(tokens: list[Token]) -> dict[str, int]:
+    """이름마다 묶이는 횟수 — local 선언(여러 이름 포함)·local function·함수 매개변수·for 변수.
+
+    이름 풀기는 범위를 나누지 않는다. 그래서 두 번 이상 묶이는 이름은 어느 자리의 값인지 알 수 없다 —
+    `local K = "Name"` 을 매개변수 K 가 가리면 K 는 더 이상 "Name" 이 아니다 (리뷰 R-Q3 33차 형제 변형).
+    """
+    counts: dict[str, int] = {}
+
+    def add(name: str) -> None:
+        counts[name] = counts.get(name, 0) + 1
+
+    for i, tok in enumerate(tokens):
+        if _is_local(tokens, i):
+            for name in _declaration(tokens, i)[0]:
+                add(name)
+        elif tok.kind == NAME and tok.text == "function":
+            if i and tokens[i - 1].kind == NAME and tokens[i - 1].text == "local" and i + 1 < len(tokens) and tokens[i + 1].kind == NAME:
+                add(tokens[i + 1].text)
+            j = i + 1
+            while j < len(tokens) and tokens[j].text != "(":
+                j += 1
+            if j < len(tokens):
+                try:
+                    params = param_names(balanced(tokens, j))
+                except LuauSyntaxError:
+                    params = []   # 닫히지 않은 괄호는 source 가 따로 문제로 남긴다
+                for name in params:
+                    add(name)
+        elif tok.kind == NAME and tok.text == "for":
+            j = i + 1
+            while j < len(tokens) and tokens[j].kind == NAME:
+                add(tokens[j].text)
+                if not (j + 1 < len(tokens) and tokens[j + 1].text == ","):
+                    break
+                j += 2
+    return counts
 
 
 STATEMENT_START = {"local", "function", "end", "return", "if", "for", "while", "repeat", "until", "do", "break",
@@ -94,6 +138,10 @@ def resolve_names(tokens: list[Token]) -> dict[str, object]:
     for name in _reassigned(tokens) - set(_declared_empty(tokens)):
         known[name] = UNRESOLVED   # 나중에 다시 묶이는 이름은 값을 하나로 볼 수 없다
         assigned.pop(name, None)
+    for name, count in _bindings(tokens).items():
+        if count > 1:
+            known[name] = UNRESOLVED   # 범위를 나누지 않으므로, 두 번 묶이는 이름은 어느 값인지 모른다
+            assigned.pop(name, None)
     for _round in range(4):   # 몇 단계를 거쳐도 끝까지 따라간다
         before = dict(known)
         for name, rhs_list in assigned.items():
@@ -313,7 +361,10 @@ def held_by(toks: list[Token], i: int) -> str | None:
 
 
 def local_tables(tokens: list[Token]) -> set[str]:
-    """`local X = {…}` (형 표기 포함)로 만든 평범한 표 — 다시 묶이지 않는 것만. 대괄호로 읽고 써도 자료일 뿐이다."""
+    """`local X = {…}` (형 표기 포함)로 만든 평범한 표 — 대괄호로 읽고 써도 자료일 뿐이다.
+
+    파일 안에서 한 번만 묶이고, 다시 대입되지 않고, setmetatable 에 넘기지 않은 것만.
+    """
     out = set()
     for i in range(len(tokens) - 2):
         if not _is_local(tokens, i):
@@ -321,7 +372,10 @@ def local_tables(tokens: list[Token]) -> set[str]:
         names, equals = _declaration(tokens, i)
         if equals is not None and len(names) == 1 and equals + 1 < len(tokens) and tokens[equals + 1].text == "{":
             out.add(names[0])
-    return out - _reassigned(tokens)
+    once = {name for name, count in _bindings(tokens).items() if count == 1}
+    with_meta = {tokens[k + 2].text for k in range(len(tokens) - 2) if tokens[k].kind == NAME and tokens[k].text == "setmetatable"
+                 and tokens[k + 1].text == "(" and tokens[k + 2].kind == NAME}
+    return (out & once) - _reassigned(tokens) - with_meta   # 같은 이름의 매개변수가 가리거나 메타표로 읽기를 바꾼 표는 평범한 표가 아니다
 
 
 def unreadable_reads(f) -> list[tuple[int, str]]:

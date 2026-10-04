@@ -230,6 +230,8 @@ EXPECTED_DEFECTS = {
     "D-table-field-grant": ("표 멤버에 담은 보상 지급", ("server.duplicate_reward",), "RewardService.grant 를 다른 이름(t.g)에 담는다"),
     "D-compound-built-class-name": ("복합 대입으로 조립한 인스턴스 이름", ("safety.free_text",), "클래스 이름을 글자 그대로 알 수 없다"),
     "D-multi-local-random-alias": ("여러 이름 local 에 담은 난수 원천", ("safety.random_or_paid_reward",), "난수 원천을 부르지 않고 다른 이름·표에 담거나 값으로 넘긴다"),
+    "D-param-shadowed-class-name": ("매개변수가 가린 상수로 만든 인스턴스", ("safety.free_text",), "클래스 이름을 글자 그대로 알 수 없다"),
+    "D-metatable-table-read": ("메타표를 건 표의 동적 읽기", ("safety.external_call",), "T 의 멤버를 값을 알 수 없는 키로 꺼낸다"),
 }
 # 심은 결함 종류 전체 — 매니페스트와 따로 둔다. 하나를 지우면 이 묶음과 어긋나 시험이 실패한다 (리뷰 R-Q3 29차)
 FROZEN_CLASSES = frozenset({
@@ -426,6 +428,8 @@ FROZEN_CLASSES = frozenset({
     "표 멤버에 담은 보상 지급",
     "복합 대입으로 조립한 인스턴스 이름",
     "여러 이름 local 에 담은 난수 원천",
+    "매개변수가 가린 상수로 만든 인스턴스",
+    "메타표를 건 표의 동적 읽기",
 })
 
 ITEM_IDS = {f"E{i}" for i in range(1, 7)} | {f"U{i}" for i in range(1, 15)}
@@ -909,6 +913,24 @@ class ResolveTest(unittest.TestCase):
         f = self.file('local T = {}\nlocal U: {[string]: number} = {}\nlocal V = {}\nV = game\nlocal s = "x"\n'
                       'print(T[k], U[k], V[k], W[k], T["a"], W[1], W[s])\nW[k] = 1\nf()[k]\n')
         self.assertEqual([name for _i, name in resolve.unreadable_reads(f)], ["V", "W", "(식의 결과)"])
+
+    def test_names_bound_twice_are_unreadable(self):
+        r = self.resolved('local K = "Name"\nlocal function g(K) return K end\nlocal J = "x"\nfor J = 1, 2 do end\nlocal L = "y"\n')
+        self.assertIs(r["K"], resolve.UNRESOLVED)
+        self.assertIs(r["J"], resolve.UNRESOLVED)
+        self.assertEqual(r["L"], "y")
+
+    def test_untyped_declaration_ends_at_any_other_token(self):
+        r = self.resolved('local x\n(foo).bar = 5\nlocal y: number\ny = 2\nlocal z: {[string]: number}\n= {}\n')
+        self.assertNotIn("x", r)
+        self.assertEqual(r["y"], 2.0)
+        self.assertIs(r["z"], resolve.UNRESOLVED)
+
+    def test_shadowed_or_metatable_tables_are_not_plain(self):
+        f = self.file('local T = {}\nlocal function h(T) return T[k]() end\nlocal M = {}\nsetmetatable(M, {__index = game})\n'
+                      'local S = {}\nprint(M[k], S[k])\n')
+        self.assertEqual(resolve.local_tables(f.tokens), {"S"})
+        self.assertEqual([name for _i, name in resolve.unreadable_reads(f)], ["T", "M"])
 
     def test_trusted_module_shapes(self):
         cases = {"RewardService.grant(p, 'a', 'b')": [],
