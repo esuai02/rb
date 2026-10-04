@@ -10,7 +10,7 @@
 |---|---|---|---|
 | REVIEW | 결정됨 | intent sha256 31116e96b862 (intent.md r4 · Diagram initial-view r6 함께 검토. 이전: 615140fbb863 r3, 2026-10-01 "검토완료.") | 사용자 메시지 2026-10-04 "검토완료" |
 | DEC-1 | 결정됨 | 첫 원본 월드 = 후보 B 입장 게이트(3~5분). 세계 이름 "Neo Seoul", 게이트 이름 "도시 언어 게이트" (영문 표기 City Language Gate 는 제안 — 현지화 용어집에서 확정) | 사용자 메시지 2026-10-01 "Neo Seoul 의 도시 언어 게이트" |
-| DEC-2 | 열림 | | |
+| DEC-2 | 결정됨 | 스테이징 Place = rb-staging — 로컬 파일 rb-staging.rbxlx(저장소 옆 폴더), 미게시, Baseplate+SpawnLocation 으로 시작. Studio 에서 이 Place 만 연다 | 사용자 메시지 2026-10-05 "열었어. DEC-2 = rb-staging … (로컬·미게시, Baseplate+SpawnLocation), Studio에 이것만 열림" |
 | DEC-3 | 결정됨 | GitHub 공개 저장소(github.com/esuai02/rb)에 첫 반영. 방식은 PR — 빈 초기 커밋을 main 에 두고 작업 브랜치에서 PR | 사용자 메시지 2026-10-01 "github pr 해줘" |
 | DEC-4 | 열림 | | |
 | DEC-5 | 열림 | | |
