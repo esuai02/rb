@@ -123,6 +123,14 @@ class GateFlowTest(unittest.TestCase):
         self.assertEqual(lines, ["- Q1-C1: PASS — exit 0; OK"])
         self.assertNotIn("일시적 오류", packet)
 
+    def test_packet_leaves_vector_criterion_to_the_lock(self):
+        """6방향 기준은 잠금 직전에 쓰므로 리뷰 요청서의 기준·근거에 넣지 않고 이유만 밝힌다 (Q1 재검증 리뷰 지적)."""
+        verify.cmd_run(self.root, "Q1")   # Q1-6V FAIL
+        graph = verify.load_graph(self.root)
+        packet = verify.review_packet(self.root, graph, verify.node_of(graph, "Q1"), self.gate()["binding"])
+        self.assertNotIn("- Q1-6V: FAIL", packet)
+        self.assertIn("Q1-6V 는 잠그기 직전에 기록하는 6방향 검토", packet)
+
     def test_claude_fallback_is_fresh_context_not_external(self):
         self.ready()
         self.fake_reviewer("NO_FINDINGS", tool="claude")

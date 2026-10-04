@@ -6,12 +6,12 @@ INVARIANTS: 수정하지 말 것(읽기 전용). 합격 기준:
 - Q1-C3: 언어·시장·교육과정 키가 나뉜다: locale 은 BCP-47, market 은 지역 포함, 엔진은 시장 중립 grade_band 만 쓴다 (INV-3) (목표: 섞인 키 실패, 올바른 키 통과)
 - Q1-C4: B안 언어 우선 필드가 있다: 용어마다 일상 표현·행동·이름표 순서와 재사용 맥락 자리 (INV-15) (목표: 필드 누락 시 실패)
 - Q1-6V: 이 단계를 잠그기 전에 6방향(전방·후방·위·아래·좌·우) 검토가 이 단계를 대상으로 기록된다 (intent §11) (목표: 6방향 각 1건 이상)
-EVIDENCE: 자동 검사 결과(binding 9c3b4caa40a3):
+EVIDENCE: 자동 검사 결과(binding fce35d598dcf):
 - Q1-C1: PASS — exit 0; OK
 - Q1-C2: PASS — exit 0; OK
 - Q1-C3: PASS — exit 0; OK
 - Q1-C4: PASS — exit 0; OK
-- Q1-6V: PASS — 6방향 모두 기록됨
+- Q1-6V: FAIL — 빠진 방향: V-BWD, V-DOWN, V-FWD, V-LEFT, V-RIGHT, V-UP
 STAGE SCOPE: 이 단계가 맡는 불변식: INV-3 키 분리, INV-9 협동 선택·입력 3종(명세 칸), INV-15 언어 우선 순서(명세 칸), INV-16 성숙도 설문·안전 플래그, DEC-9 대상·성숙도
 다음 단계로 넘긴 것(이 단계의 결함이 아니다 — 넘긴 단계의 기준이 검사한다):
 - INV-10 개인정보·분석 이벤트 → Q2-C3 · Q3-C1
@@ -19,5 +19,8 @@ STAGE SCOPE: 이 단계가 맡는 불변식: INV-3 키 분리, INV-9 협동 선�
 - INV-15 재사용 맥락 3개 이상 → Q2-C2
 - INV-4·INV-12 서버 권위·무작위 보상(코드) → Q3-C1
 - INV-16 코드 수준(런타임 LLM·URL·필터 없는 텍스트) → Q3-C1
-ASK: 각 합격 기준이 실제로 참인지, 테스트가 기준이 말하는 것을 정말로 검사하는지(빈 검사·우회 가능한 검사 포함), 이 단계가 맡는 불변식을 산출물이 어기는지 찾아라. 넘긴 항목은 지적하지 말고, 넘긴 단계의 기준으로 덮이지 않는 빈틈만 지적하라. 추측은 근거와 함께만.
+REVIEW QUESTION: Q1 명세 형식에 꼭 들어가야 할 항목이 더 있습니까?
+HUMAN DECISIONS(이 단계에 대한 사람 결정 — 리뷰 범위를 정한다):
+- (없음)
+ASK: 각 합격 기준이 실제로 참인지, 테스트가 기준이 말하는 것을 정말로 검사하는지(빈 검사, 정직한 실수로 나올 꼴을 놓치는 검사 포함), 이 단계가 맡는 불변식을 산출물이 어기는지 찾아라. 넘긴 항목은 지적하지 말고, 넘긴 단계의 기준으로 덮이지 않는 빈틈만 지적하라. 추측은 근거와 함께만.
 RETURN: lines of `severity | file:line | claim | evidence | minimal fix` (severity = critical|major|minor), or exactly NO_FINDINGS

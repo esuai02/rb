@@ -1,1 +1,1 @@
-minor | tools/validate_spec.py:120-128; tests/test_validate_spec.py:166-193 | 번역 금지 패턴 검사가 무작위·유한 표본만 확인해 범위가 좁은 우회 패턴을 통과시킨다 | 두 패턴을 0~99 숫자만 허용하도록 바꿔도 `validate(...) == []`였지만 `(100, 0)`과 `y = 100x + 1`은 잡히지 않았다 | 허용 수식 문법을 명시하고 경계·대형 수·형식 변형을 고정 표본으로 추가해 검사한다
+major | graph.json:117-129 | Q1-6V가 충족되지 않아 단계 잠금 조건이 거짓이다 | 최신 binding `fce35d...`의 검증 기록이 6개 방향 전부 누락으로 FAIL이며, `tools/verify.py:144-155`는 현재 binding의 Q1 기록만 센다 | 현재 binding으로 V-FWD·V-BWD·V-UP·V-DOWN·V-LEFT·V-RIGHT를 잠금 승인 전에 기록한 뒤 재검증한다
