@@ -1,5 +1,5 @@
 hold: LOCK-Q2
 node: Q2
-binding: cc23c1f19ef785965c830f074322a1bb0c57f79963caa8af63f913e53a97f88c
-time: 2026-10-02T09:06:02.880580+00:00
-source: 사용자 메시지 2026-10-02 "직접 진행해" (LOCK-Q2 결정 요청 — PR #3, 버전 cc23c1f19ef7 — 에 대한 답)
+binding: c320af63325c990101d582b9e5616f06383a94b851bbca9b879de4c43ddf6b37
+time: 2026-10-04T20:13:29.764909+00:00
+source: 사용자 메시지 2026-10-05 "잠금 승인" — intent r4 뒤 Q1~Q3 재잠금 요청(리뷰 CLEAR·6방향 새로 작성·남은 위험 표시)에 대한 답
