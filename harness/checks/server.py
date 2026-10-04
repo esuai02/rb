@@ -171,44 +171,44 @@ def duplicate_reward(tree, rules, config) -> list[str]:
     return out
 
 
-def _indexes(body, tables: set[str]) -> list[int]:
-    """body 안에서 표를 대괄호로 쓰는 자리."""
-    return [k for k in range(len(body) - 1) if body[k].kind == NAME and body[k].text in tables and body[k + 1].text == "["]
+CLAIM_ONCE_SHAPE = "if 표[키] then return false end · 표[키] = true · return true"
+
+
+def _claim_once_shape(body, tables: set[str]) -> bool:
+    """claimOnce 본문이 정해진 꼴인가 (사람 결정 Q3-SHAPE-RULES).
+
+    앞에는 `local` 선언만 올 수 있고, 그 뒤는 정확히
+    `if T[K] then return false end` · `T[K] = true` · `return true` 다. T 는 모듈의 표, K 는 두 곳에서 같은 식.
+    여러 조건을 하나씩 보던 방식(읽기·표시·거부·순서·되돌림)은 변형마다 구멍이 났다 — 꼴 하나만 받는다.
+    """
+    if body and body[0].text == ":":
+        body = [x for x in body if x.line != body[0].line]   # 반환 형 표기(`: boolean`)는 본문이 아니다
+    texts = [x.text for x in body]
+    start = next((k for k, x in enumerate(body) if x.kind == NAME and x.text == "if"), None)
+    if start is None:
+        return False
+    lines = {x.line for x in body[:start]}
+    if any(next(x for x in body[:start] if x.line == line).text != "local" for line in lines):
+        return False   # if 앞에는 local 선언만
+    rest = texts[start:]
+    if len(rest) < 4 or rest[1] not in tables or rest[2] != "[":
+        return False
+    close = start + 2 + len(luau.balanced(body, start + 2)) - 1
+    key = texts[start + 3:close]
+    after = texts[close + 1:]
+    want = ["then", "return", "false", "end", rest[1], "[", *key, "]", "=", "true", "return", "true"]
+    return after == want
 
 
 def _claim_once_errors(f) -> list[str]:
-    """claimOnce 가 실제로 '한 번만'을 지키는지 — 표를 읽고, 이미 있으면 거짓을 돌려주고, 준 것을 표시해 둬야 한다.
-
-    이름과 호출 모양만 맞으면 `return true` 한 줄로도 중복 보상 검사를 지나갈 수 있다(리뷰 R-Q3 19차).
-    """
+    """claimOnce 가 정해진 꼴로 '한 번만' 을 지키는지 (사람 결정 Q3-SHAPE-RULES)."""
     tables = i18n._table_names(f)
     for _params, body, i in luau.function_bodies(f.tokens):
         if _declared_name(f.tokens, i) != "claimOnce":
             continue
-        texts = [t.text for t in body]
-        reads, writes, undone = {}, {}, []
-        for k in _indexes(body, tables):
-            inner = luau.balanced(body, k + 1)
-            close = k + 1 + len(inner)
-            key = " ".join(x.text for x in inner[1:-1])
-            if close < len(body) and body[close].text == "=":
-                if close + 1 < len(body) and body[close + 1].text == "true":
-                    writes.setdefault(key, k)
-                else:
-                    undone.append(key)
-            else:
-                reads.setdefault(key, k)
-        deny = next((k for k in range(len(texts) - 1) if texts[k] == "return" and texts[k + 1] == "false"), None)
-        allow = next((k for k in range(len(texts) - 1) if texts[k] == "return" and texts[k + 1] == "true"), len(texts))
-        ordered = any(reads[key] < deny < writes[key] < allow for key in writes if key in reads and deny is not None)
-        missing = [name for name, ok in (("이미 준 적 있는지 읽기", bool(reads)), ("준 것을 표시해 두기(참으로)", bool(writes)),
-                                         ("이미 줬으면 거짓 돌려주기", deny is not None),
-                                         ("읽고 → 거부하고 → 같은 자리에 표시한 뒤 참 돌려주기", ordered)) if not ok]
-        if missing:
-            return [f"{_at(f, f.tokens[i])} claimOnce 가 {' · '.join(missing)} 를 하지 않는다 — 이름만 맞으면 중복 보상을 막을 수 없다"]
-        if undone:
-            return [f"{_at(f, f.tokens[i])} claimOnce 가 표시한 자리를 다시 거짓으로 되돌린다 — 다음 호출에서 또 준다"]
-        return []
+        if _claim_once_shape(body, tables):
+            return []
+        return [f"{_at(f, f.tokens[i])} claimOnce 가 정해진 꼴이 아니다 — `{CLAIM_ONCE_SHAPE}` 로만 쓴다(그래야 한 번만 주는지 검사할 수 있다)"]
     return [f"{f.rel}:1 보상 모듈에 claimOnce 함수가 없다 — 중복 지급을 막는 자리를 검사할 수 없다"]
 
 
