@@ -6,6 +6,8 @@
   verify.py gate <Q>                       잠금 조건 점검만(기록 없음): 남은 것과 실패를 보여 준다
   verify.py approve <Q> --source "<말>" [--hold ID]   ③ 사람 승인 기록 — 사람이 대화에서 승인한 뒤에만 쓴다(경고 장치 W7 확인 창)
   verify.py lock <Q>                       잠금 시도(masterwork gate --lock, PASS 일 때만 잠긴다)
+  verify.py observe <Q> <기준> --result PASS|FAIL --observed "<본 것>" --source "<누가·어디서·언제>"
+                                           수동 기준(Studio Play 관찰·측정)을 지금 binding 에 묶어 기록 — check 가 없는 기준만
 
 모든 기록은 그 단계의 현재 binding(계약·Intent·산출물 해시)에 묶인다. 산출물이 바뀌면 기록이 낡으므로 run·review 를 다시 돌린다.
 원본 출력은 outputs/verify/<Q>/ 에 남기고 해시를 기록에 적는다.
@@ -198,6 +200,31 @@ def cmd_run(root: Path, node_id: str) -> int:
     for cid, result, note in results:
         print(f"{result:5} {cid}  {note}")
     return 0 if all(r[1] != "FAIL" for r in results) else 1
+
+
+def cmd_observe(root: Path, node_id: str, criterion: str, result: str, observed: str, source: str) -> int:
+    """수동 기준의 관찰 기록 — check 가 없는 기준(Studio Play·측정)은 이 명령으로만 근거를 남긴다 (intent r4 · AUDIT-PROCESS-1).
+
+    손으로 원장에 덧붙이면 기록 파일·지문·binding 이 빠지기 쉽다. 자동 검사 기준은 여기서 받지 않는다(run 이 맡는다).
+    """
+    node = node_of(load_graph(root), node_id)
+    crit = next((c for c in node["criteria"] if c["id"] == criterion), None)
+    if crit is None:
+        raise SystemExit(f"[verify] {node_id} 에 기준 {criterion} 이 없습니다.")
+    if crit.get("check"):
+        raise SystemExit(f"[verify] {criterion} 은 자동 검사 기준입니다 — verify.py run {node_id} 로 기록합니다.")
+    if result not in ("PASS", "FAIL"):
+        raise SystemExit("[verify] --result 는 PASS 또는 FAIL 입니다.")
+    if not observed.strip() or not source.strip():
+        raise SystemExit("[verify] --observed(무엇을 봤나)와 --source(누가·어디서·언제)를 적어야 합니다.")
+    binding = helper_gate(root, node_id)["binding"]
+    body = f"criterion: {criterion} — {crit['statement']}\nresult: {result}\nobserved: {observed}\nsource: {source}\nbinding: {binding}\ntime: {now()}\n"
+    record, digest = write_record(root, node_id, f"{criterion}.txt", body)
+    append(root, {"id": f"V-{criterion}-{binding[:8]}", "kind": "verification", "node_id": node_id, "binding": binding,
+                  "criterion_id": criterion, "result": result, "evidence_type": crit["evidence_types"][0],
+                  "source": source, "observed": observed, "record": record, "record_sha256": digest})
+    print(f"{result:5} {criterion}  {observed[:150]}")
+    return 0 if result == "PASS" else 1
 
 
 # ---------- ② 독립 리뷰 ----------
@@ -398,7 +425,15 @@ def main(argv: list[str]) -> int:
     approve.add_argument("node")
     approve.add_argument("--source", required=True)
     approve.add_argument("--hold")
+    observe = sub.add_parser("observe")
+    observe.add_argument("node")
+    observe.add_argument("criterion")
+    observe.add_argument("--result", required=True, choices=["PASS", "FAIL"])
+    observe.add_argument("--observed", required=True)
+    observe.add_argument("--source", required=True)
     args = parser.parse_args(argv)
+    if args.command == "observe":
+        return cmd_observe(ROOT, args.node, args.criterion, args.result, args.observed, args.source)
     if args.command == "run":
         return cmd_run(ROOT, args.node)
     if args.command == "review":

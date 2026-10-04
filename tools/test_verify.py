@@ -295,6 +295,24 @@ class GateFlowTest(unittest.TestCase):
         self.assertEqual(verify.cmd_review(self.root, "Q1"), 1)
         self.assertEqual(self.rows("devil_review")[-1]["verdict"], "BLOCK")
 
+    def test_observe_records_manual_criteria_only(self):
+        """수동 기준은 observe 로 기록하고 게이트가 센다 — 자동 검사 기준·빈 관찰은 받지 않는다."""
+        graph = json.loads((self.root / "graph.json").read_text(encoding="utf-8"))
+        graph["nodes"][0]["criteria"].insert(1, {"id": "Q1-C2", "statement": "Play 관찰", "method": "m", "target": "t",
+                                                 "evidence_types": ["observation"], "benchmark_required": False, "benchmark_ids": []})
+        (self.root / "graph.json").write_text(json.dumps(graph, ensure_ascii=False), encoding="utf-8")
+        self.add_vectors("V-FWD", "V-LEFT")
+        verify.cmd_run(self.root, "Q1")
+        self.assertTrue(any("Q1-C2" in m for m in self.gate()["missing"]))
+        with self.assertRaises(SystemExit):
+            verify.cmd_observe(self.root, "Q1", "Q1-C1", "PASS", "봤다", "누가")   # 자동 검사 기준
+        with self.assertRaises(SystemExit):
+            verify.cmd_observe(self.root, "Q1", "Q1-C2", "PASS", " ", "누가")
+        self.assertEqual(verify.cmd_observe(self.root, "Q1", "Q1-C2", "PASS", "게이트가 열림", "AI 가 Studio Play 에서 2026-10-04"), 0)
+        record = [r for r in self.rows("verification") if r["criterion_id"] == "Q1-C2"][-1]
+        self.assertEqual((record["result"], record["evidence_type"]), ("PASS", "observation"))
+        self.assertFalse(any("Q1-C2" in m for m in self.gate()["missing"]))
+
     def test_approve_rejects_unknown_hold_and_empty_source(self):
         with self.assertRaises(SystemExit):
             verify.cmd_approve(self.root, "Q1", "말", "DEC-99")
