@@ -996,6 +996,41 @@ class RewardPathTest(TreeCase):
         self.assertEqual(len(found), 5, found)
 
 
+class Round35Test(TreeCase):
+    """35차 지적 3건 — 고정 범위(사람 결정 Q3-FIXED-SCOPE)라 결함 목록을 늘리지 않고 단위 시험으로 묶는다."""
+
+    LOOP = "\t\tcustom[KEYS[n]] = name .. \":\" .. value\n"
+    LOG = "function Analytics.log(player: Player, eventName: string, fields: {[string]: string})\n"
+
+    def test_analytics_slot_must_come_from_the_slot_list(self):
+        for extra, fragment in (("\t\tcustom[name] = \"bad\"\n", "표 칸을 값을 알 수 없는 키로 고른다"),
+                                ("\t\trawset(custom, name, \"bad\")\n", "rawset 으로 표를 채운다")):
+            with self.subTest(fragment=fragment):
+                tree = self.make_tree()
+                self.edit(tree, "src/server/Analytics.luau", self.LOOP, self.LOOP + extra)
+                self.assertCaught(tree, "analytics.calls", fragment)
+
+    def test_analytics_module_only_forwards_the_player(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/server/Analytics.luau", self.LOG, self.LOG + "\tfields.school = player:GetAttribute(\"School\")\n")
+        self.assertCaught(tree, "analytics.calls", "플레이어(player)를 플랫폼 전송에 넘기는 것 말고 다른 데 쓴다")
+
+    def test_reward_state_attribute_outside_the_reward_module(self):
+        for code, fragment in (("player:SetAttribute(\"reward.explorer_badge\", true)", "보상 상태 reward.explorer_badge 를 SetAttribute 로 직접 쓴다"),
+                               ("player:SetAttribute(k, true)", "속성 이름을 값을 알 수 없는 방식으로 정해")):
+            with self.subTest(code=code):
+                tree = self.make_tree()
+                self.edit(tree, "src/server/MissionService.luau", "return MissionService\n",
+                          f"function MissionService.sneak(player: Player, k: string)\n\t{code}\nend\n\nreturn MissionService\n")
+                self.assertCaught(tree, "server.reward_authority", fragment)
+
+    def test_plain_attributes_and_slot_list_writes_pass(self):
+        tree = self.make_tree()
+        self.edit(tree, "src/server/MissionService.luau", "return MissionService\n",
+                  "function MissionService.mark(part: BasePart)\n\tpart:SetAttribute(\"Lit\", true)\nend\n\nreturn MissionService\n")
+        self.assertEqual(self.failing(tree), {})
+
+
 class LuauSyntaxTest(unittest.TestCase):
     """읽을 수 없는 코드는 조용히 넘기지 않고 멈춘다 — 멈춤 문구마다 그것을 내게 하는 코드가 있다."""
 

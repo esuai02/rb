@@ -188,6 +188,39 @@ def _check_module(f, rules, config) -> list[str]:
     out += [f"{f.rel}:{t.line} 분석 모듈이 플레이어 개인정보 속성 {t.text} 를 쓴다 (INV-10)" for k, t in enumerate(f.tokens)
             if t.kind == NAME and t.text in config["player_identity_names"] and k >= 2 and f.tokens[k - 1].text == "."
             and f.tokens[k - 2].kind == NAME and f.tokens[k - 2].text in _player_names(f, config)]
+    out += [f"{f.rel}:{f.tokens[k].line} 분석 모듈이 플레이어({f.tokens[k].text})를 플랫폼 전송에 넘기는 것 말고 다른 데 쓴다 "
+            f"— 속성·이름 같은 개인정보가 필드에 섞일 수 있다 (INV-10)" for k in _player_uses(f, config)]
+    return out
+
+
+def _player_uses(f, config) -> list[int]:
+    """분석 모듈은 받은 플레이어를 플랫폼 전송 호출에 넘기기만 한다 — 그 밖의 자리(GetAttribute·다른 이름에 담기 …)를 돌려준다.
+
+    `fields.school = player:GetAttribute("School")` 처럼 모듈 안에서 플레이어 값을 꺼내 필드에 넣으면
+    호출하는 쪽의 열거형 검사를 비켜 간다 (리뷰 R-Q3 35차). 이미 따로 보고하는 `player.<개인정보 속성>` 은 뺀다.
+    """
+    toks, names, apis = f.tokens, _player_names(f, config), set(config["platform_apis"])
+    allowed = set()
+    for k in range(len(toks) - 1):
+        if toks[k].kind == NAME and toks[k].text == "function":
+            j = k + 1
+            while j < len(toks) and toks[j].text != "(":
+                j += 1
+            if j < len(toks):
+                allowed |= set(range(j, j + len(luau.balanced(toks, j))))   # 매개변수 선언
+        elif toks[k].kind == NAME and toks[k].text in apis and toks[k + 1].text == "(" and k and toks[k - 1].text in (":", "."):
+            start = k + 1
+            for arg in luau.call_args(toks, k):
+                if len(arg) == 1 and arg[0].kind == NAME:
+                    allowed.add(next(n for n in range(start, len(toks)) if toks[n] is arg[0]))
+                start += len(arg) + 1
+    out = []
+    for k, tok in enumerate(toks):
+        if tok.kind != NAME or tok.text not in names or k in allowed or (k and toks[k - 1].text in (".", ":")):
+            continue
+        if k + 2 < len(toks) and toks[k + 1].text == "." and toks[k + 2].text in config["player_identity_names"]:
+            continue
+        out.append(k)
     return out
 
 
@@ -212,6 +245,45 @@ def _custom_field_errors(f, rules) -> list[str]:
             and toks[k + 2].text.startswith("CustomField") and toks[k + 3].text == "="]
     out += [f"{f.rel}:{toks[k].line} 분석 모듈이 표 칸을 계산해서 만든다 — 어떤 칸인지 알 수 없으므로 열거형으로만 고른다 (F10)"
             for k in range(len(toks) - 2) if _computed_slot(f, k)]
+    keys = _slot_tables(f, slots)
+    out += [f"{f.rel}:{toks[k].line} 분석 모듈이 표 칸을 값을 알 수 없는 키로 고른다 — 칸은 열거형 칸 목록({', '.join(sorted(keys)) or '없음'})에서만 고른다 (F10)"
+            for k in _unlisted_slot_writes(f, keys)]
+    out += [f"{f.rel}:{t.line} 분석 모듈이 rawset 으로 표를 채운다 — 어떤 칸인지 검사할 수 없다 (F10)"
+            for k, t in enumerate(toks) if t.kind == NAME and t.text == "rawset" and k + 1 < len(toks) and toks[k + 1].text == "("]
+    return out
+
+
+def _slot_tables(f, slots: set[str]) -> set[str]:
+    """`local KEYS = { Enum.AnalyticsCustomFieldKeys.CustomField01.Name, … }` 처럼 허용 칸 열거형만 담은 평범한 표 이름."""
+    toks, out = f.tokens, set()
+    for name in resolve.local_tables(toks):
+        start = next((k for k in range(len(toks) - 3) if toks[k].text == "local" and toks[k + 1].text == name), None)
+        brace = next((k for k in range(start or 0, len(toks)) if toks[k].text == "{"), None) if start is not None else None
+        if brace is None:
+            continue
+        items = [[t.text for t in item] for item in resolve._split(luau.balanced(toks, brace)[1:-1], ",") if item]
+        if items and all(len(i) == 7 and i[:4] == ["Enum", ".", "AnalyticsCustomFieldKeys", "."] and i[4] in slots
+                         and i[5:] == [".", "Name"] for i in items):
+            out.add(name)
+    return out
+
+
+def _unlisted_slot_writes(f, keys: set[str]) -> list[int]:
+    """대괄호 대입 `T[키] = …` 가운데 키가 칸 목록 표에서 꺼낸 값(`KEYS[n]`)이 아닌 자리 — 글자 키는 따로 보고한다 (리뷰 R-Q3 35차)."""
+    toks, out = f.tokens, []
+    for k in range(1, len(toks) - 1):
+        if not (toks[k].kind == SYMBOL and toks[k].text == "[" and (toks[k - 1].kind == NAME or toks[k - 1].text in (")", "]"))):
+            continue
+        inside = luau.balanced(toks, k)
+        after = k + len(inside)
+        if after >= len(toks) or toks[after].text != "=":
+            continue
+        key = inside[1:-1]
+        if len(key) == 1 and key[0].kind == STRING:
+            continue
+        if key and key[0].kind == NAME and key[0].text in keys and len(key) > 1 and key[1].text == "[":
+            continue
+        out.append(k)
     return out
 
 

@@ -103,7 +103,7 @@ def _function_spans(tokens) -> list[tuple[int, int]]:
 
 def reward_authority(tree, rules, config) -> list[str]:
     """보상·저장 권한(leaderstats·DataStore·보상 속성)은 보상 모듈 파일 안에서만 쓴다 — 클라이언트도, 다른 서버 코드도 쓰지 않는다 (INV-4)."""
-    names, module, out = set(config["authority_names"]), config["reward_module"], []
+    names, module, out, rewards = set(config["authority_names"]), config["reward_module"], [], _reward_ids(rules)
     path, trusted = config["reward_module_path"], _trusted_reward_file(tree, config)
     if trusted is None:
         out.append(f"보상 모듈은 {path} 의 ModuleScript 하나여야 한다 — 그 파일만 보상·저장 권한을 쓸 수 있다")
@@ -123,6 +123,34 @@ def reward_authority(tree, rules, config) -> list[str]:
                 if t.text in names and t.kind in (NAME, STRING)]
         out += [f"{_at(f, f.tokens[i])} {where}가 {name} 의 멤버를 값을 알 수 없는 방식으로 고른다 — 보상·저장 권한인지 검사할 수 없다"
                 for i, name in resolve.dynamic_member_calls(f, _player_like(f, config))]
+        out += [f"{_at(f, f.tokens[i])} {where}가 {what} — 보상 상태는 {module} 만 쓴다" for i, what in _attribute_writes(f, rewards)]
+    return out
+
+
+def _reward_ids(rules) -> set[str]:
+    """잠긴 명세가 정한 보상·열린 길 id — cv.first_rewards 와 용어집의 reward.*·unlock.* 이름."""
+    values = {v["id"]: v.get("value") for v in rules.canonical.get("values", []) if isinstance(v, dict)}
+    named = {k[: -len(".name")] for k in (rules.glossary.get("strings") or {}) if k.startswith(("reward.", "unlock.")) and k.endswith(".name")}
+    return set(values.get("cv.first_rewards") or []) | named
+
+
+def _attribute_writes(f, rewards: set[str]) -> list[tuple[int, str]]:
+    """`:SetAttribute(키, …)` 가운데 보상 상태일 수 있는 것 — 키가 보상·열린 길 id 이거나 값을 알 수 없을 때 (리뷰 R-Q3 35차).
+
+    `player:SetAttribute("reward.explorer_badge", true)` 처럼 보상 모듈을 거치지 않고 보상 표시를 붙이면
+    중복 방지·판정 검사를 모두 비켜 간다. 글자 그대로의 일반 키(Lit·Open·CellX …)는 막지 않는다.
+    """
+    toks, out = f.tokens, []
+    for i in range(1, len(toks) - 1):
+        if not (toks[i].kind == NAME and toks[i].text == "SetAttribute" and toks[i - 1].text in (":", ".") and toks[i + 1].text == "("):
+            continue
+        args = luau.call_args(toks, i)
+        slot = 0 if toks[i - 1].text == ":" else 1
+        key = resolve.expression_value(args[slot], 0, f.resolved)[0] if slot < len(args) else resolve.UNRESOLVED
+        if not isinstance(key, str):
+            out.append((i, "속성 이름을 값을 알 수 없는 방식으로 정해 SetAttribute 로 쓴다 — 보상 상태인지 검사할 수 없다"))
+        elif key in rewards or key.startswith(("reward.", "unlock.")):
+            out.append((i, f"보상 상태 {key} 를 SetAttribute 로 직접 쓴다"))
     return out
 
 
@@ -147,9 +175,7 @@ def _player_like(f, config) -> set[str]:
 def duplicate_reward(tree, rules, config) -> list[str]:
     """보상 모듈의 grant 는 맨 앞에서 claimOnce 로 한 번만 지급을 보장하고, 같은 보상 id 를 주는 호출 자리는 하나뿐이다."""
     module, out, sites = config["reward_module"], [], {}
-    values = {v["id"]: v.get("value") for v in rules.canonical.get("values", []) if isinstance(v, dict)}
-    named = {k[: -len(".name")] for k in (rules.glossary.get("strings") or {}) if k.startswith(("reward.", "unlock.")) and k.endswith(".name")}
-    rewards = set(values.get("cv.first_rewards") or []) | named
+    rewards = _reward_ids(rules)
     missions = set((rules.events.get("fields") or {}).get("mission") or [])
     trusted = _trusted_reward_file(tree, config)
     owners = [trusted] if trusted is not None else []
