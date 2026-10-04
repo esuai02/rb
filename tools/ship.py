@@ -6,27 +6,31 @@
   python3 tools/ship.py status                       # 무엇이 올라가 있고 무엇이 남았는지
 
 원칙 (3층 게이트 D-VERIFY · 공개 저장소 DEC-3)
-- 저장: 로컬 경로·계정·비밀값이 섞이면 커밋하지 않는다. 코드가 바뀌었으면 자동 검사가 통과해야 커밋한다.
-  커밋하지 못하면 이유만 알리고 멈춘다 — 깨진 상태를 올리지 않는다.
+- 저장: 올라가는 것 전부(새 커밋 + 아직 안 올린 커밋 + 커밋 메시지)에 로컬 경로·계정·비밀값이 없어야 하고,
+  코드가 바뀌었으면 자동 검사가 통과해야 한다. 못 하면 이유만 알리고 멈추며 인덱스를 처음 상태로 돌린다.
 - 푸시: 지금 작업 브랜치로만, 강제 푸시 없이. main 에는 직접 커밋하지 않는다.
-- 병합: 사람이 잠근(verify.py lock) 단계만. PR 이 담은 단계가 모두 잠겼고 깨끗할 때만 병합한다.
-- 자동 실행: Stop 훅이 save 를 돌리고, verify.py lock 이 성공하면 save → merge 를 돌린다.
+- 병합: 같은 저장소의 PR 이고, 그 PR 머리 커밋에서 담은 단계가 모두 사람이 잠갔을 때만.
+  병합은 확인한 머리 커밋으로 못박는다(--match-head-commit) — 확인 뒤에 바뀐 PR 은 병합되지 않는다.
+- 자동 실행: Stop 훅이 save --quiet 를 돌린다(시간 예산 안에서 끝나고 세션을 막지 않는다).
+  verify.py lock 이 성공하면 save 가 성공했을 때만 merge 를 돌린다.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 
 # 새로 만든(아직 추적하지 않는) 파일 가운데 자동으로 올리는 자리. 그 밖의 새 파일은 사람이 정한다.
 CODE_ROOTS = ("harness/", "tests/", "tools/", "world/", "specs/", "outputs/verify/")
-# 자동 검사가 필요한 변경 — 이 자리가 바뀌면 시험을 통과해야 커밋한다.
+# 자동 검사가 필요한 변경 — 이 자리가 바뀌면 시험을 통과해야 올린다.
 GATED_ROOTS = ("harness/", "tests/", "tools/", "world/", "specs/", "graph.json")
 # PR 의 머리 브랜치 → 그 PR 이 담은 단계. 담은 단계가 모두 잠겨야 병합한다.
 STAGES_BY_BRANCH = {
@@ -34,9 +38,11 @@ STAGES_BY_BRANCH = {
     "feat/q2-world-graph": ["Q2", "Q3", "Q4"],   # Q2 잠금 뒤 Q3·Q4 작업도 이 브랜치에 쌓였다
 }
 PROTECTED = {"main", "master"}
+GATE_BUDGET_S = 480       # Stop 훅 시간 제한(600초) 안에 반드시 끝나게 — 넘으면 검사 실패로 본다
 SECRET = re.compile(r"AKIA[0-9A-Z]{16}|\b(?:api[_-]?key|passwd|password|secret|token)\s*[:=]\s*['\"][^'\"]{6,}", re.I)
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
-EXAMPLE_DOMAIN = re.compile(r"@(?:[\w-]+\.)*(?:example\.(?:com|org|net)|[\w-]+\.(?:example|test|invalid))$", re.I)
+ATTRIBUTION = "noreply@anthropic.com"   # 커밋 메시지의 공동 작성자 표기 — 이 주소 하나만 허용한다
+RESERVED = re.compile(r"@(?:[\w-]+\.)*(?:example\.(?:com|org|net)|[\w-]+\.(?:example|test|invalid))$", re.I)   # RFC 2606: 실제로 없는 주소
 
 
 def git(*args: str, check: bool = True) -> str:
@@ -69,7 +75,7 @@ def candidates(porcelain_z: str) -> list[str]:
 
 
 def leaks(diff: str, private: list[str]) -> list[str]:
-    """더하는 줄에 섞인 로컬 경로·계정·비밀값 — 하나라도 있으면 커밋하지 않는다."""
+    """더하는 줄에 섞인 로컬 경로·계정·비밀값 — 하나라도 있으면 올리지 않는다."""
     found = []
     for line in diff.splitlines():
         if not line.startswith("+") or line.startswith("+++"):
@@ -80,10 +86,15 @@ def leaks(diff: str, private: list[str]) -> list[str]:
         if SECRET.search(line):
             found.append(f"비밀값처럼 보이는 줄: {line[:80]}")
         for mail in EMAIL.findall(line):
-            if mail.endswith("@anthropic.com") or EXAMPLE_DOMAIN.search(mail):
-                continue   # 커밋 메시지의 공동 작성자 표기 · 예시 전용 도메인(RFC 2606)은 진짜 주소가 아니다
+            if mail.lower() == ATTRIBUTION or RESERVED.search(mail):
+                continue
             found.append(f"전자우편 주소 '{mail}' 가 들어 있다")
     return found
+
+
+def as_added(text: str) -> str:
+    """커밋 메시지 같은 글을 '더하는 줄' 꼴로 — 같은 누출 검사를 받게."""
+    return "\n".join("+" + line for line in text.splitlines())
 
 
 def private_values() -> list[str]:
@@ -93,22 +104,29 @@ def private_values() -> list[str]:
     return [v for v in values + [mail] if v and v not in ("/", "~")]
 
 
-def gates(paths: list[str]) -> list[str]:
-    """코드가 바뀌었으면 자동 검사를 돌린다. 실패한 검사의 이름과 첫 줄을 돌려준다."""
-    if not any(p.startswith(GATED_ROOTS) or p in GATED_ROOTS for p in paths):
+def gates(changed: list[str], budget_s: float = GATE_BUDGET_S) -> list[str]:
+    """코드가 바뀌었으면 자동 검사를 돌린다. 시간 예산을 넘기면 실패로 본다. 실패한 검사의 이름과 첫 줄을 돌려준다."""
+    if not any(p.startswith(GATED_ROOTS) or p in GATED_ROOTS for p in changed):
         return []
+    deadline = time.monotonic() + budget_s
     with tempfile.TemporaryDirectory(prefix="rb-ship-") as tmp:
         steps = [("tests", [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-q"]),
                  ("tools", [sys.executable, "-m", "unittest", "discover", "-s", "tools", "-q"]),
                  ("명세", [sys.executable, "tools/validate_spec.py"]),
                  ("월드 소스 Harness", [sys.executable, "-m", "harness.run", "world", "--out", tmp])]
-        failed = []
         for name, cmd in steps:
-            done = subprocess.run(cmd, cwd=REPO, capture_output=True, text=True, timeout=900)
+            left = deadline - time.monotonic()
+            if left <= 0:
+                return [f"{name}: 시간 예산({budget_s:.0f}초)을 넘었다"]
+            try:
+                done = subprocess.run(cmd, cwd=REPO, capture_output=True, text=True, timeout=left,
+                                      env={**os.environ, "RB_SHIP_RUNNING": "1"})
+            except subprocess.TimeoutExpired:
+                return [f"{name}: 시간 예산({budget_s:.0f}초)을 넘었다"]
             if done.returncode != 0:
                 text = (done.stderr or done.stdout).strip().splitlines()
-                failed.append(f"{name}: {next((t for t in text if 'FAIL' in t or 'Error' in t), text[-1] if text else '실패')[:120]}")
-        return failed
+                return [f"{name}: {next((t for t in text if 'FAIL' in t or 'Error' in t), text[-1] if text else '실패')[:120]}"]
+    return []
 
 
 def summary(paths: list[str]) -> str:
@@ -116,94 +134,149 @@ def summary(paths: list[str]) -> str:
     return f"chore(자동 저장): {'·'.join(areas)} — 파일 {len(paths)}개"
 
 
+def outgoing(branch: str) -> tuple[str, str, list[str], int]:
+    """아직 올리지 않은 것 전부 — (바뀐 내용, 커밋 메시지들, 바뀐 파일, 커밋 수). 원격 브랜치가 없으면 main 부터."""
+    base = f"origin/{branch}" if git("rev-parse", "--verify", "-q", f"origin/{branch}", check=False).strip() else "origin/main"
+    count = int(git("rev-list", "--count", f"{base}..HEAD").strip() or "0")
+    if not count:
+        return "", "", [], 0
+    diff = git("diff", "--text", f"{base}..HEAD")
+    messages = git("log", "--format=%B", f"{base}..HEAD")
+    files = [p for p in git("diff", "--name-only", "-z", f"{base}..HEAD").split("\0") if p]
+    return diff, messages, files, count
+
+
 def save(message: str | None, quiet: bool) -> int:
     branch = git("rev-parse", "--abbrev-ref", "HEAD").strip()
     if branch in PROTECTED:
         print(f"[자동 저장] {branch} 에는 직접 커밋하지 않는다 — 작업 브랜치에서 한다")
         return 0
+    if git("diff", "--cached", "--name-only").strip():
+        print("[자동 저장] 사람이 미리 staging 한 변경이 있어 건드리지 않는다 — 직접 커밋하거나 staging 을 풀면 이어서 한다")
+        return 1
+    private, checked = private_values(), False
     paths = candidates(git("status", "--porcelain", "-z"))
     if paths:
+        msg = message or summary(paths)
+        committed = False
         git("add", "--", *paths)
-        found = leaks(git("diff", "--cached"), private_values())
-        if found:
-            git("reset", "-q", "--", *paths)
-            print("[자동 저장] 멈춤 — 공개 저장소에 올리면 안 되는 값이 있다:\n  " + "\n  ".join(found[:5]))
-            return 1
-        failed = gates(paths)
-        if failed:
-            git("reset", "-q", "--", *paths)
-            print("[자동 저장] 멈춤 — 자동 검사가 통과하지 않아 커밋하지 않았다:\n  " + "\n  ".join(failed))
-            return 1
-        git("commit", "-q", "-m", message or summary(paths))
-    ahead = git("rev-list", "--count", f"origin/{branch}..HEAD", check=False).strip()
-    if not paths and ahead in ("", "0"):
+        try:
+            found = leaks(git("diff", "--cached", "--text"), private) + leaks(as_added(msg), private)
+            if found:
+                print("[자동 저장] 멈춤 — 공개 저장소에 올리면 안 되는 값이 있다:\n  " + "\n  ".join(found[:5]))
+                return 1
+            failed = gates(paths)
+            if failed:
+                print("[자동 저장] 멈춤 — 자동 검사가 통과하지 않아 커밋하지 않았다:\n  " + "\n  ".join(failed))
+                return 1
+            checked = True
+            git("commit", "-q", "-m", msg)
+            committed = True
+        finally:
+            if not committed:
+                git("reset", "-q", check=False)   # 시작할 때 인덱스가 비어 있었으므로 통째로 되돌려도 남의 것을 지우지 않는다
+    diff, messages, files, count = outgoing(branch)
+    if not count:
         if not quiet:
             print("[자동 저장] 바뀐 것이 없다")
         return 0
+    # 이번에 만든 커밋만이 아니라 올라가는 것 전부를 본다 — 앞서 손으로 만든 커밋도 같은 검사를 받는다
+    found = leaks(diff, private) + leaks(as_added(messages), private)
+    if found:
+        print(f"[자동 저장] 멈춤 — 올라갈 커밋 {count}개에 공개 저장소에 올리면 안 되는 값이 있다(커밋은 로컬에 남는다):\n  "
+              + "\n  ".join(found[:5]))
+        return 1
+    failed = [] if checked else gates(files)
+    if failed:
+        print(f"[자동 저장] 멈춤 — 올라갈 커밋 {count}개가 자동 검사를 통과하지 않는다(커밋은 로컬에 남는다):\n  " + "\n  ".join(failed))
+        return 1
     has_upstream = git("rev-parse", "--abbrev-ref", f"{branch}@{{upstream}}", check=False).strip()
     git("push", "-q", *([] if has_upstream else ["-u"]), "origin", branch)
     head = git("log", "--oneline", "-1").strip()
-    print(f"[자동 저장] {branch} 에 올림 — {head}" + (f" (새 파일·변경 {len(paths)}개)" if paths else ""))
+    print(f"[자동 저장] {branch} 에 올림 — {head} (커밋 {count}개)")
     return 0
 
 
-def stage_locked(stage: str) -> bool:
-    done = subprocess.run([sys.executable, "tools/verify.py", "gate", stage], cwd=REPO, capture_output=True, text=True)
-    return "locked=True" in done.stdout
+def locked_at(sha: str, stages: list[str]) -> tuple[bool, str]:
+    """그 커밋에서 담은 단계가 모두 사람이 잠갔는가 — 지금 체크아웃이 아니라 PR 머리 커밋을 따로 꺼내 본다."""
+    with tempfile.TemporaryDirectory(prefix="rb-ship-pr-") as tmp:
+        tree = Path(tmp) / "head"
+        git("worktree", "add", "-q", "--detach", str(tree), sha)
+        try:
+            for stage in stages:
+                done = subprocess.run([sys.executable, "tools/verify.py", "gate", stage], cwd=tree, capture_output=True, text=True)
+                if "locked=True" not in done.stdout:
+                    return False, f"머리 커밋 {sha[:8]} 에서 {stage} 가 잠기지 않았다"
+            return True, f"머리 커밋 {sha[:8]} 에서 {', '.join(stages)} 가 모두 사람이 잠갔다"
+        finally:
+            git("worktree", "remove", "--force", str(tree), check=False)
 
 
-def plan(prs: list[dict], locked: dict[str, bool]) -> list[tuple[dict, str, str]]:
-    """PR 마다 (PR, 병합|대기, 이유). 담은 단계가 모두 잠기고 깨끗한 PR 만 병합한다."""
+def plan(prs: list[dict], verdicts: dict[int, tuple[bool, str]]) -> list[tuple[dict, str, str]]:
+    """PR 마다 (PR, 병합|대기, 이유). 같은 저장소 · 담은 단계가 머리 커밋에서 모두 잠김 · 깨끗함 — 셋이 다 맞아야 병합한다."""
     out = []
     for pr in prs:
-        stages = STAGES_BY_BRANCH.get(pr["headRefName"])
-        if not stages:
+        if pr.get("isCrossRepository", True):
+            out.append((pr, "대기", "다른 저장소(포크)에서 온 PR — 자동으로 병합하지 않는다"))
+            continue
+        if not STAGES_BY_BRANCH.get(pr["headRefName"]):
             out.append((pr, "대기", "어느 단계를 담았는지 모르는 브랜치 — 사람이 정한다"))
             continue
-        waiting = [s for s in stages if not locked.get(s)]
-        if waiting:
-            out.append((pr, "대기", f"아직 잠기지 않은 단계: {', '.join(waiting)}"))
+        ok, reason = verdicts.get(pr["number"], (False, "잠금을 확인하지 못했다"))
+        if not ok:
+            out.append((pr, "대기", reason))
         elif pr.get("mergeStateStatus") != "CLEAN":
             out.append((pr, "대기", f"GitHub 병합 상태가 {pr.get('mergeStateStatus')} — 충돌·검사를 먼저 푼다"))
         else:
-            out.append((pr, "병합", f"담은 단계 {', '.join(stages)} 가 모두 사람이 잠갔다"))
+            out.append((pr, "병합", reason))
     return out
 
 
 def open_prs() -> list[dict]:
     done = subprocess.run(["gh", "pr", "list", "--state", "open", "--json",
-                           "number,title,headRefName,baseRefName,mergeStateStatus"], cwd=REPO, capture_output=True, text=True)
+                           "number,title,headRefName,headRefOid,baseRefName,mergeStateStatus,isCrossRepository"],
+                          cwd=REPO, capture_output=True, text=True)
     if done.returncode != 0:
         raise RuntimeError(done.stderr.strip() or "gh pr list 실패")
     return json.loads(done.stdout)
 
 
 def merge(yes: bool) -> int:
+    git("fetch", "-q", "origin")
     prs = open_prs()
-    stages = sorted({s for pr in prs for s in STAGES_BY_BRANCH.get(pr["headRefName"], [])})
-    locked = {s: stage_locked(s) for s in stages}
-    steps = plan(prs, locked)
+    verdicts = {}
+    for pr in prs:
+        stages = STAGES_BY_BRANCH.get(pr["headRefName"])
+        if stages and not pr.get("isCrossRepository", True):
+            verdicts[pr["number"]] = locked_at(pr["headRefOid"], stages)
+    steps = plan(prs, verdicts)
     for pr, action, reason in steps:
         print(f"[병합] #{pr['number']} {pr['headRefName']} → {pr['baseRefName']}: {action} — {reason}")
     if not yes:
         return 0
+    failed = 0
     for pr, action, _reason in steps:
         if action != "병합":
             continue
-        subprocess.run(["gh", "pr", "merge", str(pr["number"]), "--merge"], cwd=REPO, check=True)
+        done = subprocess.run(["gh", "pr", "merge", str(pr["number"]), "--merge", "--match-head-commit", pr["headRefOid"]],
+                              cwd=REPO, capture_output=True, text=True)
+        if done.returncode != 0:
+            print(f"[병합] #{pr['number']} 병합 실패 — {done.stderr.strip()[:160]}")
+            failed += 1
+            continue
+        print(f"[병합] #{pr['number']} 병합함 (머리 커밋 {pr['headRefOid'][:8]})")
         for child in prs:   # 쌓인 PR 은 병합된 PR 의 바탕으로 옮겨 단다
             if child["baseRefName"] == pr["headRefName"]:
                 subprocess.run(["gh", "pr", "edit", str(child["number"]), "--base", pr["baseRefName"]], cwd=REPO, check=True)
                 print(f"[병합] #{child['number']} 의 바탕을 {pr['baseRefName']} 로 옮겼다")
-        print(f"[병합] #{pr['number']} 병합함")
-    return 0
+    return 1 if failed else 0
 
 
 def status() -> int:
     branch = git("rev-parse", "--abbrev-ref", "HEAD").strip()
-    ahead = git("rev-list", "--count", f"origin/{branch}..HEAD", check=False).strip() or "?"
+    _diff, _messages, _files, count = outgoing(branch)
     paths = candidates(git("status", "--porcelain", "-z"))
-    print(f"[상태] 브랜치 {branch} · 올리지 않은 커밋 {ahead}개 · 올릴 변경 {len(paths)}개")
+    print(f"[상태] 브랜치 {branch} · 올리지 않은 커밋 {count}개 · 올릴 변경 {len(paths)}개")
     return merge(yes=False)
 
 
@@ -217,6 +290,8 @@ def main(argv: list[str]) -> int:
     p_merge.add_argument("--yes", action="store_true", help="계획만 보이지 않고 실제로 병합한다")
     sub.add_parser("status")
     args = parser.parse_args(argv)
+    if os.environ.get("RB_SHIP_RUNNING") and args.command == "save":
+        return 0   # 검사 안에서 다시 불리면(시험이 훅을 부르는 경우) 아무것도 하지 않는다
     try:
         if args.command == "save":
             code = save(args.message, args.quiet)

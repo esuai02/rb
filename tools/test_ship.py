@@ -39,18 +39,34 @@ class LeakTest(unittest.TestCase):
 
 
 class PlanTest(unittest.TestCase):
-    def pr(self, head, state="CLEAN", number=1):
-        return {"number": number, "headRefName": head, "baseRefName": "main", "mergeStateStatus": state, "title": ""}
+    def pr(self, head, state="CLEAN", number=1, fork=False):
+        return {"number": number, "headRefName": head, "baseRefName": "main", "mergeStateStatus": state,
+                "title": "", "headRefOid": "a" * 40, "isCrossRepository": fork}
 
-    def test_merges_only_when_every_carried_stage_is_locked(self):
+    def test_merges_only_when_locked_at_the_head_commit(self):
         steps = ship.plan([self.pr("feat/q1-intent-spec"), self.pr("feat/q2-world-graph", number=2)],
-                          {"Q1": True, "Q2": True, "Q3": False, "Q4": False})
+                          {1: (True, "잠김"), 2: (False, "머리 커밋에서 Q3 가 잠기지 않았다")})
         self.assertEqual([action for _pr, action, _r in steps], ["병합", "대기"])
-        self.assertIn("Q3, Q4", steps[1][2])
+        self.assertIn("Q3", steps[1][2])
 
-    def test_waits_on_conflicts_and_unknown_branches(self):
-        steps = ship.plan([self.pr("feat/q1-intent-spec", state="DIRTY"), self.pr("feat/unknown")], {"Q1": True})
-        self.assertEqual([action for _pr, action, _r in steps], ["대기", "대기"])
+    def test_waits_on_forks_conflicts_unknown_branches_and_missing_verdicts(self):
+        steps = ship.plan([self.pr("feat/q1-intent-spec", fork=True, number=1),
+                           self.pr("feat/q1-intent-spec", state="DIRTY", number=2),
+                           self.pr("feat/unknown", number=3),
+                           self.pr("feat/q1-intent-spec", number=4)],
+                          {1: (True, ""), 2: (True, ""), 4: (True, "")} | {})
+        self.assertEqual([action for _pr, action, _r in steps], ["대기", "대기", "대기", "병합"])
+        self.assertEqual(ship.plan([self.pr("feat/q1-intent-spec")], {})[0][1], "대기")   # 잠금을 확인하지 못하면 기다린다
+
+
+class MessageLeakTest(unittest.TestCase):
+    def test_commit_messages_get_the_same_scan(self):
+        self.assertTrue(ship.leaks(ship.as_added("feat: 무엇\n\n경로 /mnt/d/work/rb/x"), ["/mnt/d/work/rb"]))
+        self.assertEqual(ship.leaks(ship.as_added("Co-Authored-By: Claude <noreply@anthropic.com>"), []), [])
+
+    def test_only_the_exact_attribution_address_is_allowed(self):
+        other = "someone" + "@" + "anthropic.com"
+        self.assertTrue(ship.leaks("+" + other + "\n", []))
 
 
 if __name__ == "__main__":
