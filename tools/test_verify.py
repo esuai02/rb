@@ -283,6 +283,19 @@ class GateFlowTest(unittest.TestCase):
         self.assertEqual(verify.cmd_review(self.root, "Q1"), 2)
         self.assertTrue(any("상한" in r.get("observed", "") for r in self.rows("observation")))
 
+    def test_lock_approval_or_applying_decision_opens_a_new_window(self):
+        """잠금 승인이나 그 단계에 적용되는 사람 결정(applies_to) 뒤에는 리뷰 창을 새로 센다."""
+        self.ready()
+        for n in (5, 4, 3, 2, 1):
+            self.fake_reviewer("\n".join(f"major | a:{k} | 지적 {k} | e | m" for k in range(n)))
+            verify.cmd_review(self.root, "Q1")
+        self.fake_reviewer("NO_FINDINGS")
+        self.assertEqual(verify.cmd_review(self.root, "Q1"), 2)   # 상한
+        verify.append(self.root, {"id": "D-P", "kind": "human_decision", "node_id": "process", "applies_to": ["Q1"], "value": "정비"})
+        self.assertEqual(verify.cmd_review(self.root, "Q1"), 0)
+        verify.cmd_approve(self.root, "Q1", "사용자 메시지 테스트 '잠금 승인'", None)
+        self.assertIsNone(verify.review_refusal(self.root, verify.node_of(verify.load_graph(self.root), "Q1"), self.gate()["binding"]))
+
     def test_vectors_are_not_required_before_review(self):
         """6방향은 잠금 조건이다 — 리뷰 전에는 다른 자동 검사만 PASS 이면 된다."""
         self.assertEqual(verify.cmd_run(self.root, "Q1"), 1)   # Q1-C1 PASS, Q1-6V FAIL

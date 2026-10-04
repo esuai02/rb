@@ -314,6 +314,16 @@ def latest_review(rows: list[dict], node_id: str) -> dict | None:
     return reviews[-1] if reviews else None
 
 
+def opens_window(row: dict, node_id: str) -> bool:
+    """리뷰 창을 새로 여는 기록 — 그 단계에 대한 사람 결정(그 단계가 node_id 이거나 applies_to 에 있음)과 그 단계의 승인 기록.
+
+    잠금 승인 뒤 다시 열린 단계는 새 창에서 시작한다 — 잠그기 전의 리뷰까지 세면 상한이 처음부터 차 있다(2026-10-04 Q1 재검증 오거부).
+    """
+    if row.get("kind") == "decision" and row.get("node_id") == node_id and row.get("value") == "APPROVE":
+        return True
+    return row.get("kind") == "human_decision" and (row.get("node_id") == node_id or node_id in (row.get("applies_to") or []))
+
+
 def review_refusal(root: Path, node: dict, binding: str) -> str | None:
     """리뷰를 받기 전에 기계로 지키는 규칙 — 지키지 못하면 이유를 돌려준다 (근거 원장 AUDIT-PROCESS-1).
 
@@ -330,7 +340,7 @@ def review_refusal(root: Path, node: dict, binding: str) -> str | None:
     failing = [c for c in checked if c in latest and latest[c].get("result") != "PASS"]
     if missing or failing:
         return f"지금 버전의 자동 검사가 {'없거나 ' if missing else ''}실패했다({', '.join(missing + failing)}) — verify.py run 을 먼저 통과시킨다"
-    decided = max((str(r.get("timestamp", "")) for r in rows if r.get("kind") == "human_decision" and r.get("node_id") == node["id"]), default="")
+    decided = max((str(r.get("timestamp", "")) for r in rows if opens_window(r, node["id"])), default="")
     window = [r for r in rows if r.get("kind") == "devil_review" and r.get("node_id") == node["id"] and str(r.get("timestamp", "")) > decided]
     budget = node.get("review_budget", REVIEW_BUDGET)
     if len(window) >= budget:
