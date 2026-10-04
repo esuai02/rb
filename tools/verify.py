@@ -31,7 +31,7 @@ MAKER = "claude-code main session"
 CHECK_TIMEOUT_SEC = 600
 REVIEW_TIMEOUT_SEC = 900
 VECTOR_FIELDS = ("observed", "proposal", "next", "sources")
-BLOCKER_RE = re.compile(r"^\s*[-*]?\s*\**(critical|major|minor)\**\s*\|\s*([^|]*)\|\s*([^|]+)", re.IGNORECASE | re.MULTILINE)
+BLOCKER_RE = re.compile(r"^\s*[-*]?\s*\**(critical|major|minor|residual)\**\s*\|\s*([^|]*)\|\s*([^|]+)", re.IGNORECASE | re.MULTILINE)
 
 
 # ---------- 공통 ----------
@@ -205,6 +205,31 @@ def review_packet(root: Path, graph: dict, node: dict, binding: str) -> str:
     scope = node.get("invariant_scope", {})
     owned = ", ".join(scope.get("owned", [])) or "합격 기준에 적힌 것"
     later = "\n".join(f"- {k} → {v}" for k, v in scope.get("later", {}).items()) or "- (없음)"
+    rows = ledger(root)
+    decisions = "\n".join(f"- {r.get('decision_id', r['id'])}: {r.get('value', '')}" for r in rows
+                          if r.get("kind") == "human_decision" and r.get("node_id") == node["id"]) or "- (없음)"
+    question = node.get("review_question") or "이 단계의 산출물이 합격 기준을 만족하는가?"
+    policy = node.get("review_policy") or {}
+    if policy.get("scope") == "fixed":
+        last = latest_review(rows, node["id"])
+        fixed = "\n".join(f"- {b['severity']} | {b['location']} | {b['claim']}" for b in (last or {}).get("blockers", [])) or "- (없음)"
+        known = "\n".join(f"- {r.get('claim', '')}" for r in rows if r.get("kind") == "residual_risk" and r.get("node_id") == node["id"]) or "- (없음)"
+        ask = (f"고정 범위 확인 리뷰다(사람 결정 {policy.get('decision', '?')}). 막는 지적(critical·major·minor)은 다음 셋에만 쓴다: "
+               "① 고정된 합격 기준이 실제로 거짓이거나 테스트가 기준이 말하는 것을 검사하지 않는다 "
+               "② 합격 기준에 이름이 있는 결함 종류가 다시 잡히지 않는다(회귀) "
+               "③ 아래 '직전 리뷰 지적' 의 수정이 실제로 효과가 없다. "
+               "합격 기준에 없는 새 계열의 빈틈은 severity=residual 로 따로 적는다 — 막지 않고 남은 위험 목록에 기록된다. "
+               "residual 의 evidence 칸에는 정직한 저자가 실제로 쓸 법한 코드 예를 적는다. 이미 남은 위험 목록에 있는 것은 다시 적지 않는다.")
+        extra = f"""직전 리뷰 지적(이번에 고친 것 — 수정이 실제로 효과 있는지 본다):
+{fixed}
+이미 남은 위험 목록에 있는 것(다시 적지 말 것):
+{known}
+"""
+        severities = "critical|major|minor|residual"
+    else:
+        ask = ("각 합격 기준이 실제로 참인지, 테스트가 기준이 말하는 것을 정말로 검사하는지(빈 검사, 정직한 실수로 나올 꼴을 놓치는 검사 포함), "
+               "이 단계가 맡는 불변식을 산출물이 어기는지 찾아라. 넘긴 항목은 지적하지 말고, 넘긴 단계의 기준으로 덮이지 않는 빈틈만 지적하라. 추측은 근거와 함께만.")
+        extra, severities = "", "critical|major|minor"
     return f"""GOAL: rb 저장소 작업 Graph 단계 {node['id']}({node['label']})의 산출물이 합격 기준과 Intent 불변식을 실제로 만족하는지 독립적으로 검토한다. 단계 결과: {node['outcome']}
 SCOPE: 산출물 파일 {', '.join(node['artifacts'])} (저장소 루트 기준). 계약은 graph.json 의 {node['id']} 노드, 불변식은 intent.md §5(INV-1~16), 용어는 intent.md §0.
 INVARIANTS: 수정하지 말 것(읽기 전용). 합격 기준:
@@ -214,8 +239,11 @@ EVIDENCE: 자동 검사 결과(binding {binding[:12]}):
 STAGE SCOPE: 이 단계가 맡는 불변식: {owned}
 다음 단계로 넘긴 것(이 단계의 결함이 아니다 — 넘긴 단계의 기준이 검사한다):
 {later}
-ASK: 각 합격 기준이 실제로 참인지, 테스트가 기준이 말하는 것을 정말로 검사하는지(빈 검사·우회 가능한 검사 포함), 이 단계가 맡는 불변식을 산출물이 어기는지 찾아라. 넘긴 항목은 지적하지 말고, 넘긴 단계의 기준으로 덮이지 않는 빈틈만 지적하라. 추측은 근거와 함께만.
-RETURN: lines of `severity | file:line | claim | evidence | minimal fix` (severity = critical|major|minor), or exactly NO_FINDINGS
+REVIEW QUESTION: {question}
+HUMAN DECISIONS(이 단계에 대한 사람 결정 — 리뷰 범위를 정한다):
+{decisions}
+{extra}ASK: {ask}
+RETURN: lines of `severity | file:line | claim | evidence | minimal fix` (severity = {severities}), or exactly NO_FINDINGS
 """
 
 
@@ -231,38 +259,77 @@ def run_reviewer(root: Path, packet: Path, out: Path) -> tuple[bool, str, str]:
     return proc.returncode == 0 and match is not None, match.group(1) if match else "-", (proc.stdout + proc.stderr).strip()[:400]
 
 
-def parse_review(text: str) -> tuple[str, list[dict]]:
-    blockers = [{"severity": m.group(1).lower(), "location": m.group(2).strip(), "claim": m.group(3).strip()} for m in BLOCKER_RE.finditer(text)]
-    if not blockers and "NO_FINDINGS" not in text:
-        return "UNPARSED", []
-    return ("BLOCK" if any(b["severity"] in {"critical", "major"} for b in blockers) else "CLEAR"), blockers
+def parse_review(text: str) -> tuple[str, list[dict], list[dict]]:
+    """(판정, 막는 지적, 남은 위험). residual 은 고정 범위 밖의 새 계열 — 잠금을 막지 않고 따로 기록한다(사람 결정 Q3-FIXED-SCOPE)."""
+    found = [{"severity": m.group(1).lower(), "location": m.group(2).strip(), "claim": m.group(3).strip()} for m in BLOCKER_RE.finditer(text)]
+    blockers = [b for b in found if b["severity"] != "residual"]
+    residual = [b for b in found if b["severity"] == "residual"]
+    if not found and "NO_FINDINGS" not in text:
+        return "UNPARSED", [], []
+    return ("BLOCK" if any(b["severity"] in {"critical", "major"} for b in blockers) else "CLEAR"), blockers, residual
+
+
+def latest_review(rows: list[dict], node_id: str) -> dict | None:
+    reviews = [r for r in rows if r.get("kind") == "devil_review" and r.get("node_id") == node_id]
+    return reviews[-1] if reviews else None
+
+
+def review_refusal(root: Path, node: dict, binding: str) -> str | None:
+    """리뷰를 받기 전에 기계로 지키는 규칙 — 지키지 못하면 이유를 돌려준다 (근거 원장 AUDIT-PROCESS-1).
+
+    ① 지금 binding 의 자동 검사가 기준마다 있고 모두 PASS 여야 한다 — 실패한 상태로 리뷰를 보내지 않는다.
+    ② intent §8 멈춤: 마지막 사람 결정 뒤의 리뷰가 BLOCK 으로 세 번 이어지면서 막는 지적 수가 두 번 연속 줄지 않았으면
+       리뷰를 더 보내지 않고 멈춤 기록을 남긴다. 사람 결정이 다음 창을 연다.
+    """
+    rows = ledger(root)
+    latest = {r["criterion_id"]: r for r in rows
+              if r.get("kind") == "verification" and r.get("node_id") == node["id"] and r.get("binding") == binding}
+    checked = [c["id"] for c in node["criteria"] if c.get("check")]
+    missing = [c for c in checked if c not in latest]
+    failing = [c for c in checked if c in latest and latest[c].get("result") != "PASS"]
+    if missing or failing:
+        return f"지금 버전의 자동 검사가 {'없거나 ' if missing else ''}실패했다({', '.join(missing + failing)}) — verify.py run 을 먼저 통과시킨다"
+    decided = max((str(r.get("timestamp", "")) for r in rows if r.get("kind") == "human_decision" and r.get("node_id") == node["id"]), default="")
+    window = [r for r in rows if r.get("kind") == "devil_review" and r.get("node_id") == node["id"] and str(r.get("timestamp", "")) > decided]
+    counts = [sum(b.get("severity") in {"critical", "major"} for b in r.get("blockers", [])) for r in window[-3:]]
+    if len(counts) == 3 and all(r.get("verdict") == "BLOCK" for r in window[-3:]) and counts[1] >= counts[0] and counts[2] >= counts[1]:
+        return f"intent §8 멈춤 — 막는 지적 수 {counts[0]}→{counts[1]}→{counts[2]} 로 두 번 연속 줄지 않았다. 사람 결정이 있어야 다음 리뷰를 보낸다"
+    return None
 
 
 def cmd_review(root: Path, node_id: str) -> int:
     graph = load_graph(root)
     node = node_of(graph, node_id)
     binding = helper_gate(root, node_id)["binding"]
+    refusal = review_refusal(root, node, binding)
+    if refusal:
+        if refusal.startswith("intent §8"):
+            append(root, {"id": f"STOP-{node_id}-auto-{binding[:8]}", "kind": "observation", "node_id": node_id, "binding": binding,
+                          "rule": "intent §8 — 한 격차에서 2번 연속 개선이 없으면 멈춘다", "observed": refusal, "applies_to": [node_id]})
+        print(f"ESCALATE {refusal}")
+        return 2
     packet_rel, _ = write_record(root, node_id, "review-packet.md", review_packet(root, graph, node, binding))
     out = root / "outputs" / "verify" / node_id / "review.md"
     ok, tool, message = run_reviewer(root, root / packet_rel, out)
     if not ok or not out.is_file():
         print(f"ESCALATE 독립 리뷰를 받지 못했습니다: {message}")
         return 2
-    verdict, blockers = parse_review(out.read_text(encoding="utf-8"))
+    verdict, blockers, residual = parse_review(out.read_text(encoding="utf-8"))
     if verdict == "UNPARSED":
         print(f"ESCALATE 리뷰 결과 형식을 읽을 수 없습니다 — {out.relative_to(root)} 를 사람이 보고 판단해야 합니다.")
         return 2
     independence = "external" if tool in {"codex", "gemini"} else "fresh_context"
     append(root, {"id": f"R-{node_id}-{binding[:8]}", "kind": "devil_review", "node_id": node_id, "binding": binding,
                   "reviewer": f"{tool} via tri_tool review (read-only)", "independence": independence, "verdict": verdict,
-                  "blockers": blockers, "record": out.relative_to(root).as_posix(), "record_sha256": sha(out)})
+                  "blockers": blockers, "residual": residual, "record": out.relative_to(root).as_posix(), "record_sha256": sha(out)})
     successors = [n["id"] for n in graph["nodes"] if node_id in n.get("depends_on", [])]
-    for i, b in enumerate(b for b in blockers if b["severity"] == "minor"):
+    minors = [b for b in blockers if b["severity"] == "minor"] if verdict == "CLEAR" else []   # D-MINOR-LIMIT: CLEAR 리뷰의 사소 지적만 넘긴다
+    for i, b in enumerate(minors):
         append(root, {"id": f"DEFER-{node_id}-{binding[:8]}-{i + 1}", "kind": "deferral", "node_id": node_id, "binding": binding,
                       "to": successors[0] if successors else "후속 개정", "claim": b["claim"], "location": b["location"],
                       "rule": "근거 원장 D-MINOR-LIMIT: CLEAR 리뷰의 사소 지적은 다음 단계로 넘겨 기록"})
-    print(f"{verdict} 리뷰어={tool} 지적={len(blockers)}건")
-    for b in blockers:
+    print(f"{verdict} 리뷰어={tool} 지적={len(blockers)}건" + (f" · 남은 위험 후보={len(residual)}건" if residual else ""))
+    for b in blockers + residual:
         print(f"  {b['severity']:8} {b['location']}  {b['claim'][:150]}")
     return 0 if verdict == "CLEAR" else 1
 

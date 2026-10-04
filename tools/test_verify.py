@@ -77,6 +77,11 @@ class GateFlowTest(unittest.TestCase):
     def gate(self):
         return verify.helper_gate(self.root, "Q1")
 
+    def ready(self):
+        """리뷰를 받을 수 있는 상태 — 지금 버전의 자동 검사가 모두 PASS."""
+        self.add_vectors("V-FWD", "V-LEFT")
+        self.assertEqual(verify.cmd_run(self.root, "Q1"), 0)
+
     def test_run_records_pass_and_fail_with_intact_records(self):
         self.assertEqual(verify.cmd_run(self.root, "Q1"), 1)  # 6방향 기록이 없어 FAIL 포함
         by_id = {r["criterion_id"]: r for r in self.rows("verification")}
@@ -90,6 +95,7 @@ class GateFlowTest(unittest.TestCase):
         self.assertEqual(latest["result"], "FAIL")
 
     def test_review_verdicts(self):
+        self.ready()
         self.fake_reviewer("NO_FINDINGS")
         self.assertEqual(verify.cmd_review(self.root, "Q1"), 0)
         review = self.rows("devil_review")[-1]
@@ -118,6 +124,7 @@ class GateFlowTest(unittest.TestCase):
         self.assertNotIn("일시적 오류", packet)
 
     def test_claude_fallback_is_fresh_context_not_external(self):
+        self.ready()
         self.fake_reviewer("NO_FINDINGS", tool="claude")
         verify.cmd_review(self.root, "Q1")
         self.assertEqual(self.rows("devil_review")[-1]["independence"], "fresh_context")
@@ -195,6 +202,64 @@ class GateFlowTest(unittest.TestCase):
         late = [r for r in verify.ledger(self.root) if r["id"].startswith("VR-V-FWD-")]
         self.assertTrue(late)
 
+    def test_review_refused_unless_current_checks_pass(self):
+        """자동 검사가 없거나 실패한 상태로는 리뷰를 보내지 않는다 (AUDIT-PROCESS-1 · 22차 사고)."""
+        self.fake_reviewer("NO_FINDINGS")
+        self.assertEqual(verify.cmd_review(self.root, "Q1"), 2)
+        self.write_graph(FAIL_CMD)
+        self.add_vectors("V-FWD", "V-LEFT")
+        verify.cmd_run(self.root, "Q1")
+        self.assertEqual(verify.cmd_review(self.root, "Q1"), 2)
+        self.assertEqual(self.rows("devil_review"), [])
+
+    def test_minor_of_a_blocking_review_is_not_deferred(self):
+        """사소 지적은 CLEAR 리뷰에서만 넘긴다(D-MINOR-LIMIT) — BLOCK 리뷰의 것은 그대로 고칠 거리다."""
+        self.ready()
+        self.fake_reviewer("major | a.txt:1 | 큰 것 | e | m\nminor | a.txt:2 | 작은 것 | e | m")
+        self.assertEqual(verify.cmd_review(self.root, "Q1"), 1)
+        self.assertEqual(self.rows("deferral"), [])
+
+    def test_stop_rule_refuses_review_until_a_human_decision(self):
+        """intent §8 — 막는 지적 수가 두 번 연속 줄지 않으면 리뷰를 더 보내지 않고 멈춤을 기록한다."""
+        self.ready()
+        for claim in ("하나", "둘", "셋"):
+            self.fake_reviewer(f"major | a.txt:1 | {claim} | e | m")
+            self.assertEqual(verify.cmd_review(self.root, "Q1"), 1)
+        self.assertEqual(verify.cmd_review(self.root, "Q1"), 2)
+        self.assertTrue(any(r["id"].startswith("STOP-Q1-auto-") for r in self.rows("observation")))
+        self.assertEqual(len(self.rows("devil_review")), 3)
+        verify.append(self.root, {"id": "D-T", "kind": "human_decision", "node_id": "Q1", "value": "범위를 고정한다"})
+        self.assertEqual(verify.cmd_review(self.root, "Q1"), 1)
+
+    def test_improving_rounds_keep_going(self):
+        self.ready()
+        for text in ("major | a:1 | a | e | m\nmajor | a:2 | b | e | m\nmajor | a:3 | c | e | m",
+                     "major | a:1 | a | e | m\nmajor | a:2 | b | e | m", "major | a:1 | a | e | m"):
+            self.fake_reviewer(text)
+            self.assertEqual(verify.cmd_review(self.root, "Q1"), 1)
+        self.fake_reviewer("NO_FINDINGS")
+        self.assertEqual(verify.cmd_review(self.root, "Q1"), 0)
+
+    def test_fixed_scope_residual_is_recorded_but_does_not_block(self):
+        """고정 범위(사람 결정)에서는 새 계열을 residual 로 따로 받고, 잠금 판정을 막지 않는다."""
+        graph = json.loads((self.root / "graph.json").read_text(encoding="utf-8"))
+        graph["nodes"][0].update(review_policy={"scope": "fixed", "decision": "T-FIXED"}, review_question="정직한 실수를 잡는가?")
+        (self.root / "graph.json").write_text(json.dumps(graph, ensure_ascii=False), encoding="utf-8")
+        verify.append(self.root, {"id": "D-T-FIXED", "kind": "human_decision", "node_id": "Q1", "decision_id": "T-FIXED", "value": "고정"})
+        self.ready()
+        binding = self.gate()["binding"]
+        graph = verify.load_graph(self.root)
+        packet = verify.review_packet(self.root, graph, verify.node_of(graph, "Q1"), binding)
+        for part in ("REVIEW QUESTION: 정직한 실수를 잡는가?", "T-FIXED: 고정", "severity = critical|major|minor|residual", "고정 범위 확인 리뷰"):
+            self.assertIn(part, packet)
+        self.assertNotIn("우회 가능한 검사", packet)
+        self.fake_reviewer("residual | a.txt:3 | 새 계열 | 정직한 코드 예 | m")
+        self.assertEqual(verify.cmd_review(self.root, "Q1"), 0)
+        review = self.rows("devil_review")[-1]
+        self.assertEqual((review["verdict"], review["blockers"], len(review["residual"])), ("CLEAR", [], 1))
+        verify.cmd_approve(self.root, "Q1", "사용자 메시지 테스트 '잠금 승인'", None)
+        self.assertEqual(self.gate()["verdict"], "PASS")
+
     def test_approve_rejects_unknown_hold_and_empty_source(self):
         with self.assertRaises(SystemExit):
             verify.cmd_approve(self.root, "Q1", "말", "DEC-99")
@@ -215,8 +280,10 @@ class ParseTest(unittest.TestCase):
         self.assertNotIn(str(root), output)
 
     def test_parse_review_lines(self):
-        verdict, blockers = verify.parse_review("- **minor** | spec.yaml:3 | 오타 | x | y\nNO_FINDINGS")
-        self.assertEqual((verdict, blockers[0]["severity"], blockers[0]["location"]), ("CLEAR", "minor", "spec.yaml:3"))
+        verdict, blockers, residual = verify.parse_review("- **minor** | spec.yaml:3 | 오타 | x | y\nNO_FINDINGS")
+        self.assertEqual((verdict, blockers[0]["severity"], blockers[0]["location"], residual), ("CLEAR", "minor", "spec.yaml:3", []))
+        verdict, blockers, residual = verify.parse_review("residual | f:2 | 새 계열 | e | m")
+        self.assertEqual((verdict, blockers, residual[0]["claim"]), ("CLEAR", [], "새 계열"))
         self.assertEqual(verify.parse_review("critical | f:1 | c | e | m")[0], "BLOCK")
         self.assertEqual(verify.parse_review("모르겠음")[0], "UNPARSED")
 
