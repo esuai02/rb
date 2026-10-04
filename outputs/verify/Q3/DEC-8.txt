@@ -1,5 +1,5 @@
 hold: DEC-8
 node: Q3
-binding: b649f2ed03fa22d5f6087b9fd611561feff457a4b5e43e915daa3586603f22df
-time: 2026-10-02T16:31:57.183475+00:00
-source: 사용자 선택 2026-10-02 "Git 파일 + Rojo (Recommended)" (AskUserQuestion, 선택지 3개 중) — 산출물이 바뀌어 같은 결정을 현재 binding 에 다시 묶음(새 승인이 아님)
+binding: 6cd6b70f54e2d9f505cba3ebe890b6fff7f16dbc187972e91ca227a9c8f9446c
+time: 2026-10-04T11:23:26.026497+00:00
+source: 사용자 메시지 2026-10-04 "잠금 승인" — Q3 잠금 승인 요청(DEC-8 하네스는 저장소 파일을 검사한다를 이 버전에 재확인 포함)에 대한 답
