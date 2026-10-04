@@ -327,7 +327,16 @@ def main(argv: list[str]) -> int:
             return 2
     result = helper_gate(ROOT, args.node, lock=args.command == "lock")
     print_gate(result)
+    if args.command == "lock" and result["verdict"] == "PASS":
+        ship_locked(args.node)
     return 0 if result["verdict"] == "PASS" else 2
+
+
+def ship_locked(node: str) -> None:
+    """사람이 잠근 단계는 바로 내보낸다 — 잠금 기록을 커밋·푸시하고, 잠긴 단계만 담은 PR 을 병합한다 (tools/ship.py)."""
+    ship = ROOT / "tools" / "ship.py"
+    for args in (["save", "-m", f"chore: {node} 잠금 기록"], ["merge", "--yes"]):
+        subprocess.run([sys.executable, str(ship), *args], cwd=ROOT)
 
 
 if __name__ == "__main__":
