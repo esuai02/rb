@@ -152,8 +152,9 @@ def duplicate_reward(tree, rules, config) -> list[str]:
     for f in tree.luau:
         out += [f"{f.rel}:{f.tokens[i].line} 보상 모듈 {name} 의 멤버를 값을 알 수 없는 방식으로 고른다 — 어떤 함수인지 검사할 수 없다"
                 for i, name in resolve.dynamic_member_calls(f, _module_names(f, module))]
-        out += [f"{f.rel}:{f.tokens[i].line} 보상 지급 함수를 부르지 않고 값으로 넘긴다 — 어디서·어떤 판정 뒤에 주는지 검사할 수 없다"
-                for i in resolve.passed_as_value(f, {(name, "grant") for name in _module_names(f, module)})]
+        if f.name != module:
+            out += [f"{f.rel}:{f.tokens[i].line} {what} — 보상 지급은 `{module}.grant(…)` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)"
+                    for i, what in resolve.shape_violations(f, module, {"grant"})]
         for i in grant_calls(f, module):
             args = luau.call_args(f.tokens, i)
             literal = [a[0] if len(a) == 1 and a[0].kind == STRING else None for a in args]

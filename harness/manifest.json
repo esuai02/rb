@@ -3510,6 +3510,50 @@
           "replace": "if MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) == nil then"
         }
       ]
+    },
+    {
+      "id": "D-two-level-grant-value",
+      "class": "두 단계 별칭으로 값 전달한 보상 지급",
+      "expected": [
+        "server.duplicate_reward"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local g = RewardService.grant\nlocal h = g\npcall(h, nil, \"reward.explorer_card\", \"m.gate_open\")\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-two-level-analytics-value",
+      "class": "두 단계 별칭으로 값 전달한 분석 전송",
+      "expected": [
+        "analytics.calls"
+      ],
+      "edits": [
+        {
+          "file": "src/server/MissionService.luau",
+          "find": "return MissionService\n",
+          "replace": "local send = Analytics.log\nlocal send2 = send\npcall(send2, nil, \"not_allowed\", {})\n\nreturn MissionService\n"
+        }
+      ]
+    },
+    {
+      "id": "D-two-level-text-value",
+      "class": "두 단계 별칭으로 값 전달한 문구 조회",
+      "expected": [
+        "i18n.missing_key",
+        "safety.url"
+      ],
+      "note": "별칭을 거쳐 넘긴 글자는 문구 키 자리로 보지 않으므로 도메인 꼴로도 걸린다 — 두 검사가 모두 맞다",
+      "edits": [
+        {
+          "file": "src/client/Hud.client.luau",
+          "find": "sendCell(2, 1)\n",
+          "replace": "local get = Text.get\nlocal use = get\npcall(use, \"goal.missing\")\nsendCell(2, 1)\n"
+        }
+      ]
     }
   ]
 }

@@ -83,6 +83,7 @@
  },
  "D-analytics-alias": {
   "analytics.calls": [
+   "src/server/MissionService.luau:5 모듈 Analytics 을 다른 이름(tracker)에 다시 담는다 — 분석은 `Analytics.log(…)` · `Analytics.funnel(…)` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)",
    "src/server/MissionService.luau:26 이벤트 player_profile 가 허용 목록(specs/analytics/events.yaml)에 없다"
   ]
  },
@@ -132,6 +133,7 @@
  },
  "D-analytics-method-alias": {
   "analytics.calls": [
+   "src/server/MissionService.luau:5 Analytics.log 를 다른 이름(send)에 담는다 — 분석은 `Analytics.log(…)` · `Analytics.funnel(…)` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)",
    "src/server/MissionService.luau:26 이벤트 player_profile 가 허용 목록(specs/analytics/events.yaml)에 없다"
   ]
  },
@@ -167,7 +169,7 @@
  },
  "D-analytics-passed-as-value": {
   "analytics.calls": [
-   "src/server/MissionService.luau:27 분석 전송 함수를 부르지 않고 값으로 넘긴다 — 어떤 이벤트를 보내는지 검사할 수 없다"
+   "src/server/MissionService.luau:27 Analytics 의 함수를 부르지 않고 값으로 넘긴다 — 분석은 `Analytics.log(…)` · `Analytics.funnel(…)` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)"
   ]
  },
  "D-analytics-pii": {
@@ -182,6 +184,8 @@
  },
  "D-analytics-two-step-alias": {
   "analytics.calls": [
+   "src/server/MissionService.luau:5 Analytics.log 를 다른 이름(send)에 담는다 — 분석은 `Analytics.log(…)` · `Analytics.funnel(…)` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)",
+   "src/server/MissionService.luau:6 Analytics.log 를 다른 이름(send2)에 담는다 — 분석은 `Analytics.log(…)` · `Analytics.funnel(…)` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)",
    "src/server/MissionService.luau:27 이벤트 player_profile 가 허용 목록(specs/analytics/events.yaml)에 없다"
   ]
  },
@@ -687,7 +691,7 @@
  },
  "D-grant-passed-as-value": {
   "server.duplicate_reward": [
-   "src/server/Main.server.luau:18 보상 지급 함수를 부르지 않고 값으로 넘긴다 — 어디서·어떤 판정 뒤에 주는지 검사할 수 없다"
+   "src/server/Main.server.luau:18 RewardService 의 함수를 부르지 않고 값으로 넘긴다 — 보상 지급은 `RewardService.grant(…)` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)"
   ]
  },
  "D-hard-sentence": {
@@ -1526,11 +1530,13 @@
  },
  "D-split-analytics-alias": {
   "analytics.calls": [
+   "src/server/MissionService.luau:28 Analytics.log 를 다른 이름(send)에 담는다 — 분석은 `Analytics.log(…)` · `Analytics.funnel(…)` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)",
    "src/server/MissionService.luau:29 이벤트 player_profile 가 허용 목록(specs/analytics/events.yaml)에 없다"
   ]
  },
  "D-split-reward-alias": {
   "server.duplicate_reward": [
+   "src/server/Main.server.luau:19 RewardService.grant 를 다른 이름(grant)에 담는다 — 보상 지급은 `RewardService.grant(…)` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)",
    "src/server/MissionService.luau:21 보상 reward.explorer_card(m.gate_open)를 주는 호출이 2곳이다 (src/server/Main.server.luau:20, src/server/MissionService.luau:21) — 한 곳에서만"
   ],
   "server.reward_after_verdict": [
@@ -1554,11 +1560,14 @@
  },
  "D-text-alias-chain": {
   "i18n.missing_key": [
+   "src/client/Hud.client.luau:5 Text.get 를 다른 이름(get)에 담는다 — 문구는 `Text.get(\"키\")` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)",
+   "src/client/Hud.client.luau:6 Text.get 를 다른 이름(use)에 담는다 — 문구는 `Text.get(\"키\")` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)",
    "src/client/Hud.client.luau:14 문구 키 goal.missing 가 LocalizationTable 에 없다"
   ]
  },
  "D-text-function-alias": {
   "i18n.missing_key": [
+   "src/client/Hud.client.luau:5 Text.get 를 다른 이름(get)에 담는다 — 문구는 `Text.get(\"키\")` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)",
    "src/client/Hud.client.luau:13 문구 키 goal.missing 가 LocalizationTable 에 없다"
   ]
  },
@@ -1583,8 +1592,31 @@
    "label.coordinate.line[qps-ploc] 번역 금지 조각이 원문과 다르다 (원문 ['(2, 1)'] · 번역 [])"
   ]
  },
+ "D-two-level-analytics-value": {
+  "analytics.calls": [
+   "src/server/MissionService.luau:27 Analytics.log 를 다른 이름(send)에 담는다 — 분석은 `Analytics.log(…)` · `Analytics.funnel(…)` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)",
+   "src/server/MissionService.luau:28 Analytics.log 를 다른 이름(send2)에 담는다 — 분석은 `Analytics.log(…)` · `Analytics.funnel(…)` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)"
+  ]
+ },
+ "D-two-level-grant-value": {
+  "server.duplicate_reward": [
+   "src/server/MissionService.luau:27 RewardService.grant 를 다른 이름(g)에 담는다 — 보상 지급은 `RewardService.grant(…)` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)",
+   "src/server/MissionService.luau:28 RewardService.grant 를 다른 이름(h)에 담는다 — 보상 지급은 `RewardService.grant(…)` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)"
+  ]
+ },
+ "D-two-level-text-value": {
+  "i18n.missing_key": [
+   "src/client/Hud.client.luau:15 Text.get 를 다른 이름(get)에 담는다 — 문구는 `Text.get(\"키\")` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)",
+   "src/client/Hud.client.luau:16 Text.get 를 다른 이름(use)에 담는다 — 문구는 `Text.get(\"키\")` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)"
+  ],
+  "safety.url": [
+   "src/client/Hud.client.luau:17 URL 이나 도메인 'goal.missing' 이 있다"
+  ]
+ },
  "D-two-step-grant-alias": {
   "server.duplicate_reward": [
+   "src/server/Main.server.luau:7 RewardService.grant 를 다른 이름(g)에 담는다 — 보상 지급은 `RewardService.grant(…)` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)",
+   "src/server/Main.server.luau:8 RewardService.grant 를 다른 이름(h)에 담는다 — 보상 지급은 `RewardService.grant(…)` 로 바로 부른다(사람 결정 Q3-SHAPE-RULES)",
    "src/server/MissionService.luau:21 보상 reward.explorer_card(m.gate_open)를 주는 호출이 2곳이다 (src/server/Main.server.luau:23, src/server/MissionService.luau:21) — 한 곳에서만"
   ],
   "server.reward_after_verdict": [

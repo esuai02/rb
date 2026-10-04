@@ -6,7 +6,7 @@
 """
 from __future__ import annotations
 
-from harness.luau import NAME, NUMBER, STRING, SYMBOL, Token
+from harness.luau import NAME, NUMBER, STRING, SYMBOL, Token, balanced
 
 UNRESOLVED = object()   # 여러 번 묶였거나 알 수 없는 값
 
@@ -202,6 +202,44 @@ def expression_value(tokens: list[Token], start: int, known: dict[str, object]) 
 def names_for(known: dict[str, object], path: tuple[str, ...]) -> set[str]:
     """그 경로를 가리키는 이름 모두 — `local R = RewardService` 도, `local g = R.grant` 도."""
     return {path[0]} | {name for name, value in known.items() if isinstance(value, tuple) and tuple(value) == tuple(path)}
+
+
+def require_bound(tokens: list[Token], module: str) -> set[str]:
+    """`local X = require(….Module)` 로 그 모듈을 받은 이름."""
+    out = set()
+    for i in range(len(tokens) - 4):
+        if (tokens[i].kind == NAME and tokens[i].text == "local" and tokens[i + 1].kind == NAME and tokens[i + 2].text == "="
+                and tokens[i + 3].kind == NAME and tokens[i + 3].text == "require" and tokens[i + 4].text == "("):
+            names = [x.text for x in balanced(tokens, i + 4) if x.kind == NAME]
+            if names and names[-1] == module:
+                out.add(tokens[i + 1].text)
+    return out
+
+
+def shape_violations(f, module: str, members: set[str]) -> list[tuple[int, str]]:
+    """신뢰 모듈의 함수는 `모듈.함수(…)` 로 바로 부르는 꼴만 받는다 (사람 결정 Q3-SHAPE-RULES).
+
+    모듈을 다른 이름에 다시 담기 · 함수를 다른 이름에 담기 · 부르지 않고 값으로 넘기기는 모두 거부한다.
+    별칭을 한 단계씩 따라가며 막던 방식은 단계가 늘 때마다 구멍이 났다 — 별칭 자체를 받지 않는다.
+    돌려주는 것: (토큰 번호, 무엇을 했는가).
+    """
+    toks, bound = f.tokens, require_bound(f.tokens, module) | {module}
+
+    def declared_at(name: str) -> int:
+        return next((k for k in range(len(toks) - 1) if toks[k].kind == NAME and toks[k].text == name
+                     and toks[k + 1].kind == SYMBOL and toks[k + 1].text == "="), 0)
+
+    out = []
+    for name, value in sorted(f.resolved.items()):
+        if name in bound or not isinstance(value, tuple) or not value:
+            continue
+        if len(value) == 1 and value[0] in bound:
+            out.append((declared_at(name), f"모듈 {module} 을 다른 이름({name})에 다시 담는다"))
+        elif len(value) == 2 and value[0] in bound and value[1] in members:
+            out.append((declared_at(name), f"{module}.{value[1]} 를 다른 이름({name})에 담는다"))
+    out += [(i, f"{module} 의 함수를 부르지 않고 값으로 넘긴다")
+            for i in passed_as_value(f, {(b, m) for b in bound for m in members})]
+    return out
 
 
 def passed_as_value(f, paths: set[tuple[str, ...]]) -> list[int]:
