@@ -145,33 +145,24 @@ def external_call(tree, rules, config) -> list[str]:
                 for name, value in sorted(f.resolved.items()) if isinstance(value, str) and value in names]
         for i, value in _services(f):
             if not isinstance(value, str):
-                out.append(f"{f.rel}:{f.tokens[i].line} 어떤 서비스를 가져오는지 알 수 없다 — GetService 인자는 글자 그대로여야 한다")
+                out.append(f"{f.rel}:{f.tokens[i].line} 어떤 서비스를 가져오는지 알 수 없다 — {f.tokens[i].text} 인자는 글자 그대로여야 한다")
             elif value in names:
                 out.append(f"{f.rel}:{f.tokens[i].line} 런타임 외부 호출·생성형 AI {value} 를 가져온다 — 조각을 나눠 조립해도 같다")
-        out += [f"{f.rel}:{f.tokens[i].line} 서비스 {name} 의 멤버를 값을 알 수 없는 방식으로 부른다 — 외부 호출인지 검사할 수 없다"
-                for i, name in resolve.dynamic_member_calls(f, _service_names(f))]
+        out += [f"{f.rel}:{f.tokens[i].line} {name} 의 멤버를 값을 알 수 없는 키로 꺼낸다 — 이 파일에서 `local 이름 = {{…}}` 로 만든 표가 아니면 "
+                f"무엇을 부르는지(외부 호출인지) 검사할 수 없다"
+                for i, name in resolve.unreadable_reads(f)]
     return out
 
 
 def _services(f) -> list[tuple[int, object]]:
-    """GetService 호출마다 (토큰 번호, 풀린 서비스 이름). 풀리지 않으면 resolve.UNRESOLVED."""
+    """GetService·FindService 호출마다 (토큰 번호, 풀린 서비스 이름). 풀리지 않으면 resolve.UNRESOLVED."""
     out = []
     for i, tok in enumerate(f.tokens):
-        if not (tok.kind == NAME and tok.text == "GetService" and i + 1 < len(f.tokens) and f.tokens[i + 1].text == "("):
+        if not (tok.kind == NAME and tok.text in ("GetService", "FindService") and i + 1 < len(f.tokens) and f.tokens[i + 1].text == "("):
             continue
         args = luau.call_args(f.tokens, i)
         value, _has_text = resolve.expression_value(args[0], 0, f.resolved) if args else (resolve.UNRESOLVED, False)
         out.append((i, value))
-    return out
-
-
-def _service_names(f) -> set[str]:
-    """GetService 의 결과를 담은 이름 — 그 이름의 멤버를 동적으로 부르면 어떤 외부 호출인지 알 수 없다."""
-    toks, out = f.tokens, set()
-    for i in range(len(toks) - 4):
-        if toks[i].kind == NAME and toks[i].text == "local" and toks[i + 1].kind == NAME and toks[i + 2].text == "=" \
-                and any(t.kind == NAME and t.text == "GetService" and t.line == toks[i].line for t in toks[i + 3:i + 8]):
-            out.add(toks[i + 1].text)
     return out
 
 
@@ -214,12 +205,26 @@ def random_or_paid_reward(tree, rules, config) -> list[str]:
         roots = {path[0] for path in RANDOM_PATHS} | {alias for path in RANDOM_PATHS for alias in resolve.names_for(f.resolved, (path[0],))}
         out += [f"{f.rel}:{f.tokens[i].line} 난수 원천 {name} 의 멤버를 값을 알 수 없는 방식으로 고른다 — 난수를 쓰는지 검사할 수 없다"
                 for i, name in resolve.dynamic_member_calls(f, roots)]
-        out += [f"{f.rel}:{f.tokens[k].line} 난수 원천을 다른 이름({f.tokens[k].text})에 담았다 — 이름을 바꿔도 난수다" for k in range(len(f.tokens) - 4)
-                if f.tokens[k].kind == NAME and f.tokens[k + 1].text == "=" and _is_random_source(f.tokens, k + 2)]
+        out += [f"{f.rel}:{f.tokens[k].line} " + (f"난수 원천을 다른 이름({holder})에 담았다 — 이름을 바꿔도 난수다" if holder
+                                                  else "난수 원천을 부르지 않고 다른 이름·표에 담거나 값으로 넘긴다 — 이름을 바꿔도 난수다")
+                for k, holder in _random_values(f.tokens)]
     return out
 
 
-def _is_random_source(tokens, i: int) -> bool:
-    """i 자리가 math.random · Random.new (호출하지 않고 이름만 꺼내는 꼴)인가."""
-    return any(tokens[i].kind == NAME and tokens[i].text == head and tokens[i + 1].text == "." and tokens[i + 2].text == tail
-               and tokens[i + 3].text != "(" for head, tail in RANDOM_PATHS)
+def _random_values(tokens) -> list[tuple[int, str | None]]:
+    """math.random · Random.new 를 부르지 않고 꺼내는 자리 — (토큰 번호, 담는 이름 또는 None).
+
+    `이름 = math.random` 만 보던 것을 바꿨다: 여러 이름 선언·표에 담기·인자로 넘기기도 같은 일이다 (리뷰 R-Q3 33차 형제 변형).
+    """
+    out = []
+    for i in range(len(tokens) - 2):
+        before = tokens[i - 1] if i else None
+        if before is not None and (before.text in (".", ":") or (before.kind == NAME and before.text == "function")):
+            continue
+        for head, tail in RANDOM_PATHS:
+            if not (tokens[i].kind == NAME and tokens[i].text == head and tokens[i + 1].text == "." and tokens[i + 2].text == tail):
+                continue
+            after = tokens[i + 3] if i + 3 < len(tokens) else None
+            if after is None or not (after.text in ("(", "{") or after.kind == STRING):
+                out.append((i, resolve.held_by(tokens, i)))
+    return out

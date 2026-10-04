@@ -12,13 +12,14 @@ import re
 import shutil
 import sys
 import tempfile
+import types
 import unittest
 from fractions import Fraction
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from harness import luau, run, source  # noqa: E402
+from harness import luau, resolve, run, source  # noqa: E402
 from harness.checks import REGISTRY, i18n, math_claims  # noqa: E402
 
 FIXTURES = ROOT / "harness" / "fixtures"
@@ -50,19 +51,19 @@ EXPECTED_DEFECTS = {
     "D-conditions-not-a-table": ("표가 아닌 조건", ("math.conditions",), "조건(conditions)은 '이름: 값' 표여야 한다"),
     "D-bracket-property-non-instance": ("비인스턴스 객체의 알 수 없는 속성 이름", ("i18n.hardcoded_text",), "속성 이름을 값을 알 수 없는 방식으로 고른다"),
     "D-analytics-module-impostor": ("이름만 분석 모듈인 Script", ("analytics.calls",), "정해진 자리(src/server/Analytics.luau)의 ModuleScript 가 아니다"),
-    "D-random-alias-dynamic-member": ("난수 원천 별칭의 동적 멤버", ("safety.random_or_paid_reward",), "난수 원천 R 의 멤버를 값을 알 수 없는 방식으로 고른다"),
+    "D-random-alias-dynamic-member": ("난수 원천 별칭의 동적 멤버", ("safety.external_call", "safety.random_or_paid_reward"), "난수 원천 R 의 멤버를 값을 알 수 없는 방식으로 고른다"),
     "D-project-path-not-a-string": ("글자가 아닌 Rojo $path", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "$path 는 글자여야 한다"),
     "D-dynamic-member-handler": ("동적 멤버에 대입한 원격 처리", ("i18n.hardcoded_text", "server.remote_validation"), "에 처리 함수를 대입했다"),
     "D-analytics-dynamic-platform-member": ("분석 모듈 안의 동적 플랫폼 멤버", ("analytics.calls", "safety.external_call"), "어떤 전송 함수인지 검사할 수 없다"),
-    "D-ui-text-from-bracket-call": ("대괄호 멤버로 부른 UI 문구", ("i18n.hardcoded_text",), "허용된 문구 키 호출이 아닌 함수의 결과를 넣는다"),
+    "D-ui-text-from-bracket-call": ("대괄호 멤버로 부른 UI 문구", ("i18n.hardcoded_text", "safety.external_call"), "허용된 문구 키 호출이 아닌 함수의 결과를 넣는다"),
     "D-direct-require-grant": ("직접 require 로 부른 보상 지급", ("server.reward_after_verdict",), "서버 판정"),
     "D-direct-require-analytics": ("직접 require 로 부른 분석 이벤트", ("analytics.calls",), "이벤트 not_allowed_event 가 허용 목록"),
     "D-direct-require-text-key": ("직접 require 로 부른 끊긴 번역 키", ("i18n.missing_key",), "문구 키 goal.missing_key 가 LocalizationTable 에 없다"),
-    "D-dynamic-table-field": ("값을 알 수 없는 키로 읽은 표 입력", ("server.remote_validation",), "값을 알 수 없는 키로 읽는다 — 계약의 어느 필드인지"),
+    "D-dynamic-table-field": ("값을 알 수 없는 키로 읽은 표 입력", ("safety.external_call", "server.remote_validation"), "값을 알 수 없는 키로 읽는다 — 계약의 어느 필드인지"),
     "D-assembled-external-name": ("조립해 만든 외부 호출 이름", ("safety.external_call",), "런타임 외부 호출·생성형 AI TextGenerator 다 — 이름을 조립해도 같다"),
     "D-assembled-paid-name": ("조립해 만든 유료 서비스 이름", ("safety.random_or_paid_reward",), "결제·구독 조건 MarketplaceService 다 — 이름을 조립해도 같다"),
     "D-fullwidth-sentence-count": ("전각 종결 부호로 숨긴 긴 문구", ("text.readability",), "문장이 4개다"),
-    "D-reward-module-in-a-table": ("표에 담은 보상 모듈", ("server.reward_authority",), "보상 모듈 RewardService 을 표·멤버에 담는다"),
+    "D-reward-module-in-a-table": ("표에 담은 보상 모듈", ("server.duplicate_reward", "server.reward_authority"), "보상 모듈 RewardService 을 표·멤버에 담는다"),
     "D-analytics-module-in-a-table": ("표에 담은 분석 모듈", ("analytics.calls",), "분석 모듈 Analytics 을 표·멤버에 담는다"),
     "D-text-module-in-a-table": ("표에 담은 문구 모듈", ("i18n.missing_key",), "문구 모듈 Text 을 표·멤버에 담는다"),
     "D-mapping-escapes-src": ("src 밖으로 빠져나가는 매핑", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "실제로 가리키는 자리는 소스 폴더(src/) 밖이다"),
@@ -139,12 +140,12 @@ EXPECTED_DEFECTS = {
     "D-double-mapped-file": ("같은 파일을 두 곳에 싣는 매핑", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "src/shared/Localization.csv: 같은 파일을 Replicat"),
     "D-double-negated-cooldown": ("두 번 뒤집은 쿨다운", ("server.remote_cooldown",), "쿨다운 결과로 멈추지 않는다"),
     "D-duplicate-reward": ("중복 보상", ("server.duplicate_reward", "server.reward_after_verdict"), "보상 reward.explorer_card(m.gate_open)를 주는 호출이"),
-    "D-dynamic-analytics-member": ("값을 알 수 없는 분석 멤버", ("analytics.calls",), "분석 모듈 Analytics 의 멤버를 값을 알 수 없는 방식으로 고른다"),
+    "D-dynamic-analytics-member": ("값을 알 수 없는 분석 멤버", ("analytics.calls", "safety.external_call"), "분석 모듈 Analytics 의 멤버를 값을 알 수 없는 방식으로 고른다"),
     "D-dynamic-authority-member": ("동적 멤버로 쓴 보상 권한", ("safety.external_call", "server.reward_authority"), "값을 알 수 없는 방식으로"),
     "D-dynamic-remote-member": ("변수로 만든 대괄호 원격 등록", ("server.remote_cooldown", "server.remote_validation"), "원격 이벤트 처리가 Cooldown.allow 를 거치지 않는다 (연타·자동 반"),
-    "D-dynamic-reward-member": ("값을 알 수 없는 보상 멤버", ("server.duplicate_reward",), "보상 모듈 RewardService 의 멤버를 값을 알 수 없는 방식으로 고른다"),
+    "D-dynamic-reward-member": ("값을 알 수 없는 보상 멤버", ("safety.external_call", "server.duplicate_reward"), "보상 모듈 RewardService 의 멤버를 값을 알 수 없는 방식으로 고른다"),
     "D-dynamic-text-member": ("변수로 고른 문구 함수", ("i18n.missing_key",), "문구 키 goal.missing 가 LocalizationTable 에 없다"),
-    "D-dynamic-text-member-unresolved": ("값을 알 수 없는 문구 멤버", ("i18n.hardcoded_text", "i18n.missing_key"), "UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다"),
+    "D-dynamic-text-member-unresolved": ("값을 알 수 없는 문구 멤버", ("i18n.hardcoded_text", "i18n.missing_key", "safety.external_call"), "UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다"),
     "D-else-reward": ("판정의 else 가지에서 보상", ("server.reward_after_verdict",), "원격 처리가 서버 판정(MissionService.coordinateMove ·"),
     "D-equals-false-verdict": ("판정이 거짓(== false)인 가지에서 보상", ("server.reward_after_verdict",), "원격 처리가 서버 판정(MissionService.coordinateMove ·"),
     "D-fraction-line-untied": ("대사와 묶이지 않은 분수 계수", ("math.truth",), "claim.line.point: 분수 계수는 수로 대사와 묶을 수 없다"),
@@ -200,7 +201,7 @@ EXPECTED_DEFECTS = {
     "D-ui-text-literal": ("UI 글자 속성에 바로 넣은 문구", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 문구 'Start' 를 바로 넣었다"),
     "D-ui-text-variable": ("변수로 넣은 UI 문구", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 문구 'Open_Gate' 를 바로 넣었다"),
     "D-unknown-analytics-function": ("분석 모듈의 모르는 함수", ("analytics.calls",), "분석 모듈의 모르는 함수 raw 를 부른다"),
-    "D-unknown-remote-member": ("값을 알 수 없는 멤버에 건 원격 처리", ("server.remote_validation",), "값을 알 수 없는 멤버에 처리 함수를 이었다"),
+    "D-unknown-remote-member": ("값을 알 수 없는 멤버에 건 원격 처리", ("safety.external_call", "server.remote_validation"), "값을 알 수 없는 멤버에 처리 함수를 이었다"),
     "D-unranged-remote": ("범위를 검사하지 않는 원격 입력", ("server.remote_validation",), "원격 입력 x 의 범위를 처리 전에 검사하지 않는다 (INV-4 타입·범위)"),
     "D-unreadable-model": ("검사할 수 없는 이진 모델", ("analytics.calls", "i18n.do_not_translate", "i18n.hardcoded_text", "i18n.length_budget", "i18n.missing_key", "math.conditions", "math.truth", "safety.banned_terms", "safety.external_call", "safety.free_text", "safety.random_or_paid_reward", "safety.url", "server.duplicate_reward", "server.remote_cooldown", "server.remote_validation", "server.reward_after_verdict", "server.reward_authority", "text.readability"), "src/shared/Widget.rbxm: Rojo 가 싣는 이진 모델이라 검사"),
     "D-unresolved-ui-text": ("UI 로 흘러가는 알 수 없는 조립 글자", ("i18n.hardcoded_text",), "UI 글자 속성 .Text 에 허용된 문구 키 호출이 아닌 함수의 결과를 넣는다"),
@@ -220,6 +221,15 @@ EXPECTED_DEFECTS = {
     "D-wrong-math": ("틀린 수학 대사", ("math.truth",), "claim.coordinate.label: 명제가 거짓이다 (E1)"),
     "D-wrong-type-guard": ("계약과 다른 종류로 한 검사", ("server.remote_validation",), "원격 입력 x 를 string 로 검사하지만 계약은 number 다"),
     "D-zero-width-banned": ("폭 0 문자를 끼운 금지어", ("safety.banned_terms",), "resp.gate_open[Source] 금지어 ['입국', '심사']"),
+    "D-newline-grant-alias": ("줄바꿈한 별칭에 담은 보상 지급", ("server.duplicate_reward",), "RewardService.grant 를 다른 이름(g)에 담는다"),
+    "D-newline-text-alias": ("줄바꿈한 별칭에 담은 문구 조회", ("i18n.missing_key",), "Text.get 를 다른 이름(use)에 담는다"),
+    "D-newline-analytics-alias": ("줄바꿈한 별칭에 담은 분석 전송", ("analytics.calls",), "Analytics.log 를 다른 이름(send)에 담는다"),
+    "D-split-service-dynamic-member": ("나눠 대입한 서비스의 동적 멤버", ("safety.external_call",), "svc 의 멤버를 값을 알 수 없는 키로 꺼낸다"),
+    "D-parent-dynamic-member": ("부모를 거쳐 값을 알 수 없는 키로 꺼낸 멤버", ("safety.external_call",), "Parent 의 멤버를 값을 알 수 없는 키로 꺼낸다"),
+    "D-paren-require-grant": ("괄호로 감싼 require 로 받은 보상 모듈", ("server.duplicate_reward",), "모듈 RewardService 을 `local 이름 = require(…)` 가 아닌 꼴로 받는다"),
+    "D-table-field-grant": ("표 멤버에 담은 보상 지급", ("server.duplicate_reward",), "RewardService.grant 를 다른 이름(t.g)에 담는다"),
+    "D-compound-built-class-name": ("복합 대입으로 조립한 인스턴스 이름", ("safety.free_text",), "클래스 이름을 글자 그대로 알 수 없다"),
+    "D-multi-local-random-alias": ("여러 이름 local 에 담은 난수 원천", ("safety.random_or_paid_reward",), "난수 원천을 부르지 않고 다른 이름·표에 담거나 값으로 넘긴다"),
 }
 # 심은 결함 종류 전체 — 매니페스트와 따로 둔다. 하나를 지우면 이 묶음과 어긋나 시험이 실패한다 (리뷰 R-Q3 29차)
 FROZEN_CLASSES = frozenset({
@@ -407,6 +417,15 @@ FROZEN_CLASSES = frozenset({
     "허용 밖 분석 이벤트",
     "허용 밖 함수가 만든 UI 문구",
     "호출하지 않은 중복 방지",
+    "줄바꿈한 별칭에 담은 보상 지급",
+    "줄바꿈한 별칭에 담은 문구 조회",
+    "줄바꿈한 별칭에 담은 분석 전송",
+    "나눠 대입한 서비스의 동적 멤버",
+    "부모를 거쳐 값을 알 수 없는 키로 꺼낸 멤버",
+    "괄호로 감싼 require 로 받은 보상 모듈",
+    "표 멤버에 담은 보상 지급",
+    "복합 대입으로 조립한 인스턴스 이름",
+    "여러 이름 local 에 담은 난수 원천",
 })
 
 ITEM_IDS = {f"E{i}" for i in range(1, 7)} | {f"U{i}" for i in range(1, 15)}
@@ -708,6 +727,24 @@ class RecordTest(TreeCase):
             for secret in (str(tree), str(Path.home()), str(tree.parent)):
                 self.assertNotIn(secret, body)
 
+    def test_scrub_removes_every_absolute_path_shape(self):
+        """Windows 드라이브·UNC·공백 낀 디렉터리·따옴표 안 경로·저장소 경로가 기록에 남지 않는다 (리뷰 R-Q3 33차)."""
+        root = Path("/nonexistent/tree")
+        cases = [(r"C:\Users\Alice\project\src", ("Alice", "project")),
+                 ("C:/Users/Alice/project/x.luau", ("Alice", "project")),
+                 (r"\\server\share\Alice Docs\f.txt", ("server", "Alice", "Docs")),
+                 ("/home/alice/My Project/file.txt", ("alice", "Project", "file.txt")),
+                 ("No such file: '/home/alice/My Project/a b.txt'", ("alice", "Project", "a b.txt")),
+                 (str(run.REPO / "specs" / "x.yaml"), (str(run.REPO),))]
+        for text, secrets in cases:
+            with self.subTest(text=text):
+                out = run.scrub(root, text)
+                for secret in secrets:
+                    self.assertNotIn(secret, out)
+        for keep in ("- src/server/MissionService.luau:12 보상 reward.x 를 준다", "결과 1/2", "<repo>/specs/x.yaml", "a/b 와 c"):
+            with self.subTest(keep=keep):
+                self.assertEqual(run.scrub(root, keep), keep)
+
     def test_fingerprint_changes_with_content(self):
         tree = self.make_tree()
         before = run.fingerprint(tree)
@@ -831,6 +868,64 @@ return M
             with self.subTest(src=src):
                 with self.assertRaises(luau.LuauSyntaxError):
                     luau.function_bodies(luau.tokenize(src))
+
+
+class ResolveTest(unittest.TestCase):
+    """이름 풀기 — 줄바꿈·여러 이름·다시 묶기를 따라가고, 못 풀면 UNRESOLVED 로 둔다 (리뷰 R-Q3 33차)."""
+
+    @staticmethod
+    def resolved(src: str) -> dict:
+        return resolve.resolve_names(luau.tokenize(src))
+
+    @staticmethod
+    def file(src: str):
+        toks = luau.tokenize(src)
+        return types.SimpleNamespace(tokens=toks, resolved=resolve.resolve_names(toks))
+
+    def test_multiline_declarations(self):
+        r = self.resolved('local g =\n\tM.f\nlocal h\n= I.new\nlocal n = "Text" ..\n  "Box"\nlocal a = b\n.c\n')
+        self.assertEqual((r["g"], r["h"], r["n"], r["a"]), (("M", "f"), ("I", "new"), "TextBox", ("b", "c")))
+
+    def test_statement_ends_at_a_new_line(self):
+        r = self.resolved('local a = "x"\nprint(a)\nlocal b = 1\nlocal c = b\n')
+        self.assertEqual((r["a"], r["c"]), ("x", 1.0))
+
+    def test_multi_name_declarations(self):
+        r = self.resolved('local p, q = I.new, math.random\nlocal x, y = f()\nlocal u, v\nv = M.f\n')
+        self.assertEqual((r["p"], r["q"], r["v"]), (("I", "new"), ("math", "random"), ("M", "f")))
+        self.assertIs(r["y"], resolve.UNRESOLVED)
+
+    def test_rebinding_makes_a_name_unreadable(self):
+        r = self.resolved('local a = "Text"\na ..= "Box"\nlocal b = 1\nlocal t = {}\nt.k, b = 1, 2\n'
+                          'local c = 1\nc, d = 2, 3\nlocal e = x or M.f\n')
+        for name in "abce":
+            with self.subTest(name=name):
+                self.assertIs(r[name], resolve.UNRESOLVED)
+
+    def test_table_fields_are_not_rebinding(self):
+        self.assertEqual(self.resolved('local y = 5\nlocal t = {x = 1, y = 2}\n')["y"], 5.0)
+
+    def test_unreadable_reads_outside_local_tables(self):
+        f = self.file('local T = {}\nlocal U: {[string]: number} = {}\nlocal V = {}\nV = game\nlocal s = "x"\n'
+                      'print(T[k], U[k], V[k], W[k], T["a"], W[1], W[s])\nW[k] = 1\nf()[k]\n')
+        self.assertEqual([name for _i, name in resolve.unreadable_reads(f)], ["V", "W", "(식의 결과)"])
+
+    def test_trusted_module_shapes(self):
+        cases = {"RewardService.grant(p, 'a', 'b')": [],
+                 "RewardService:grant(p, 'a', 'b')": ["콜론으로 부른다"],
+                 "print(RewardService)": ["`RewardService.멤버` 가 아닌 꼴로 쓴다"],
+                 "local R =\n\tRewardService": ["다른 이름(R)에 다시 담는다"],
+                 "local a, g = 1, RewardService.grant": ["부르지 않고 값으로 넘긴다"],
+                 "local cfg = {RewardService = 1}\nRewardService = {}": [],
+                 "RewardService[k](p)": [],
+                 "local R = (require(script.RewardService))": ["가 아닌 꼴로 받는다"],
+                 "local R = require(script.RewardService)\nR.grant(p, 'a', 'b')\nR.other()": []}
+        for src, fragments in cases.items():
+            with self.subTest(src=src):
+                found = [what for _i, what in resolve.shape_violations(self.file(src), "RewardService", {"grant"})]
+                self.assertEqual(len(found), len(fragments), found)
+                for fragment, what in zip(fragments, found):
+                    self.assertIn(fragment, what)
 
 
 class LuauSyntaxTest(unittest.TestCase):
@@ -1134,6 +1229,14 @@ class CheckBranchTest(TreeCase):
         self.edit(tree, "src/server/Cooldown.luau", "local last: {[string]: number} = {}",
                   "local last: {[string]: number} = {}\nlocal roll = math.random\n")
         self.assertCaught(tree, "safety.random_or_paid_reward", "다른 이름(roll)에 담았다")
+        tree = self.make_tree()
+        self.edit(tree, "src/server/Cooldown.luau", "local last: {[string]: number} = {}",
+                  "local last: {[string]: number} = {}\nlocal ok = pcall(math.random, 1, 2)\n")
+        self.assertCaught(tree, "safety.random_or_paid_reward", "난수 원천을 부르지 않고 다른 이름·표에 담거나 값으로 넘긴다")
+        tree = self.make_tree()
+        self.edit(tree, "src/server/Main.server.luau", 'local ReplicatedStorage = game:GetService("ReplicatedStorage")\n',
+                  'local ReplicatedStorage = game:GetService("ReplicatedStorage")\nlocal found = game:FindService(script.Name)\n')
+        self.assertCaught(tree, "safety.external_call", "FindService 인자는 글자 그대로여야 한다")
         tree = self.make_tree()
         self.edit(tree, "src/client/Hud.client.luau", "sendCell(2, 1)", 'sendCell(2, 1)\nlocal link = "see www.example.org"')
         self.assertCaught(tree, "safety.url", "www.")

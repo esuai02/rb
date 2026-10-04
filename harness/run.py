@@ -85,13 +85,23 @@ def run_checks(root: Path, manifest: dict | None = None, rules: source.Rules | N
     return results
 
 
-ABSOLUTE_PATH = re.compile(r"(?<![\w<])/(?:[\w.\-]+/)+[\w.\-]*")
+# 경로 조각: 공백이 낀 디렉터리 이름(`My Project/`)도 다음 구분자까지 한 조각으로 본다 (리뷰 R-Q3 33차)
+_PART = r"[^\s/\\'\"<>]+(?: [^\s/\\'\"<>]+)*"
+QUOTED_PATH = re.compile(r"""(['"])(?:/|[A-Za-z]:[\\/]|\\\\)[^'"\n]*\1""")
+WINDOWS_PATH = re.compile(rf"(?<![\w<])(?:[A-Za-z]:|\\\\{_PART})[\\/](?:{_PART}[\\/])*[^\s\\/'\"<>]*")
+ABSOLUTE_PATH = re.compile(rf"(?<![\w<>~])/(?:{_PART}/)+[^\s'\"<>]*")
 
 
 def scrub(root: Path, text: str) -> str:
-    """기록(공개 저장소)에 로컬 경로가 남지 않게 한다 — 대상 트리·홈·그 밖의 절대 경로 모양을 모두 바꿔 쓴다 (INV-6)."""
-    for local, alias in ((str(root.resolve()), "<tree>"), (str(root), "<tree>"), (str(Path.home()), "~")):
+    """기록(공개 저장소)에 로컬 경로가 남지 않게 한다 (INV-6).
+
+    대상 트리·저장소·홈을 먼저 이름으로 바꾸고, 남은 절대 경로 모양(따옴표 안 경로 · Windows 드라이브·UNC ·
+    공백이 낀 Unix 경로)을 모두 `<path>` 로 바꾼다. 지나치게 지우는 쪽이 새는 쪽보다 낫다.
+    """
+    for local, alias in ((str(root.resolve()), "<tree>"), (str(root), "<tree>"), (str(REPO), "<repo>"), (str(Path.home()), "~")):
         text = text.replace(local, alias)
+    text = QUOTED_PATH.sub(lambda m: f"{m.group(1)}<path>{m.group(1)}", text)
+    text = WINDOWS_PATH.sub("<path>", text)
     return ABSOLUTE_PATH.sub("<path>", text)
 
 

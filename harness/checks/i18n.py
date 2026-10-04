@@ -144,21 +144,6 @@ def _ui_texts(f, start: int, end: int) -> list:
     return out
 
 
-def _table_names(f) -> set[str]:
-    """`local X = {` 로 만든 평범한 표 — 속성이 아니라 자료이므로 대괄호 대입을 막지 않는다.
-
-    형 표기가 붙은 `local X: {[string]: number} = {}` 도 같이 본다.
-    """
-    toks, out = f.tokens, set()
-    for i in range(len(toks) - 3):
-        if not (toks[i].kind == NAME and toks[i].text == "local" and toks[i + 1].kind == NAME):
-            continue
-        equals = resolve._assign_index(toks, i)
-        if equals is not None and equals + 1 < len(toks) and toks[equals + 1].text == "{":
-            out.add(toks[i + 1].text)
-    return out
-
-
 def _chain_root(toks, j: int) -> int | None:
     """j 의 여는 대괄호 바로 앞 이름 경로(A.b.c)가 시작하는 토큰 번호."""
     k = j - 1
@@ -171,7 +156,7 @@ def _chain_root(toks, j: int) -> int | None:
 
 def _bracket_assignments(f) -> list[tuple[int, int, object]]:
     """obj[키] = … 대입 — (경로 시작 토큰 번호, 오른쪽 시작 토큰 번호, 풀린 키 값). 평범한 표에 담는 것은 뺀다."""
-    toks, tables, out = f.tokens, _table_names(f), []
+    toks, tables, out = f.tokens, resolve.local_tables(f.tokens), []
     for j, tok in enumerate(toks):
         if not (tok.kind == SYMBOL and tok.text == "["):
             continue

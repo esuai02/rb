@@ -203,7 +203,7 @@ def _claim_once_shape(body, tables: set[str]) -> bool:
 
 def _claim_once_errors(f) -> list[str]:
     """claimOnce 가 정해진 꼴로 '한 번만' 을 지키는지 (사람 결정 Q3-SHAPE-RULES)."""
-    tables = i18n._table_names(f)
+    tables = resolve.local_tables(f.tokens)
     for _params, body, i in luau.function_bodies(f.tokens):
         if _declared_name(f.tokens, i) != "claimOnce":
             continue
@@ -533,7 +533,7 @@ def _dynamic_reads(f, body) -> list[str]:
 
     `local t = {}` 로 만든 제 표에서 꺼내는 것은 받은 입력이 아니므로 뺀다.
     """
-    tables, out = i18n._table_names(f), []
+    tables, out = resolve.local_tables(f.tokens), []
     for j, tok in enumerate(body):
         if not (tok.kind == SYMBOL and tok.text == "["):
             continue
