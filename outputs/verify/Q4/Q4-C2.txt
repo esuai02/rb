@@ -1,0 +1,6 @@
+criterion: Q4-C2 — 스테이징 Place 의 내용이 저장소 소스와 같다 — Rojo 로 넣은 뒤 버전 표시로 대조한다 (사람 결정 DEC-2 로 Place 를 정한 뒤에만)
+result: PASS
+observed: Rojo 7.7.1 로 world/default.project.json 을 스테이징 Place(rb-staging.rbxlx, 편집 모드) 에 넣은 뒤 Studio MCP execute_luau 로 전수 대조: Instance 15개(폴더 3·코드 11·번역표 1) 경로·종류 일치, 코드 11개 Source 길이·FNV-1a32 가 저장소 파일 바이트와 일치, 번역표 항목 81개 정규화 길이·FNV-1a32 가 Rojo 변환 결과와 일치, 비교 값 40개 어긋남 0, 세 뿌리 밖 스크립트·번역표 0. 소스에 버전 표시가 없어 전체 내용 해시로 대신함. 저장소 HEAD dc39ab6, world/ 변경 없음. 원본 outputs/verify/Q4/Q4-C2-place-vs-repo.json (sha256 3336464c…)
+source: Claude Code 세션 4dbacf45 이 2026-10-05 Studio MCP(studio 876d3f03, rb-staging.rbxlx) 에서 직접 대조. Rojo Connect·Accept 는 사람이 클릭(대화 '눌렀어' 2026-10-05)
+binding: af78c329f8a0cf2f5a5cf7d9cab56ce042b798ad380cdebc0e4b5158c249d0e2
+time: 2026-10-05T05:48:33.020911+00:00
