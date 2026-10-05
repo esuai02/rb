@@ -1,9 +1,9 @@
 {
  "criterion": "Q4-C2",
  "result": "PASS",
- "checked_at": "2026-10-05T06:47:47.020841+00:00",
- "repo_head": "07071e1",
- "world_dirty": "M world/src/client/Hud.client.luau\n M world/src/shared/Text.luau",
+ "checked_at": "2026-10-05T07:43:41.578489+00:00",
+ "repo_head": "1934b5e",
+ "world_dirty": "M world/src/server/Main.server.luau\n M world/src/server/MissionService.luau",
  "rojo": "7.7.1 (Windows serve)",
  "studio_place": "rb-staging.rbxlx",
  "compared_instances": 15,
@@ -31,14 +31,14 @@
   },
   "ServerScriptService.Gate.Main": {
    "class": "Script",
-   "len": 2627,
-   "fnv": 415950066,
+   "len": 2861,
+   "fnv": 1458553114,
    "file": "world/src/server/Main.server.luau"
   },
   "ServerScriptService.Gate.MissionService": {
    "class": "ModuleScript",
-   "len": 3678,
-   "fnv": 2432131669,
+   "len": 4882,
+   "fnv": 3059216754,
    "file": "world/src/server/MissionService.luau"
   },
   "ServerScriptService.Gate.RewardService": {
@@ -133,14 +133,14 @@
    "source_locale": "en-us"
   },
   "ServerScriptService.Gate.Main": {
-   "len": 2627,
+   "len": 2861,
    "class": "Script",
-   "fnv": 415950066
+   "fnv": 1458553114
   },
   "ServerScriptService.Gate.MissionService": {
-   "len": 3678,
+   "len": 4882,
    "class": "ModuleScript",
-   "fnv": 2432131669
+   "fnv": 3059216754
   },
   "ReplicatedStorage.Shared": {
    "class": "Folder"

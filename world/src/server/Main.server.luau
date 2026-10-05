@@ -24,13 +24,24 @@ local REACH = 12   -- 정본 값 cv.server_distance.server_check_studs — 화�
 local world = WorldBuilder.build()
 MissionService.bind(world, ResultRemote)
 
+local found = world:FindFirstChild("SignalPanel", true)
+local panelPart: BasePart? = if found and found:IsA("BasePart") then found else nil
+
+-- 거리는 서버가 다시 잰다(표시용 값은 믿지 않는다, cv.rule_source)
+local function nearPanel(player: Player): boolean
+	local character = player.Character
+	local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
+	if not (panelPart and root and root:IsA("BasePart")) then return false end
+	return (root.Position - panelPart.Position).Magnitude <= REACH
+end
+
+-- 고른 칸은 신호 패널을 켤 때 보낸다 — 패널 곁에서 온 것만 받는다. 진행 순서는 MissionService 가 확인한다.
 local function onSignal(player: Player, x: unknown, y: unknown)
 	if typeof(x) ~= "number" or typeof(y) ~= "number" then return end
 	if x < -GRID or x > GRID or y < -GRID or y > GRID then return end
+	if not nearPanel(player) then return end
 	if not Cooldown.allow(player, "signal") then return end
-	if MissionService.coordinateMove(player, {x = x :: number, y = y :: number}) then
-		MissionService.openGate(player)
-	end
+	MissionService.coordinateMove(player, {x = x :: number, y = y :: number})
 end
 
 local function onSlope(player: Player, choice: unknown)
@@ -41,12 +52,9 @@ local function onSlope(player: Player, choice: unknown)
 	end
 end
 
--- 신호 패널은 다가가서 켠다. 거리는 서버가 다시 재고(표시용 값은 믿지 않는다, cv.rule_source), 연타는 쿨다운이 막는다.
-local function onPanel(player: Player, panel: BasePart)
-	local character = player.Character
-	local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
-	if not (root and root:IsA("BasePart")) then return end
-	if (root.Position - panel.Position).Magnitude > REACH then return end
+-- 신호 패널은 다가가서 켠다. 연타는 쿨다운이 막는다.
+local function onPanel(player: Player)
+	if not nearPanel(player) then return end
 	if not Cooldown.allow(player, "panel") then return end
 	MissionService.activatePanel(player)
 end
@@ -54,12 +62,7 @@ end
 SignalRemote.OnServerEvent:Connect(onSignal)
 SlopeRemote.OnServerEvent:Connect(onSlope)
 
-local panelPart = world:FindFirstChild("SignalPanel", true)
-if panelPart and panelPart:IsA("BasePart") then
-	local prompt = panelPart:FindFirstChild("ActivatePrompt")
-	if prompt and prompt:IsA("ProximityPrompt") then
-		prompt.Triggered:Connect(function(player: Player)
-			onPanel(player, panelPart)
-		end)
-	end
+local prompt = if panelPart then panelPart:FindFirstChild("ActivatePrompt") else nil
+if prompt and prompt:IsA("ProximityPrompt") then
+	prompt.Triggered:Connect(onPanel)
 end

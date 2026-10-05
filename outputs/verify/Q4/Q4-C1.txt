@@ -1,8 +1,8 @@
 criterion: Q4-C1 — 저장소 소스(default.project.json · src/ · content/)가 Q3 Harness 18개 검사를 위반 0 으로 통과하고, 미션·용어·분석 이벤트·정본 값이 잠긴 Q2 명세와 같으며, 번역표 CSV 는 용어집에서 생성한 결과와 한 글자도 다르지 않다 (DEC-8: 저장소 파일이 정본)
 command: python3 -m unittest tests.test_world_source -v
 exit: 0
-binding: 4539e4c4d3e7b5b6267870998698377ae955f70366a0a12045a01758680f0bc8
-time: 2026-10-05T06:47:17.418250+00:00
+binding: 41c857bf980b9eb4af3ebba3a88ac8b6e028305041e007d87c495c493d0d0b28
+time: 2026-10-05T07:43:16.581755+00:00
 
 test_events_are_in_the_allowlist (tests.test_world_source.AnalyticsEventTest.test_events_are_in_the_allowlist) ... ok
 test_funnel_events_use_the_funnel_sender (tests.test_world_source.AnalyticsEventTest.test_funnel_events_use_the_funnel_sender) ... ok
@@ -26,6 +26,6 @@ test_missions_match_the_locked_graph (tests.test_world_source.MissionDataTest.te
 test_terms_match_the_locked_graph (tests.test_world_source.MissionDataTest.test_terms_match_the_locked_graph) ... ok
 
 ----------------------------------------------------------------------
-Ran 19 tests in 1.598s
+Ran 19 tests in 1.517s
 
 OK
