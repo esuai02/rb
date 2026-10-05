@@ -1,0 +1,160 @@
+scope: source/design/environment checks; test approval messages are temporary fixtures
+command: python3 tools/check.py
+exit: 0
+time: 2026-10-05T13:12:06.913005+00:00
+
+PASS  Q1-C1  exit 0; OK
+PASS  Q1-6V  6방향 모두 기록됨
+PASS  Q1-C1  exit 0; OK
+PASS  Q1-6V  6방향 모두 기록됨
+CLEAR 리뷰어=claude 지적=0건
+PASS  Q1-C1  exit 0; OK
+PASS  Q1-6V  6방향 모두 기록됨
+CLEAR 리뷰어=codex 지적=0건
+기록됨: LOCK-Q1 APPROVE (Q1, binding 0cbfa97cdc8a)
+PASS  Q1-C1  exit 0; OK
+PASS  Q1-6V  6방향 모두 기록됨
+CLEAR 리뷰어=codex 지적=0건 · 남은 위험 후보=1건
+  residual a.txt:3  새 계열
+기록됨: LOCK-Q1 APPROVE (Q1, binding 3b92b6bbc4d7)
+PASS  Q1-C1  exit 0; OK
+PASS  Q1-6V  6방향 모두 기록됨
+CLEAR 리뷰어=codex 지적=0건
+기록됨: LOCK-Q1 APPROVE (Q1, binding 0cbfa97cdc8a)
+PASS  Q1-C1  exit 0; OK
+PASS  Q1-6V  6방향 모두 기록됨
+BLOCK 리뷰어=codex 지적=3건
+  major    a:1  a
+  major    a:2  b
+  major    a:3  c
+BLOCK 리뷰어=codex 지적=2건
+  major    a:1  a
+  major    a:2  b
+BLOCK 리뷰어=codex 지적=1건
+  major    a:1  a
+CLEAR 리뷰어=codex 지적=0건
+PASS  Q1-C1  exit 0; OK
+PASS  Q1-6V  6방향 모두 기록됨
+BLOCK 리뷰어=codex 지적=5건
+  major    a:0  지적 0
+  major    a:1  지적 1
+  major    a:2  지적 2
+  major    a:3  지적 3
+  major    a:4  지적 4
+BLOCK 리뷰어=codex 지적=4건
+  major    a:0  지적 0
+  major    a:1  지적 1
+  major    a:2  지적 2
+  major    a:3  지적 3
+BLOCK 리뷰어=codex 지적=3건
+  major    a:0  지적 0
+  major    a:1  지적 1
+  major    a:2  지적 2
+BLOCK 리뷰어=codex 지적=2건
+  major    a:0  지적 0
+  major    a:1  지적 1
+BLOCK 리뷰어=codex 지적=1건
+  major    a:0  지적 0
+ESCALATE intent §8 멈춤 — 마지막 사람 결정 뒤 리뷰 상한 5회를 다 썼다. 사람 결정(남은 위험 기록 후 잠금·범위 축소·계속 투자)이 있어야 다음 리뷰를 보낸다
+CLEAR 리뷰어=codex 지적=0건
+기록됨: LOCK-Q1 APPROVE (Q1, binding 0cbfa97cdc8a)
+PASS  Q1-C1  exit 0; OK
+PASS  Q1-6V  6방향 모두 기록됨
+CLEAR 리뷰어=codex 지적=0건
+기록됨: LOCK-Q1 APPROVE (Q1, binding 0cbfa97cdc8a)
+PASS  Q1-C1  exit 0; OK
+PASS  Q1-6V  6방향 모두 기록됨
+PASS  Q1-C1  exit 0; OK
+PASS  Q1-6V  6방향 모두 기록됨
+BLOCK 리뷰어=codex 지적=2건
+  major    a.txt:1  큰 것
+  minor    a.txt:2  작은 것
+수동    Q1-C1  check 없음 — 사람이 관찰해 기록
+PASS  Q1-6V  6방향 모두 기록됨
+PASS  Q1-C1  exit 0; OK
+수동    Q1-C2  check 없음 — 사람이 관찰해 기록
+PASS  Q1-6V  6방향 모두 기록됨
+PASS  Q1-C2  게이트가 열림
+PASS  Q1-C1  exit 0; OK
+FAIL  Q1-6V  빠진 방향: V-FWD, V-LEFT
+PASS  Q1-C1  exit 0; OK
+FAIL  Q1-6V  빠진 방향: V-FWD, V-LEFT
+PASS  Q1-C1  exit 0; OK
+FAIL  Q1-6V  빠진 방향: V-FWD, V-LEFT
+PASS  Q1-C1  exit 0; OK
+PASS  Q1-6V  6방향 모두 기록됨
+PASS  Q1-C1  exit 0; OK
+PASS  Q1-6V  6방향 모두 기록됨
+PASS  Q1-C1  exit 0; OK
+PASS  Q1-6V  6방향 모두 기록됨
+BLOCK 리뷰어=codex 지적=1건
+  major    a.txt:3  (residual 로 적었지만 고정 범위가 아니라 막는 지적으로 본다) 고정 범위가 아닌데 residual
+PASS  Q1-C1  exit 0; OK
+PASS  Q1-6V  6방향 모두 기록됨
+BLOCK 리뷰어=codex 지적=5건
+  major    a:0  지적 0
+  major    a:1  지적 1
+  major    a:2  지적 2
+  major    a:3  지적 3
+  major    a:4  지적 4
+BLOCK 리뷰어=codex 지적=4건
+  major    a:0  지적 0
+  major    a:1  지적 1
+  major    a:2  지적 2
+  major    a:3  지적 3
+BLOCK 리뷰어=codex 지적=3건
+  major    a:0  지적 0
+  major    a:1  지적 1
+  major    a:2  지적 2
+BLOCK 리뷰어=codex 지적=2건
+  major    a:0  지적 0
+  major    a:1  지적 1
+BLOCK 리뷰어=codex 지적=1건
+  major    a:0  지적 0
+ESCALATE intent §8 멈춤 — 마지막 사람 결정 뒤 리뷰 상한 5회를 다 썼다. 사람 결정(남은 위험 기록 후 잠금·범위 축소·계속 투자)이 있어야 다음 리뷰를 보낸다
+ESCALATE 지금 버전의 자동 검사가 없거나 실패했다(Q1-C1) — verify.py run 을 먼저 통과시킨다
+FAIL  Q1-C1  exit 1; FAILED
+PASS  Q1-6V  6방향 모두 기록됨
+ESCALATE 지금 버전의 자동 검사가 실패했다(Q1-C1) — verify.py run 을 먼저 통과시킨다
+PASS  Q1-C1  exit 0; OK
+PASS  Q1-6V  6방향 모두 기록됨
+CLEAR 리뷰어=codex 지적=0건
+CLEAR 리뷰어=codex 지적=1건
+  minor    a.txt:2  사소한 것
+BLOCK 리뷰어=codex 지적=1건
+  major    a.txt:1  기준이 거짓이다
+ESCALATE 리뷰 결과 형식을 읽을 수 없습니다 — outputs/verify/Q1/review-1791205869788275593.md 를 사람이 보고 판단해야 합니다.
+PASS  Q1-C1  exit 0; OK
+FAIL  Q1-6V  빠진 방향: V-FWD, V-LEFT
+FAIL  Q1-C1  exit 1; FAILED
+FAIL  Q1-6V  빠진 방향: V-FWD, V-LEFT
+ESCALATE Q1-C1  exit 98; OK (skipped=1, expected failures=1)
+PASS  Q1-6V  6방향 모두 기록됨
+ESCALATE Q1-C1  exit 98; OK (skipped=1)
+PASS  Q1-6V  6방향 모두 기록됨
+PASS  Q1-C1  exit 0; OK
+PASS  Q1-6V  6방향 모두 기록됨
+BLOCK 리뷰어=codex 지적=1건
+  major    a.txt:1  하나
+BLOCK 리뷰어=codex 지적=1건
+  major    a.txt:1  둘
+BLOCK 리뷰어=codex 지적=1건
+  major    a.txt:1  셋
+ESCALATE intent §8 멈춤 — 막는 지적 수 1→1→1 로 두 번 연속 줄지 않았다. 사람 결정이 있어야 다음 리뷰를 보낸다
+BLOCK 리뷰어=codex 지적=1건
+  major    a.txt:1  셋
+ESCALATE 선행 잠금이 없거나 무효입니다. 먼저 verify.py next 로 복구할 단계를 확인하세요.
+PASS  Q1-C1  exit 0; OK
+FAIL  Q1-6V  빠진 방향: V-FWD, V-LEFT
+CLEAR 리뷰어=codex 지적=0건
+tests=385 skipped=0
+.............................................................................................
+----------------------------------------------------------------------
+Ran 93 tests in 13.664s
+
+OK
+....................................................................................................................................................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 292 tests in 54.686s
+
+OK

@@ -20,6 +20,7 @@ import json
 import re
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -59,6 +60,8 @@ def node_of(graph: dict, node_id: str) -> dict:
 
 
 def helper_gate(root: Path, node_id: str, lock: bool = False) -> dict:
+    if not HELPER.is_file():
+        raise SystemExit("[verify] ESCALATE masterwork 런타임 없음. 설치된 masterwork.py 경로를 MASTERWORK_HELPER 로 지정하세요.")
     argv = [sys.executable, str(HELPER), "gate", str(root / "graph.json"), "--node", node_id] + (["--lock"] if lock else [])
     proc = subprocess.run(argv, capture_output=True, text=True, timeout=60)
     if proc.stdout.strip():
@@ -92,6 +95,8 @@ def append(root: Path, row: dict) -> dict:
 def write_record(root: Path, node_id: str, name: str, text: str) -> tuple[str, str]:
     out = root / "outputs" / "verify" / node_id / name
     out.parent.mkdir(parents=True, exist_ok=True)
+    if out.exists():
+        out = out.with_name(f"{out.stem}-{time.time_ns()}{out.suffix}")
     out.write_text(text, encoding="utf-8")
     return out.relative_to(root).as_posix(), sha(out)
 
@@ -108,7 +113,13 @@ def scrub(root: Path, text: str) -> str:
 def run_command(root: Path, argv: list[str]) -> tuple[int, str]:
     try:
         proc = subprocess.run(argv, cwd=root, capture_output=True, text=True, timeout=CHECK_TIMEOUT_SEC)
-        return proc.returncode, scrub(root, proc.stdout + proc.stderr)
+        output = scrub(root, proc.stdout + proc.stderr)
+        counts = [int(n) for n in re.findall(r"^Ran (\d+) tests?\b", output, re.MULTILINE)]
+        is_unittest = any(argv[i:i + 2] == ["-m", "unittest"] for i in range(len(argv) - 1)) or bool(counts)
+        skipped = any(int(n) > 0 for n in re.findall(r"^OK \([^)]*\bskipped=(\d+)[^)]*\)\s*$", output, re.MULTILINE))
+        if proc.returncode in {0, 5} and (skipped or "NO TESTS RAN" in output or (is_unittest and (not counts or not all(counts)))):
+            return 98, f"ESCALATE incomplete unittest suite; child_exit={proc.returncode}\n" + output
+        return proc.returncode, output
     except (OSError, subprocess.TimeoutExpired) as exc:
         return 99, scrub(root, f"{type(exc).__name__}: {exc}")
 
@@ -170,7 +181,11 @@ def last_line(text: str) -> str:
 def cmd_run(root: Path, node_id: str) -> int:
     graph = load_graph(root)
     node = node_of(graph, node_id)
-    binding = helper_gate(root, node_id)["binding"]
+    state = helper_gate(root, node_id)
+    if any("Dependency" in item for item in state.get("missing", []) + state.get("failures", [])):
+        print("ESCALATE 선행 잠금이 없거나 무효입니다. 먼저 verify.py next 로 복구할 단계를 확인하세요.")
+        return 2
+    binding = state["binding"]
     results = []
     for crit in node["criteria"]:
         check = crit.get("check")
@@ -180,6 +195,7 @@ def cmd_run(root: Path, node_id: str) -> int:
         if check.get("type") == "command":
             code, output = run_command(root, check["argv"])
             ok, source = code == 0, " ".join(check["argv"])
+            verdict = "PASS" if ok else "ESCALATE" if code in {98, 99} else "FAIL"
             body = f"criterion: {crit['id']} — {crit['statement']}\ncommand: {source}\nexit: {code}\nbinding: {binding}\ntime: {now()}\n\n{output}"
             observed = f"exit {code}; {last_line(output)}"
             etype = "test" if "test" in crit["evidence_types"] else crit["evidence_types"][0]
@@ -189,17 +205,20 @@ def cmd_run(root: Path, node_id: str) -> int:
             body = f"criterion: {crit['id']} — {crit['statement']}\nbinding: {binding}\ntime: {now()}\n\n{summary}\n"
             observed = summary.splitlines()[-1] if not ok else "6방향 모두 기록됨"
             etype = "observation"
+            verdict = "PASS" if ok else "FAIL"
         else:
             results.append((crit["id"], "수동", f"알 수 없는 check 형식 {check.get('type')}"))
             continue
         record, digest = write_record(root, node_id, f"{crit['id']}.txt", body)
         append(root, {"id": f"V-{crit['id']}-{binding[:8]}", "kind": "verification", "node_id": node_id, "binding": binding,
-                      "criterion_id": crit["id"], "result": "PASS" if ok else "FAIL", "evidence_type": etype,
+                      "criterion_id": crit["id"], "result": verdict, "evidence_type": etype,
                       "source": source, "observed": observed, "record": record, "record_sha256": digest})
-        results.append((crit["id"], "PASS" if ok else "FAIL", observed))
+        results.append((crit["id"], verdict, observed))
     for cid, result, note in results:
         print(f"{result:5} {cid}  {note}")
-    return 0 if all(r[1] != "FAIL" for r in results) else 1
+    if any(r[1] == "FAIL" for r in results):
+        return 1
+    return 2 if any(r[1] in {"수동", "ESCALATE"} for r in results) else 0
 
 
 def cmd_observe(root: Path, node_id: str, criterion: str, result: str, observed: str, source: str) -> int:
@@ -372,7 +391,7 @@ def cmd_review(root: Path, node_id: str) -> int:
         print(f"ESCALATE {refusal}")
         return 2
     packet_rel, _ = write_record(root, node_id, "review-packet.md", review_packet(root, graph, node, binding))
-    out = root / "outputs" / "verify" / node_id / "review.md"
+    out = root / "outputs" / "verify" / node_id / f"review-{time.time_ns()}.md"
     ok, tool, message = run_reviewer(root, root / packet_rel, out)
     if not ok or not out.is_file():
         print(f"ESCALATE 독립 리뷰를 받지 못했습니다: {message}")
@@ -419,6 +438,32 @@ def print_gate(result: dict) -> None:
         print(f"  남음: {item}")
 
 
+def cmd_next(root: Path) -> int:
+    """기존 Graph 의 첫 미잠금 단계를 안내한다. 새 계획이나 승인 기록을 만들지 않는다."""
+    graph = load_graph(root)
+    if not HELPER.is_file():
+        print("ESCALATE MASTERWORK_HELPER 에 설치된 런타임 경로를 지정하세요.")
+        return 2
+    ok, statuses = flow_guard.run_helper(HELPER, "status", root / "graph.json")
+    if not ok:
+        print(f"ESCALATE {statuses}")
+        return 2
+    ready = [n for n in graph["nodes"] if statuses[n["id"]] != "LOCKED"
+             and all(statuses[d] == "LOCKED" for d in n["depends_on"])]
+    node = next((n for n in ready if n["id"] == graph["focus"]), ready[0] if ready else None)
+    if node is None:
+        print(json.dumps({"statuses": statuses, "next_node": None}, ensure_ascii=False, indent=2))
+        return 0
+    result = helper_gate(root, node["id"])
+    print(json.dumps({"statuses": statuses, "next_node": node["id"], "binding": result["binding"],
+                      "outcome": node["outcome"], "remaining": result["missing"] + result["failures"],
+                      "commands": [f"python3 tools/verify.py run {node['id']}",
+                                   f"python3 tools/verify.py review {node['id']}",
+                                   f"python3 tools/verify.py gate {node['id']}"],
+                      "human_holds": node["human_holds"]}, ensure_ascii=False, indent=2))
+    return 0
+
+
 def cmd_approve(root: Path, node_id: str, source: str, hold: str | None) -> int:
     graph = load_graph(root)
     node = node_of(graph, node_id)
@@ -438,6 +483,7 @@ def cmd_approve(root: Path, node_id: str, source: str, hold: str | None) -> int:
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("next")
     for name in ("run", "review", "gate", "lock"):
         sub.add_parser(name).add_argument("node")
     approve = sub.add_parser("approve")
@@ -451,6 +497,8 @@ def main(argv: list[str]) -> int:
     observe.add_argument("--observed", required=True)
     observe.add_argument("--source", required=True)
     args = parser.parse_args(argv)
+    if args.command == "next":
+        return cmd_next(ROOT)
     if args.command == "observe":
         return cmd_observe(ROOT, args.node, args.criterion, args.result, args.observed, args.source)
     if args.command == "run":

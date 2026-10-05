@@ -1,6 +1,7 @@
 # rb — Roblox Studio × Claude Code
 
 ## 세션 시작 시
+0. 현행 작업 브랜치를 확인하고 `README.md` → `python3 tools/check.py` → `python3 tools/verify.py next`로 복원한다. 설치된 기존 Masterwork 경로는 `MASTERWORK_HELPER`로 연결한다. main만 보고 이미 잠긴 Q1~Q3나 결정된 DEC-2/8/12를 다시 만들지 않는다.
 1. `intent.md` 를 먼저 읽는다. 목표·제품 순서(Q1~Q8)·불변식·결정 항목(DEC)의 정본이다. 결정·검토 상태는 `decisions.md` 에 있다(사람이 대화에서 명시적으로 답한 것만 적는다). 작업 방식은 masterwork(Intent → Diagram → 작업 Graph → Harness → Evidence)다.
    원천 자료 색인은 `docs/knowledge/K0-docs-index.md`.
 2. `docs/02-start-here.md` 에서 연결 환경과 Studio 연결 절차를 확인한다.

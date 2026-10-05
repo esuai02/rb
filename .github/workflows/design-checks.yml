@@ -1,0 +1,30 @@
+name: Spec and design checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  design:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install -r requirements.txt
+      - name: Intent, spec, reference and fault-injection tests
+        run: |
+          python3 -m unittest discover -s tests -v
+          python3 -m unittest tools.test_flow_guard.RepoConsistencyTest.test_live_files_are_consistent tools.test_flow_guard.RepoConsistencyTest.test_live_graph_follows_intent -v
+          python3 tools/validate_spec.py
+          python3 tools/validate_graph.py
+          python3 -m harness.run world
+      - name: Declare verification scope
+        if: always()
+        run: |
+          echo 'This job checks specs and design data. Masterwork integration, human locks, Roblox runtime and player outcomes are separate gates.' >> "$GITHUB_STEP_SUMMARY"
