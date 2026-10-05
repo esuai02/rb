@@ -42,7 +42,7 @@
 | 4 | AI (범위는 사람) | 작은 단위 수정 — 원 가이드 §2. 한 요청 = 한 기능. 끝나면 바뀐 경로·diff·Play 테스트 결과를 보고한다 | 테스트 결과 |
 | 5 | AI (스테이징만) | 대규모 변경 — 원 가이드 §3 | Play 테스트 + 남은 위험 보고 |
 
-진행 현황 (2026-10-01 15:30): **0단계 완료** (세션 = WSL, `/init` 우회로 실행 가능, MCP 등록까지 끝남). **1단계 대기 — 사람.** Studio 가 붙으면 AI 가 2·3단계를 이어서 한다. MCP 도구는 세션 시작 때 불러오므로, 이번 세션에서는 stdio 로 직접 호출하고 다음 세션부터는 `Roblox_Studio` 도구로 바로 쓴다.
+진행 현황 (2026-10-05): **0·1단계 완료.** 사람이 Studio 스위치를 켠 뒤 `list_roblox_studios` 가 Studio 1개를 돌려줬다 (근거 `ENV-STUDIO-LINK-2`). Studio 의 Quick connect 화면이 보여 주는 `claude mcp add … cmd.exe …` 명령은 Windows용 Claude Code 용이다. 이 WSL 세션에는 이미 `/init` 경유로 등록돼 있으므로 다시 실행하지 않는다. **2단계 확인 사항:** 열린 Place 가 DEC-2 의 `rb-staging.rbxlx` 가 아니라 자동 복구본(`rb-staging_AutoRecovery_0.rbxl`)이다. Q4-C2 를 시작하기 전에 맞춘다.
 
 ## 4. 열린 결정
 
