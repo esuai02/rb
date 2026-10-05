@@ -124,12 +124,19 @@ function WorldView.setBridge(root: Instance, step: number)
 end
 
 -- 다리가 닿고 한 박자 뒤 문이 켜진 불과 함께 셔터처럼 올라간다. 다 올라가면 돌아온다 — 그 뒤에 '열렸어'.
+-- Open 속성: 없음 = 닫힘, false = 여는 중, true = 열림. 여는 중에 온 호출(같은 게이트를 쓰는 다른 플레이어)은 다 열릴 때까지 기다린다.
 function WorldView.openGate(root: Instance)
 	local gate = part(root, "CityLanguageGate")
-	if not gate or gate:GetAttribute("Open") then
+	if not gate then
 		return
 	end
-	gate:SetAttribute("Open", true)
+	if gate:GetAttribute("Open") ~= nil then
+		while gate:GetAttribute("Open") ~= true do
+			gate:GetAttributeChangedSignal("Open"):Wait()
+		end
+		return
+	end
+	gate:SetAttribute("Open", false)
 	task.wait(BEAT_SECONDS)
 	gate.CanCollide = false
 	local lift = Vector3.new(0, Layout.GATE_SIZE.Y + 1, 0)
@@ -139,6 +146,7 @@ function WorldView.openGate(root: Instance)
 		end
 	end
 	finished(gate, play(gate, RISE, {Position = gate.Position + lift}))
+	gate:SetAttribute("Open", true)
 end
 
 return WorldView

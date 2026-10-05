@@ -20,7 +20,7 @@
   "V13 대비·가림": "대비 GOAL/DIM 3.50·SIGNAL/DIM 3.97·START/DIM 5.67·DIM/UNLIT 2.52·커서 검정/DIM 3.28(GOAL/SIGNAL 1.13 은 깜박임/고정으로 구별). 가림: 패널 시점 0·다리 출발점 시점 0, 출발 시점에서 StartPad(시작 때는 루미도)가 HUD Top 에 가림 → S9 막힘으로 기록",
   "V14 낮은 그래픽": "QualityLevel Level01 캡처에서 켜진/꺼진 불·깜박이는 문턱·탑·굴대 구별 → PASS (설정은 Automatic 으로 되돌림)",
   "V15 첫 화면·60초": "출발 카메라에서 패널 광선 3/3, 생성 뒤 약 29s 에 패널 고정(AI 조작 기준) → PASS(실사용 중앙값은 Q4-C4)",
-  "V16 독립 리뷰": "진행 중(tri_tool ask review)"
+  "V16 독립 리뷰": "Codex(tri_tool ask review, 읽기 전용) 지적 2건. ① 높음: 루미·움직임 표를 플레이어들이 공유해 다른 사람의 오답이 내 성공 비행을 끊을 수 있음 → DEFERRED(플레이어·파티별 월드 슬라이스와 같은 문제. 혼자일 때는 좌표 단계가 닫혀 불가, 자기 겹침은 V8 a·b·c 로 확인). ② 중간: 게이트가 올라가는 동안 다른 호출은 닫힌 게이트에서 '열렸어'를 받음 → VALID, 수정(Open 속성 없음/false/true 세 상태, 여는 중 호출은 다 열릴 때까지 대기). 회귀: 0.5초 간격 두 호출 모두 +2.40s 에 Open=true·y=41 에서 돌아옴, 문 한 번만 상승, 이미 열린 뒤 호출 0.000s. 혼자 정상 진행 slope_reached→gate_opened 2.38s, 수신 때 Open=true·y=41"
  },
  "s9_blockers_found": [
   "출발 시점 HUD Top 이 신호판 출발 칸(StartPad·루미)을 가림",
@@ -30,5 +30,24 @@
  "still_false_texts": [
   "hint.coordinate.l1·hint.slope.l1 의 빛줄, hint.slope.l3 의 '옆 작은 다리' — S7",
   "출발 칸 (0,0) 자체를 고른 시도에 'other_spot' 문구 — E4(S17)"
- ]
+ ],
+ "review": {
+  "tool": "codex via ~/.claude/scripts/tri_tool.py ask review",
+  "packet": "scratchpad/review/s4-packet.md",
+  "findings": [
+   {
+    "severity": "high",
+    "where": "WorldView.luau playing/Lumi 공유, MissionService.coordinateMove 성공 경로",
+    "class": "DEFERRED",
+    "reason": "다인 공유 월드 문제 — 파티별 월드 슬라이스"
+   },
+   {
+    "severity": "medium",
+    "where": "WorldView.openGate Open 을 상승 전에 설정",
+    "class": "VALID",
+    "fix": "Open 세 상태 + 여는 중 호출 대기",
+    "regression": "PASS"
+   }
+  ]
+ }
 }

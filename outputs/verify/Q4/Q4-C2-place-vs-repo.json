@@ -1,9 +1,9 @@
 {
  "criterion": "Q4-C2",
  "result": "PASS",
- "checked_at": "2026-10-05T09:50:13.598316+00:00",
- "repo_head": "d66a8f6",
- "world_dirty": "M world/src/client/Hud.client.luau\n M world/src/server/MissionService.luau\n M world/src/server/WorldBuilder.luau\n M world/src/server/WorldView.luau\n M world/src/shared/Layout.luau",
+ "checked_at": "2026-10-05T09:57:27.955041+00:00",
+ "repo_head": "be45534",
+ "world_dirty": "M world/src/server/WorldView.luau",
  "rojo": "7.7.1 (Windows serve)",
  "studio_place": "rb-staging.rbxlx",
  "compared_instances": 15,
@@ -55,8 +55,8 @@
   },
   "ServerScriptService.Gate.WorldView": {
    "class": "ModuleScript",
-   "len": 5803,
-   "fnv": 317329365,
+   "len": 6143,
+   "fnv": 2742099820,
    "file": "world/src/server/WorldView.luau"
   },
   "ReplicatedStorage.Shared": {
@@ -116,9 +116,9 @@
    "fnv": 3716350301
   },
   "ServerScriptService.Gate.WorldView": {
-   "len": 5803,
+   "len": 6143,
    "class": "ModuleScript",
-   "fnv": 317329365
+   "fnv": 2742099820
   },
   "ReplicatedStorage.Shared.Missions": {
    "len": 1376,
