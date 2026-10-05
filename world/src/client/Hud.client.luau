@@ -102,6 +102,9 @@ local function showStage()
 	stopPoint.Visible = stage == STAGE_DONE
 	goal.Visible = stage ~= STAGE_DONE   -- 입구에 들어가면 남은 목표가 없다. 추천 구역 안내는 다음 목표로 남긴다
 	hintBox.Visible = false
+	if stage == STAGE_DONE then
+		labelBox.Visible = false   -- 끝 화면에는 멈춤 지점 선택지 둘만 둔다
+	end
 	if stage == STAGE_PANEL then
 		goal.Text = Text.get("goal.signal_1")
 		situation.Text = Text.get("sit.gate_dark")
@@ -227,6 +230,8 @@ local function onPromptTriggered()
 	end
 end
 
+local portalPrompt: ProximityPrompt? = nil
+
 local function watchPrompt()
 	local root = workspace:WaitForChild("CityLanguageGateWorld")
 	local panelPart = root:WaitForChild("SignalPanel")
@@ -235,9 +240,10 @@ local function watchPrompt()
 		prompt.ActionText = Text.get("prompt.signal_panel.activate")
 		prompt.Triggered:Connect(onPromptTriggered)
 	end
-	local portalPrompt = root:WaitForChild("ZonePortal"):WaitForChild("EnterPrompt")
-	if portalPrompt:IsA("ProximityPrompt") then
-		portalPrompt.ActionText = Text.get("zone.metro_district.name")
+	local found = root:WaitForChild("ZonePortal"):WaitForChild("EnterPrompt")
+	if found:IsA("ProximityPrompt") then
+		found.ActionText = Text.get("zone.metro_district.name")
+		portalPrompt = found
 	end
 end
 
@@ -273,6 +279,9 @@ ResultRemote.OnClientEvent:Connect(function(code: string)
 		showStage()
 	elseif code == "zone_portal_entered" then
 		response.Visible = false   -- 입구에 들어간 반응은 멈춤 지점 선택지가 맡는다
+		if portalPrompt then
+			portalPrompt.Enabled = false   -- 이미 쓴 입구 — 이 플레이어 화면에서만 끈다(서버·다른 플레이어는 그대로)
+		end
 		stage = STAGE_DONE
 		showStage()
 	else

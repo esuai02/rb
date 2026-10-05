@@ -146,6 +146,9 @@ function MissionService.openGate(player: Player)
 	Analytics.funnel(player, "gate_opened", {play_mode = "solo_npc"})
 	RewardService.grant(player, "reward.explorer_card", "m.gate_open")
 	WorldView.openGate(root)
+	if done[slot(player, "m.zone_portal")] then
+		return   -- 문이 오르는 사이(1.5~2.4초) 이미 입구에 들어갔다 — 끝난 화면과 켜진 포털을 되돌리지 않는다
+	end
 	WorldView.goal(root, "ZonePortal")   -- 다음 '지금 할 곳'은 다음 구역 입구
 	tell(player, "gate_opened")
 end

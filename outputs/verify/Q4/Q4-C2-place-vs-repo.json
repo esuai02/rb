@@ -1,9 +1,9 @@
 {
  "criterion": "Q4-C2",
  "result": "PASS",
- "checked_at": "2026-10-05T10:50:40.939642+00:00",
- "repo_head": "8878f95",
- "world_dirty": "M world/src/client/Hud.client.luau\n M world/src/server/Main.server.luau\n M world/src/server/MissionService.luau\n M world/src/server/WorldBuilder.luau",
+ "checked_at": "2026-10-05T11:22:36.060043+00:00",
+ "repo_head": "2ddb72b",
+ "world_dirty": "M world/src/client/Hud.client.luau\n M world/src/server/MissionService.luau",
  "rojo": "7.7.1 (Windows serve)",
  "studio_place": "rb-staging.rbxlx",
  "compared_instances": 15,
@@ -37,8 +37,8 @@
   },
   "ServerScriptService.Gate.MissionService": {
    "class": "ModuleScript",
-   "len": 6923,
-   "fnv": 3535959195,
+   "len": 7114,
+   "fnv": 221841370,
    "file": "world/src/server/MissionService.luau"
   },
   "ServerScriptService.Gate.RewardService": {
@@ -94,8 +94,8 @@
   },
   "StarterPlayer.StarterPlayerScripts.Gate.Hud": {
    "class": "LocalScript",
-   "len": 10749,
-   "fnv": 1646613262,
+   "len": 11086,
+   "fnv": 3439074552,
    "file": "world/src/client/Hud.client.luau"
   }
  },
@@ -106,9 +106,9 @@
    "fnv": 390509306
   },
   "StarterPlayer.StarterPlayerScripts.Gate.Hud": {
-   "len": 10749,
+   "len": 11086,
    "class": "LocalScript",
-   "fnv": 1646613262
+   "fnv": 3439074552
   },
   "ReplicatedStorage.Shared.Text": {
    "len": 1435,
@@ -138,9 +138,9 @@
    "fnv": 3349192828
   },
   "ServerScriptService.Gate.MissionService": {
-   "len": 6923,
+   "len": 7114,
    "class": "ModuleScript",
-   "fnv": 3535959195
+   "fnv": 221841370
   },
   "ReplicatedStorage.Shared": {
    "class": "Folder"
