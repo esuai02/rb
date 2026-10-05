@@ -1,8 +1,10 @@
 --!strict
 -- 화면은 현재 목표 하나만 보여 준다 (K5). 판정은 서버가 하고 클라이언트는 고른 것만 보낸다 (INV-4).
 -- 글자는 모두 번역표를 거친다 — 코드에는 키만 쓴다 (INV-3). 색만으로 뜻을 전하지 않는다 (INV-9).
+local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 
 local Text = require(ReplicatedStorage.Shared.Text)
 local Layout = require(ReplicatedStorage.Shared.Layout)
@@ -66,7 +68,6 @@ local hint = label("HintText", hintBox, UDim2.new(0, 8, 0, 4), UDim2.new(1, -16,
 
 local labelBox = panel("Discovery", UDim2.new(0, 16, 0, 212), UDim2.new(0, 460, 0, 96))
 local discovery = label("DiscoveryText", labelBox, UDim2.new(0, 8, 0, 4), UDim2.new(1, -16, 0, 52))
-local useLabel = button("UseLabel", labelBox, UDim2.new(0, 8, 0, 56))
 
 local moves = panel("Moves", UDim2.new(0, 16, 1, -200), UDim2.new(0, 330, 0, 184))
 local moveRight = button("MoveRight", moves, UDim2.new(0, 170, 0, 70))
@@ -92,9 +93,51 @@ moveDown.Text = Text.get("action.position.move_down")
 slopeUp.Text = Text.get("action.slope.increase")
 slopeDown.Text = Text.get("action.slope.decrease")
 slopeFlat.Text = Text.get("action.slope.set_zero")
-useLabel.Text = Text.get("choice.use_label")
 keepGoing.Text = Text.get("pacing.continue")
 takeRest.Text = Text.get("pacing.rest")
+
+-- 입력 3종 (K4 U6·U9 · INV-9). 터치·마우스는 버튼을 바로 누르고, 패널·입구는 근접 프롬프트(E·ButtonX·탭)로 켠다.
+-- 게임패드 초점은 지금 고르는 패널의 틀에 먼저 둔다 — 어느 선택지도 미리 고르지 않는다 (멈춤 지점 두 선택지는 같게, K6 R7).
+local choicePanels = {moves, slopes, stopPoint}
+for _, group in choicePanels do
+	group.Selectable = true
+	group.SelectionOrder = -1   -- Select 버튼·\ 로 선택을 켜면 버튼(기본 0)보다 틀이 먼저 잡힌다
+end
+
+-- 이동 순서 (U9): 칸마다 네 방향을 모두 적는다(자기 자신 = 그대로) — 비운 방향을 엔진이 알아서 골라 패널 밖으로 새지 않게
+local function link(item: GuiObject, up: GuiObject, down: GuiObject, left: GuiObject, right: GuiObject)
+	item.NextSelectionUp = up
+	item.NextSelectionDown = down
+	item.NextSelectionLeft = left
+	item.NextSelectionRight = right
+end
+-- 십자: 어디서든 누른 방향의 버튼으로 간다 — 패드 방향 = 화면 방향 = 루미가 갈 방향
+for _, item in ({moves, moveUp, moveLeft, moveRight, moveDown} :: {GuiObject}) do
+	link(item, moveUp, moveDown, moveLeft, moveRight)
+end
+-- 기울기 세로 한 줄: 틀에서는 가장 가까운 칸으로 들어간다(위 = 가운데, 아래 = 맨 아래) — 한 번 눌러 맨 위에 닿지 않는다
+link(slopes, slopeDown, slopeFlat, slopes, slopes)
+link(slopeUp, slopeUp, slopeDown, slopeUp, slopeUp)
+link(slopeDown, slopeUp, slopeFlat, slopeDown, slopeDown)
+link(slopeFlat, slopeDown, slopeFlat, slopeFlat, slopeFlat)
+-- 멈춤 지점: 어디서든 왼쪽 = 계속하기, 오른쪽 = 쉬기 — 두 쪽 모두 한 번 눌러 닿는다
+for _, item in ({stopPoint, keepGoing, takeRest} :: {GuiObject}) do
+	link(item, item, item, keepGoing, takeRest)
+end
+
+-- 게임패드일 때만, 지금 보이는 고르는 패널(단계마다 하나뿐)의 틀에 초점을 둔다. 걷는 단계·다른 입력 장치에서는
+-- 초점을 직접 풀어 이동을 돌려준다 — 패널을 숨기거나 Selectable 을 꺼서는 풀리지 않는다.
+local function focusPanel()
+	local focusTarget: GuiObject? = nil
+	if UserInputService.PreferredInput == Enum.PreferredInput.Gamepad then
+		for _, group in choicePanels do
+			if group.Visible then
+				focusTarget = group
+			end
+		end
+	end
+	GuiService.SelectedObject = focusTarget
+end
 
 local function showStage()
 	moves.Visible = stage == STAGE_COORDINATE
@@ -118,6 +161,7 @@ local function showStage()
 		goal.Text = Text.get("goal.portal")
 		situation.Text = Text.get("zone.recommend")
 	end
+	focusPanel()
 end
 
 local function showHint()
@@ -209,14 +253,11 @@ slopeFlat.Activated:Connect(function()
 	SlopeRemote:FireServer("expr.slope.flat")
 end)
 
-useLabel.Activated:Connect(function()
-	showDiscovery()
-end)
-
 -- 어느 쪽을 골라도 선택 창만 닫힌다 — 다음 미션은 저절로 시작하지 않는다(pacing.autoplay_next_mission).
 -- 광장 미션(m.plaza_*)이 생기면 '계속하기'가 그쪽으로 이어진다.
 local function closeStopPoint()
 	stopPoint.Visible = false
+	focusPanel()   -- 고르고 나면 초점을 풀어 다시 걷게 한다
 end
 keepGoing.Activated:Connect(closeStopPoint)
 takeRest.Activated:Connect(closeStopPoint)
@@ -264,6 +305,7 @@ ResultRemote.OnClientEvent:Connect(function(code: string)
 		response.Text = Text.get("resp.coordinate.other_spot")
 		cursorX, cursorY = 0, 0
 		showCursor()
+		focusPanel()   -- 커서가 출발 칸으로 돌아오면 초점도 틀로 돌아온다
 		hintLevel = 1
 		showHint()
 	elseif code == "slope_reached" then
@@ -298,6 +340,14 @@ task.spawn(function()
 			hintLevel += 1
 			lastActed = os.clock()
 			showHint()
+			-- 기울기 단계에서 초점을 잃고(Select·B·메뉴) 서 있는 게임패드 플레이어에게 패널을 다시 건넨다. 걷는 중에는 빼앗지 않는다.
+			-- 좌표 단계는 패널 앞 X(보내기 → 다른 칸 → 초점 복귀)가 같은 길이다 — 패널에서 먼 곳에서 초점에 묶이지 않게 넣지 않는다
+			local character = Players.LocalPlayer.Character
+			local humanoid = if character then character:FindFirstChildOfClass("Humanoid") else nil
+			local standing = humanoid ~= nil and humanoid:IsA("Humanoid") and humanoid.MoveDirection.Magnitude == 0
+			if stage == STAGE_SLOPE and standing and GuiService.SelectedObject == nil then
+				focusPanel()
+			end
 		end
 	end
 end)
@@ -305,3 +355,4 @@ end)
 labelBox.Visible = false
 showStage()
 task.spawn(watchPrompt)
+UserInputService:GetPropertyChangedSignal("PreferredInput"):Connect(focusPanel)   -- 패드를 잡거나 놓으면 초점을 다시 정한다

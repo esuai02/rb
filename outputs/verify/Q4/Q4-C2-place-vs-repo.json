@@ -1,9 +1,9 @@
 {
  "criterion": "Q4-C2",
  "result": "PASS",
- "checked_at": "2026-10-05T11:22:36.060043+00:00",
- "repo_head": "2ddb72b",
- "world_dirty": "M world/src/client/Hud.client.luau\n M world/src/server/MissionService.luau",
+ "checked_at": "2026-10-05T14:24:49.547190+00:00",
+ "repo_head": "59f56e8",
+ "world_dirty": "M world/src/client/Hud.client.luau",
  "rojo": "7.7.1 (Windows serve)",
  "studio_place": "rb-staging.rbxlx",
  "compared_instances": 15,
@@ -94,8 +94,8 @@
   },
   "StarterPlayer.StarterPlayerScripts.Gate.Hud": {
    "class": "LocalScript",
-   "len": 11086,
-   "fnv": 3439074552,
+   "len": 14439,
+   "fnv": 1469886921,
    "file": "world/src/client/Hud.client.luau"
   }
  },
@@ -106,9 +106,9 @@
    "fnv": 390509306
   },
   "StarterPlayer.StarterPlayerScripts.Gate.Hud": {
-   "len": 11086,
+   "len": 14439,
    "class": "LocalScript",
-   "fnv": 3439074552
+   "fnv": 1469886921
   },
   "ReplicatedStorage.Shared.Text": {
    "len": 1435,

@@ -1,6 +1,6 @@
 criterion: Q4-C2 — 스테이징 Place 의 내용이 저장소 소스와 같다 — Rojo 로 넣은 뒤 버전 표시로 대조한다 (사람 결정 DEC-2 로 Place 를 정한 뒤에만)
 result: PASS
-observed: S5(포털·멈춤 지점)와 리뷰 수정 뒤 재대조: Windows rojo.exe 실시간 반영 상태의 Studio(rb-staging.rbxlx) 와 저장소 작업 트리 전수 대조 — Instance 15·비교 값 40 어긋남 0, 세 뿌리 밖 스크립트·번역표 0. 원본 outputs/verify/Q4/Q4-C2-place-vs-repo.json (sha256 71ef4e15…)
+observed: S6(입력 3종 — 게임패드 초점) 뒤 재대조: Windows rojo.exe 실시간 반영 상태의 Studio(rb-staging.rbxlx) 와 저장소 작업 트리 전수 대조 — Instance 15·비교 값 40 어긋남 0, 세 뿌리 밖 스크립트·번역표 0. 원본 outputs/verify/Q4/Q4-C2-place-vs-repo.json (sha256 6eafa0ba…)
 source: Claude Code 세션 4dbacf45, 2026-10-05, Studio MCP execute_luau(studio 876d3f03) 직접 대조
-binding: eae7ad21aa0a46696cc8b81d6ada2643246a97f7948f4c364f0407dc27934865
-time: 2026-10-05T11:23:13.713538+00:00
+binding: 95f0c4bf7bacc4d0b6c17ad5582f7ac60a7e58813e6688591c50a2c4f0e6829f
+time: 2026-10-05T14:25:56.909543+00:00
