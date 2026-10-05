@@ -24,22 +24,27 @@ local REACH = 12   -- 정본 값 cv.server_distance.server_check_studs — 화�
 local world = WorldBuilder.build()
 MissionService.bind(world, ResultRemote)
 
-local found = world:FindFirstChild("SignalPanel", true)
-local panelPart: BasePart? = if found and found:IsA("BasePart") then found else nil
+local function find(name: string): BasePart?
+	local found = world:FindFirstChild(name, true)
+	return if found and found:IsA("BasePart") then found else nil
+end
+
+local panelPart = find("SignalPanel")
+local portalPart = find("ZonePortal")
 
 -- 거리는 서버가 다시 잰다(표시용 값은 믿지 않는다, cv.rule_source)
-local function nearPanel(player: Player): boolean
+local function near(player: Player, target: BasePart?): boolean
 	local character = player.Character
 	local root = if character then character:FindFirstChild("HumanoidRootPart") else nil
-	if not (panelPart and root and root:IsA("BasePart")) then return false end
-	return (root.Position - panelPart.Position).Magnitude <= REACH
+	if not (target and root and root:IsA("BasePart")) then return false end
+	return (root.Position - target.Position).Magnitude <= REACH
 end
 
 -- 고른 칸은 신호 패널을 켤 때 보낸다 — 패널 곁에서 온 것만 받는다. 진행 순서는 MissionService 가 확인한다.
 local function onSignal(player: Player, x: unknown, y: unknown)
 	if typeof(x) ~= "number" or typeof(y) ~= "number" then return end
 	if x < -GRID or x > GRID or y < -GRID or y > GRID then return end
-	if not nearPanel(player) then return end
+	if not near(player, panelPart) then return end
 	if not Cooldown.allow(player, "signal") then return end
 	MissionService.coordinateMove(player, {x = x :: number, y = y :: number})
 end
@@ -54,15 +59,28 @@ end
 
 -- 신호 패널은 다가가서 켠다. 연타는 쿨다운이 막는다.
 local function onPanel(player: Player)
-	if not nearPanel(player) then return end
+	if not near(player, panelPart) then return end
 	if not Cooldown.allow(player, "panel") then return end
 	MissionService.activatePanel(player)
+end
+
+-- 다음 구역 입구도 다가가서 들어간다. 게이트를 연 사람만 들어간다(순서는 MissionService 가 확인한다).
+local function onPortal(player: Player)
+	if not near(player, portalPart) then return end
+	if not Cooldown.allow(player, "portal") then return end
+	MissionService.enterPortal(player)
 end
 
 SignalRemote.OnServerEvent:Connect(onSignal)
 SlopeRemote.OnServerEvent:Connect(onSlope)
 
-local prompt = if panelPart then panelPart:FindFirstChild("ActivatePrompt") else nil
-if prompt and prompt:IsA("ProximityPrompt") then
-	prompt.Triggered:Connect(onPanel)
+-- 프롬프트는 서버가 직접 받는다 — 원격 입력이 아니라 서버가 잰 근접 상호작용이다.
+-- 처리 함수는 이름으로 바로 연결한다(Harness 가 보상까지 닿는 길을 따라갈 수 있게).
+local panelPrompt = if panelPart then panelPart:FindFirstChildOfClass("ProximityPrompt") else nil
+if panelPrompt then
+	panelPrompt.Triggered:Connect(onPanel)
+end
+local portalPrompt = if portalPart then portalPart:FindFirstChildOfClass("ProximityPrompt") else nil
+if portalPrompt then
+	portalPrompt.Triggered:Connect(onPortal)
 end

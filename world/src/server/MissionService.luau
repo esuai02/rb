@@ -146,7 +146,22 @@ function MissionService.openGate(player: Player)
 	Analytics.funnel(player, "gate_opened", {play_mode = "solo_npc"})
 	RewardService.grant(player, "reward.explorer_card", "m.gate_open")
 	WorldView.openGate(root)
+	WorldView.goal(root, "ZonePortal")   -- 다음 '지금 할 곳'은 다음 구역 입구
 	tell(player, "gate_opened")
+end
+
+-- 다음 구역 입구 (m.zone_portal). 구역 자체는 Q5 뒤(INV-2) — 이 월드는 입구까지다.
+-- 들어가면 온보딩이 끝나고 멈춤 지점(계속하기·쉬기)이 열린다. 다음 미션은 저절로 시작하지 않는다(pacing.autoplay_next_mission).
+function MissionService.enterPortal(player: Player)
+	local root = world
+	if not root or not ready(player, "m.zone_portal") then
+		return
+	end
+	finish(player, "m.zone_portal")
+	Analytics.funnel(player, "zone_portal_entered", {})
+	Analytics.funnel(player, "onboarding_complete", {play_mode = "solo_npc"})
+	WorldView.restore(root, "ZonePortal")
+	tell(player, "zone_portal_entered")
 end
 
 function MissionService.count(): number

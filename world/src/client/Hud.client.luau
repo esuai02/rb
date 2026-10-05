@@ -11,7 +11,7 @@ local SignalRemote = ReplicatedStorage:WaitForChild("SignalRemote")
 local SlopeRemote = ReplicatedStorage:WaitForChild("SlopeRemote")
 local ResultRemote = ReplicatedStorage:WaitForChild("ResultRemote")
 
-local STAGE_PANEL, STAGE_COORDINATE, STAGE_SLOPE, STAGE_PORTAL = "panel", "coordinate", "slope", "portal"
+local STAGE_PANEL, STAGE_COORDINATE, STAGE_SLOPE, STAGE_PORTAL, STAGE_DONE = "panel", "coordinate", "slope", "portal", "done"
 local HINT_IDLE_SECONDS = 10   -- 정본 값 cv.hint_ladder.first_trigger.idle_seconds
 
 local stage = STAGE_PANEL
@@ -79,6 +79,11 @@ local slopeUp = button("SlopeUp", slopes, UDim2.new(0, 8, 0, 12))
 local slopeDown = button("SlopeDown", slopes, UDim2.new(0, 8, 0, 64))
 local slopeFlat = button("SlopeFlat", slopes, UDim2.new(0, 8, 0, 116))
 
+-- 멈춤 지점: 두 선택지는 같은 크기·같은 모습이고 어느 쪽도 미리 고르지 않는다 (pacing.stop_point.equal_size)
+local stopPoint = panel("StopPoint", UDim2.new(0.5, -170, 1, -120), UDim2.new(0, 340, 0, 64))
+local keepGoing = button("Continue", stopPoint, UDim2.new(0, 12, 0, 12))
+local takeRest = button("Rest", stopPoint, UDim2.new(0, 178, 0, 12))
+
 -- 버튼 글자는 한 번만 넣는다 — 키는 글자 그대로 적어 검사할 수 있게 한다
 moveRight.Text = Text.get("action.position.move_right")
 moveLeft.Text = Text.get("action.position.move_left")
@@ -88,10 +93,14 @@ slopeUp.Text = Text.get("action.slope.increase")
 slopeDown.Text = Text.get("action.slope.decrease")
 slopeFlat.Text = Text.get("action.slope.set_zero")
 useLabel.Text = Text.get("choice.use_label")
+keepGoing.Text = Text.get("pacing.continue")
+takeRest.Text = Text.get("pacing.rest")
 
 local function showStage()
 	moves.Visible = stage == STAGE_COORDINATE
 	slopes.Visible = stage == STAGE_SLOPE
+	stopPoint.Visible = stage == STAGE_DONE
+	goal.Visible = stage ~= STAGE_DONE   -- 입구에 들어가면 남은 목표가 없다. 추천 구역 안내는 다음 목표로 남긴다
 	hintBox.Visible = false
 	if stage == STAGE_PANEL then
 		goal.Text = Text.get("goal.signal_1")
@@ -201,6 +210,14 @@ useLabel.Activated:Connect(function()
 	showDiscovery()
 end)
 
+-- 어느 쪽을 골라도 선택 창만 닫힌다 — 다음 미션은 저절로 시작하지 않는다(pacing.autoplay_next_mission).
+-- 광장 미션(m.plaza_*)이 생기면 '계속하기'가 그쪽으로 이어진다.
+local function closeStopPoint()
+	stopPoint.Visible = false
+end
+keepGoing.Activated:Connect(closeStopPoint)
+takeRest.Activated:Connect(closeStopPoint)
+
 -- 신호 패널을 켜면 고른 칸을 서버에 보낸다. 신호 1 에서는 켜는 것 자체가 첫 반응이다.
 local function onPromptTriggered()
 	lastActed = os.clock()
@@ -217,6 +234,10 @@ local function watchPrompt()
 	if prompt:IsA("ProximityPrompt") then
 		prompt.ActionText = Text.get("prompt.signal_panel.activate")
 		prompt.Triggered:Connect(onPromptTriggered)
+	end
+	local portalPrompt = root:WaitForChild("ZonePortal"):WaitForChild("EnterPrompt")
+	if portalPrompt:IsA("ProximityPrompt") then
+		portalPrompt.ActionText = Text.get("zone.metro_district.name")
 	end
 end
 
@@ -249,6 +270,10 @@ ResultRemote.OnClientEvent:Connect(function(code: string)
 	elseif code == "gate_opened" then
 		response.Text = Text.get("resp.gate_open")
 		stage = STAGE_PORTAL
+		showStage()
+	elseif code == "zone_portal_entered" then
+		response.Visible = false   -- 입구에 들어간 반응은 멈춤 지점 선택지가 맡는다
+		stage = STAGE_DONE
 		showStage()
 	else
 		response.Text = Text.get("retry.again")

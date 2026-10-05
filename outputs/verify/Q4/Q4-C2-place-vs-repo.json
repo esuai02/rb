@@ -1,9 +1,9 @@
 {
  "criterion": "Q4-C2",
  "result": "PASS",
- "checked_at": "2026-10-05T09:57:27.955041+00:00",
- "repo_head": "be45534",
- "world_dirty": "M world/src/server/WorldView.luau",
+ "checked_at": "2026-10-05T10:50:40.939642+00:00",
+ "repo_head": "8878f95",
+ "world_dirty": "M world/src/client/Hud.client.luau\n M world/src/server/Main.server.luau\n M world/src/server/MissionService.luau\n M world/src/server/WorldBuilder.luau",
  "rojo": "7.7.1 (Windows serve)",
  "studio_place": "rb-staging.rbxlx",
  "compared_instances": 15,
@@ -31,14 +31,14 @@
   },
   "ServerScriptService.Gate.Main": {
    "class": "Script",
-   "len": 2861,
-   "fnv": 1458553114,
+   "len": 3693,
+   "fnv": 3349192828,
    "file": "world/src/server/Main.server.luau"
   },
   "ServerScriptService.Gate.MissionService": {
    "class": "ModuleScript",
-   "len": 6173,
-   "fnv": 2083269879,
+   "len": 6923,
+   "fnv": 3535959195,
    "file": "world/src/server/MissionService.luau"
   },
   "ServerScriptService.Gate.RewardService": {
@@ -49,8 +49,8 @@
   },
   "ServerScriptService.Gate.WorldBuilder": {
    "class": "ModuleScript",
-   "len": 8040,
-   "fnv": 2453505548,
+   "len": 8442,
+   "fnv": 1765436067,
    "file": "world/src/server/WorldBuilder.luau"
   },
   "ServerScriptService.Gate.WorldView": {
@@ -94,8 +94,8 @@
   },
   "StarterPlayer.StarterPlayerScripts.Gate.Hud": {
    "class": "LocalScript",
-   "len": 9337,
-   "fnv": 1561872942,
+   "len": 10749,
+   "fnv": 1646613262,
    "file": "world/src/client/Hud.client.luau"
   }
  },
@@ -106,9 +106,9 @@
    "fnv": 390509306
   },
   "StarterPlayer.StarterPlayerScripts.Gate.Hud": {
-   "len": 9337,
+   "len": 10749,
    "class": "LocalScript",
-   "fnv": 1561872942
+   "fnv": 1646613262
   },
   "ReplicatedStorage.Shared.Text": {
    "len": 1435,
@@ -133,14 +133,14 @@
    "source_locale": "en-us"
   },
   "ServerScriptService.Gate.Main": {
-   "len": 2861,
+   "len": 3693,
    "class": "Script",
-   "fnv": 1458553114
+   "fnv": 3349192828
   },
   "ServerScriptService.Gate.MissionService": {
-   "len": 6173,
+   "len": 6923,
    "class": "ModuleScript",
-   "fnv": 2083269879
+   "fnv": 3535959195
   },
   "ReplicatedStorage.Shared": {
    "class": "Folder"
@@ -167,9 +167,9 @@
    "fnv": 1318663135
   },
   "ServerScriptService.Gate.WorldBuilder": {
-   "len": 8040,
+   "len": 8442,
    "class": "ModuleScript",
-   "fnv": 2453505548
+   "fnv": 1765436067
   }
  }
 }

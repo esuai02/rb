@@ -143,9 +143,15 @@ local function buildLumi(root: Instance): Instance
 	return lumi
 end
 
+-- 다음 구역 입구: 다가가서 들어간다. 안내 글자(구역 이름)는 클라이언트가 번역표에서 넣는다.
 local function buildPortal(root: Instance): Instance
-	local portal = anchored("ZonePortal", Vector3.new(8, 10, 1), Layout.PORTAL_CENTER, root)
+	local portal = paint(anchored("ZonePortal", Vector3.new(8, 10, 1), Layout.PORTAL_CENTER, root), Enum.Material.SmoothPlastic, DIM)
 	portal.CanCollide = false   -- 들어가는 문 — 지나간다
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "EnterPrompt"
+	prompt.RequiresLineOfSight = false
+	prompt.MaxActivationDistance = 10   -- 정본 값 cv.server_distance.prompt_activation_studs
+	prompt.Parent = portal
 	return portal
 end
 

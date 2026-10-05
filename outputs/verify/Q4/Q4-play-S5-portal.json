@@ -1,0 +1,20 @@
+{
+ "slice": "S5 포털·멈춤 지점 (감사 번호 S10)",
+ "checked_at": "2026-10-05T10:50:41.077462+00:00",
+ "place": "rb-staging.rbxlx",
+ "checks": {
+  "시작 상태": "ZonePortal SmoothPlastic DIM, EnterPrompt ActionText='Metro District'(번역표), MaxActivationDistance 10, StopPoint 숨김",
+  "순서 위반": "게이트 닫힘 상태로 포털 4.5 studs 앞에 옮겨 E — 서버가 프롬프트를 받음(1회) 그러나 결과·분석 0, 포털 변화 0 → 막힘",
+  "다음 목표": "gate_opened 뒤 GOAL 색으로 깜박이는 부품은 ZonePortal 하나(투명도 0.00..0.40)",
+  "정상 진입": "바닥→다리(y14.3)→게이트 통과(z-32.4)→포털 앞 → E → 0.27s 에 zone_portal_entered, 포털 SIGNAL 고정·Lit",
+  "HUD": "목표 줄 숨김, 상황 줄 zone.recommend 유지, 응답 줄 숨김, StopPoint 보임 — Continue '계속하기'·Rest '쉬기' 둘 다 150×40·같은 색·글꼴, 미리 선택된 GUI 없음",
+  "분석": "콘솔 퍼널 5(first_interaction·first_math_success·gate_opened·zone_portal_entered·onboarding_complete)+시도 2",
+  "한 번만": "두 번째 E — 서버 프롬프트 수신 누적 3, 새 결과·새 분석 0",
+  "자동 진행 없음": "계속하기 누르면 선택 창만 닫히고 3초 동안 새 결과 0",
+  "정적": "harness 18/18, tools 82, tests 292, validate_spec OK, Q4-C1 PASS"
+ },
+ "notes": [
+  "프롬프트 연결을 공용 함수로 묶자 Harness server.reward_after_verdict 가 처리 함수를 못 따라가 FAIL → 이름 붙은 처리 함수에 직접 연결하는 꼴로 되돌림",
+  "계속하기·쉬기는 지금 둘 다 선택 창만 닫음 — 광장 미션(S16)이 생기면 계속하기가 그쪽으로 이어진다"
+ ]
+}
