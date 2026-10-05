@@ -1,5 +1,7 @@
 """verify.py 회귀 테스트 — 3층 게이트(자동 검사 → 독립 리뷰 → 사람 승인 → 잠금)를 임시 작업공간에서 끝까지 돌린다."""
 import hashlib
+import io
+from contextlib import redirect_stdout
 import json
 import shutil
 import sys
@@ -347,6 +349,73 @@ class GateFlowTest(unittest.TestCase):
             verify.cmd_approve(self.root, "Q1", "말", "DEC-99")
         with self.assertRaises(SystemExit):
             verify.cmd_approve(self.root, "Q1", "  ", None)
+
+
+    def test_repeated_runs_preserve_previous_raw_records(self):
+        self.add_vectors("V-FWD", "V-LEFT")
+        verify.cmd_run(self.root, "Q1")
+        first=self.rows("verification")[-1]
+        path=self.root/first["record"]
+        original=path.read_bytes()
+        verify.cmd_run(self.root, "Q1")
+        second=self.rows("verification")[-1]
+        self.assertNotEqual(first["record"],second["record"])
+        self.assertEqual(path.read_bytes(),original)
+        self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),first["record_sha256"])
+
+    def test_missing_check_escalates_instead_of_reporting_success(self):
+        graph=verify.load_graph(self.root)
+        graph["nodes"][0]["criteria"][0].pop("check")
+        (self.root/"graph.json").write_text(json.dumps(graph),encoding="utf-8")
+        self.add_vectors("V-FWD", "V-LEFT")
+        self.assertEqual(verify.cmd_run(self.root,"Q1"),2)
+
+    def add_q2(self):
+        graph=verify.load_graph(self.root)
+        graph['focus']='Q2'
+        node=json.loads(json.dumps(graph['nodes'][0]))
+        node.update(id='Q2',depends_on=['Q1'],human_holds=['LOCK-Q2'])
+        for criterion in node['criteria']:
+            criterion['id']=criterion['id'].replace('Q1','Q2')
+        graph['nodes'].append(node)
+        (self.root/'graph.json').write_text(json.dumps(graph),encoding='utf-8')
+
+    def test_successor_cannot_execute_while_predecessor_unlocked(self):
+        self.add_q2()
+        self.assertEqual(verify.cmd_run(self.root,'Q2'),2)
+        self.assertEqual(self.rows('verification'),[])
+
+    def test_next_routes_to_first_invalid_prerequisite(self):
+        self.add_q2()
+        output=io.StringIO()
+        with redirect_stdout(output): self.assertEqual(verify.cmd_next(self.root),0)
+        self.assertEqual(json.loads(output.getvalue())['next_node'],'Q1')
+
+    def test_changed_raw_evidence_is_rejected(self):
+        self.add_vectors("V-FWD", "V-LEFT")
+        verify.cmd_run(self.root,"Q1")
+        record=self.root/self.rows('verification')[0]['record']
+        record.write_text('tampered',encoding='utf-8')
+        self.assertTrue(any('intact' in x for x in self.gate()['missing']))
+
+    def test_skipped_unittest_is_inconclusive(self):
+        command=[sys.executable,'-c',"import unittest; T=type('T',(unittest.TestCase,),{'test_skip':unittest.skip('missing runtime')(lambda self:None)}); unittest.TextTestRunner().run(unittest.defaultTestLoader.loadTestsFromTestCase(T))"]
+        self.write_graph(command)
+        self.add_vectors('V-FWD','V-LEFT')
+        self.assertEqual(verify.cmd_run(self.root,'Q1'),2)
+        self.assertEqual(self.rows('verification')[0]['result'],'ESCALATE')
+
+    def test_empty_unittest_is_inconclusive(self):
+        code,output=verify.run_command(self.root,[sys.executable,'-m','unittest','discover','-s',str(self.root)])
+        self.assertEqual(code,98)
+        self.assertIn('child_exit=',output)
+
+    def test_skipped_and_expected_failure_summary_is_inconclusive(self):
+        command=[sys.executable,'-c',"import unittest; T=type('T',(unittest.TestCase,),{'test_skip':unittest.skip('missing')(lambda self:None),'test_expected':unittest.expectedFailure(lambda self:self.fail('known'))}); unittest.TextTestRunner().run(unittest.defaultTestLoader.loadTestsFromTestCase(T))"]
+        self.write_graph(command)
+        self.add_vectors('V-FWD','V-LEFT')
+        self.assertEqual(verify.cmd_run(self.root,'Q1'),2)
+        self.assertEqual(self.rows('verification')[0]['result'],'ESCALATE')
 
 
 class ParseTest(unittest.TestCase):

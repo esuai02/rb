@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-DEFAULT_HELPER = Path.home() / ".claude/skills/masterwork/scripts/masterwork.py"
+DEFAULT_HELPER = Path(os.environ.get("MASTERWORK_HELPER") or Path.home() / ".claude/skills/masterwork/scripts/masterwork.py").expanduser()
 HELPER_TIMEOUT_SEC = 15
 REVIEW_HASH_LEN = 12
 

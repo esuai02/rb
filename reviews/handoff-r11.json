@@ -1,0 +1,303 @@
+{
+  "schema_version": 1,
+  "kind": "derived_handoff",
+  "authority": false,
+  "source_branch": "feat/q2-world-graph",
+  "base_commit": "59f56e898832b75c409c7dce6fd462b1874524f8",
+  "revision": 11,
+  "snapshot": "a401351d13bbdd4bf285a11c0a249e5038b32e693186ac66902dec7c2d447ee5",
+  "same_sources": {
+    "intent": "intent.md",
+    "decisions": "decisions.md",
+    "graph": "graph.json",
+    "harness": "harness/manifest.json",
+    "evidence": "evidence.jsonl"
+  },
+  "source_sha256": {
+    "intent.md": "31116e96b8627d1d88e8409bff9ce6caf96bb2fdf1da48e5d02da57071fc28aa",
+    "decisions.md": "bf375266cf9be9638d4c09ff388db1a406914eae08ac14d8a3547461c6da7554",
+    "graph.json": "604d0e7b6129501333addef1707c1ec9e514873228e7b347b93f10245c4b8dce",
+    "harness/manifest.json": "6aef057c7a2ac52e657ee450c7b65647861ce67c662c216dda3ac2dd710d424c",
+    "evidence.jsonl": "0eac081f8e5dad70529e4e82288ca8b16c707bda78f6caf4ab3ed7780b00f077"
+  },
+  "environment": {
+    "binding": "8cd556bc0c84fb5377e65a1453c5fa26f2cc902ada48d034daff688741981223",
+    "intent_sha256": "31116e96b8627d1d88e8409bff9ce6caf96bb2fdf1da48e5d02da57071fc28aa",
+    "graph_sha256": "604d0e7b6129501333addef1707c1ec9e514873228e7b347b93f10245c4b8dce",
+    "runtime_sha256": "94a9221e020607149555e784eca0ea55975fcfa56fed722d601f621ecfa6a1ce",
+    "support_files": {
+      "tools/flow_guard.py": "b457edc8fa84b86318c74a025927e4d7d3e935c729409102b6d407a59e9d5f59",
+      "tools/verify.py": "70378649ca34e8e0d468bf0a59c7fa533e5091195acf6a15f9cbc20d2e554618",
+      "tools/check.py": "609af3cf633f9864a36267f89c14575714503efad575ca12ed903c8ff12ecc0d",
+      "tools/test_flow_guard.py": "fa817e4b0b9ac69c96e19087bf8f86c88ec370c83dd3963111e8800830a27e2b",
+      "tools/test_verify.py": "e99af477efb1d9560c54c0638141937734ed06ef348d58062cb7be557475a379",
+      "tools/test_check.py": "a107d3b4dab1a6148d9fb19d9cfa20be272579d0fc4a35914fb0798c6fb15a06",
+      "requirements.txt": "9e725fa2edb0b48146061b5f664388a0413b392f261300d609c7930e8cde090a"
+    }
+  },
+  "current_node": "Q4",
+  "product_binding": "eae7ad21aa0a46696cc8b81d6ada2643246a97f7948f4c364f0407dc27934865",
+  "current_statuses": {
+    "Q1": "LOCKED",
+    "Q2": "LOCKED",
+    "Q3": "LOCKED",
+    "Q4": "FOCUS",
+    "Q5": "PENDING",
+    "Q6": "PENDING",
+    "Q7": "PENDING",
+    "Q8": "PENDING"
+  },
+  "current_gate": {
+    "node_id": "Q4",
+    "binding": "eae7ad21aa0a46696cc8b81d6ada2643246a97f7948f4c364f0407dc27934865",
+    "verdict": "FAIL",
+    "failures": [
+      "Q4-C3: verification failed",
+      "Q4-6V: verification failed"
+    ],
+    "missing": [
+      "Human decision DEC-2 needs an actual host-verified approval record",
+      "Human decision DEC-12 needs an actual host-verified approval record",
+      "Human decision LOCK-Q4 needs an actual host-verified approval record",
+      "Q4-C4: no verification for this artifact/contract",
+      "Q4-C5: no verification for this artifact/contract",
+      "No Devil review for this artifact/contract"
+    ],
+    "locked": false
+  },
+  "active_gap": {
+    "criterion": "Q4-C3",
+    "work_slice": "S8 input paths",
+    "why": "Existing current ENV-INPUT-1 observes real gamepad cannot be emulated. Q4-C3 says touch/gamepad incomplete.",
+    "reuse": [
+      "world/src/client/Hud.client.luau",
+      "world/src/shared/Layout.luau",
+      "world/content/remote_contracts.yaml",
+      "world/src/server/Main.server.luau"
+    ],
+    "acceptance": "Same action contracts; actual keyboard/touch/gamepad progression, no movement/focus conflict; bind logs to build/device/scenario.",
+    "limits": "Full C3 also needs NPC/2players, hints, events, language choice/reuse, plaza. S8 alone cannot pass C3."
+  },
+  "work_contracts": [
+    {
+      "id": "Q1",
+      "contract_sha256": "a0b24e0e3e9402606cc45ae9e85c939f223f38cc44706a79349f04c6b77efcda",
+      "binding": "f6689fbe8dd92e75ebf1bad4f14943c08653c8b23ab23bc6cd5adf008bfc4004",
+      "criteria": [
+        "Q1-C1",
+        "Q1-C2",
+        "Q1-C3",
+        "Q1-C4",
+        "Q1-6V"
+      ],
+      "depends_on": [],
+      "human_holds": [
+        "LOCK-Q1"
+      ]
+    },
+    {
+      "id": "Q2",
+      "contract_sha256": "73812381ad4faba4ce45498c82f539206f59e084bbd31b7d5bd1db9b8b4e3ca5",
+      "binding": "c320af63325c990101d582b9e5616f06383a94b851bbca9b879de4c43ddf6b37",
+      "criteria": [
+        "Q2-C1",
+        "Q2-C2",
+        "Q2-C3",
+        "Q2-C4",
+        "Q2-C5",
+        "Q2-C6",
+        "Q2-C7",
+        "Q2-6V"
+      ],
+      "depends_on": [
+        "Q1"
+      ],
+      "human_holds": [
+        "LOCK-Q2"
+      ]
+    },
+    {
+      "id": "Q3",
+      "contract_sha256": "ca38836b0dfbf1104c3cbcd1d979c34a02cf723ce15802e3349910160548fa84",
+      "binding": "80f5cb7209c8af5dc267020dfede3b244f4906481a8a5c2deddf35fb08f789fd",
+      "criteria": [
+        "Q3-C1",
+        "Q3-C2",
+        "Q3-C3",
+        "Q3-C4",
+        "Q3-6V"
+      ],
+      "depends_on": [
+        "Q2"
+      ],
+      "human_holds": [
+        "DEC-8",
+        "LOCK-Q3"
+      ]
+    },
+    {
+      "id": "Q4",
+      "contract_sha256": "afb2be5f59563ea0950b1d108ea8a0f13d752276e9f13b9eb703dff8e0990aa3",
+      "binding": "eae7ad21aa0a46696cc8b81d6ada2643246a97f7948f4c364f0407dc27934865",
+      "criteria": [
+        "Q4-C1",
+        "Q4-C2",
+        "Q4-C3",
+        "Q4-C4",
+        "Q4-C5",
+        "Q4-6V"
+      ],
+      "depends_on": [
+        "Q3"
+      ],
+      "human_holds": [
+        "DEC-2",
+        "DEC-12",
+        "LOCK-Q4"
+      ]
+    },
+    {
+      "id": "Q5",
+      "contract_sha256": "5b3fca40fe132e0ef42ef078804791720edd4162bbd0285451d85271a327e95e",
+      "binding": "f0586d0df130fa727ed400a1b164be75bb2aed7087fb2fa44018ef4b1e0e17be",
+      "criteria": [
+        "Q5-C1",
+        "Q5-C2",
+        "Q5-6V"
+      ],
+      "depends_on": [
+        "Q4"
+      ],
+      "human_holds": [
+        "DEC-7",
+        "LOCK-Q5"
+      ]
+    },
+    {
+      "id": "Q6",
+      "contract_sha256": "4044ba887d3573e5668df029428135267a8279bb8cd160413a3d1eb6887fe6e0",
+      "binding": "98e62c28eef77c90aa3726bd452e2abe7799894bf2f5a1778d09d3fd52530a7f",
+      "criteria": [
+        "Q6-C1",
+        "Q6-C2",
+        "Q6-6V"
+      ],
+      "depends_on": [
+        "Q5"
+      ],
+      "human_holds": [
+        "DEC-5",
+        "LOCK-Q6"
+      ]
+    },
+    {
+      "id": "Q7",
+      "contract_sha256": "ded6da267396ccf92e33453817482ac0b95c1241ebb2ae39491594fffd9afc99",
+      "binding": "4e17a15a9d9e6a035e232d64c064f1f72d541448a5f387024a556f548f0cb440",
+      "criteria": [
+        "Q7-C1",
+        "Q7-C2",
+        "Q7-6V"
+      ],
+      "depends_on": [
+        "Q6"
+      ],
+      "human_holds": [
+        "DEC-4",
+        "DEC-11",
+        "LOCK-Q7"
+      ]
+    },
+    {
+      "id": "Q8",
+      "contract_sha256": "1c59367435083b1683e0adc5a3beed458176dbcb336af279d117e391deee11fc",
+      "binding": "a0d8cd7924c897fa7cf1a3f77cd86a2aaa3a6505dded5eded079001acf3f17de",
+      "criteria": [
+        "Q8-C1",
+        "Q8-C2",
+        "Q8-6V"
+      ],
+      "depends_on": [
+        "Q7"
+      ],
+      "human_holds": [
+        "DEC-6",
+        "LOCK-Q8"
+      ]
+    }
+  ],
+  "current_artifacts": {
+    "world/default.project.json": "2441f41c75628209fb86e52f45a63d40dcbda40d415ccbfa214669c5bf5f8455",
+    "world/src/shared/Text.luau": "2af9fb8e11b2ad853ead1306032bed8609ea07060d3cf39d905d5b499bd3b053",
+    "world/src/shared/Localization.csv": "91b99819db25ce03497835703c10d59897f03427b17ea170116b14785931ec53",
+    "world/src/shared/Missions.luau": "57bdc57abdccb5b0d9b8d13e1ed3e073e07ab8d3c7d5fe7c029a6d919d4d2172",
+    "world/src/shared/Layout.luau": "c7cbff1dbde13e571ad5f3a3c8b19e92783dd720d36680af6322df80e16590ae",
+    "world/src/server/Main.server.luau": "087466b06f39f80f62ccf808ca5da0289edc55e5b2c4448696885b9ec0b9d075",
+    "world/src/server/MissionService.luau": "f3a8d10f7763ab0c8d2e9740fa72809b8a8216651ff0be49794d4be4c4384454",
+    "world/src/server/RewardService.luau": "65b1b22c742eb6c612cea1c5130e69a215078424d3609f27e40daee10eec5718",
+    "world/src/server/Cooldown.luau": "baee2bd7dd3b66e779c8589516818f496c59a6e398bfac8738244603c5d524ff",
+    "world/src/server/Analytics.luau": "8b2d19378a521f35a424e852eb5d5a4e34fbd1eb7a6655ed7cb98c56ce2dc462",
+    "world/src/server/WorldBuilder.luau": "24e0e168da12bdbc15c7123087f8b6dabc31e808b6ae2a0b24f2a6dc5ba7d37f",
+    "world/src/server/WorldView.luau": "de77bc89192bbff7a8debb9d1845069a83657a098ecbd6b78edc988e85b65f42",
+    "world/src/client/Hud.client.luau": "d117bd2f0f807c530da63caad365432dcace870c7e2629b857681672c2a87f2e",
+    "world/content/math_claims.yaml": "218d65ac85d204ea156c52b71341e61c998596a815068fc0934a5b5756804436",
+    "world/content/remote_contracts.yaml": "a93543638563dcdc14f5f3c08a7be41fc748e5277ff27591760b872c5411ce7a",
+    "tools/build_localization.py": "71eb48cb7ae84be9014a89a17fabc1166f4b8d87c0a5de7e6a46666a4ca99908",
+    "tests/test_world_source.py": "b4e4f8303876e069b67139ba10e488541b8d08268c292f4bc69e96df929d3271"
+  },
+  "actual_environment_evidence": [
+    {
+      "id": "ENV-CURRENT-CHECK-8cd556bc",
+      "kind": "environment_verification",
+      "record": "outputs/verify/environment/current-check.txt",
+      "record_sha256": "0933f82e83e078bbd628dd2988ff8d935df7ee3ccb7311c6666b81f30c394bdd"
+    },
+    {
+      "id": "ENV-CURRENT-DRILL-8cd556bc",
+      "kind": "environment_observation",
+      "record": "outputs/verify/environment/current-drill.json",
+      "record_sha256": "b4e339b91999ce0081df1cad4ef2d79ede599a4b79fa859a12a4075baab5c731"
+    },
+    {
+      "id": "ENV-CURRENT-REVIEW-8cd556bc",
+      "kind": "environment_review",
+      "record": "outputs/verify/environment/current-independent-review.md",
+      "record_sha256": "0d8a5c13007a0198c32d954fb1d61b80ef98510f8520168fd4457775a5bfc325"
+    }
+  ],
+  "existing_runtime_evidence_refs": [
+    "PLAY-S5-PORTAL",
+    "V-Q4-C3-eae7ad21",
+    "ENV-INPUT-1",
+    "outputs/verify/Q4/Q4-play-S5-portal.json"
+  ],
+  "decisions": {
+    "already_decided": [
+      "DEC-2 rb-staging",
+      "DEC-8 Git+Rojo",
+      "DEC-12 no player storage"
+    ],
+    "binding_note": "Native gate still requests current-binding DEC2/12 records. Original decisions remain authoritative; do not ask those choices again or invent a fresh user approval.",
+    "future_reserved": [
+      "LOCK-Q4 after actual criteria/review/vectors",
+      "DEC-7 before pilot",
+      "DEC-5 before publish/spend",
+      "DEC-4/11/6 before market expansion"
+    ]
+  },
+  "limits": {
+    "new_studio_runs": 0,
+    "human_diagram_comprehension": "NOT_OBSERVED",
+    "fun": "NOT_MEASURED",
+    "roi": "NOT_MEASURED",
+    "RDC_Studio_tools": "NOT_EXPOSED_IN_THIS_SESSION",
+    "new_lock_or_approval": false
+  },
+  "resume": [
+    "Read same Intent/decisions/Graph and current working branch.",
+    "Connect installed runtime via MASTERWORK_HELPER; run check.py and verify.py next.",
+    "Compare supporting code/runtime hashes; changed environment needs renewed tools checks/review, product-only edits do not change environment identity.",
+    "Complete one observed Q4 slice using existing modules and local staging; record actual runtime with observe.",
+    "Run current stage checks; review only before stage lock, preserve 5-round cap/stop/fixed scope; six vectors once before actual user current-version approval."
+  ]
+}

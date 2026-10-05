@@ -1,0 +1,22 @@
+command: python3 -m harness.run world
+exit: 0
+time: 2026-10-05T13:13:03.555147+00:00
+
+OK   server.reward_authority
+OK   server.duplicate_reward
+OK   server.remote_validation
+OK   server.remote_cooldown
+OK   server.reward_after_verdict
+OK   i18n.missing_key
+OK   i18n.length_budget
+OK   i18n.do_not_translate
+OK   i18n.hardcoded_text
+OK   text.readability
+OK   math.truth
+OK   math.conditions
+OK   safety.banned_terms
+OK   safety.url
+OK   safety.external_call
+OK   safety.free_text
+OK   safety.random_or_paid_reward
+OK   analytics.calls

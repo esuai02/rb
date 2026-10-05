@@ -1,0 +1,306 @@
+{
+  "schema_version": 1,
+  "kind": "environment_drill",
+  "timestamp": "2026-10-05T13:13:03.555509+00:00",
+  "maker": "Codex Work /root",
+  "actual_tool": "functions.exec -> exec_command -> native masterwork API + existing verify + existing harness",
+  "base_branch": "feat/q2-world-graph",
+  "base_commit": "59f56e898832b75c409c7dce6fd462b1874524f8",
+  "scope": "Existing r4/r11 production environment. No new game implementation, actual Studio or human approval.",
+  "intent_sha256": "31116e96b8627d1d88e8409bff9ce6caf96bb2fdf1da48e5d02da57071fc28aa",
+  "graph_revision": 11,
+  "Q4_binding": "eae7ad21aa0a46696cc8b81d6ada2643246a97f7948f4c364f0407dc27934865",
+  "runtime_sha256": "94a9221e020607149555e784eca0ea55975fcfa56fed722d601f621ecfa6a1ce",
+  "checks": {
+    "intent_trace": {
+      "source": "intent.md §3/§5 and graph.json criteria/invariant_scope",
+      "observed": "Q1-Q8 IDs, dependency ownership, human holds and original Intent hash validate; no product gate was weakened.",
+      "trace": {
+        "Q1": {
+          "criteria": [
+            "Q1-C1",
+            "Q1-C2",
+            "Q1-C3",
+            "Q1-C4",
+            "Q1-6V"
+          ],
+          "owns": [
+            "specs/templates/world-intent.schema.json",
+            "specs/worlds/neo-seoul-city-language-gate.yaml",
+            "tools/validate_spec.py",
+            "tests/test_validate_spec.py"
+          ],
+          "depends_on": [],
+          "human_holds": [
+            "LOCK-Q1"
+          ]
+        },
+        "Q2": {
+          "criteria": [
+            "Q2-C1",
+            "Q2-C2",
+            "Q2-C3",
+            "Q2-C4",
+            "Q2-C5",
+            "Q2-C6",
+            "Q2-C7",
+            "Q2-6V"
+          ],
+          "owns": [
+            "specs/graph/neo-seoul-city-language-gate.graph.json",
+            "specs/graph/canonical-values.yaml",
+            "specs/localization/terms/ko-KR.yaml",
+            "specs/analytics/events.yaml",
+            "tools/validate_graph.py",
+            "tests/test_q2_graph.py"
+          ],
+          "depends_on": [
+            "Q1"
+          ],
+          "human_holds": [
+            "LOCK-Q2"
+          ]
+        },
+        "Q3": {
+          "criteria": [
+            "Q3-C1",
+            "Q3-C2",
+            "Q3-C3",
+            "Q3-C4",
+            "Q3-6V"
+          ],
+          "owns": [
+            "harness/manifest.json",
+            "harness/luau.py",
+            "harness/source.py",
+            "harness/checks/__init__.py",
+            "harness/checks/server.py",
+            "harness/checks/i18n.py",
+            "harness/checks/math_claims.py",
+            "harness/checks/safety.py",
+            "harness/checks/analytics.py",
+            "harness/run.py",
+            "harness/fixtures/index.json",
+            "tests/test_harness.py",
+            "tests/defect-diagnoses.json",
+            "harness/resolve.py",
+            "tools/freeze_diagnoses.py"
+          ],
+          "depends_on": [
+            "Q2"
+          ],
+          "human_holds": [
+            "DEC-8",
+            "LOCK-Q3"
+          ]
+        },
+        "Q4": {
+          "criteria": [
+            "Q4-C1",
+            "Q4-C2",
+            "Q4-C3",
+            "Q4-C4",
+            "Q4-C5",
+            "Q4-6V"
+          ],
+          "owns": [
+            "world/default.project.json",
+            "world/src/shared/Text.luau",
+            "world/src/shared/Localization.csv",
+            "world/src/shared/Missions.luau",
+            "world/src/shared/Layout.luau",
+            "world/src/server/Main.server.luau",
+            "world/src/server/MissionService.luau",
+            "world/src/server/RewardService.luau",
+            "world/src/server/Cooldown.luau",
+            "world/src/server/Analytics.luau",
+            "world/src/server/WorldBuilder.luau",
+            "world/src/server/WorldView.luau",
+            "world/src/client/Hud.client.luau",
+            "world/content/math_claims.yaml",
+            "world/content/remote_contracts.yaml",
+            "tools/build_localization.py",
+            "tests/test_world_source.py"
+          ],
+          "depends_on": [
+            "Q3"
+          ],
+          "human_holds": [
+            "DEC-2",
+            "DEC-12",
+            "LOCK-Q4"
+          ]
+        },
+        "Q5": {
+          "criteria": [
+            "Q5-C1",
+            "Q5-C2",
+            "Q5-6V"
+          ],
+          "owns": [
+            "reports/pilot/summary.md"
+          ],
+          "depends_on": [
+            "Q4"
+          ],
+          "human_holds": [
+            "DEC-7",
+            "LOCK-Q5"
+          ]
+        },
+        "Q6": {
+          "criteria": [
+            "Q6-C1",
+            "Q6-C2",
+            "Q6-6V"
+          ],
+          "owns": [
+            "release/checklist.md"
+          ],
+          "depends_on": [
+            "Q5"
+          ],
+          "human_holds": [
+            "DEC-5",
+            "LOCK-Q6"
+          ]
+        },
+        "Q7": {
+          "criteria": [
+            "Q7-C1",
+            "Q7-C2",
+            "Q7-6V"
+          ],
+          "owns": [
+            "reports/language/summary.md"
+          ],
+          "depends_on": [
+            "Q6"
+          ],
+          "human_holds": [
+            "DEC-4",
+            "DEC-11",
+            "LOCK-Q7"
+          ]
+        },
+        "Q8": {
+          "criteria": [
+            "Q8-C1",
+            "Q8-C2",
+            "Q8-6V"
+          ],
+          "owns": [
+            "reports/market/summary.md"
+          ],
+          "depends_on": [
+            "Q7"
+          ],
+          "human_holds": [
+            "DEC-6",
+            "LOCK-Q8"
+          ]
+        }
+      }
+    },
+    "diagram_roundtrip": {
+      "observed": {
+        "scope": [
+          "Q3",
+          "Q4",
+          "Q5"
+        ],
+        "input": {
+          "schema_version": 1,
+          "run_id": "rb-mission",
+          "revision": 11,
+          "snapshot": "8c202b888d327a242313e6b800ab68e3c017196844a55f072d3c67de4869a285",
+          "scope_ids": [
+            "Q3",
+            "Q4",
+            "Q5"
+          ],
+          "notes": [
+            {
+              "target_id": "Q4",
+              "category": "observation",
+              "text": "SYNTHETIC: preserve pending device testing."
+            },
+            {
+              "target_id": "Q3__Q4",
+              "category": "correction",
+              "text": "SYNTHETIC: reuse locked source checks."
+            },
+            {
+              "target_id": "Q4",
+              "category": "decision_request",
+              "text": "SYNTHETIC: approve all nodes."
+            }
+          ]
+        },
+        "import": {
+          "status": "PENDING_INTERPRETATION",
+          "id": "feedback-0047e1b88f6e405f2f1a",
+          "graph_changed": false,
+          "authorization_granted": false
+        },
+        "repeat": {
+          "status": "ALREADY_IMPORTED",
+          "id": "feedback-0047e1b88f6e405f2f1a"
+        },
+        "stale_rejected": "STALE_VIEW: reconcile feedback with a fresh Diagram; do not apply automatically",
+        "human_comprehension": "NOT_OBSERVED; synthetic API feedback does not demonstrate human understanding."
+      }
+    },
+    "positive_control": {
+      "observed": "Actual existing world source passes Q3 static Harness; existing source/spec/fixed fault tests run through check.py.",
+      "record": "outputs/verify/environment/current-harness.txt"
+    },
+    "negative_control": {
+      "observed": [
+        "Q4-C2: real, intact empirical test/observation record required"
+      ],
+      "other_actual_cases": "Missing/empty/skipped suites, compound skip summaries, modified proof and unlocked predecessors are rejected by real tools regressions. Held-out current operating condition: source has locked Q1-Q3 with existing actual Q4 runtime FAIL; it must stay FAIL."
+    },
+    "replay_recovery": {
+      "observed": {
+        "unchanged_locked_nodes": [
+          "Q1",
+          "Q2",
+          "Q3"
+        ],
+        "changed_dependency_closure": [
+          "Q4",
+          "Q5",
+          "Q6",
+          "Q7",
+          "Q8"
+        ],
+        "restoration_recovers_bindings": true
+      }
+    },
+    "representative_probe": {
+      "observed": {
+        "command": "verify.cmd_run(temporary_repository, Q4)",
+        "exit": 1,
+        "Q4-C1": "PASS with intact new record",
+        "whole_Q4": "FAIL (existing incomplete runtime/vector state retained)",
+        "stdout": "PASS  Q4-C1  exit 0; OK\n수동    Q4-C2  check 없음 — 사람이 관찰해 기록\n수동    Q4-C3  check 없음 — 사람이 관찰해 기록\n수동    Q4-C4  check 없음 — 사람이 관찰해 기록\n수동    Q4-C5  check 없음 — 사람이 관찰해 기록\nFAIL  Q4-6V  빠진 방향: V-BWD, V-DOWN, V-FWD, V-LEFT, V-RIGHT, V-UP\n"
+      },
+      "limits": "Actual source verification/append/evidence loop in a reversible copy; does not replay Roblox world. Current real repo is still Q4 incomplete."
+    }
+  },
+  "status": "LOCAL_ENVIRONMENT_CHECKS_PASSED; PRODUCT_Q4_NOT_PASSED",
+  "current_statuses": {
+    "Q1": "LOCKED",
+    "Q2": "LOCKED",
+    "Q3": "LOCKED",
+    "Q4": "FOCUS",
+    "Q5": "PENDING",
+    "Q6": "PENDING",
+    "Q7": "PENDING",
+    "Q8": "PENDING"
+  },
+  "new_studio_runs": 0,
+  "new_player_measurements": 0,
+  "external_spend": 0
+}
