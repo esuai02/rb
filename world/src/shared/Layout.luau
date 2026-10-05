@@ -32,6 +32,12 @@ function Layout.bridgePlacement(step: number): (Vector3, CFrame)
 		CFrame.new(center) * CFrame.Angles(math.atan2(rise, Layout.BRIDGE_RUN), 0, 0)
 end
 
+-- 다리 판의 높은 끝(판과 같은 기울기). 다리 끝 막대가 여기에 붙는다.
+function Layout.bridgeTip(step: number): CFrame
+	local size, frame = Layout.bridgePlacement(step)
+	return frame * CFrame.new(0, 0, -size.Z / 2)
+end
+
 -- 게이트 단: 앞 윗모서리가 문턱이다. 정답 다리의 윗면 끝이 단 윗면과 같은 높이에서 만난다.
 local reach = Layout.bridgeEnd(Layout.BRIDGE_REACH_STEP)
 Layout.DECK_TOP = reach.Y + Layout.BRIDGE_THICKNESS / 2
@@ -47,6 +53,13 @@ Layout.PORTAL_CENTER = Vector3.new(0, Layout.DECK_TOP + 5, Layout.DECK_FRONT_Z -
 -- 칸 좌표(x, y)의 월드 위치. 신호판이 세로 벽이라 y 가 실제 위쪽이 된다(cv.coordinate_expression.plane).
 function Layout.cellPosition(x: number, y: number): Vector3
 	return Layout.WALL_CENTER + Vector3.new(x * Layout.CELL_STUDS, y * Layout.CELL_STUDS, 0)
+end
+
+-- 루미가 칸 앞에 머무는 자리. 구가 칸 앞면에 닿아 비스듬히 봐도 어느 칸인지 보인다.
+Layout.LUMI_STANDOFF = 1.8
+
+function Layout.lumiPosition(x: number, y: number): Vector3
+	return Layout.cellPosition(x, y) + Vector3.new(0, 0, Layout.LUMI_STANDOFF)
 end
 
 function Layout.cellName(x: number, y: number): string

@@ -60,90 +60,93 @@ Players.PlayerRemoving:Connect(function(player: Player)
 	end
 end)
 
+-- 나간 사람에게는 보내지 않는다 — 월드 반응을 기다리는 사이에 나갈 수 있다
 local function tell(player: Player, code: string)
 	local remote = results
-	if remote then
+	if remote and player.Parent then
 		remote:FireClient(player, code)
 	end
 end
 
--- 월드와 결과 알림 통로를 받아 둔다. 서버가 만든 것만 쓴다.
+-- 월드와 결과 알림 통로를 받아 둔다. 서버가 만든 것만 쓴다. 첫 '지금 할 곳'은 신호 패널이다.
 function MissionService.bind(root: Instance, remote: RemoteEvent)
 	world = root
 	results = remote
-	WorldView.lightTarget(root, TARGET_CELL.x, TARGET_CELL.y)
+	WorldView.goal(root, "SignalPanel")
 end
 
--- 신호 1 — 수학 없는 첫 월드 반응 (cv.gate_signals.signal_1)
+-- 신호 1 — 수학 없는 첫 월드 반응 (cv.gate_signals.signal_1): 패널이 켜지고 먼 도시 불빛·게이트 불 1 이 켜진다.
+-- 다음 '지금 할 곳'은 신호 칸이다.
 function MissionService.activatePanel(player: Player)
 	local root = world
 	if not root or not ready(player, "m.signal_wake") then
 		return
 	end
 	finish(player, "m.signal_wake")
-	WorldView.lightPanel(root)
+	WorldView.restore(root, "SignalPanel")
+	WorldView.restore(root, "CityLights")
+	WorldView.restore(root, "GateLamp1")
+	WorldView.goal(root, Layout.cellName(TARGET_CELL.x, TARGET_CELL.y))
 	Analytics.funnel(player, "first_interaction", {})
 	tell(player, "signal_panel_lit")
 end
 
+-- 신호 2 — 좌표. 판정·기록은 먼저 하고, 루미가 날아간 뒤에 말한다 (월드 → 말 → 이름표, INV-15).
 function MissionService.coordinateMove(player: Player, cell: {x: number, y: number})
 	local root = world
-	if not ready(player, "m.signal_coordinate") then
+	if not root or not ready(player, "m.signal_coordinate") then
 		return
 	end
-	local reached = cell.x == TARGET_CELL.x and cell.y == TARGET_CELL.y
-	if root then
-		if reached then
-			WorldView.moveLumi(root, cell.x, cell.y)
-		else
-			WorldView.resetLumi(root)
-		end
-	end
-	if reached then
+	if cell.x == TARGET_CELL.x and cell.y == TARGET_CELL.y then
 		finish(player, "m.signal_coordinate")
 		Analytics.log(player, "math_attempt", {mission = "m.signal_coordinate", outcome = "target_reached"})
 		Analytics.funnel(player, "first_math_success", {attempt = "first"})
-		tell(player, "coordinate_reached")
+		WorldView.moveLumi(root, cell.x, cell.y)
+		WorldView.restore(root, Layout.cellName(cell.x, cell.y))
+		WorldView.restore(root, "GateLamp2")
+		WorldView.restore(root, "LightBridge")
+		WorldView.goal(root, "GateThreshold")
+		tell(player, "coordinate_reached")   -- 끼어든 판정이 있어도 성공 말은 보낸다 — 단계가 멈추지 않게
 	else
 		Analytics.log(player, "math_attempt", {mission = "m.signal_coordinate", outcome = "other_result"})
-		tell(player, "coordinate_other")
+		if WorldView.visitLumi(root, cell.x, cell.y) then   -- 밀린 '다른 결과' 말은 보내지 않는다
+			tell(player, "coordinate_other")
+		end
 	end
 end
 
+-- 신호 3 — 기울기. 다리는 바로 바뀌고, 닿으면 문턱과 게이트 불 3 이 켜진다.
 function MissionService.slopeSet(player: Player, choice: string): boolean
 	local root = world
-	if not ready(player, "m.signal_slope") then
+	local step = SLOPE_STEPS[choice]
+	if not root or not step or not ready(player, "m.signal_slope") then   -- 정해진 표현 셋이 아니면 무시한다
 		return false
 	end
-	local step = SLOPE_STEPS[choice]
-	local reached = step == TARGET_STEP
-	if root and step then
-		WorldView.setBridge(root, step)
-	end
-	if reached then
+	WorldView.setBridge(root, step)
+	if step == TARGET_STEP then
 		finish(player, "m.signal_slope")
 		Analytics.log(player, "math_attempt", {mission = "m.signal_slope", outcome = "target_reached"})
+		WorldView.restore(root, "GateThreshold")
+		WorldView.restore(root, "GateLamp3")
 		tell(player, "slope_reached")
-	else
-		Analytics.log(player, "math_attempt", {mission = "m.signal_slope", outcome = "other_result"})
-		tell(player, "slope_other")
+		return true
 	end
-	return reached
+	Analytics.log(player, "math_attempt", {mission = "m.signal_slope", outcome = "other_result"})
+	tell(player, "slope_other")
+	return false
 end
 
--- 게이트 열림 — 완주한 사람 모두에게 같은 기본 보상 (cv.first_rewards)
+-- 게이트 열림 — 완주한 사람 모두에게 같은 기본 보상 (cv.first_rewards). 기록·보상은 판정 때, 말은 문이 다 올라간 뒤.
 function MissionService.openGate(player: Player)
 	local root = world
-	if not ready(player, "m.gate_open") then
+	if not root or not ready(player, "m.gate_open") then
 		return
 	end
 	finish(player, "m.gate_open")
-	if root then
-		WorldView.openGate(root)
-	end
 	Analytics.funnel(player, "gate_opened", {play_mode = "solo_npc"})
-	tell(player, "gate_opened")
 	RewardService.grant(player, "reward.explorer_card", "m.gate_open")
+	WorldView.openGate(root)
+	tell(player, "gate_opened")
 end
 
 function MissionService.count(): number

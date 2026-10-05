@@ -152,6 +152,8 @@ end
 -- 고른 칸은 월드에서 보여 준다(테두리). 보내는 것은 신호 패널을 켤 때다.
 local marker = Instance.new("SelectionBox")
 marker.Name = "CellCursor"
+marker.Color3 = Color3.fromRGB(0, 0, 0)   -- 어느 칸 색(꺼짐·깜박임·켜짐·출발) 위에서도 3:1 이상 — 기본 파랑은 꺼진 칸 위에서 거의 사라진다
+marker.LineThickness = 0.2
 marker.Parent = screen
 
 local function showCursor()

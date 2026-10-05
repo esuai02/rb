@@ -1,60 +1,144 @@
 --!strict
 -- 월드가 플레이어의 말에 반응하는 자리 (K5 — 점수가 아니라 월드가 답한다).
 -- 판정은 MissionService 가 하고 여기서는 보이는 것만 바꾼다. 글자는 넣지 않는다(INV-3).
+-- 반응은 1초 안에 보인다(INV-8). 움직임을 기다리는 함수는 끝난 뒤 돌아오므로, 말은 월드 반응 뒤에 간다(INV-15).
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
 local Layout = require(ReplicatedStorage.Shared.Layout)
 
 local WorldView = {}
+
+-- 지금 할 곳 = 노랑 깜박임, 돌아온 신호 = 청록 고정. 색보다 깜박임과 멈춤이 먼저 뜻을 싣는다 (INV-9)
+local GOAL = Color3.fromRGB(255, 176, 32)
+local SIGNAL = Color3.fromRGB(80, 220, 255)
+local PULSE = TweenInfo.new(0.55, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)   -- 약 0.9Hz — 3Hz 깜박임 한도 아래
+local SETTLE = TweenInfo.new(0.15)
+local FLY = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+local RISE = TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+local DWELL_SECONDS = 0.5   -- 고른 칸에 머무는 시간 — 어디에 내렸는지 볼 틈
+local BEAT_SECONDS = 1.5    -- 다리가 닿은 뒤 문이 움직이기 전 한 박자 — '닿았어'가 먼저 보이게
+
+-- 부품마다 지금 재생 중인 움직임 하나. 새 움직임이 앞의 것을 끊으므로 마지막 판정의 모습이 남는다.
+local playing: {[BasePart]: Tween} = {}
+
+local function play(target: BasePart, info: TweenInfo, props: {[string]: any}): Tween
+	local previous = playing[target]
+	if previous then
+		previous:Cancel()
+	end
+	local tween = TweenService:Create(target, info, props)
+	playing[target] = tween
+	tween:Play()
+	return tween
+end
+
+-- 끝까지 재생됐고 그사이 다른 움직임이 이 부품을 가져가지 않았으면 true
+local function finished(target: BasePart, tween: Tween): boolean
+	return tween.Completed:Wait() == Enum.PlaybackState.Completed and playing[target] == tween
+end
 
 local function part(root: Instance, name: string): BasePart?
 	local found = root:FindFirstChild(name, true)
 	return if found and found:IsA("BasePart") then found else nil
 end
 
--- 목표 칸에 빛을 켠다 — 어디로 보내야 하는지 월드가 보여 준다
-function WorldView.lightTarget(root: Instance, x: number, y: number)
-	local cell = part(root, Layout.cellName(x, y))
-	if cell then
-		cell:SetAttribute("Lit", true)
+-- 이름으로 찾은 부품과 그 아래 부품 전부(폴더면 안의 부품). Place 가 꾸민 CityLights 도 같은 약속으로 켠다.
+local function parts(root: Instance, name: string): {BasePart}
+	local list: {BasePart} = {}
+	local found = root:FindFirstChild(name, true)
+	if not found then
+		return list
+	end
+	if found:IsA("BasePart") then
+		table.insert(list, found)
+	end
+	for _, item in found:GetDescendants() do
+		if item:IsA("BasePart") then
+			table.insert(list, item)
+		end
+	end
+	return list
+end
+
+-- 지금 할 곳: 노랑으로 깜박인다. 깜박이는 곳은 늘 하나다 — MissionService 가 다음 자리로 옮긴다.
+function WorldView.goal(root: Instance, name: string)
+	for _, item in parts(root, name) do
+		item.Material = Enum.Material.Neon
+		item.Color = GOAL
+		item.Transparency = 0
+		play(item, PULSE, {Transparency = 0.4})
 	end
 end
 
-function WorldView.moveLumi(root: Instance, x: number, y: number)
+-- 돌아온 신호: 청록으로 고정해 켠다. 같은 부품의 깜박임은 멈춘다.
+function WorldView.restore(root: Instance, name: string)
+	for _, item in parts(root, name) do
+		item.Material = Enum.Material.Neon
+		item.Color = SIGNAL
+		item:SetAttribute("Lit", true)
+		play(item, SETTLE, {Transparency = 0})
+	end
+end
+
+-- 루미를 출발 칸에 두고 고른 칸으로 날린다 (cv.coordinate_expression.moves_from — 언제나 출발 칸에서)
+local function launch(root: Instance, x: number, y: number): (BasePart?, Tween?)
 	local lumi = part(root, "Lumi")
-	if lumi then
-		lumi.Position = Layout.cellPosition(x, y) + Vector3.new(0, 0, 3)
+	if not lumi then
+		return nil, nil
 	end
+	lumi.Position = Layout.lumiPosition(0, 0)
+	return lumi, play(lumi, FLY, {Position = Layout.lumiPosition(x, y)})
 end
 
--- 다른 칸에 내리면 출발 칸으로 돌아온다 (정본 값 cv.coordinate_expression.moves_from)
-function WorldView.resetLumi(root: Instance)
-	WorldView.moveLumi(root, 0, 0)
+-- 목표 칸: 날아가 그 앞에 머문다. 도착하면 true.
+function WorldView.moveLumi(root: Instance, x: number, y: number): boolean
+	local lumi, flight = launch(root, x, y)
+	return lumi ~= nil and flight ~= nil and finished(lumi, flight)
 end
 
--- 빛 다리 기울기 — 출발점과 가로 거리는 고정하고 끝 높이만 바꾼다 (cv.slope_choices.fixed)
+-- 다른 칸: 고른 칸에 내렸다가 머문 뒤 출발 칸으로 돌아온다(resp.coordinate.other_spot). 다른 판정이 끼어들면 false.
+function WorldView.visitLumi(root: Instance, x: number, y: number): boolean
+	local lumi, flight = launch(root, x, y)
+	if not (lumi and flight and finished(lumi, flight)) then
+		return false
+	end
+	task.wait(DWELL_SECONDS)
+	if playing[lumi] ~= flight then
+		return false
+	end
+	return finished(lumi, play(lumi, FLY, {Position = Layout.lumiPosition(0, 0)}))
+end
+
+-- 빛 다리 기울기 — 출발점과 가로 거리는 고정하고 끝 높이만 바꾼다 (cv.slope_choices.fixed). 끝 막대가 함께 간다.
 function WorldView.setBridge(root: Instance, step: number)
 	local bridge = part(root, "LightBridge")
 	if not bridge then
 		return
 	end
 	bridge.Size, bridge.CFrame = Layout.bridgePlacement(step)
+	local tip = bridge:FindFirstChild("BridgeEnd")
+	if tip and tip:IsA("BasePart") then
+		tip.CFrame = Layout.bridgeTip(step)
+	end
 	bridge:SetAttribute("SlopeStep", step)
 end
 
+-- 다리가 닿고 한 박자 뒤 문이 켜진 불과 함께 셔터처럼 올라간다. 다 올라가면 돌아온다 — 그 뒤에 '열렸어'.
 function WorldView.openGate(root: Instance)
 	local gate = part(root, "CityLanguageGate")
-	if gate then
-		gate:SetAttribute("Open", true)
-		gate.CanCollide = false
-		gate.Transparency = 0.8
+	if not gate or gate:GetAttribute("Open") then
+		return
 	end
-end
-
-function WorldView.lightPanel(root: Instance)
-	local panel = part(root, "SignalPanel")
-	if panel then
-		panel:SetAttribute("Lit", true)
+	gate:SetAttribute("Open", true)
+	task.wait(BEAT_SECONDS)
+	gate.CanCollide = false
+	local lift = Vector3.new(0, Layout.GATE_SIZE.Y + 1, 0)
+	for _, lamp in gate:GetChildren() do
+		if lamp:IsA("BasePart") then
+			play(lamp, RISE, {Position = lamp.Position + lift})
+		end
 	end
+	finished(gate, play(gate, RISE, {Position = gate.Position + lift}))
 end
 
 return WorldView
