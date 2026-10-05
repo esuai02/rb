@@ -1,0 +1,6 @@
+criterion: Q4-C3 — Play 테스트: 혼자(NPC 대체)·2인·터치/키보드/게임패드로 게이트를 끝까지 연다 (INV-9)
+result: FAIL
+observed: 기준선 Play(혼자·키보드, Studio Play 클라이언트 1개): 6개 시나리오 모두 좌표 미션에서 막힘. PLAY-1 GateHud 가 PlayerGui 가 아니라 PlayerScripts.Gate 아래 생겨 목표·버튼이 화면에 없음(캡처 확인) → 커서를 못 움직여 E 입력은 늘 (0,0)=coordinate_other. PLAY-2 버튼 값 (2,1) 을 대신 보내면 coordinate_reached 와 gate_opened 가 같은 순간(20.98s) — 기울기 미션 건너뜀. PLAY-3 ZonePortal 트리거 없음. PLAY-4 월드 부품 CanCollide 0 — 게이트가 길을 막지 않음. PLAY-5 패널·목표 칸 반응이 속성만 바뀌고 눈에 안 보임. 키보드 E 로 패널 켜기는 동작. 2인·터치·게임패드는 PLAY-1 때문에 미실행. 원본 outputs/verify/Q4/Q4-C3-baseline-play.json
+source: Claude Code 세션 4dbacf45, 2026-10-05, Studio MCP(start_stop_play·user_keyboard_input·character_navigation·execute_luau·screen_capture) on rb-staging.rbxlx
+binding: af78c329f8a0cf2f5a5cf7d9cab56ce042b798ad380cdebc0e4b5158c249d0e2
+time: 2026-10-05T05:55:14.334933+00:00

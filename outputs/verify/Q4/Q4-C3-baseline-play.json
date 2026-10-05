@@ -1,0 +1,76 @@
+{
+ "criterion": "Q4-C3",
+ "result": "FAIL",
+ "kind": "baseline_play",
+ "checked_at": "2026-10-05T05:55:12.309266+00:00",
+ "repo_head": "5a1ae5a",
+ "studio_place_file": "rb-staging.rbxlx",
+ "rojo": "7.7.1",
+ "run": {
+  "play_mode": "solo (Studio Play, 1 client)",
+  "input": "keyboard (MCP user_keyboard_input) + character_navigation",
+  "device": {
+   "TouchEnabled": false,
+   "KeyboardEnabled": true,
+   "GamepadEnabled": false
+  }
+ },
+ "result_codes_client": "5.28:signal_panel_lit;18.58:coordinate_other;20.98:coordinate_reached;20.98:gate_opened",
+ "findings": [
+  {
+   "id": "PLAY-1",
+   "severity": "blocker",
+   "where": "world/src/client/Hud.client.luau (screen.Parent = script.Parent)",
+   "observed": "GateHud ScreenGui 가 Players.<p>.PlayerScripts.Gate.GateHud 에 생기고 PlayerGui 에 없다. 화면 캡처에 목표·버튼이 하나도 없다",
+   "effect": "목표 안내·이동 버튼·기울기 버튼이 보이지 않아 어떤 입력으로도 좌표 미션을 풀 수 없다(모든 시나리오 막힘)"
+  },
+  {
+   "id": "PLAY-2",
+   "severity": "blocker",
+   "where": "world/src/server/Main.server.luau onSignal → MissionService.openGate",
+   "observed": "SignalRemote(2,1) 를 보내자 같은 순간(20.98s) coordinate_reached 와 gate_opened 가 왔고 LightBridge SlopeStep=nil",
+   "effect": "기울기 미션(m.signal_slope)을 건너뛰고 게이트가 열린다 — 경로 순서 위반"
+  },
+  {
+   "id": "PLAY-3",
+   "severity": "blocker",
+   "where": "world/src/server/WorldBuilder.luau buildPortal",
+   "observed": "ZonePortal 에 자식(트리거) 0, 포털 안(거리 1.2)에 서도 결과 코드 없음",
+   "effect": "m.zone_portal 을 끝낼 수 없다(zone_portal_entered·onboarding_complete 없음)"
+  },
+  {
+   "id": "PLAY-4",
+   "severity": "major",
+   "where": "world/src/server/WorldBuilder.luau anchored() CanCollide=false",
+   "observed": "CityLanguageGateWorld 안 CanCollide 부품 0개",
+   "effect": "게이트가 열리기 전에도 길을 막지 않는다"
+  },
+  {
+   "id": "PLAY-5",
+   "severity": "major",
+   "where": "world/src/server/WorldView.luau lightPanel/lightTarget",
+   "observed": "패널 Lit=true 뒤에도 색 0.639,0.635,0.647·Plastic 그대로. 목표 칸도 속성만 바뀜",
+   "effect": "월드 반응이 눈에 보이지 않는다(INV-8·K5 첫 월드 반응)"
+  },
+  {
+   "id": "PLAY-6",
+   "severity": "info",
+   "where": "ProximityPrompt",
+   "observed": "키보드 E 로 신호 패널 켜기 성공(거리 5.4, MaxActivationDistance 10, Gamepad ButtonX)",
+   "effect": "패널 켜기는 키보드로 동작"
+  }
+ ],
+ "not_run": [
+  "2인(duo) — MCP Play 는 클라이언트 1개",
+  "터치·게임패드 — PLAY-1 이 고쳐지기 전에는 의미 없음",
+  "NPC 대체·협동·광장 미션 — 코드 없음(정적 감사 진행 중)"
+ ],
+ "scenarios": {
+  "sc.solo_touch_first_try": "FAIL(PLAY-1)",
+  "sc.solo_gamepad_other_results": "FAIL(PLAY-1)",
+  "sc.duo_keyboard": "FAIL(PLAY-1)",
+  "sc.solo_touch_idle": "FAIL(PLAY-1)",
+  "sc.solo_keyboard_everyday_only": "FAIL(PLAY-1)",
+  "sc.duo_gamepad_plaza_reuse": "FAIL(PLAY-1)"
+ }
+}

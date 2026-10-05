@@ -21,7 +21,7 @@ local hintLevel, attempts, lastActed = 0, 0, os.clock()
 local screen = Instance.new("ScreenGui")
 screen.Name = "GateHud"
 screen.ResetOnSpawn = false
-screen.Parent = script.Parent
+screen.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")   -- 화면에 그려지는 곳은 PlayerGui 뿐이다
 
 local function panel(name: string, position: UDim2, size: UDim2): Frame
 	local frame = Instance.new("Frame")
