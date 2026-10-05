@@ -37,11 +37,7 @@ function WorldView.setBridge(root: Instance, step: number)
 	if not bridge then
 		return
 	end
-	local rise = step * Layout.BRIDGE_RISE_PER_STEP
-	local angle = math.atan2(rise, Layout.BRIDGE_RUN)
-	bridge.Size = Vector3.new(2, 1, math.sqrt(Layout.BRIDGE_RUN * Layout.BRIDGE_RUN + rise * rise))
-	bridge.CFrame = CFrame.new(Layout.BRIDGE_START + Vector3.new(0, rise / 2, -Layout.BRIDGE_RUN / 2))
-		* CFrame.Angles(angle, 0, 0)
+	bridge.Size, bridge.CFrame = Layout.bridgePlacement(step)
 	bridge:SetAttribute("SlopeStep", step)
 end
 

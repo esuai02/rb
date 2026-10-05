@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Analytics = require(script.Parent.Analytics)
 local RewardService = require(script.Parent.RewardService)
 local WorldView = require(script.Parent.WorldView)
+local Layout = require(ReplicatedStorage.Shared.Layout)
 local Missions = require(ReplicatedStorage.Shared.Missions)
 
 local MissionService = {}
@@ -19,7 +20,7 @@ local SLOPE_STEPS: {[string]: number} = {
 	["expr.slope.rise_less"] = 1,
 	["expr.slope.flat"] = 0,
 }
-local TARGET_STEP = 3
+local TARGET_STEP = Layout.BRIDGE_REACH_STEP   -- 문턱 높이는 월드(Layout)가 정한다 — 정답과 월드가 한 값을 본다
 
 local world: Instance? = nil
 local results: RemoteEvent? = nil

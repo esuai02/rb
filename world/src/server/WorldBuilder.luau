@@ -8,13 +8,13 @@ local Layout = require(ReplicatedStorage.Shared.Layout)
 
 local WorldBuilder = {}
 
-local function anchored(class: string, name: string, size: Vector3, position: Vector3, parent: Instance): BasePart
+-- 고정 부품. 부딪힘은 Roblox 기본값(켜짐)을 쓰고, 지나가야 하는 것(루미·포털)만 끈다.
+local function anchored(name: string, size: Vector3, position: Vector3, parent: Instance): BasePart
 	local part = Instance.new("Part")
 	part.Name = name
 	part.Size = size
 	part.Position = position
 	part.Anchored = true
-	part.CanCollide = false
 	part.Parent = parent
 	return part
 end
@@ -22,10 +22,10 @@ end
 -- 신호판: 세로 벽 + 칸 25개. 칸은 이름으로만 구분하고 글자는 붙이지 않는다.
 local function buildWall(root: Instance): Instance
 	local span = (Layout.GRID_HALF * 2 + 1) * Layout.CELL_STUDS
-	local wall = anchored("Part", "SignalWall", Vector3.new(span, span, Layout.WALL_THICKNESS), Layout.WALL_CENTER, root)
+	local wall = anchored("SignalWall", Vector3.new(span, span, Layout.WALL_THICKNESS), Layout.WALL_CENTER, root)
 	for x = -Layout.GRID_HALF, Layout.GRID_HALF do
 		for y = -Layout.GRID_HALF, Layout.GRID_HALF do
-			local cell = anchored("Part", Layout.cellName(x, y),
+			local cell = anchored(Layout.cellName(x, y),
 				Vector3.new(Layout.CELL_STUDS - 1, Layout.CELL_STUDS - 1, Layout.WALL_THICKNESS + 1),
 				Layout.cellPosition(x, y), wall)
 			cell:SetAttribute("CellX", x)
@@ -37,7 +37,7 @@ end
 
 -- 신호 패널: 다가가서 켜는 자리. 안내 글자는 클라이언트가 번역표에서 넣는다.
 local function buildPanel(root: Instance): Instance
-	local panel = anchored("Part", "SignalPanel", Vector3.new(4, 6, 1), Vector3.new(8, 4, -16), root)
+	local panel = anchored("SignalPanel", Vector3.new(4, 6, 1), Layout.PANEL_POSITION, root)
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "ActivatePrompt"
 	prompt.RequiresLineOfSight = false
@@ -46,28 +46,41 @@ local function buildPanel(root: Instance): Instance
 	return panel
 end
 
+-- 빛 다리: 처음에는 평평하게(기울기 0) 바닥에 놓여 게이트 문턱에 닿지 않는다 (sit.slope.bridge_low)
 local function buildBridge(root: Instance): Instance
-	return anchored("Part", "LightBridge", Vector3.new(2, 1, Layout.BRIDGE_RUN), Layout.BRIDGE_START, root)
+	local bridge = anchored("LightBridge", Vector3.one, Layout.BRIDGE_START, root)
+	bridge.Size, bridge.CFrame = Layout.bridgePlacement(0)
+	return bridge
+end
+
+-- 게이트 단: 바닥에서 뛰어오를 수 없는 높이라 빛 다리로만 오른다
+local function buildDeck(root: Instance): Instance
+	return anchored("GateDeck", Layout.DECK_SIZE, Layout.DECK_CENTER, root)
 end
 
 local function buildGate(root: Instance): Instance
-	local gate = anchored("Part", "CityLanguageGate", Vector3.new(14, 18, 1), Layout.GATE_CENTER, root)
-	anchored("Part", "GateThreshold", Vector3.new(14, 1, 2),
-		Layout.GATE_CENTER - Vector3.new(0, 9, 0), gate)
+	local gate = anchored("CityLanguageGate", Layout.GATE_SIZE, Layout.GATE_CENTER, root)
+	-- 문턱: 단의 앞 윗모서리. 정답 다리 끝이 여기에 닿는다
+	anchored("GateThreshold", Vector3.new(Layout.DECK_SIZE.X, 1, 2),
+		Vector3.new(0, Layout.DECK_TOP - 0.5, Layout.DECK_FRONT_Z - 1), gate)
 	-- 협동 프리즘 — 이름은 정본 값 cv.coop_switch_ids 와 같아야 한다
-	anchored("Part", "gate_prism_left", Vector3.new(2, 4, 2),
-		Layout.GATE_CENTER + Vector3.new(-Layout.PRISM_OFFSET, -6, 0), gate)
-	anchored("Part", "gate_prism_right", Vector3.new(2, 4, 2),
-		Layout.GATE_CENTER + Vector3.new(Layout.PRISM_OFFSET, -6, 0), gate)
+	anchored("gate_prism_left", Vector3.new(2, 4, 2),
+		Vector3.new(-Layout.PRISM_OFFSET, 2, Layout.BRIDGE_START.Z - 4), gate)
+	anchored("gate_prism_right", Vector3.new(2, 4, 2),
+		Vector3.new(Layout.PRISM_OFFSET, 2, Layout.BRIDGE_START.Z - 4), gate)
 	return gate
 end
 
 local function buildLumi(root: Instance): Instance
-	return anchored("Part", "Lumi", Vector3.new(2, 2, 2), Layout.cellPosition(0, 0) + Vector3.new(0, 0, 3), root)
+	local lumi = anchored("Lumi", Vector3.new(2, 2, 2), Layout.cellPosition(0, 0) + Vector3.new(0, 0, 3), root)
+	lumi.CanCollide = false   -- 떠다니는 드론 — 길을 막지 않는다
+	return lumi
 end
 
 local function buildPortal(root: Instance): Instance
-	return anchored("Part", "ZonePortal", Vector3.new(8, 10, 1), Layout.PORTAL_CENTER, root)
+	local portal = anchored("ZonePortal", Vector3.new(8, 10, 1), Layout.PORTAL_CENTER, root)
+	portal.CanCollide = false   -- 들어가는 문 — 지나간다
+	return portal
 end
 
 -- 월드를 한 번만 만든다. 이미 있으면 그것을 쓴다(Place 를 사람이 꾸며 둔 경우).
@@ -82,6 +95,7 @@ function WorldBuilder.build(): Instance
 	buildWall(root)
 	buildPanel(root)
 	buildBridge(root)
+	buildDeck(root)
 	buildGate(root)
 	buildLumi(root)
 	buildPortal(root)
