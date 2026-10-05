@@ -1,18 +1,18 @@
 {
  "criterion": "Q4-C2",
  "result": "PASS",
- "checked_at": "2026-10-05T05:48:18.413222+00:00",
- "repo_head": "dc39ab6",
- "world_dirty": "",
- "rojo": "7.7.1",
- "studio_place_file": "rb-staging.rbxlx",
+ "checked_at": "2026-10-05T06:47:47.020841+00:00",
+ "repo_head": "07071e1",
+ "world_dirty": "M world/src/client/Hud.client.luau\n M world/src/shared/Text.luau",
+ "rojo": "7.7.1 (Windows serve)",
+ "studio_place": "rb-staging.rbxlx",
  "compared_instances": 15,
  "compared_fields": 40,
  "missing": [],
  "extra": [],
  "mismatch": [],
  "stray_scripts": [],
- "method": "저장소 world/src 파일 바이트와 Studio Instance Source 의 길이·FNV-1a32 대조(코드 11). 번역표는 Rojo 가 CSV 를 바꾼 항목(81)을 정규화해 길이·FNV-1a32 대조. 경로·종류 전수 대조(15). 세 뿌리 밖 스크립트·번역표 0 확인. 소스에 버전 표시가 없어 전체 내용 해시로 대신함",
+ "method": "저장소 world/src 파일 바이트와 Studio Source 의 길이·FNV-1a32(코드), Rojo 변환 번역 항목 정규화 길이·FNV-1a32(번역표), 경로·종류 전수, 세 뿌리 밖 스크립트·번역표 0. 소스에 버전 표시가 없어 전체 내용 해시로 대신함",
  "expected": {
   "ServerScriptService.Gate": {
    "class": "Folder"
@@ -85,8 +85,8 @@
   },
   "ReplicatedStorage.Shared.Text": {
    "class": "ModuleScript",
-   "len": 944,
-   "fnv": 3097056303,
+   "len": 1435,
+   "fnv": 3716350301,
    "file": "world/src/shared/Text.luau"
   },
   "StarterPlayer.StarterPlayerScripts.Gate": {
@@ -94,8 +94,8 @@
   },
   "StarterPlayer.StarterPlayerScripts.Gate.Hud": {
    "class": "LocalScript",
-   "len": 8903,
-   "fnv": 216776424,
+   "len": 9129,
+   "fnv": 1654047628,
    "file": "world/src/client/Hud.client.luau"
   }
  },
@@ -106,14 +106,14 @@
    "fnv": 390509306
   },
   "StarterPlayer.StarterPlayerScripts.Gate.Hud": {
-   "len": 8903,
+   "len": 9129,
    "class": "LocalScript",
-   "fnv": 216776424
+   "fnv": 1654047628
   },
   "ReplicatedStorage.Shared.Text": {
-   "len": 944,
+   "len": 1435,
    "class": "ModuleScript",
-   "fnv": 3097056303
+   "fnv": 3716350301
   },
   "ServerScriptService.Gate.WorldView": {
    "len": 2180,
@@ -126,10 +126,11 @@
    "fnv": 348161944
   },
   "ReplicatedStorage.Shared.Localization": {
+   "entries_n": 81,
    "entries_len": 6833,
    "class": "LocalizationTable",
    "entries_fnv": 1427963783,
-   "entries_n": 81
+   "source_locale": "en-us"
   },
   "ServerScriptService.Gate.Main": {
    "len": 2627,

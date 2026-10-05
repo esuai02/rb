@@ -59,6 +59,7 @@ local top = panel("Top", UDim2.new(0, 16, 0, 16), UDim2.new(0, 460, 0, 120))
 local goal = label("Goal", top, UDim2.new(0, 8, 0, 4), UDim2.new(1, -16, 0, 34))
 local situation = label("Situation", top, UDim2.new(0, 8, 0, 40), UDim2.new(1, -16, 0, 34))
 local response = label("Response", top, UDim2.new(0, 8, 0, 76), UDim2.new(1, -16, 0, 34))
+response.Visible = false   -- 첫 결과 전에는 TextLabel 기본 글자("Label")가 보이지 않게 숨긴다
 
 local hintBox = panel("Hint", UDim2.new(0, 16, 0, 148), UDim2.new(0, 460, 0, 56))
 local hint = label("HintText", hintBox, UDim2.new(0, 8, 0, 4), UDim2.new(1, -16, 1, -8))
@@ -219,6 +220,7 @@ end
 
 ResultRemote.OnClientEvent:Connect(function(code: string)
 	hintLevel, lastActed = 0, os.clock()
+	response.Visible = true
 	if code == "signal_panel_lit" then
 		response.Text = Text.get("resp.signal_1.panel_lit")
 		stage = STAGE_COORDINATE
