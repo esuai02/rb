@@ -50,6 +50,12 @@
 - WSL 의 `rojo serve` 는 D:\ 가 9p 마운트라 파일 변경을 보지 못한다. WSL 쪽 `rojo` 는 build·검사에만 쓴다.
 - 서버를 새로 띄우면 Studio 의 Rojo 창에서 Connect 를 다시 눌러야 한다.
 
+**Studio → 저장소 사본 (2026-10-06, 근거 `ENV-STUDIO-PULL-1`):**
+- `python3 tools/studio_pull.py --now` 는 Studio 에 지금 열린 스테이징 Place 를 읽기만 한다. 저장 버튼을 누르지 않아도 되고 Place 는 바꾸지 않는다. Place 몫(DEC-8: 지형·꾸밈·조명 등)을 `place/<서비스>/<이름>.rbxmx` 와 `place/settings.json` 에 사본으로 쓴다. Rojo 가 넣는 코드 자리와 Play 때 코드가 짓는 월드는 뺀다.
+- 사본은 이력·백업용이다. 정본은 여전히 Place 이므로 사본을 손으로 고치지 않는다. 사본을 Studio 로 되살리는 일은 아직 시험하지 않았다.
+- 쓰기 전에 공개 저장소 누출 검사를 한다(로컬 경로·Studio 계정 이름·번호). 계정 값은 저장소 밖 `.git/info/rb-private` 에만 두고 `ship.py` 도 같은 값을 찾는다.
+- 커밋·푸시는 `tools/ship.py save` 가 한다. 대화 턴이 끝날 때마다 자동으로 읽으려면 Stop 훅에 이어야 한다(설정 변경이라 사람 승인이 필요하다).
+
 ## 4. 열린 결정
 
 결정 항목의 정의는 `intent.md` §7, 상태(열림/결정됨)와 근거는 `decisions.md` 에 있다 (DEC-1 무엇을 만드는가 · DEC-2 스테이징 Place · DEC-3 GitHub 반영 …). 경고 장치(`tools/flow_guard.py`)가 `decisions.md` 를 읽는다.

@@ -1,5 +1,6 @@
 """자동 저장·병합 장치 시험 (tools/ship.py) — git·gh 를 부르지 않는 판단만 본다."""
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -17,6 +18,9 @@ class CandidateTest(unittest.TestCase):
     def test_rename_keeps_the_new_name(self):
         status = "\0".join(["R  tools/new_name.py", "tools/old_name.py", ""])
         self.assertEqual(ship.candidates(status), ["tools/new_name.py"])
+
+    def test_studio_copies_are_picked_up(self):
+        self.assertEqual(ship.candidates("?? place/Workspace/Baseplate.rbxmx\0"), ["place/Workspace/Baseplate.rbxmx"])
 
 
 class LeakTest(unittest.TestCase):
@@ -66,6 +70,44 @@ class LeakTest(unittest.TestCase):
         for shape in ("C:" + sep + "Users" + sep + "someone" + sep + "AppData",
                       "C:" + sep * 2 + "Users" + sep * 2 + "someone",
                       "/mnt/c/" + "Users/someone/AppData"):
+            with self.subTest(shape=shape):
+                self.assertTrue(ship.leaks("+" + shape + "\n", []))
+
+    def test_private_values_match_in_any_case(self):
+        self.assertTrue(ship.leaks("+path = '/MNT/D/WORK/RB/tools'\n", self.PRIVATE))
+
+    def test_other_separator_and_unc_forms_are_refused(self):
+        """빗금 꼴(D:/…)·섞인 구분자·WSL UNC 꼴(\\\\wsl$\\…)도 같은 경로다 (리뷰 SHIP 3차). 꼴은 실행 중에 조립한다."""
+        sep = "\\"
+        private = ship.windows_forms("/mnt/d/work/rb") + ["/mnt/d/work/rb", "/home/someone"]
+        for shape in ("D:/work/rb/x", "d:" + sep + "work/rb", sep * 2 + "wsl$" + sep + "Ubuntu" + sep + "mnt" + sep + "d" + sep + "work" + sep + "rb",
+                      sep * 2 + "wsl.localhost" + sep + "Ubuntu" + sep + "home" + sep + "someone" + sep + "notes"):
+            with self.subTest(shape=shape):
+                self.assertTrue(ship.leaks("+" + shape + "\n", private))
+
+    def test_user_folders_with_forward_slashes_are_refused_but_shared_ones_pass(self):
+        sep = "\\"
+        self.assertTrue(ship.leaks("+C:/" + "Users/someone/AppData\n", []))
+        for shared in ("C:" + sep + "Users" + sep + "Public" + sep + "Documents", "/mnt/c/" + "Users/Default/x",
+                       "C:/" + "Users/All Users/x"):
+            with self.subTest(shared=shared):
+                self.assertEqual(ship.leaks("+" + shared + "\n", []), [])
+
+    def test_local_private_values_are_read_from_outside_the_tree(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "rb-private"
+            path.write_text("\ufeffsomeone\n\n 1234567890 \n", encoding="utf-8")   # 메모장 BOM 은 값이 아니다
+            self.assertEqual(ship.local_private(path), ["someone", "1234567890"])
+            self.assertEqual(ship.local_private(Path(tmp) / "missing"), [])
+
+    def test_content_lines_that_look_like_headers_or_hold_line_separators_are_scanned(self):
+        """'++' 로 시작하는 내용 줄 · U+2028 뒤의 글자 · 몇 겹의 역슬래시 꼴도 검사받는다 (리뷰 STUDIO-PULL 1차)."""
+        sep = "\\"
+        self.assertTrue(ship.leaks(ship.as_added("++ built by someone"), ["someone"]))
+        self.assertTrue(ship.leaks("+note\u2028 /home/someone/x\n", ["/home/someone"]))
+        self.assertEqual(ship.leaks("+++ b/notes/someone.md\n", ["someone"]), [])   # 진짜 파일 머리 줄은 건너뛴다
+        for shape in ("C:" + sep * 4 + "Users" + sep * 4 + "someone", "C:" + sep + "/Users" + sep + "/someone",
+                      sep + "/mnt" + sep + "/c" + sep + "/Users" + sep + "/someone"):
             with self.subTest(shape=shape):
                 self.assertTrue(ship.leaks("+" + shape + "\n", []))
 

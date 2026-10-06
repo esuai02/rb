@@ -29,7 +29,8 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 
 # 새로 만든(아직 추적하지 않는) 파일 가운데 자동으로 올리는 자리. 그 밖의 새 파일은 사람이 정한다.
-CODE_ROOTS = ("harness/", "tests/", "tools/", "world/", "specs/", "outputs/verify/")
+# place/ = Studio 에서 만든 것의 사본 (tools/studio_pull.py — DEC-8)
+CODE_ROOTS = ("harness/", "tests/", "tools/", "world/", "specs/", "outputs/verify/", "place/")
 # 자동 검사가 필요한 변경 — 이 자리가 바뀌면 시험을 통과해야 올린다.
 GATED_ROOTS = ("harness/", "tests/", "tools/", "world/", "specs/", "graph.json")
 # PR 의 머리 브랜치 → 그 PR 이 담은 단계. 담은 단계가 모두 잠겨야 병합한다.
@@ -49,9 +50,15 @@ SECRET = re.compile(
     r"|\bBearer\s+[A-Za-z0-9._~+/=-]{20,}"                # 인증 머리
     r"|(?:\b|_)(?:api[_-]?key|passwd|password|secret|token|key)\s*[:=]\s*(?:['\"][^'\"]{6,}|[A-Za-z0-9_\-+/=]{16,})",
     re.I)
-EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
-# Windows 사용자 폴더 경로 — 계정 이름을 드러낸다 (드라이브 문자 다음 Users 폴더, JSON 안 이중 역슬래시 꼴, WSL 의 /mnt/<드라이브>/Users 꼴)
-USER_DIR = re.compile(r"\b[A-Za-z]:\\{1,2}Users\\{1,2}[^\\\s\"'`]+|/mnt/[a-z]/Users/[^/\s\"'`]+", re.I)
+# 앞이 주소 글자가 아닌 자리에서만 시작한다 — 긴 줄(직렬화 자료)에서 검사 시간이 줄 길이의 제곱으로 늘지 않게. 찾는 주소는 같다
+EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]+@[\w-]+\.[\w.]+")
+# Windows 사용자 폴더 경로 — 계정 이름을 드러낸다. plain() 으로 맞춘 줄(소문자, 구분자는 / 하나)에서 찾으므로
+# 역슬래시가 몇 겹이든·빗금이든·\/ 꼴이든 같다. WSL 의 /mnt/<드라이브>/Users 꼴도.
+# 여럿이 함께 쓰는 Public·Default·All Users 폴더는 계정이 아니다 (리뷰 SHIP 3차·STUDIO-PULL 1차)
+_SHARED = r"(?!(?:public|default|all)(?:[/\s\"'`]|$))"
+USER_DIR = re.compile(r"\b[a-z]:/users/" + _SHARED + r"[^/\s\"'`]+|/mnt/[a-z]/users/" + _SHARED + r"[^/\s\"'`]+")
+# git diff 의 파일 머리 줄 — 이 꼴만 건너뛴다. '++' 로 시작하는 내용 줄은 '+' 를 붙여도 검사받는다 (리뷰 STUDIO-PULL 1차)
+HEADER = re.compile(r'\+\+\+ (?:"?[ab]/|/dev/null)')
 ATTRIBUTION = "noreply@anthropic.com"   # 커밋 메시지의 공동 작성자 표기 — 이 주소 하나만 허용한다
 RESERVED = re.compile(r"@(?:[\w-]+\.)*(?:example\.(?:com|org|net)|[\w-]+\.(?:example|test|invalid))$", re.I)   # RFC 2606: 실제로 없는 주소
 
@@ -89,18 +96,28 @@ def candidates(porcelain_z: str) -> list[str]:
     return sorted(set(out))
 
 
+def plain(text: str) -> str:
+    """비교용 꼴 — 대소문자와 경로 구분자(\\ · \\\\ · /)를 하나로 맞춘다.
+
+    D:\\a · D:/a · JSON 안 D:\\\\a · \\\\wsl$\\<배포판>\\mnt\\d\\a 가 모두 같은 값으로 걸리게 한다 (리뷰 SHIP 3차).
+    """
+    return re.sub(r"/+", "/", text.lower().replace("\\", "/"))
+
+
 def leaks(diff: str, private: list[str]) -> list[str]:
     """더하는 줄에 섞인 로컬 경로·계정·비밀값 — 하나라도 있으면 올리지 않는다."""
     found = []
-    for line in diff.splitlines():
-        if not line.startswith("+") or line.startswith("+++"):
+    values = [(value, plain(value)) for value in private if value]
+    for line in diff.split("\n"):   # git 이 나누는 대로 \n 에서만 — U+2028 같은 글자 뒤도 같은 줄로 검사받게
+        if not line.startswith("+") or HEADER.match(line):
             continue
-        for value in private:
-            if value and value in line:
+        flat = plain(line)
+        for value, flat_value in values:
+            if flat_value in flat:
                 found.append(f"로컬 경로·계정 '{value}' 가 들어 있다: {line[:80]}")
         if SECRET.search(line):
             found.append(f"비밀값처럼 보이는 줄: {line[:80]}")
-        for folder in USER_DIR.findall(line):
+        for folder in USER_DIR.findall(flat):
             found.append(f"Windows 사용자 폴더 경로 '{folder[:40]}' 가 들어 있다")
         for mail in EMAIL.findall(line):
             if mail.lower() == ATTRIBUTION or RESERVED.search(mail):
@@ -126,11 +143,29 @@ def windows_forms(path: str) -> list[str]:
     return forms
 
 
+def git_path(name: str) -> Path:
+    """저장소의 .git 안 자리(작업 트리 밖이라 커밋되지 않는다)."""
+    return REPO / (git("rev-parse", "--git-path", name, check=False).strip() or f".git/{name}")
+
+
+def local_private_path() -> Path:
+    return git_path("info/rb-private")
+
+
+def local_private(path: Path | None = None) -> list[str]:
+    """저장소 밖에 적어 둔 이 사람의 값(한 줄에 하나) — Studio 계정 이름·번호 등. tools/studio_pull.py 가 더한다."""
+    try:
+        text = (path or local_private_path()).read_text(encoding="utf-8-sig")   # 메모장이 붙이는 BOM 은 값이 아니다
+    except OSError:
+        return []
+    return [line.strip() for line in text.splitlines() if line.strip()]
+
+
 def private_values() -> list[str]:
-    """올리면 안 되는 이 기계의 값 — 저장소 경로(WSL·Windows 꼴)·홈 경로·커밋 계정의 전자우편."""
+    """올리면 안 되는 이 기계의 값 — 저장소 경로(WSL·Windows 꼴)·홈 경로·커밋 계정의 전자우편·저장소 밖에 적어 둔 값."""
     values = [str(REPO), str(Path.home())] + windows_forms(str(REPO))
     mail = git("config", "user.email", check=False).strip()
-    return [v for v in values + [mail] if v and v not in ("/", "~")]
+    return [v for v in values + [mail] + local_private() if v and v not in ("/", "~")]
 
 
 def gates(changed: list[str], budget_s: float = GATE_BUDGET_S) -> list[str]:
@@ -198,13 +233,15 @@ def save(message: str | None, quiet: bool) -> int:
     if failed:
         print("[자동 저장] 멈춤 — 자동 검사가 통과하지 않아 커밋·푸시하지 않았다:\n  " + "\n  ".join(failed))
         return 1
-    found = leaks(before, private)
+    # 파일 이름도 공개된다(Studio 사본은 Instance 이름이 파일 이름이다) — 내용과 같은 검사를 받는다 (리뷰 STUDIO-PULL 1차)
+    found = leaks(before, private) + leaks(as_added("\n".join(before_files)), private)
     if paths:
         msg = message or summary(paths)
         committed = False
         try:
             git("add", "--", *paths)
-            found += leaks(git("diff", "--cached", "--text"), private) + leaks(as_added(msg), private)
+            found += (leaks(git("diff", "--cached", "--text"), private) + leaks(as_added(msg), private)
+                      + leaks(as_added("\n".join(paths)), private))
             if not found:
                 checked_tree = git("write-tree").strip()
                 git("commit", "-q", "-m", msg)   # 커밋 훅은 건너뛰지 않는다(사용자 정책)
