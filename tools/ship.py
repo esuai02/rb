@@ -104,16 +104,27 @@ def plain(text: str) -> str:
     return re.sub(r"/+", "/", text.lower().replace("\\", "/"))
 
 
+SHORT_VALUE = 6   # 이보다 짧은 이름꼴 값(계정 이름 등)은 낱말로만 찾는다 — 'ace' 가 'place' 안에서 걸리지 않게 (리뷰 STUDIO-PULL 1차)
+
+
+def matcher(value: str):
+    """값을 찾는 함수 — 긴 값은 어디에 붙어 있어도, 짧은 이름꼴 값은 앞뒤가 이름 글자가 아닐 때만."""
+    flat = plain(value)
+    if len(flat) < SHORT_VALUE and re.fullmatch(r"[a-z0-9_]+", flat):
+        return re.compile(r"(?<![a-z0-9_])" + re.escape(flat) + r"(?![a-z0-9_])").search
+    return lambda text: flat in text
+
+
 def leaks(diff: str, private: list[str]) -> list[str]:
     """더하는 줄에 섞인 로컬 경로·계정·비밀값 — 하나라도 있으면 올리지 않는다."""
     found = []
-    values = [(value, plain(value)) for value in private if value]
+    values = [(value, matcher(value)) for value in private if value]
     for line in diff.split("\n"):   # git 이 나누는 대로 \n 에서만 — U+2028 같은 글자 뒤도 같은 줄로 검사받게
         if not line.startswith("+") or HEADER.match(line):
             continue
         flat = plain(line)
-        for value, flat_value in values:
-            if flat_value in flat:
+        for value, found_in in values:
+            if found_in(flat):
                 found.append(f"로컬 경로·계정 '{value}' 가 들어 있다: {line[:80]}")
         if SECRET.search(line):
             found.append(f"비밀값처럼 보이는 줄: {line[:80]}")

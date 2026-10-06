@@ -73,6 +73,11 @@ class LeakTest(unittest.TestCase):
             with self.subTest(shape=shape):
                 self.assertTrue(ship.leaks("+" + shape + "\n", []))
 
+    def test_short_name_values_match_only_as_whole_words(self):
+        self.assertEqual(ship.leaks("+place/Workspace/Baseplate.rbxmx\n+-- Galileo\n", ["Ace", "Leo"]), [])
+        self.assertTrue(ship.leaks("+Ace's house\n", ["Ace"]))
+        self.assertTrue(ship.leaks("+owner=LEO\n", ["Leo"]))
+
     def test_private_values_match_in_any_case(self):
         self.assertTrue(ship.leaks("+path = '/MNT/D/WORK/RB/tools'\n", self.PRIVATE))
 
