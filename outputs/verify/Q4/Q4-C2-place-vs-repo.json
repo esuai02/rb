@@ -1,9 +1,9 @@
 {
  "criterion": "Q4-C2",
  "result": "PASS",
- "checked_at": "2026-10-05T14:24:49.547190+00:00",
- "repo_head": "59f56e8",
- "world_dirty": "M world/src/client/Hud.client.luau",
+ "checked_at": "2026-10-06T10:50:28.071319+00:00",
+ "repo_head": "9feb101",
+ "world_dirty": "M world/src/server/WorldBuilder.luau\n M world/src/server/WorldView.luau\n M world/src/shared/Layout.luau",
  "rojo": "7.7.1 (Windows serve)",
  "studio_place": "rb-staging.rbxlx",
  "compared_instances": 15,
@@ -49,14 +49,14 @@
   },
   "ServerScriptService.Gate.WorldBuilder": {
    "class": "ModuleScript",
-   "len": 8442,
-   "fnv": 1765436067,
+   "len": 10407,
+   "fnv": 3331190940,
    "file": "world/src/server/WorldBuilder.luau"
   },
   "ServerScriptService.Gate.WorldView": {
    "class": "ModuleScript",
-   "len": 6143,
-   "fnv": 2742099820,
+   "len": 6497,
+   "fnv": 1171739199,
    "file": "world/src/server/WorldView.luau"
   },
   "ReplicatedStorage.Shared": {
@@ -64,8 +64,8 @@
   },
   "ReplicatedStorage.Shared.Layout": {
    "class": "ModuleScript",
-   "len": 4017,
-   "fnv": 1263100474,
+   "len": 4708,
+   "fnv": 1568893775,
    "file": "world/src/shared/Layout.luau"
   },
   "ReplicatedStorage.Shared.Localization": {
@@ -116,9 +116,9 @@
    "fnv": 3716350301
   },
   "ServerScriptService.Gate.WorldView": {
-   "len": 6143,
+   "len": 6497,
    "class": "ModuleScript",
-   "fnv": 2742099820
+   "fnv": 1171739199
   },
   "ReplicatedStorage.Shared.Missions": {
    "len": 1376,
@@ -157,9 +157,9 @@
    "fnv": 3915140747
   },
   "ReplicatedStorage.Shared.Layout": {
-   "len": 4017,
+   "len": 4708,
    "class": "ModuleScript",
-   "fnv": 1263100474
+   "fnv": 1568893775
   },
   "ServerScriptService.Gate.Cooldown": {
    "len": 495,
@@ -167,9 +167,9 @@
    "fnv": 1318663135
   },
   "ServerScriptService.Gate.WorldBuilder": {
-   "len": 8442,
+   "len": 10407,
    "class": "ModuleScript",
-   "fnv": 1765436067
+   "fnv": 3331190940
   }
  }
 }

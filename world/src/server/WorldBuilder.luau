@@ -6,6 +6,7 @@ local Workspace = game:GetService("Workspace")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Layout = require(ReplicatedStorage.Shared.Layout)
+local WorldView = require(script.Parent.WorldView)
 
 local WorldBuilder = {}
 
@@ -87,21 +88,38 @@ end
 
 -- 빛 다리: 처음에는 평평하게(기울기 0) 바닥에 놓여 게이트 문턱에 닿지 않는다 (sit.slope.bridge_low)
 -- 판보다 넓은 끝 막대가 '움직이는 끝', 출발점 굴대가 '고정된 출발점'을 보인다 (cv.slope_choices.fixed)
+-- 양옆 난간은 판과 함께 기운다 — 비스듬히 올라도 옆으로 떨어지지 않는다. 놓는 자리는 WorldView.setBridge 하나가 정한다.
 local function buildBridge(root: Instance): Instance
 	local bridge = paint(anchored("LightBridge", Vector3.one, Layout.BRIDGE_START, root), Enum.Material.SmoothPlastic, DIM)
-	bridge.Size, bridge.CFrame = Layout.bridgePlacement(0)
-	local tip = mark(paint(anchored("BridgeEnd", Vector3.new(Layout.BRIDGE_WIDTH + 1, 1.6, 1.2), Layout.BRIDGE_START, bridge),
+	mark(paint(anchored("BridgeEnd", Vector3.new(Layout.BRIDGE_WIDTH + 1, 1.6, 1.2), Layout.BRIDGE_START, bridge),
 		Enum.Material.SmoothPlastic, DIM))
-	tip.CFrame = Layout.bridgeTip(0)
+	paint(anchored("BridgeRailLeft", Vector3.one, Layout.BRIDGE_START, bridge), Enum.Material.SmoothPlastic, DIM)
+	paint(anchored("BridgeRailRight", Vector3.one, Layout.BRIDGE_START, bridge), Enum.Material.SmoothPlastic, DIM)
 	local axle = mark(paint(anchored("BridgeStart", Vector3.new(Layout.BRIDGE_WIDTH + 1, 1.4, 1.4),
 		Layout.BRIDGE_START + Vector3.new(0, 0.2, 0), root), Enum.Material.SmoothPlastic, START))
 	axle.Shape = Enum.PartType.Cylinder
 	return bridge
 end
 
--- 게이트 단: 바닥에서 뛰어오를 수 없는 높이라 빛 다리로만 오른다
+-- 게이트 단: 바닥에서 뛰어오를 수 없는 높이라 빛 다리로만 오른다.
+-- 가장자리 난간이 옆·뒤·앞을 막고 다리가 닿는 입구(다리 폭)만 열어 둔다 — 단 위에서 걷다 떨어지지 않게.
+-- 난간은 단(남색)보다 밝은 색이라 모양으로 보인다 — 보이지 않는 벽을 두지 않는다.
 local function buildDeck(root: Instance): Instance
-	return paint(anchored("GateDeck", Layout.DECK_SIZE, Layout.DECK_CENTER, root), Enum.Material.SmoothPlastic, UNLIT)
+	local deck = paint(anchored("GateDeck", Layout.DECK_SIZE, Layout.DECK_CENTER, root), Enum.Material.SmoothPlastic, UNLIT)
+	local railY = Layout.DECK_TOP + Layout.RAIL_HEIGHT / 2
+	local halfX = Layout.DECK_SIZE.X / 2 - Layout.RAIL_THICKNESS / 2
+	local frontZ = Layout.DECK_FRONT_Z - Layout.RAIL_THICKNESS / 2
+	local frontWidth = (Layout.DECK_SIZE.X - Layout.BRIDGE_WIDTH) / 2
+	local frontX = (Layout.DECK_SIZE.X + Layout.BRIDGE_WIDTH) / 4
+	local sideSize = Vector3.new(Layout.RAIL_THICKNESS, Layout.RAIL_HEIGHT, Layout.DECK_SIZE.Z)
+	paint(anchored("DeckRailLeft", sideSize, Vector3.new(-halfX, railY, Layout.DECK_CENTER.Z), deck), Enum.Material.SmoothPlastic, DIM)
+	paint(anchored("DeckRailRight", sideSize, Vector3.new(halfX, railY, Layout.DECK_CENTER.Z), deck), Enum.Material.SmoothPlastic, DIM)
+	paint(anchored("DeckRailBack", Vector3.new(Layout.DECK_SIZE.X, Layout.RAIL_HEIGHT, Layout.RAIL_THICKNESS),
+		Vector3.new(0, railY, Layout.DECK_FRONT_Z - Layout.DECK_SIZE.Z + Layout.RAIL_THICKNESS / 2), deck), Enum.Material.SmoothPlastic, DIM)
+	local frontSize = Vector3.new(frontWidth, Layout.RAIL_HEIGHT, Layout.RAIL_THICKNESS)
+	paint(anchored("DeckRailFrontLeft", frontSize, Vector3.new(-frontX, railY, frontZ), deck), Enum.Material.SmoothPlastic, DIM)
+	paint(anchored("DeckRailFrontRight", frontSize, Vector3.new(frontX, railY, frontZ), deck), Enum.Material.SmoothPlastic, DIM)
+	return deck
 end
 
 -- 게이트 문 + 신호 불 셋(켜진 수 = 돌아온 신호 수). 문이 올라갈 때 불도 함께 올라가므로 게이트의 자식은 불뿐이다.
@@ -145,8 +163,8 @@ end
 
 -- 다음 구역 입구: 다가가서 들어간다. 안내 글자(구역 이름)는 클라이언트가 번역표에서 넣는다.
 local function buildPortal(root: Instance): Instance
+	-- 부딪히면 멈추는 문 — 지나쳐 단 뒤로 가지 않고, 다가간 자리에서 프롬프트로 들어간다
 	local portal = paint(anchored("ZonePortal", Vector3.new(8, 10, 1), Layout.PORTAL_CENTER, root), Enum.Material.SmoothPlastic, DIM)
-	portal.CanCollide = false   -- 들어가는 문 — 지나간다
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "EnterPrompt"
 	prompt.RequiresLineOfSight = false
@@ -167,6 +185,7 @@ function WorldBuilder.build(): Instance
 	buildWall(root)
 	buildPanel(root)
 	buildBridge(root)
+	WorldView.setBridge(root, 0)
 	buildDeck(root)
 	buildGate(root)
 	buildCity(root)

@@ -109,7 +109,7 @@ function WorldView.visitLumi(root: Instance, x: number, y: number): boolean
 	return finished(lumi, play(lumi, FLY, {Position = Layout.lumiPosition(0, 0)}))
 end
 
--- 빛 다리 기울기 — 출발점과 가로 거리는 고정하고 끝 높이만 바꾼다 (cv.slope_choices.fixed). 끝 막대가 함께 간다.
+-- 빛 다리 기울기 — 출발점과 가로 거리는 고정하고 끝 높이만 바꾼다 (cv.slope_choices.fixed). 끝 막대·난간이 함께 간다.
 function WorldView.setBridge(root: Instance, step: number)
 	local bridge = part(root, "LightBridge")
 	if not bridge then
@@ -119,6 +119,12 @@ function WorldView.setBridge(root: Instance, step: number)
 	local tip = bridge:FindFirstChild("BridgeEnd")
 	if tip and tip:IsA("BasePart") then
 		tip.CFrame = Layout.bridgeTip(step)
+	end
+	local railSize, leftFrame, rightFrame = Layout.bridgeRails(step)
+	local left, right = bridge:FindFirstChild("BridgeRailLeft"), bridge:FindFirstChild("BridgeRailRight")
+	if left and left:IsA("BasePart") and right and right:IsA("BasePart") then
+		left.Size, left.CFrame = railSize, leftFrame
+		right.Size, right.CFrame = railSize, rightFrame
 	end
 	bridge:SetAttribute("SlopeStep", step)
 end

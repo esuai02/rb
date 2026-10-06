@@ -38,6 +38,19 @@ function Layout.bridgeTip(step: number): CFrame
 	return frame * CFrame.new(0, 0, -size.Z / 2)
 end
 
+-- 난간: 다리 양옆과 게이트 단 가장자리. 잘못 디뎌 떨어지지 않게 한다(일부러 뛰어넘을 수는 있다).
+Layout.RAIL_HEIGHT = 3
+Layout.RAIL_THICKNESS = 0.5
+
+-- 다리 양옆 난간(판과 같은 기울기). 판 바깥 가장자리에 붙어 판과 함께 움직인다.
+function Layout.bridgeRails(step: number): (Vector3, CFrame, CFrame)
+	local size, frame = Layout.bridgePlacement(step)
+	local up = (Layout.BRIDGE_THICKNESS + Layout.RAIL_HEIGHT) / 2
+	local side = (Layout.BRIDGE_WIDTH + Layout.RAIL_THICKNESS) / 2
+	return Vector3.new(Layout.RAIL_THICKNESS, Layout.RAIL_HEIGHT, size.Z),
+		frame * CFrame.new(-side, up, 0), frame * CFrame.new(side, up, 0)
+end
+
 -- 게이트 단: 앞 윗모서리가 문턱이다. 정답 다리의 윗면 끝이 단 윗면과 같은 높이에서 만난다.
 local reach = Layout.bridgeEnd(Layout.BRIDGE_REACH_STEP)
 Layout.DECK_TOP = reach.Y + Layout.BRIDGE_THICKNESS / 2

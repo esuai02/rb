@@ -50,6 +50,8 @@ SECRET = re.compile(
     r"|(?:\b|_)(?:api[_-]?key|passwd|password|secret|token|key)\s*[:=]\s*(?:['\"][^'\"]{6,}|[A-Za-z0-9_\-+/=]{16,})",
     re.I)
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
+# Windows 사용자 폴더 경로 — 계정 이름을 드러낸다 (드라이브 문자 다음 Users 폴더, JSON 안 이중 역슬래시 꼴, WSL 의 /mnt/<드라이브>/Users 꼴)
+USER_DIR = re.compile(r"\b[A-Za-z]:\\{1,2}Users\\{1,2}[^\\\s\"'`]+|/mnt/[a-z]/Users/[^/\s\"'`]+", re.I)
 ATTRIBUTION = "noreply@anthropic.com"   # 커밋 메시지의 공동 작성자 표기 — 이 주소 하나만 허용한다
 RESERVED = re.compile(r"@(?:[\w-]+\.)*(?:example\.(?:com|org|net)|[\w-]+\.(?:example|test|invalid))$", re.I)   # RFC 2606: 실제로 없는 주소
 
@@ -98,6 +100,8 @@ def leaks(diff: str, private: list[str]) -> list[str]:
                 found.append(f"로컬 경로·계정 '{value}' 가 들어 있다: {line[:80]}")
         if SECRET.search(line):
             found.append(f"비밀값처럼 보이는 줄: {line[:80]}")
+        for folder in USER_DIR.findall(line):
+            found.append(f"Windows 사용자 폴더 경로 '{folder[:40]}' 가 들어 있다")
         for mail in EMAIL.findall(line):
             if mail.lower() == ATTRIBUTION or RESERVED.search(mail):
                 continue
@@ -110,9 +114,21 @@ def as_added(text: str) -> str:
     return "\n".join("+" + line for line in text.splitlines())
 
 
+def windows_forms(path: str) -> list[str]:
+    """WSL 경로(/mnt/d/…)를 Windows 쪽에서 쓰는 꼴 — D:\\… 와 JSON·문자열 안의 D:\\\\… 도 같은 로컬 경로다."""
+    match = re.match(r"/mnt/([a-z])(/.*)?$", path)
+    if not match:
+        return []
+    rest = (match.group(2) or "").replace("/", "\\")
+    forms = []
+    for drive in (match.group(1).upper(), match.group(1)):
+        forms += [drive + ":" + rest, (drive + ":" + rest).replace("\\", "\\\\")]
+    return forms
+
+
 def private_values() -> list[str]:
-    """올리면 안 되는 이 기계의 값 — 저장소 경로·홈 경로·커밋 계정의 전자우편."""
-    values = [str(REPO), str(Path.home())]
+    """올리면 안 되는 이 기계의 값 — 저장소 경로(WSL·Windows 꼴)·홈 경로·커밋 계정의 전자우편."""
+    values = [str(REPO), str(Path.home())] + windows_forms(str(REPO))
     mail = git("config", "user.email", check=False).strip()
     return [v for v in values + [mail] if v and v not in ("/", "~")]
 

@@ -49,6 +49,26 @@ class LeakTest(unittest.TestCase):
     def test_code_words_are_not_secrets(self):
         self.assertEqual(ship.leaks("+token = tokens[j]\n+local tokens = luau.tokenize(src)\n", []), [])
 
+    def test_windows_form_of_the_repo_path_is_refused(self):
+        """WSL 저장소 경로의 Windows 꼴(D:\\…, JSON 안 D:\\\\…)도 같은 로컬 경로다 (2026-10-06 문서·근거 기록으로 새어 나감)."""
+        sep = "\\"
+        forms = ship.windows_forms("/mnt/d/work/rb")
+        self.assertIn("D:" + sep + "work" + sep + "rb", forms)
+        self.assertIn("D:" + sep * 2 + "work" + sep * 2 + "rb", forms)
+        for form in forms:
+            with self.subTest(form=form):
+                self.assertTrue(ship.leaks("+serve in " + form + sep + "world\n", forms))
+        self.assertEqual(ship.windows_forms("/home/someone"), [])
+
+    def test_windows_user_folders_are_refused(self):
+        """Windows 사용자 폴더 경로는 계정 이름을 드러낸다. 꼴은 실행 중에 조립한다 — 시험 파일이 검사에 걸리지 않게."""
+        sep = "\\"
+        for shape in ("C:" + sep + "Users" + sep + "someone" + sep + "AppData",
+                      "C:" + sep * 2 + "Users" + sep * 2 + "someone",
+                      "/mnt/c/" + "Users/someone/AppData"):
+            with self.subTest(shape=shape):
+                self.assertTrue(ship.leaks("+" + shape + "\n", []))
+
     def test_ordinary_lines_pass(self):
         diff = "+Co-Authored-By: Claude <noreply@anthropic.com>\n+cmd = '/mnt/c/Windows/System32/cmd.exe'\n-removed /home/someone\n"
         self.assertEqual(ship.leaks(diff, self.PRIVATE), [])

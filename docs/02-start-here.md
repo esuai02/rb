@@ -46,7 +46,7 @@
 
 **Rojo 운영 (2026-10-05, 근거 `ENV-ROJO-1`·`ENV-ROJO-2`):**
 - Rojo 7.7.1 플러그인은 `%LOCALAPPDATA%\Roblox\Plugins\Rojo.rbxm` 에 있다.
-- 서버는 **Windows 쪽** `%LOCALAPPDATA%\Programs\rojo\rojo.exe serve default.project.json`(`D:\1 Project\roblox\rb\world`, 127.0.0.1:34872)으로 띄운다. WSL 에서는 `/init cmd.exe /c …` 로 실행한다.
+- 서버는 **Windows 쪽** `%LOCALAPPDATA%\Programs\rojo\rojo.exe serve default.project.json`(저장소의 `world` 폴더에서, 127.0.0.1:34872)으로 띄운다. WSL 에서는 `/init cmd.exe /c …` 로 실행한다.
 - WSL 의 `rojo serve` 는 D:\ 가 9p 마운트라 파일 변경을 보지 못한다. WSL 쪽 `rojo` 는 build·검사에만 쓴다.
 - 서버를 새로 띄우면 Studio 의 Rojo 창에서 Connect 를 다시 눌러야 한다.
 
