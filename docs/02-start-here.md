@@ -49,6 +49,7 @@
 - 서버는 **Windows 쪽** `%LOCALAPPDATA%\Programs\rojo\rojo.exe serve default.project.json`(저장소의 `world` 폴더에서, 127.0.0.1:34872)으로 띄운다. WSL 에서는 `/init cmd.exe /c …` 로 실행한다.
 - WSL 의 `rojo serve` 는 D:\ 가 9p 마운트라 파일 변경을 보지 못한다. WSL 쪽 `rojo` 는 build·검사에만 쓴다.
 - 서버를 새로 띄우면 Studio 의 Rojo 창에서 Connect 를 다시 눌러야 한다.
+- Rojo 가 못 넣는 설정이 있다: `TextChatService.ChatVersion` 은 쓰기 권한이 RobloxScriptSecurity 라 Rojo·Studio AI·MCP 스크립트 모두 바꾸지 못한다(공식 문서, `ENV-CHAT-1`). 저장소 값(`default.project.json`)은 `rojo build` 로 새 Place 를 만들 때만 들어가므로, 열린 Place 는 사람이 Studio 속성 창(TextChatService → Data → ChatVersion)에서 한 번 바꾼다.
 
 **Studio → 저장소 사본 (2026-10-06, 근거 `ENV-STUDIO-PULL-1`):**
 - `python3 tools/studio_pull.py --now` 는 Studio 에 지금 열린 스테이징 Place 를 읽기만 한다. 저장 버튼을 누르지 않아도 되고 Place 는 바꾸지 않는다. Place 몫(DEC-8: 지형·꾸밈·조명 등)을 `place/<서비스>/<이름>.rbxmx` 와 `place/settings.json` 에 사본으로 쓴다. Rojo 가 넣는 코드 자리와 Play 때 코드가 짓는 월드는 뺀다.
