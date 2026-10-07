@@ -18,6 +18,7 @@ local SlopeRemote = ReplicatedStorage:WaitForChild("SlopeRemote")
 local ResultRemote = ReplicatedStorage:WaitForChild("ResultRemote")
 
 local STAGE_PANEL, STAGE_COORDINATE, STAGE_SLOPE, STAGE_PORTAL, STAGE_DONE = "panel", "coordinate", "slope", "portal", "done"
+local STAGE_COOP = "coop"   -- 다리가 닿은 뒤 협동 프리즘을 함께 비추는 차례 (coop.gate_prisms → m.gate_open)
 local HINT_IDLE_SECONDS = 10   -- 정본 값 cv.hint_ladder.first_trigger.idle_seconds
 local LABEL_FULL_SECONDS = 2   -- 정본 값 cv.label_tag_display.full_seconds — 크게 보인 뒤 탐험 카드로 줄어든다
 local RESPONSE_FRESH_SECONDS = 4   -- 방금 온 응답은 이 동안 상황 설명보다 앞에 둔다 (작은 화면에서 한쪽만 들어갈 때)
@@ -32,6 +33,7 @@ local stage = STAGE_PANEL
 local cursorX, cursorY = 0, 0
 local hintLevel, attempts, lastActed = 0, 0, os.clock()
 local respondedAt = -math.huge
+local prismPrompts: {ProximityPrompt} = {}   -- 협동 프리즘 안내(watchPrompt 가 채운다)
 
 local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")   -- 화면에 그려지는 곳은 PlayerGui 뿐이다
 
@@ -371,6 +373,9 @@ local function showStage()
 	if stage == STAGE_DONE then
 		labelBox.Visible = false   -- 끝 화면에는 멈춤 지점 선택지 둘만 둔다
 	end
+	for _, prompt in prismPrompts do
+		prompt.Enabled = stage == STAGE_COOP   -- 이 플레이어 화면에서만 — 차례가 아닐 때는 프리즘 안내를 띄우지 않는다
+	end
 	if stage == STAGE_PANEL then
 		goal.Text = Text.get("goal.signal_1")
 		situation.Text = Text.get("sit.gate_dark")
@@ -380,6 +385,9 @@ local function showStage()
 	elseif stage == STAGE_SLOPE then
 		goal.Text = Text.get("goal.signal_3")
 		situation.Text = Text.get("sit.slope.bridge_low")
+	elseif stage == STAGE_COOP then
+		goal.Text = Text.get("goal.portal")   -- 게이트 열기 미션(m.gate_open)의 목표 — 프리즘을 함께 비추면 문이 열린다
+		situation.Text = Text.get("role.switch_holder.name")
 	else
 		goal.Text = Text.get("goal.portal")
 		situation.Text = Text.get("zone.recommend")
@@ -526,6 +534,22 @@ local function watchPrompt()
 		found.ActionText = Text.get("zone.metro_district.name")
 		portalPrompt = found
 	end
+	-- 협동 프리즘: 무엇(왼쪽·오른쪽 프리즘)과 할 일(준비) — 길게 누르기는 서버가 만든 프롬프트가 잰다
+	local left = root:WaitForChild("gate_prism_left"):WaitForChild("HoldPrompt")
+	if left:IsA("ProximityPrompt") then
+		left.ObjectText = Text.get("coop.prism.left")
+		left.ActionText = Text.get("ping.ready")
+		table.insert(prismPrompts, left)
+	end
+	local right = root:WaitForChild("gate_prism_right"):WaitForChild("HoldPrompt")
+	if right:IsA("ProximityPrompt") then
+		right.ObjectText = Text.get("coop.prism.right")
+		right.ActionText = Text.get("ping.ready")
+		table.insert(prismPrompts, right)
+	end
+	for _, prompt in prismPrompts do
+		prompt.Enabled = stage == STAGE_COOP
+	end
 end
 
 ResultRemote.OnClientEvent:Connect(function(code: string)
@@ -552,6 +576,14 @@ ResultRemote.OnClientEvent:Connect(function(code: string)
 	elseif code == "slope_reached" then
 		response.Text = Text.get("resp.slope.bridge_reaches")
 		showDiscovery()
+		stage = STAGE_COOP
+		showStage()
+	elseif code == "prism_ready" then
+		response.Text = Text.get("coop.ready")
+	elseif code == "npc_takes_prism" then
+		response.Text = Text.get("coop.npc_takes_prism")
+	elseif code == "partner_waiting" then
+		response.Text = Text.get("coop.partner_waiting")
 	elseif code == "slope_other" then
 		response.Text = Text.get("resp.slope.other_height")
 		hintLevel = 1

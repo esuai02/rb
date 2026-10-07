@@ -5,6 +5,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Analytics = require(script.Parent.Analytics)
+local Coop = require(script.Parent.Coop)
 local RewardService = require(script.Parent.RewardService)
 local WorldView = require(script.Parent.WorldView)
 local Layout = require(ReplicatedStorage.Shared.Layout)
@@ -26,6 +27,9 @@ local world: Instance? = nil
 local results: RemoteEvent? = nil
 -- 플레이어별로 마친 미션. 순서는 Missions 정본의 requires 가 정한다 — 차례가 아닌 입력은 무시한다 (INV-4 상태로 검증).
 local done: {[string]: boolean} = {}
+-- 협동 프리즘 상태는 Coop 이 가진다(프리즘이 한 쌍뿐이다). 다른 탐험가와 함께 연 사람은 duo 로 센다.
+local together: {[string]: boolean} = {}
+local npcFlying = false
 
 local function slot(player: Player, missionId: string): string
 	return tostring(player.UserId) .. "|" .. missionId
@@ -58,6 +62,8 @@ Players.PlayerRemoving:Connect(function(player: Player)
 	for _, mission in Missions do
 		done[slot(player, mission.id)] = nil
 	end
+	together[tostring(player.UserId)] = nil
+	Coop.remove(player)   -- 나간 탐험가가 지킨 프리즘·연 제안을 거둔다 — 다음 탐험가가 막히지 않게
 end)
 
 -- 나간 사람에게는 보내지 않는다 — 월드 반응을 기다리는 사이에 나갈 수 있다
@@ -115,7 +121,7 @@ function MissionService.coordinateMove(player: Player, cell: {x: number, y: numb
 	end
 end
 
--- 신호 3 — 기울기. 다리는 바로 바뀌고, 닿으면 문턱과 게이트 불 3 이 켜진다.
+-- 신호 3 — 기울기. 다리는 바로 바뀌고, 닿으면 문턱과 게이트 불 3 이 켜진다. 다음 '지금 할 곳'은 협동 프리즘.
 function MissionService.slopeSet(player: Player, choice: string): boolean
 	local root = world
 	local step = SLOPE_STEPS[choice]
@@ -128,6 +134,8 @@ function MissionService.slopeSet(player: Player, choice: string): boolean
 		Analytics.log(player, "math_attempt", {mission = "m.signal_slope", outcome = "target_reached"})
 		WorldView.restore(root, "GateThreshold")
 		WorldView.restore(root, "GateLamp3")
+		WorldView.goal(root, Coop.LEFT)    -- 다음 '지금 할 곳'은 협동 프리즘 한 쌍 — 함께 비추면 게이트가 열린다
+		WorldView.goal(root, Coop.RIGHT)
 		tell(player, "slope_reached")
 		return true
 	end
@@ -136,15 +144,120 @@ function MissionService.slopeSet(player: Player, choice: string): boolean
 	return false
 end
 
--- 게이트 열림 — 완주한 사람 모두에게 같은 기본 보상 (cv.first_rewards). 기록·보상은 판정 때, 말은 문이 다 올라간 뒤.
+-- 탐험 카드(cv.first_rewards) — 세 신호를 다 되살린 기울기 판정이 참일 때만 부른다(Main: if slopeSet(…) then).
+-- 다음 협동 프리즘은 누르기라 보상하지 않는다(INV-4). 루미가 짝이 되어 늘 끝까지 가므로 혼자 온 탐험가도 같은 보상이다(INV-9·INV-12)
+function MissionService.rewardSignals(player: Player)
+	RewardService.grant(player, "reward.explorer_card", "m.gate_open")
+end
+
+-- 같은 단계(게이트 열기 차례)에 있는 다른 탐험가 — 빈 프리즘을 비춰 함께하자고 알린다
+local function partnersOf(player: Player): {Player}
+	local list = {}
+	for _, other in Players:GetPlayers() do
+		if other ~= player and ready(other, "m.gate_open") then
+			table.insert(list, other)
+		end
+	end
+	return list
+end
+
+-- 두 프리즘이 이어졌다 — 함께한 탐험가마다 게이트를 연다. 둘 다 탐험가면 duo, 루미와 함께면 solo_npc
+local function connect(members: {any})
+	local root = world
+	if root then
+		WorldView.restore(root, Coop.LEFT)
+		WorldView.restore(root, Coop.RIGHT)
+	end
+	local explorers: {Player} = {}
+	for _, member in members do
+		if typeof(member) == "Instance" and member:IsA("Player") and member.Parent ~= nil then   -- 그 사이 나간 탐험가는 빼고
+			table.insert(explorers, member)
+		end
+	end
+	for _, explorer in explorers do
+		if #explorers >= 2 then
+			together[tostring(explorer.UserId)] = true
+			Analytics.log(explorer, "co_play_started", {play_mode = "duo"})
+		end
+		task.spawn(function()
+			MissionService.openGate(explorer)
+		end)
+	end
+end
+
+-- 루미가 다른 프리즘을 맡는다 — 날아가 닿은 뒤 그 쪽이 준비된다. 부른 탐험가가 아직 준비돼 있으면 바로 이어진다.
+-- 다른 탐험가의 미션이 비행을 끊으면 한 번 더 날아간다. 그래도 끊겨도 준비는 기록한다 — 혼자 온 탐험가를 멈추지 않는다(INV-9)
+local function npcTakes(prism: string, asker: Player)
+	local root = world
+	if not root or npcFlying or Coop.npcHolds() then
+		return
+	end
+	npcFlying = true
+	tell(asker, "npc_takes_prism")
+	if not WorldView.lumiTo(root, prism) then
+		WorldView.lumiTo(root, prism)
+	end
+	npcFlying = false
+	local result, members = Coop.ready(Coop.NPC, prism, os.clock(), 0)
+	WorldView.restore(root, prism)
+	if result == "connected" then
+		connect(members)
+	end
+end
+
+-- 제안을 연 지 cv.match_wait 가 지났는지 본다 — 그 사이 프리즘을 옮겼으면 지금 지키는 쪽의 맞은편을 루미가 맡는다
+local function checkOffer(asker: Player)
+	local who, held = Coop.due(os.clock())
+	if who == asker and held then
+		npcTakes(Coop.other(held), asker)
+	end
+end
+
+-- 협동 (coop.gate_prisms) — 프리즘을 다 누르면 그 쪽이 준비된다. 서버가 잰 근접 상호작용이다(거리·쿨다운은 Main).
+-- 함께할 탐험가가 없으면 루미가 바로, 있으면 빈 쪽을 비춰 한 번 알리고 cv.match_wait 뒤에 루미가 맡는다 (INV-9)
+function MissionService.holdPrism(player: Player, prism: string)
+	local root = world
+	if not root or not ready(player, "m.gate_open") then
+		return
+	end
+	local partners = partnersOf(player)
+	local result, members = Coop.ready(player, prism, os.clock(), #partners)
+	if result == "taken" then
+		return
+	end
+	WorldView.restore(root, prism)   -- 내 쪽은 청록으로 고정 — 준비 완료
+	tell(player, "prism_ready")
+	if result == "connected" then
+		connect(members)
+	elseif result == "npc" then
+		task.spawn(function()
+			npcTakes(Coop.other(prism), player)
+		end)
+	elseif result == "offered" then   -- 새 제안일 때만 알린다 — 다시 눌러도 같은 제안이면 되풀이하지 않는다
+		WorldView.goal(root, Coop.other(prism))
+		for _, partner in partners do
+			tell(partner, "partner_waiting")
+			Analytics.log(partner, "co_play_offered", {offer_source = "player_present"})
+		end
+		task.delay(Coop.MATCH_WAIT, function()
+			checkOffer(player)
+		end)
+	end
+end
+
+-- 게이트 열림 — 두 프리즘이 이어질 때 부른다(connect). 협동 미션 완주 = gate_opened (specs/analytics/events.yaml).
+-- 기록은 판정 때, 말은 문이 다 올라간 뒤. 보상은 이미 기울기 판정 때 줬다.
 function MissionService.openGate(player: Player)
 	local root = world
 	if not root or not ready(player, "m.gate_open") then
 		return
 	end
 	finish(player, "m.gate_open")
-	Analytics.funnel(player, "gate_opened", {play_mode = "solo_npc"})
-	RewardService.grant(player, "reward.explorer_card", "m.gate_open")
+	if together[tostring(player.UserId)] then
+		Analytics.funnel(player, "gate_opened", {play_mode = "duo"})
+	else
+		Analytics.funnel(player, "gate_opened", {play_mode = "solo_npc"})
+	end
 	WorldView.openGate(root)
 	if done[slot(player, "m.zone_portal")] then
 		return   -- 문이 오르는 사이(1.5~2.4초) 이미 입구에 들어갔다 — 끝난 화면과 켜진 포털을 되돌리지 않는다
@@ -162,7 +275,11 @@ function MissionService.enterPortal(player: Player)
 	end
 	finish(player, "m.zone_portal")
 	Analytics.funnel(player, "zone_portal_entered", {})
-	Analytics.funnel(player, "onboarding_complete", {play_mode = "solo_npc"})
+	if together[tostring(player.UserId)] then
+		Analytics.funnel(player, "onboarding_complete", {play_mode = "duo"})
+	else
+		Analytics.funnel(player, "onboarding_complete", {play_mode = "solo_npc"})
+	end
 	WorldView.restore(root, "ZonePortal")
 	tell(player, "zone_portal_entered")
 end

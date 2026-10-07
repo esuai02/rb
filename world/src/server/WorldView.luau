@@ -109,6 +109,16 @@ function WorldView.visitLumi(root: Instance, x: number, y: number): boolean
 	return finished(lumi, play(lumi, FLY, {Position = Layout.lumiPosition(0, 0)}))
 end
 
+-- 루미가 협동 프리즘 위로 날아가 다른 쪽을 맡는다 (cv.helper_npc — 혼자 온 탐험가의 짝). 닿으면 true.
+function WorldView.lumiTo(root: Instance, name: string): boolean
+	local lumi, target = part(root, "Lumi"), part(root, name)
+	if not (lumi and target) then
+		return false
+	end
+	local spot = target.Position + Vector3.new(0, target.Size.Y / 2 + Layout.LUMI_STANDOFF, 0)
+	return finished(lumi, play(lumi, FLY, {Position = spot}))
+end
+
 -- 빛 다리 기울기 — 출발점과 가로 거리는 고정하고 끝 높이만 바꾼다 (cv.slope_choices.fixed). 끝 막대·난간이 함께 간다.
 function WorldView.setBridge(root: Instance, step: number)
 	local bridge = part(root, "LightBridge")

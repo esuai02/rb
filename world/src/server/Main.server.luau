@@ -31,6 +31,8 @@ end
 
 local panelPart = find("SignalPanel")
 local portalPart = find("ZonePortal")
+local prismLeft = find("gate_prism_left")     -- 정본 값 cv.coop_switch_ids
+local prismRight = find("gate_prism_right")
 
 -- 거리는 서버가 다시 잰다(표시용 값은 믿지 않는다, cv.rule_source)
 local function near(player: Player, target: BasePart?): boolean
@@ -49,11 +51,12 @@ local function onSignal(player: Player, x: unknown, y: unknown)
 	MissionService.coordinateMove(player, {x = x :: number, y = y :: number})
 end
 
+-- 다리가 문턱에 닿으면(세 신호 복구) 탐험 카드를 주고 협동 프리즘 차례다 — 게이트는 두 프리즘이 이어질 때 열린다
 local function onSlope(player: Player, choice: unknown)
 	if typeof(choice) ~= "string" then return end
 	if not Cooldown.allow(player, "slope") then return end
 	if MissionService.slopeSet(player, choice :: string) then
-		MissionService.openGate(player)
+		MissionService.rewardSignals(player)
 	end
 end
 
@@ -62,6 +65,19 @@ local function onPanel(player: Player)
 	if not near(player, panelPart) then return end
 	if not Cooldown.allow(player, "panel") then return end
 	MissionService.activatePanel(player)
+end
+
+-- 협동 프리즘도 다가가서 길게 누른다(0.6초 홀드는 프롬프트가 잰다). 차례·짝 찾기는 MissionService 가 한다.
+local function onPrismLeft(player: Player)
+	if not near(player, prismLeft) then return end
+	if not Cooldown.allow(player, "prism") then return end
+	MissionService.holdPrism(player, "gate_prism_left")
+end
+
+local function onPrismRight(player: Player)
+	if not near(player, prismRight) then return end
+	if not Cooldown.allow(player, "prism") then return end
+	MissionService.holdPrism(player, "gate_prism_right")
 end
 
 -- 다음 구역 입구도 다가가서 들어간다. 게이트를 연 사람만 들어간다(순서는 MissionService 가 확인한다).
@@ -83,4 +99,12 @@ end
 local portalPrompt = if portalPart then portalPart:FindFirstChildOfClass("ProximityPrompt") else nil
 if portalPrompt then
 	portalPrompt.Triggered:Connect(onPortal)
+end
+local leftPrompt = if prismLeft then prismLeft:FindFirstChildOfClass("ProximityPrompt") else nil
+if leftPrompt then
+	leftPrompt.Triggered:Connect(onPrismLeft)
+end
+local rightPrompt = if prismRight then prismRight:FindFirstChildOfClass("ProximityPrompt") else nil
+if rightPrompt then
+	rightPrompt.Triggered:Connect(onPrismRight)
 end

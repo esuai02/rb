@@ -15,6 +15,7 @@ local UNLIT = Color3.fromRGB(26, 32, 52)       -- 꺼진 구조: 벽·단·게�
 local DIM = Color3.fromRGB(78, 94, 136)        -- 아직 켜지지 않은 자리: 칸·패널·불·문턱·다리
 local START = Color3.fromRGB(255, 240, 205)    -- 출발 표시: 출발 칸 원판·다리 출발점
 local LUMI = Color3.fromRGB(235, 252, 255)
+local HOLD_SECONDS = 0.6   -- 정본 값 cv.hold_time — 협동 프리즘을 길게 누르는 시간
 
 -- 먼 도시 탑 — 신호 1 에서 불이 켜진다(resp.signal_1.panel_lit). 자리는 출발·패널 카메라에서 보이게 둔 Q4 가설.
 -- Place 가 월드를 꾸며 두면(아래 build) 그 안의 CityLights 를 켠다 — 장식은 Place, 켜는 반응은 코드(DEC-8).
@@ -135,11 +136,18 @@ local function buildGate(root: Instance): Instance
 	-- 문턱: 단 앞면에 붙은 띠(윗면 = 단 윗면). 정답 다리 끝이 여기에 닿는다
 	paint(anchored("GateThreshold", Vector3.new(Layout.DECK_SIZE.X, 1, 0.4),
 		Vector3.new(0, Layout.DECK_TOP - 0.5, Layout.DECK_FRONT_Z + 0.2), root), Enum.Material.SmoothPlastic, DIM)
-	-- 협동 프리즘 — 이름은 정본 값 cv.coop_switch_ids 와 같아야 한다
-	anchored("gate_prism_left", Vector3.new(2, 4, 2),
-		Vector3.new(-Layout.PRISM_OFFSET, 2, Layout.BRIDGE_START.Z - 4), root)
-	anchored("gate_prism_right", Vector3.new(2, 4, 2),
-		Vector3.new(Layout.PRISM_OFFSET, 2, Layout.BRIDGE_START.Z - 4), root)
+	-- 협동 프리즘 — 이름은 정본 값 cv.coop_switch_ids 와 같아야 한다. 길게 눌러 '준비'한다: 0.6초(cv.hold_time),
+	-- 다 누르기 전에 손을 떼면 프롬프트가 바로 취소한다(cv.hold_cancel). 글자는 클라이언트가 번역표에서 넣는다
+	for _, side in {{name = "gate_prism_left", x = -Layout.PRISM_OFFSET}, {name = "gate_prism_right", x = Layout.PRISM_OFFSET}} do
+		local prism = paint(anchored(side.name, Vector3.new(2, 4, 2), Vector3.new(side.x, 2, Layout.BRIDGE_START.Z - 4), root),
+			Enum.Material.SmoothPlastic, DIM)
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.Name = "HoldPrompt"
+		prompt.HoldDuration = HOLD_SECONDS
+		prompt.RequiresLineOfSight = false
+		prompt.MaxActivationDistance = 10   -- 정본 값 cv.server_distance.prompt_activation_studs
+		prompt.Parent = prism
+	end
 	return gate
 end
 
