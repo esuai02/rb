@@ -3,9 +3,11 @@
 -- 글자는 모두 번역표를 거친다 — 코드에는 키만 쓴다 (INV-3). 색만으로 뜻을 전하지 않는다 (INV-9).
 -- 배치 (S9): 목표 카드는 오른쪽 위 — 왼쪽 위 채팅창과 출발 칸을 가리지 않는다. 고르는 패널은 아래 띠의
 -- 터치 조이스틱(왼쪽)과 점프 버튼(오른쪽) 사이. 탐험 카드는 위 메뉴 줄의 빈자리. 화면이 바뀌면 다시 놓는다.
+-- 채팅창 (S10): PC·콘솔에서는 왼쪽 아래로 내려 왼쪽 위 출발 칸·루미를 비우고, 고르는 패널은 그 오른쪽 띠에 둔다.
 local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextChatService = game:GetService("TextChatService")
 local UserInputService = game:GetService("UserInputService")
 
 local Text = require(ReplicatedStorage.Shared.Text)
@@ -32,6 +34,10 @@ local hintLevel, attempts, lastActed = 0, 0, os.clock()
 local respondedAt = -math.huge
 
 local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")   -- 화면에 그려지는 곳은 PlayerGui 뿐이다
+
+-- 새 채팅(TextChatService, 설정은 저장소 default.project.json)의 창·입력줄. 옛 채팅이면 손대지 않는다
+local chatWindow = TextChatService:FindFirstChildOfClass("ChatWindowConfiguration")
+local chatInput = TextChatService:FindFirstChildOfClass("ChatInputBarConfiguration")
 
 -- 기본 여백(CoreUISafeInsets)이 위 메뉴 줄과 화면 양옆 안전 영역을 이미 뺀다 (S9 실측)
 local screen = Instance.new("ScreenGui")
@@ -208,20 +214,30 @@ end
 
 -- 아래 띠에서 터치 조작(기본 PlayerModule 의 TouchGui)이 차지하지 않는 가로 구간. 못 찾으면 비율로 어림한다
 local function band(width: number): (number, number)
-	if UserInputService.PreferredInput ~= Enum.PreferredInput.Touch then
-		return 0, width
-	end
 	local origin = screen.AbsolutePosition.X
-	local controls = playerGui:FindFirstChild("TouchGui")
-	local frame = if controls then controls:FindFirstChild("TouchControlFrame") else nil
-	local stick = if frame then frame:FindFirstChild("DynamicThumbstickFrame") or frame:FindFirstChild("ThumbstickFrame") else nil
-	local jump = if frame then frame:FindFirstChild("JumpButton") else nil
-	local left, right = width * STICK_SHARE, width - JUMP_ROOM
-	if stick and stick:IsA("GuiObject") and stick.Visible then
-		left = stick.AbsolutePosition.X + stick.AbsoluteSize.X - origin
+	local left, right = 0, width
+	if UserInputService.PreferredInput == Enum.PreferredInput.Touch then
+		local controls = playerGui:FindFirstChild("TouchGui")
+		local frame = if controls then controls:FindFirstChild("TouchControlFrame") else nil
+		local stick = if frame then frame:FindFirstChild("DynamicThumbstickFrame") or frame:FindFirstChild("ThumbstickFrame") else nil
+		local jump = if frame then frame:FindFirstChild("JumpButton") else nil
+		left, right = width * STICK_SHARE, width - JUMP_ROOM
+		if stick and stick:IsA("GuiObject") and stick.Visible then
+			left = stick.AbsolutePosition.X + stick.AbsoluteSize.X - origin
+		end
+		if jump and jump:IsA("GuiObject") and jump.Visible then
+			right = jump.AbsolutePosition.X - origin
+		end
 	end
-	if jump and jump:IsA("GuiObject") and jump.Visible then
-		right = jump.AbsolutePosition.X - origin
+	-- 왼쪽 아래로 내린 채팅창(입력줄까지)도 띠에서 뺀다
+	if chatWindow and chatWindow.Enabled and chatWindow.VerticalAlignment == Enum.VerticalAlignment.Bottom then
+		local edge = chatWindow.AbsolutePosition.X + chatWindow.AbsoluteSize.X
+		if chatInput and chatInput.Enabled then
+			edge = math.max(edge, chatInput.AbsolutePosition.X + chatInput.AbsoluteSize.X)
+		end
+		if chatWindow.AbsoluteSize.X > 0 then
+			left = math.max(left, edge - origin)
+		end
 	end
 	return left, right
 end
@@ -240,7 +256,13 @@ local function layout()
 	local rowHeight = if compact then MIN_TOUCH else 52   -- 손가락으로 누르는 버튼 높이
 	local textSize = if compact then 14 else 20
 
-	-- 고르는 패널: 아래 띠 가운데, 터치 조작 사이
+	-- 채팅창: 터치 기기는 기본 자리(왼쪽 위 — 열 때만 보인다), 그 밖은 왼쪽 아래
+	if chatWindow and TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+		local touch = UserInputService.PreferredInput == Enum.PreferredInput.Touch
+		chatWindow.VerticalAlignment = if touch then Enum.VerticalAlignment.Top else Enum.VerticalAlignment.Bottom
+	end
+
+	-- 고르는 패널: 아래 띠 가운데, 터치 조작·채팅창 사이
 	local left, right = band(area.X)
 	left, right = math.max(left + gap, margin), math.min(right - gap, area.X - margin)
 	if right - left < 3 * MIN_TOUCH + 2 * gap then
@@ -608,6 +630,12 @@ local function watchTouch(child: Instance)
 	end
 end
 playerGui.ChildAdded:Connect(watchTouch)
+for _, config in ({chatWindow, chatInput} :: {Instance?}) do
+	if config then
+		config:GetPropertyChangedSignal("AbsolutePosition"):Connect(relayout)   -- 채팅창이 자리를 잡거나 바뀌면 띠를 다시 잰다
+		config:GetPropertyChangedSignal("AbsoluteSize"):Connect(relayout)
+	end
+end
 for _, child in playerGui:GetChildren() do
 	watchTouch(child)
 end
