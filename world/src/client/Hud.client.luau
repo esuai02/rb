@@ -21,6 +21,7 @@ local LABEL_FULL_SECONDS = 2   -- 정본 값 cv.label_tag_display.full_seconds �
 local RESPONSE_FRESH_SECONDS = 4   -- 방금 온 응답은 이 동안 상황 설명보다 앞에 둔다 (작은 화면에서 한쪽만 들어갈 때)
 local COMPACT_HEIGHT = 420     -- 이보다 낮은 화면(가로로 든 휴대폰)은 줄·버튼·글자를 줄인다
 local MIN_TEXT = 10            -- 글자를 칸에 맞춰 줄여도 이보다 작게는 하지 않는다
+local MIN_TOUCH = 44           -- 손가락으로 누르는 버튼의 가장 작은 한 변
 local TV_SAFE = 0.05           -- TV 는 가장자리가 잘릴 수 있다 — 짧은 변의 5% 안쪽에만 둔다
 local STICK_SHARE = 0.4        -- 터치 조이스틱 자리를 못 찾으면 왼쪽 40% 로 어림한다 (기본 PlayerModule 실측과 같음)
 local JUMP_ROOM = 110          -- 점프 버튼 자리를 못 찾으면 오른쪽 끝에서 이만큼 비운다
@@ -236,15 +237,18 @@ local function layout()
 	local margin = if tv then math.floor(math.max(area.X, area.Y) * TV_SAFE) elseif compact then 8 else 16
 	local gap = if compact then 4 else 8
 	local line = if compact then 17 else 26        -- 글자 한 줄 높이
-	local rowHeight = if compact then 44 else 52   -- 손가락으로 누르는 버튼 높이 (44 이상)
+	local rowHeight = if compact then MIN_TOUCH else 52   -- 손가락으로 누르는 버튼 높이
 	local textSize = if compact then 14 else 20
 
 	-- 고르는 패널: 아래 띠 가운데, 터치 조작 사이
 	local left, right = band(area.X)
 	left, right = math.max(left + gap, margin), math.min(right - gap, area.X - margin)
+	if right - left < 3 * MIN_TOUCH + 2 * gap then
+		left, right = margin, area.X - margin   -- 터치 조작 사이가 너무 좁으면 겹치더라도 버튼 크기를 지킨다
+	end
 	local width = math.max(right - left, 0)
 	local bottom = area.Y - margin
-	local cell = math.min(math.floor((width - 2 * gap) / 3), if compact then 120 else 170)
+	local cell = math.max(MIN_TOUCH, math.min(math.floor((width - 2 * gap) / 3), if compact then 120 else 170))
 	local crossWidth, crossHeight = 3 * cell + 2 * gap, 3 * rowHeight + 2 * gap
 	place(moves, left + (width - crossWidth) / 2, bottom - crossHeight, crossWidth, crossHeight)
 	place(moveUp, cell + gap, 0, cell, rowHeight)
@@ -298,20 +302,27 @@ local function layout()
 	top.Visible = y > gap
 	place(top, area.X - margin - cardWidth, margin, cardWidth, y)
 
-	-- 이름표 2초: 화면 가운데 크게
+	-- 이름표 2초: 화면 가운데 크게. 가운데에 두면 보이는 고르는 패널을 덮는 작은 화면에서는 목표 카드 자리에 띄운다
+	-- (카드는 2초 뒤 다시 드러나고, 고르는 버튼·신호판은 가리지 않는다 — 진행을 막지 않는다)
 	local labelWidth = math.min(area.X - 2 * margin, if compact then 520 else 640)
 	local nameHeight = 2 * line + 8
 	local labelHeight = nameHeight + 3 * line + 3 * gap
-	place(labelBox, (area.X - labelWidth) / 2, math.max(margin, (area.Y - labelHeight) / 2), labelWidth, labelHeight)
+	local labelX, labelY = (area.X - labelWidth) / 2, math.max(margin, (area.Y - labelHeight) / 2)
+	if labelY + labelHeight > floor - gap then
+		labelWidth, labelX, labelY = cardWidth, area.X - margin - cardWidth, margin
+		labelHeight = math.min(labelHeight, floor - gap - margin)
+	end
+	place(labelBox, labelX, labelY, labelWidth, labelHeight)
 	place(discoveryName, gap, gap, labelWidth - 2 * gap, nameHeight)
-	place(discovery, gap, 2 * gap + nameHeight, labelWidth - 2 * gap, 3 * line)
+	place(discovery, gap, 2 * gap + nameHeight, labelWidth - 2 * gap, labelHeight - nameHeight - 3 * gap)
 	textLimit(discoveryName, 2 * textSize + 8)
 	textLimit(discovery, textSize)
 
 	-- 탐험 카드: 위 메뉴 줄의 빈칸 오른쪽 끝. 그 칸이 없거나 낮으면, 또 TV 에서는(맨 위가 잘릴 수 있다) 목표 카드 바로 아래
 	local bar = cardScreen.AbsoluteSize
-	local onBar = not tv and bar.Y >= 24 and bar.X >= 160
-	local chipHeight = if onBar then math.min(bar.Y - 16, 32) else line + 8
+	local barChip = math.min(bar.Y - 16, 32)
+	local onBar = not tv and bar.Y >= 24 and bar.X - margin >= 6 * barChip + gap   -- 이름 둘이 다 들어갈 때만
+	local chipHeight = if onBar then barChip else line + 8
 	if onBar then
 		card.Parent = cardScreen
 		place(card, 0, 0, bar.X - margin, bar.Y)
@@ -389,6 +400,7 @@ local function showDiscovery()
 		discovery.Text = Text.get("label.slope.line")
 	end
 	labelBox.Visible = true
+	layout()
 	task.delay(LABEL_FULL_SECONDS, function()
 		term.Visible = true   -- 탐험 카드에 이름이 남는다
 		if mine == discoveries then
@@ -566,9 +578,37 @@ UserInputService:GetPropertyChangedSignal("PreferredInput"):Connect(function()
 end)
 screen:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout)   -- 화면을 돌리거나 창 크기를 바꾸면 다시 놓는다
 cardScreen:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout)
-playerGui.ChildAdded:Connect(function(child: Instance)
-	if child.Name == "TouchGui" then
-		task.delay(0.5, layout)   -- 터치 조작은 PlayerModule 이 따로 만든다 — 자리가 잡힌 뒤 다시 놓는다
+-- 터치 조작은 PlayerModule 이 따로, 늦게 만든다(점프 버튼은 캐릭터가 생긴 뒤). 생기거나 움직이면 다시 놓는다
+local relayoutQueued = false
+local function relayout()
+	if relayoutQueued then
+		return
 	end
-end)
+	relayoutQueued = true
+	task.defer(function()
+		relayoutQueued = false
+		layout()
+	end)
+end
+local TOUCH_CONTROLS = {"DynamicThumbstickFrame", "ThumbstickFrame", "JumpButton"}
+local function watchControl(item: Instance)
+	if item:IsA("GuiObject") and table.find(TOUCH_CONTROLS, item.Name) then
+		item:GetPropertyChangedSignal("AbsolutePosition"):Connect(relayout)
+		item:GetPropertyChangedSignal("AbsoluteSize"):Connect(relayout)
+		item:GetPropertyChangedSignal("Visible"):Connect(relayout)
+		relayout()
+	end
+end
+local function watchTouch(child: Instance)
+	if child.Name == "TouchGui" then
+		child.DescendantAdded:Connect(watchControl)
+		for _, item in child:GetDescendants() do
+			watchControl(item)
+		end
+	end
+end
+playerGui.ChildAdded:Connect(watchTouch)
+for _, child in playerGui:GetChildren() do
+	watchTouch(child)
+end
 task.delay(1, layout)

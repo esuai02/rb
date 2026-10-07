@@ -1,0 +1,27 @@
+{
+ "slice": "S9 HUD 배치 — 기기마다 겹침 없이, 이름표 2초 → 탐험 카드",
+ "date": "2026-10-07",
+ "method": "Studio Device Simulator 로 기기를 바꾸고 Play. 서버에서 ResultRemote 단계 신호(신호1→다른 칸→좌표 도착→다른 높이→다리 닿음→게이트 열림→입구)를 2.5초 간격으로 보내고 Client 에서 AbsolutePosition 으로 점검: 화면 밖·패널끼리 겹침·이름표와 고르는 패널 겹침·터치 조이스틱/점프 겹침·버튼 44px 미만·TextFits 거짓·출발 칸/루미 가림",
+ "before_a06": {
+  "gui_area": "705x280 (위 메뉴 줄 58px 제외)",
+  "start_pad": "Top(16,16-476,136) 안 (221,22) — 가림",
+  "moves": "16,80-346,264 — Top·조이스틱 영역과 겹침",
+  "slopes": "360,80-530,264 — Top 과 겹침",
+  "stop_point": "182,160-522,224 — '계속하기'가 조이스틱 영역(x<282) 안",
+  "desktop_chat": "LegacyChatService 채팅창 0,2-511,181 이 Top 전체를 덮음"
+ },
+ "after": {
+  "samsung_galaxy_a06 705x338": "9개 상태 모두 위반 0. 이름표는 작은 화면에서 목표 카드 자리(373-697 x 8-113), 기울기 패널 y132~",
+  "iphone_7 666x374": "위반 0. 십자 패널 270-566 이 조이스틱(~266)·점프(571~) 사이",
+  "iphone_17_pro 750x361": "위반 0",
+  "ipad_10th 1179x819": "위반 0",
+  "hd_720 1279x720": "위반 0. 목표 카드 854-1263 — 채팅창(0-511)과 떨어짐. 네 줄 모두 보임",
+  "xbox 1919x1079 ten-foot": "위반 0. TV 여백 96px, 탐험 카드는 목표 카드 아래(맨 위 줄은 잘릴 수 있어 쓰지 않음)"
+ },
+ "real_input_hd720": "마우스로 MoveRight 두 번·MoveUp 한 번 → 커서 cell_2_1. 패널 앞 E·E → 서버 coordinate_reached → '좌표' 이름표 2초 → 탐험 카드 [좌표]. SlopeUp 클릭 → slope_reached → '기울기' 이름표 → 카드 [좌표, 기울기] → gate_opened, 목표 '다음 구역 입구를 찾자'",
+ "remaining": [
+  "PC 에서 Roblox 기본 채팅창(LegacyChatService, 왼쪽 위)이 출발 칸을 가림 — HUD 가 아닌 채팅 설정 문제. TextChatService 전환·채팅창 자리 조정은 다음 후보",
+  "사용자가 채팅창을 오른쪽으로 옮긴 경우는 피하지 않음 (리뷰 DEFERRED)",
+  "실제 휴대폰·실물 게임패드 확인은 사람 몫 (기존 항목)"
+ ]
+}
