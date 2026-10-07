@@ -229,13 +229,16 @@ local function band(width: number): (number, number)
 			right = jump.AbsolutePosition.X - origin
 		end
 	end
-	-- 왼쪽 아래로 내린 채팅창(입력줄까지)도 띠에서 뺀다
-	if chatWindow and chatWindow.Enabled and chatWindow.VerticalAlignment == Enum.VerticalAlignment.Bottom then
-		local edge = chatWindow.AbsolutePosition.X + chatWindow.AbsoluteSize.X
-		if chatInput and chatInput.Enabled then
+	-- 왼쪽 아래로 내린 채팅창과 입력줄도 띠에서 뺀다 — 메시지가 없으면 창은 크기 0 으로 숨고 입력줄만 남는다 (실측)
+	if chatWindow and chatWindow.VerticalAlignment == Enum.VerticalAlignment.Bottom then
+		local edge = 0
+		if chatWindow.Enabled and chatWindow.AbsoluteSize.X > 0 then
+			edge = chatWindow.AbsolutePosition.X + chatWindow.AbsoluteSize.X
+		end
+		if chatInput and chatInput.Enabled and chatInput.AbsoluteSize.X > 0 then
 			edge = math.max(edge, chatInput.AbsolutePosition.X + chatInput.AbsoluteSize.X)
 		end
-		if chatWindow.AbsoluteSize.X > 0 then
+		if edge > 0 then
 			left = math.max(left, edge - origin)
 		end
 	end
