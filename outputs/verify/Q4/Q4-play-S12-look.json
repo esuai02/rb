@@ -1,0 +1,51 @@
+{
+  "slice": "S12 고도화 연출 — 도시 야경·상태 빛·신호 원 반응·신호 바·빛줄기·게이트 빛 터짐",
+  "date": "2026-10-07",
+  "intent": "게이트에 온 탐험가가 신호를 하나 되살릴 때마다 월드와 화면이 크게 반응해, 점수 없이도 '내가 도시를 켰다'가 보이게 한다 (K5 — 점수가 아니라 월드가 답한다)",
+  "design_sources": [
+    "사용자가 보여 준 스피드 시뮬레이터 화면(큰 숫자 반응·채우는 레벨 바) — 반응의 크기와 채우는 바만 가져오고 숫자·점수는 쓰지 않음",
+    "원천 설계의 '두 빛줄기 합류'(협동 프리즘이 이어질 때)"
+  ],
+  "design_choices": {
+    "night": "Play 때 서버 코드가 놓음: ClockTime 19.6, Brightness 1.4, Ambient (38,44,72), OutdoorAmbient (58,68,104), 환경광 0.6 · NightBloom(0.9, 28, 문턱 0.85 — 켠 Neon 만 번짐) · NightAir 대기(밀도 0.32) · NightGrade 색보정. Place 의 Edit 조명 값은 그대로(14:00, 밝기 1, 효과 0개 — 실측)",
+    "lights": "늘 켜진 빛 둘(신호판 앞면 SurfaceLight, 다리 출발점 PointLight) + 상태 빛 6개(처음엔 꺼짐, 지금 할 곳=노랑, 되살린 곳=청록 — WorldView.goal·restore 가 켬)",
+    "signal_bar": "목표 카드의 목표 줄 아래 3칸. 카드 높이 계산에 늘 포함(작은 화면 12px·큰 화면 16px)",
+    "signal_pop": "신호가 돌아올 때마다 큰 원 셋이 뜨고 새로 찬 원이 1.8배에서 튀어 내려옴(0.25초) → 0.95초 머묾 → 0.4초 흐려짐. 찬 원=되살린 신호, 테두리 원=아직 (색만으로 뜻을 전하지 않음 INV-9). 숫자 글자는 잠긴 용어집(Q2)에 키가 없어 쓰지 않음",
+    "beams": "두 프리즘이 이어지면 각 프리즘 꼭대기에서 게이트 문턱 가운데로 청록 빛줄기(Beam)",
+    "burst": "게이트가 다 오른 순간 문턱에서 빛 알갱이 60개(청록→노랑)"
+  },
+  "verification": {
+    "play_real_input_default_viewport": {
+      "path": "신호판 E → MoveRight×2·MoveUp 클릭 → E → SlopeUp 클릭 → 왼쪽 프리즘 E 0.9초",
+      "codes": "signal_panel_lit 17.00s · coordinate_reached 22.30s · slope_reached 25.11s · prism_ready·npc_takes_prism 310.90s · gate_opened 313.82s",
+      "pop_and_bar": "세 신호 각각: 큰 원 보임, 찬 원 1/2/3, 바 1/2/3칸 (0.1초 뒤 기록)",
+      "world": "연결 뒤 두 프리즘 SignalBeam·문턱 BeamMeet 있음, 루미 오른쪽 프리즘 위(6,5.8,-20), CityLanguageGate Open=true·충돌 끔·Y 41, 다음 목표 ZonePortal 상태 빛=노랑. 빛 터짐은 Open=true 를 쓰기 바로 앞 줄에서 불리므로 Open=true 로 호출 확인(알갱이 수는 API 로 셀 수 없음)",
+      "console": "오류 0 (분석 이벤트 로그만)"
+    },
+    "hud_devices": {
+      "method": "Device Simulator + 서버 단계 신호(4초 뒤부터 2.5초 간격 7개). 14순간 = S9 의 9상태 + 원 셋이 떠 있는 3순간 + 원이 가장 크게 튄 3순간(신호 직후 task.defer). 원 셋은 이름표(2초)를 포함한 모든 패널·터치 조이스틱/점프·채팅 입력줄과 겹치면 위반으로 셈",
+      "samsung_galaxy_a06 705x338": "위반 0. 원 셋 122-254 x 32-68(튈 때 107-268 x 17-82), 이름표가 가운데 뜰 때 92-612 x 87-192 — 겹치지 않음",
+      "iphone_7 666x374": "위반 0",
+      "iphone_17_pro 750x361": "위반 0",
+      "ipad_10th 1179x819": "위반 0. 원 셋 위 가운데 486-691 x 107-163",
+      "hd_720 1279x720": "위반 0. 채팅 입력줄 16-475 x 492-529 와 떨어짐",
+      "xbox 1919x1079": "위반 0. TV 여백 안 856-1061 x 214-270",
+      "bar": "모든 기기·상태에서 목표 카드 안에 보임, 찬 칸 0→1→2→3"
+    },
+    "fixed_during_verification": [
+      "튀어 오르는 원이 왼쪽 위 모서리를 기준으로 커져 오른쪽 아래로 번짐(실측: 0.05초 뒤 위·왼쪽 끝은 그대로, 오른쪽·아래만 늘어남. 계산: A06 에서 1.8배 순간 셋째 원 아래끝 97px — 가운데 이름표 위끝 87px 과 겹침) → 원의 기준점을 가운데로(AnchorPoint 0.5). 재측정에서 위아래 같은 폭으로 커짐(17-82)",
+      "WorldBuilder.build() 의 설명 주석이 새 함수 위로 밀려나 있던 것을 제자리로"
+    ],
+    "gates": "tools 109 테스트 OK · tests 292 테스트 OK · validate_spec OK · Harness 18검사 PASS(발견 0)"
+  },
+  "screenshots": {
+    "taken": "낮(이전)과 밤 시안(조명 시험값 — 최종 코드는 신호판 앞면 빛을 절반 밝기로 낮추고 상태 빛을 처음엔 끔)",
+    "blocked": "12:25 이후 캡처가 하얗게 나옴. 원인 실측: Studio 창이 최소화돼 3D 화면을 그리지 않음(IsIconic=True). 이쪽에서 창을 펼치는 요청(ShowWindowAsync·SetWindowPlacement)은 거부됨 — 최종 모습·빛줄기·빛 터짐 순간 사진은 아직 없음"
+  },
+  "review": "pending",
+  "not_verified": [
+    "최종 조명 값 그대로의 밤 화면 사진(창 최소화로 캡처 불가)",
+    "저사양 휴대폰 실기기에서 블룸·대기·빛 8개의 프레임 비용",
+    "두 사람 실제 Play 에서 빛줄기가 한 번만 생기는지(판정은 joinBeams 가 이미 있으면 건너뜀)"
+  ]
+}

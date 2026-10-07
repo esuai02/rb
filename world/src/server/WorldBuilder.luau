@@ -181,6 +181,81 @@ local function buildPortal(root: Instance): Instance
 	return portal
 end
 
+-- 도시 야경 (S12): 해 진 뒤의 도시 — 꺼진 것은 어둡고, 켠 신호만 빛난다(Neon + 블룸). 조명도 설정이라 저장소 코드가
+-- 정한다(DEC-8) — Play 때 서버가 놓는다. 값은 Studio 에서 시안을 비교해 고른 Q4 가설(outputs/verify/Q4/Q4-play-S12-look.json)
+local function buildNight()
+	local lighting = game:GetService("Lighting")
+	lighting.ClockTime = 19.6
+	lighting.Brightness = 1.4
+	lighting.Ambient = Color3.fromRGB(38, 44, 72)
+	lighting.OutdoorAmbient = Color3.fromRGB(58, 68, 104)
+	lighting.EnvironmentDiffuseScale = 0.6
+	lighting.EnvironmentSpecularScale = 0.6
+	if not lighting:FindFirstChild("NightBloom") then
+		local bloom = Instance.new("BloomEffect")
+		bloom.Name = "NightBloom"
+		bloom.Intensity, bloom.Size, bloom.Threshold = 0.9, 28, 0.85   -- 켠 신호(Neon)만 번진다
+		bloom.Parent = lighting
+	end
+	if not lighting:FindFirstChild("NightAir") then
+		local air = Instance.new("Atmosphere")
+		air.Name = "NightAir"
+		air.Density, air.Offset, air.Glare, air.Haze = 0.32, 0.1, 0.2, 1.6
+		air.Color, air.Decay = Color3.fromRGB(92, 110, 160), Color3.fromRGB(40, 46, 82)
+		air.Parent = lighting
+	end
+	if not lighting:FindFirstChild("NightGrade") then
+		local grade = Instance.new("ColorCorrectionEffect")
+		grade.Name = "NightGrade"
+		grade.Contrast, grade.Saturation, grade.TintColor = 0.08, 0.12, Color3.fromRGB(235, 240, 255)
+		grade.Parent = lighting
+	end
+end
+
+-- 놀이 자리를 읽히게 하는 빛. 늘 켜진 빛 둘(신호판 앞면·다리 출발점)과, 상태를 따라가는 빛 —
+-- 지금 할 곳이면 노랑, 되살린 곳이면 청록으로 둘레를 비춘다(WorldView.goal·restore). 상태 빛은 처음엔 꺼져 있다
+local function buildLights(root: Instance)
+	local wall = root:FindFirstChild("SignalWall", true)
+	if wall then
+		local face = Instance.new("SurfaceLight")
+		face.Name = "WallLight"
+		face.Face = Enum.NormalId.Front
+		face.Color, face.Range, face.Brightness, face.Shadows = Color3.fromRGB(140, 170, 255), 12, 0.6, false
+		face.Parent = wall
+	end
+	local start = root:FindFirstChild("BridgeStart", true)
+	if start then
+		local path = Instance.new("PointLight")
+		path.Name = "PathLight"
+		path.Color, path.Range, path.Brightness, path.Shadows = Color3.fromRGB(255, 236, 200), 14, 1, false
+		path.Parent = start
+	end
+	for _, spec in {{name = "SignalPanel", range = 16}, {name = "LightBridge", range = 16}, {name = "GateThreshold", range = 12},
+		{name = "gate_prism_left", range = 12}, {name = "gate_prism_right", range = 12}, {name = "ZonePortal", range = 14}} do
+		local item = root:FindFirstChild(spec.name, true)
+		if item then
+			local glow = Instance.new("PointLight")
+			glow.Name = "StateLight"
+			glow.Range, glow.Brightness, glow.Shadows, glow.Enabled = spec.range, 1.4, false, false
+			glow.Parent = item
+		end
+	end
+	-- 게이트가 열릴 때 문턱에서 터지는 빛 알갱이(WorldView.openGate 가 한 번 뿜는다)
+	local threshold = root:FindFirstChild("GateThreshold", true)
+	if threshold then
+		local burst = Instance.new("ParticleEmitter")
+		burst.Name = "OpenBurst"
+		burst.Rate = 0
+		burst.LightEmission = 1
+		burst.Color = ColorSequence.new(Color3.fromRGB(80, 220, 255), Color3.fromRGB(255, 176, 32))
+		burst.Size = NumberSequence.new(0.8, 0)
+		burst.Lifetime = NumberRange.new(1, 1.6)
+		burst.Speed = NumberRange.new(10, 16)
+		burst.SpreadAngle = Vector2.new(180, 180)
+		burst.Parent = threshold
+	end
+end
+
 -- 월드를 한 번만 만든다. 이미 있으면 그것을 쓴다(Place 를 사람이 꾸며 둔 경우).
 function WorldBuilder.build(): Instance
 	local existing = Workspace:FindFirstChild("CityLanguageGateWorld")
@@ -199,6 +274,8 @@ function WorldBuilder.build(): Instance
 	buildCity(root)
 	buildLumi(root)
 	buildPortal(root)
+	buildLights(root)
+	buildNight()
 	return root
 end
 

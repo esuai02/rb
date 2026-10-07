@@ -52,7 +52,7 @@
 - Rojo 가 못 넣는 설정이 있다: `TextChatService.ChatVersion` 은 쓰기 권한이 RobloxScriptSecurity 라 Rojo·Studio AI·MCP 스크립트 모두 바꾸지 못한다(공식 문서, `ENV-CHAT-1`). 저장소 값(`default.project.json`)은 `rojo build` 로 새 Place 를 만들 때만 들어가므로, 열린 Place 는 사람이 Studio 속성 창(TextChatService → Data → ChatVersion)에서 한 번 바꾼다.
 
 **Studio → 저장소 사본 (2026-10-06, 근거 `ENV-STUDIO-PULL-1`):**
-- `python3 tools/studio_pull.py --now` 는 Studio 에 지금 열린 스테이징 Place 를 읽기만 한다. 저장 버튼을 누르지 않아도 되고 Place 는 바꾸지 않는다. Place 몫(DEC-8: 지형·꾸밈·조명 등)을 `place/<서비스>/<이름>.rbxmx` 와 `place/settings.json` 에 사본으로 쓴다. Rojo 가 넣는 코드 자리와 Play 때 코드가 짓는 월드는 뺀다.
+- `python3 tools/studio_pull.py --now` 는 Studio 에 지금 열린 스테이징 Place 를 읽기만 한다. 저장 버튼을 누르지 않아도 되고 Place 는 바꾸지 않는다. Place 몫(DEC-8: 지형·꾸밈·조명 등)을 `place/<서비스>/<이름>.rbxmx` 와 `place/settings.json` 에 사본으로 쓴다. 단 Play 중 조명(밤 시각·밝기·블룸 등)은 코드(`WorldBuilder` 의 밤 조명, S12)가 덮어쓴다 — 사본의 조명 값은 Edit 화면 값이다. Rojo 가 넣는 코드 자리와 Play 때 코드가 짓는 월드는 뺀다.
 - 사본은 이력·백업용이다. 정본은 여전히 Place 이므로 사본을 손으로 고치지 않는다. 사본을 Studio 로 되살리는 일은 아직 시험하지 않았다.
 - 쓰기 전에 공개 저장소 누출 검사를 한다(로컬 경로·Studio 계정 이름·번호). 계정 값은 저장소 밖 `.git/info/rb-private` 에만 두고 `ship.py` 도 같은 값을 찾는다.
 - 커밋·푸시는 `tools/ship.py save` 가 한다. Stop 훅이 대화 턴이 끝날 때마다 `studio_pull.py --quiet` 다음에 `ship.py save --quiet` 를 차례로 돌린다(10분에 한 번까지 읽음, 사용자 승인 2026-10-07 "A) 대화가 끝날 때마다 자동으로", 근거 `ENV-STUDIO-PULL-3`).

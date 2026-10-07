@@ -167,6 +167,7 @@ local function connect(members: {any})
 	if root then
 		WorldView.restore(root, Coop.LEFT)
 		WorldView.restore(root, Coop.RIGHT)
+		WorldView.joinBeams(root)
 	end
 	local explorers: {Player} = {}
 	for _, member in members do

@@ -8,6 +8,7 @@ local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextChatService = game:GetService("TextChatService")
+local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
 local Text = require(ReplicatedStorage.Shared.Text)
@@ -101,6 +102,57 @@ for _, row in {situation, response, hint} do
 end
 -- 줄마다 보일 내용이 있는지. 실제로 보이는지는 layout 이 남는 높이로 정한다
 local wanted: {[TextLabel]: boolean} = {[goal] = true, [situation] = true, [response] = false, [hint] = false}
+
+-- 도시 신호 바 (S12): 게이트 불 셋과 같은 수만큼 찬다 — 점수가 아니라 되살아난 월드를 그대로 보인다 (K5).
+-- 글자 없이 모양으로 센다: 되살린 신호는 꽉 찬 원, 아직인 신호는 테두리 원(색만으로 뜻을 전하지 않는다 INV-9).
+-- 신호가 돌아올 때마다 큰 원 셋이 화면에 떠서 새로 찬 원이 튀어 오른다 — 숫자 글자는 잠긴 용어집에 키가 없어 쓰지 않는다
+local SIGNAL_ON = Color3.fromRGB(80, 220, 255)   -- 월드의 '돌아온 신호' 색과 같다 (WorldView.SIGNAL)
+local SIGNAL_OFF = Color3.fromRGB(60, 70, 100)
+local signalsLit = 0
+local signalBar = Instance.new("Frame")
+signalBar.Name = "SignalBar"
+signalBar.BackgroundTransparency = 1
+signalBar.Parent = top
+local segments: {Frame} = {}
+for _ = 1, 3 do
+	local segment = Instance.new("Frame")
+	segment.Name = "Segment"
+	segment.BorderSizePixel = 0
+	segment.BackgroundColor3 = SIGNAL_OFF
+	segment.Parent = signalBar
+	local round = Instance.new("UICorner")
+	round.CornerRadius = UDim.new(0.5, 0)
+	round.Parent = segment
+	table.insert(segments, segment)
+end
+local signalPop = Instance.new("Frame")
+signalPop.Name = "SignalPop"
+signalPop.BackgroundTransparency = 1
+signalPop.ZIndex = 4
+signalPop.Visible = false
+signalPop.Parent = screen
+local popDots: {Frame} = {}
+local popRings: {UIStroke} = {}
+local popScales: {UIScale} = {}
+for _ = 1, 3 do
+	local dot = Instance.new("Frame")
+	dot.Name = "PopDot"
+	dot.AnchorPoint = Vector2.new(0.5, 0.5)   -- 튀어 오를 때(UIScale) 가운데에서 커진다 — 모서리 기준이면 오른쪽 아래로 번져 이름표를 덮는다
+	dot.BorderSizePixel = 0
+	dot.ZIndex = 4
+	dot.Parent = signalPop
+	local round = Instance.new("UICorner")
+	round.CornerRadius = UDim.new(0.5, 0)
+	round.Parent = dot
+	local ring = Instance.new("UIStroke")
+	ring.Thickness = 3
+	ring.Parent = dot
+	local scale = Instance.new("UIScale")
+	scale.Parent = dot
+	table.insert(popDots, dot)
+	table.insert(popRings, ring)
+	table.insert(popScales, scale)
+end
 
 -- 이름표: 수학 이름을 2초 크게 보인 뒤 탐험 카드의 이름 하나로 줄어든다 (정본 값 cv.label_tag_display)
 local labelBox = panel("Discovery", screen)
@@ -309,7 +361,8 @@ local function layout()
 	local heights = {[goal] = line + 6, [situation] = 3 * line, [response] = 2 * line, [hint] = 3 * line}
 	local fresh = os.clock() - respondedAt < RESPONSE_FRESH_SECONDS
 	local order = if fresh then {goal, response, hint, situation} else {goal, hint, situation, response}
-	local room = floor - gap - margin - 2 * gap
+	local barHeight = if compact then 12 else 16
+	local room = floor - gap - margin - 2 * gap - (barHeight + gap)   -- 신호 바 한 줄은 늘 둔다
 	local shown: {[TextLabel]: boolean} = {}
 	for _, row in order do
 		if wanted[row] and heights[row] <= room then
@@ -324,6 +377,15 @@ local function layout()
 			place(row, gap, y, cardWidth - 2 * gap, heights[row])
 			textLimit(row, if row == goal then textSize + 2 else textSize)
 			y += heights[row] + gap
+		end
+		if row == goal then   -- 목표 바로 아래 도시 신호 바 — 목표가 없는 끝 화면에서도 남는다
+			local inner = cardWidth - 2 * gap
+			local segmentWidth = (inner - 2 * gap) / 3
+			place(signalBar, gap, y, inner, barHeight)
+			for k, segment in segments do
+				place(segment, (k - 1) * (segmentWidth + gap), barHeight * 0.25, segmentWidth, barHeight * 0.5)
+			end
+			y += barHeight + gap
 		end
 	end
 	top.Visible = y > gap
@@ -345,6 +407,15 @@ local function layout()
 	textLimit(discoveryName, 2 * textSize + 8)
 	textLimit(discovery, textSize)
 
+	-- 큰 원 셋: 큰 화면은 위 가운데, 작은 화면은 목표 카드 왼쪽 위(이름표가 카드 자리에 뜨므로 겹치지 않게)
+	local dotSize = if compact then 36 else 56
+	local popWidth, popHeight = 3 * dotSize + 2 * dotSize / 3, dotSize
+	local popX = if compact then margin + (area.X - 2 * margin - cardWidth - gap - popWidth) / 2 else (area.X - popWidth) / 2
+	place(signalPop, popX, margin + (if compact then 24 else area.Y * 0.12), popWidth, popHeight)
+	for k, dot in popDots do
+		place(dot, (k - 1) * (dotSize + dotSize / 3) + dotSize / 2, dotSize / 2, dotSize, dotSize)
+	end
+
 	-- 탐험 카드: 위 메뉴 줄의 빈칸 오른쪽 끝. 그 칸이 없거나 낮으면, 또 TV 에서는(맨 위가 잘릴 수 있다) 목표 카드 바로 아래
 	local bar = cardScreen.AbsoluteSize
 	local barChip = math.min(bar.Y - 16, 32)
@@ -362,6 +433,44 @@ local function layout()
 		term.Size = UDim2.fromOffset(3 * chipHeight, chipHeight)
 		textLimit(term, textSize)
 	end
+end
+
+-- 도시 신호 바와 큰 원 셋 — 찬 원(되살린 신호)·테두리 원(아직)
+local function showSignals(pop: boolean)
+	for k, segment in segments do
+		segment.BackgroundColor3 = if k <= signalsLit then SIGNAL_ON else SIGNAL_OFF
+	end
+	for k, dot in popDots do
+		local lit = k <= signalsLit
+		dot.BackgroundColor3 = SIGNAL_ON
+		dot.BackgroundTransparency = if lit then 0 else 1
+		popRings[k].Color = if lit then SIGNAL_ON else SIGNAL_OFF
+		popRings[k].Transparency = 0
+		popScales[k].Scale = 1
+	end
+	if not pop or signalsLit < 1 then
+		return
+	end
+	-- 새로 찬 원이 튀어 오르고(0.25초) 잠깐 머문 뒤(0.7초) 셋이 흐려진다(0.4초) — 진행을 막지 않는다
+	signalPop.Visible = true
+	local newest = popScales[math.min(signalsLit, 3)]
+	newest.Scale = 1.8
+	TweenService:Create(newest, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
+	local popped = signalsLit
+	task.delay(0.95, function()
+		if popped ~= signalsLit then
+			return   -- 그 사이 다음 신호가 왔다 — 새 원이 이어서 튀어 오른다
+		end
+		for k, dot in popDots do
+			TweenService:Create(dot, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play()
+			TweenService:Create(popRings[k], TweenInfo.new(0.4), {Transparency = 1}):Play()
+		end
+		task.delay(0.45, function()
+			if popped == signalsLit then
+				signalPop.Visible = false
+			end
+		end)
+	end)
 end
 
 local function showStage()
@@ -556,6 +665,10 @@ ResultRemote.OnClientEvent:Connect(function(code: string)
 	hintLevel, lastActed = 0, os.clock()
 	respondedAt = os.clock()
 	wanted[response] = true
+	if code == "signal_panel_lit" or code == "coordinate_reached" or code == "slope_reached" then
+		signalsLit += 1   -- 서버가 게이트 불을 하나 켤 때마다 (신호 1·2·3)
+		showSignals(true)
+	end
 	if code == "signal_panel_lit" then
 		response.Text = Text.get("resp.signal_1.panel_lit")
 		stage = STAGE_COORDINATE
@@ -628,6 +741,7 @@ task.spawn(function()
 end)
 
 showStage()
+showSignals(false)
 task.spawn(watchPrompt)
 UserInputService:GetPropertyChangedSignal("PreferredInput"):Connect(function()
 	layout()       -- 터치로 바뀌면 조이스틱·점프 버튼 자리를 비운다

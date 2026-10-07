@@ -60,12 +60,22 @@ local function parts(root: Instance, name: string): {BasePart}
 	return list
 end
 
+-- 상태 빛(WorldBuilder 가 단 StateLight)이 있으면 같은 색으로 둘레를 비춘다 — 밤에도 지금 할 곳·되살린 곳이 읽힌다 (S12)
+local function glow(item: BasePart, color: Color3)
+	local light = item:FindFirstChild("StateLight")
+	if light and light:IsA("PointLight") then
+		light.Color = color
+		light.Enabled = true
+	end
+end
+
 -- 지금 할 곳: 노랑으로 깜박인다. 깜박이는 곳은 늘 하나다 — MissionService 가 다음 자리로 옮긴다.
 function WorldView.goal(root: Instance, name: string)
 	for _, item in parts(root, name) do
 		item.Material = Enum.Material.Neon
 		item.Color = GOAL
 		item.Transparency = 0
+		glow(item, GOAL)
 		play(item, PULSE, {Transparency = 0.4})
 	end
 end
@@ -76,6 +86,7 @@ function WorldView.restore(root: Instance, name: string)
 		item.Material = Enum.Material.Neon
 		item.Color = SIGNAL
 		item:SetAttribute("Lit", true)
+		glow(item, SIGNAL)
 		play(item, SETTLE, {Transparency = 0})
 	end
 end
@@ -117,6 +128,35 @@ function WorldView.lumiTo(root: Instance, name: string): boolean
 	end
 	local spot = target.Position + Vector3.new(0, target.Size.Y / 2 + Layout.LUMI_STANDOFF, 0)
 	return finished(lumi, play(lumi, FLY, {Position = spot}))
+end
+
+-- 두 프리즘의 빛줄기가 게이트 문턱 가운데에서 만난다 — 협동이 이어진 것을 월드가 보여 준다 (원천 설계 '두 빛줄기 합류')
+function WorldView.joinBeams(root: Instance)
+	local threshold = part(root, "GateThreshold")
+	if not threshold then
+		return
+	end
+	local meet = threshold:FindFirstChild("BeamMeet")
+	if not meet then
+		meet = Instance.new("Attachment")
+		meet.Name = "BeamMeet"
+		meet.Parent = threshold
+	end
+	for _, name in {"gate_prism_left", "gate_prism_right"} do
+		local prism = part(root, name)
+		if prism and not prism:FindFirstChild("SignalBeam") then
+			local from = Instance.new("Attachment")
+			from.Name = "BeamFrom"
+			from.Position = Vector3.new(0, prism.Size.Y / 2, 0)
+			from.Parent = prism
+			local beam = Instance.new("Beam")
+			beam.Name = "SignalBeam"
+			beam.Attachment0, beam.Attachment1 = from, meet :: Attachment
+			beam.Color = ColorSequence.new(SIGNAL)
+			beam.LightEmission, beam.Width0, beam.Width1, beam.FaceCamera = 1, 0.6, 0.3, true
+			beam.Parent = prism
+		end
+	end
 end
 
 -- 빛 다리 기울기 — 출발점과 가로 거리는 고정하고 끝 높이만 바꾼다 (cv.slope_choices.fixed). 끝 막대·난간이 함께 간다.
@@ -162,6 +202,11 @@ function WorldView.openGate(root: Instance)
 		end
 	end
 	finished(gate, play(gate, RISE, {Position = gate.Position + lift}))
+	local threshold = part(root, "GateThreshold")
+	local burst = if threshold then threshold:FindFirstChild("OpenBurst") else nil
+	if burst and burst:IsA("ParticleEmitter") then
+		burst:Emit(60)   -- 문이 다 오른 순간 문턱에서 빛 알갱이가 터진다 (S12)
+	end
 	gate:SetAttribute("Open", true)
 end
 
