@@ -435,6 +435,12 @@ def due(state: Path, now: float, interval: float = INTERVAL_S) -> bool:
         return True
 
 
+def edit_available(state: str) -> bool:
+    """get_studio_state 답에서 Edit 화면을 읽을 수 있는지 — 'Available DataModels: Edit' (Play 중에는 Client, Server)."""
+    line = next((row for row in state.splitlines() if "Available DataModels" in row), "")
+    return "Edit" in line.split(":", 1)[-1]
+
+
 def find_rojo() -> str:
     found = shutil.which("rojo") or next((str(p) for p in (Path.home() / ".local/bin/rojo", Path.home() / ".cargo/bin/rojo")
                                          if p.is_file()), "")
@@ -473,6 +479,8 @@ def read_studio(deadline: float) -> tuple[dict, list[bytes]]:
         target = next((s["id"] for s in listed if s.get("name") == STAGING), None)
         if not target:
             raise Absent(f"스테이징 Place({STAGING})가 열려 있지 않다")
+        if not edit_available(studio.tool("get_studio_state", {"studio_id": target})):
+            raise Absent("Studio 가 Play 중이다 — Place 몫은 Edit 화면에서만 읽는다")
         call = {"studio_id": target, "datamodel_type": "Edit"}
         head = studio.tool("execute_luau", {**call, "code": fill(MANIFEST, ARGS=json.dumps(args, ensure_ascii=False))})
         match = re.fullmatch(r"#(\d+):(\d+)", head.strip())
@@ -584,8 +592,17 @@ def main(argv: list[str]) -> int:
         if not args.now and not due(state, now):
             return 0
         state.parent.mkdir(parents=True, exist_ok=True)
+        previous = state.read_bytes() if state.is_file() else None
         state.write_text(json.dumps({"last": now}), encoding="utf-8")   # 실패해도 매 턴 오래 기다리지 않게 먼저 적는다
-        return pull(args.quiet)
+        try:
+            return pull(args.quiet)
+        except Absent:
+            # 읽을 것이 없다는 답은 금방 온다 — 간격을 쓰지 않아 Play 를 끝내거나 Place 를 열면 다음 턴에 바로 읽는다
+            if previous is None:
+                state.unlink(missing_ok=True)
+            else:
+                state.write_bytes(previous)
+            raise
     except Absent as exc:
         if not args.quiet:
             print(f"[Studio 읽기] 건너뜀 — {exc}")

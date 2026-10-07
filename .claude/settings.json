@@ -34,7 +34,7 @@
           },
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PROJECT_DIR}\"/tools/ship.py save --quiet",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}\"/tools/studio_pull.py --quiet; python3 \"${CLAUDE_PROJECT_DIR}\"/tools/ship.py save --quiet",
             "timeout": 600
           }
         ]

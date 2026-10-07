@@ -123,6 +123,26 @@ class FillTest(unittest.TestCase):
         self.assertEqual(pull.fill("x__A__y", A="1"), "x1y")
 
 
+class StateTest(unittest.TestCase):
+    def test_play_mode_is_read_from_the_studio_state(self):
+        self.assertTrue(pull.edit_available("- Current Studio Mode: Edit\n- Available DataModels: Edit\n"))
+        self.assertFalse(pull.edit_available("- Current Studio Mode: Play\n- Available DataModels: Client, Server\n"))
+        self.assertFalse(pull.edit_available(""))
+
+    def test_nothing_to_read_does_not_use_up_the_interval(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            state = Path(tmp) / "state.json"
+            state.write_text(json.dumps({"last": 1.0}), encoding="utf-8")
+            with mock.patch.object(pull.ship, "git_path", return_value=state), \
+                    mock.patch.object(pull, "pull", side_effect=pull.Absent("Play 중")):
+                self.assertEqual(pull.main(["--quiet"]), 0)
+            self.assertEqual(json.loads(state.read_text(encoding="utf-8")), {"last": 1.0})   # 그대로 — 다음 턴에 바로 다시 본다
+            with mock.patch.object(pull.ship, "git_path", return_value=state), \
+                    mock.patch.object(pull, "pull", side_effect=pull.Unavailable("통로 막힘")):
+                self.assertEqual(pull.main(["--quiet"]), 0)
+            self.assertGreater(json.loads(state.read_text(encoding="utf-8"))["last"], 1.0)   # 느린 실패는 간격을 쓴다
+
+
 class DueTest(unittest.TestCase):
     def test_interval(self):
         with tempfile.TemporaryDirectory() as tmp:
