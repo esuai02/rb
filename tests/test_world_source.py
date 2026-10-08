@@ -155,23 +155,51 @@ class LocalizationTest(unittest.TestCase):
         self.assertEqual(sorted(used - set(tree.strings)), [])
 
 
+ANALYTICS_CALL = re.compile(r'Analytics\.(log|funnel)\(\w+, "([^"]+)"')
+# 아직 잇지 않은 이벤트와 그 까닭 — 까닭이 사라지면(그 미션이 월드에 생기면) 여기서 빼고 잇는다
+PENDING_EVENTS = {
+    "term_reused": "재사용 맥락(reuse_contexts)의 미션이 이 월드에 아직 없다 — 재사용 미션·광장(Q5 뒤)과 함께 잇는다",
+}
+
+
+def sent_events() -> dict[str, set[str]]:
+    """서버 소스가 보내는 분석 이벤트 → 전송 함수(log·funnel)."""
+    out: dict[str, set[str]] = {}
+    for path in sorted((SOURCE / "server").glob("*.luau")):
+        for sender, name in ANALYTICS_CALL.findall(path.read_text(encoding="utf-8")):
+            out.setdefault(name, set()).add(sender)
+    return out
+
+
 class AnalyticsEventTest(unittest.TestCase):
-    """코드가 보내는 분석 이벤트가 잠긴 허용 목록 안에 있다 (INV-10 · F11)."""
+    """코드가 보내는 분석 이벤트가 잠긴 허용 목록 안에 있고, 목록의 이벤트를 빠짐없이 보낸다 (INV-10 · F11)."""
+
+    def setUp(self):
+        events = source.load_rules(ROOT).events
+        self.funnel = {e["name"] for e in events.get("onboarding_funnel", [])}
+        self.allowed = self.funnel | {e["name"] for e in events.get("custom_events", [])}
+        self.sent = sent_events()
 
     def test_events_are_in_the_allowlist(self):
-        events = source.load_rules(ROOT).events
-        allowed = {e["name"] for e in events.get("onboarding_funnel", [])} | {e["name"] for e in events.get("custom_events", [])}
-        text = "".join((SOURCE / rel).read_text(encoding="utf-8") for rel in ("server/MissionService.luau",))
-        used = set(re.findall(r'Analytics\.(?:log|funnel)\(player, "([^"]+)"', text))
-        self.assertTrue(used, "분석 이벤트를 하나도 보내지 않는다")
-        self.assertEqual(sorted(used - allowed), [])
+        self.assertTrue(self.sent, "분석 이벤트를 하나도 보내지 않는다")
+        self.assertEqual(sorted(set(self.sent) - self.allowed), [])
 
     def test_funnel_events_use_the_funnel_sender(self):
-        funnel = {e["name"] for e in source.load_rules(ROOT).events.get("onboarding_funnel", [])}
-        text = (SOURCE / "server/MissionService.luau").read_text(encoding="utf-8")
-        for name in re.findall(r'Analytics\.log\(player, "([^"]+)"', text):
+        for name, senders in sorted(self.sent.items()):
             with self.subTest(event=name):
-                self.assertNotIn(name, funnel, "퍼널 단계는 Analytics.funnel 로 보내야 한다 (F11)")
+                self.assertEqual(senders, {"funnel"} if name in self.funnel else {"log"},
+                                 "퍼널 단계는 Analytics.funnel, 사용자 정의 이벤트는 Analytics.log 로만 보낸다 (F11)")
+
+    def test_every_allowed_event_is_sent(self):
+        self.assertEqual(sorted(self.allowed - set(self.sent) - set(PENDING_EVENTS)), [],
+                         "허용 목록의 이벤트를 보내지 않는다 — 잇거나, 못 잇는 까닭을 PENDING_EVENTS 에 적는다")
+        self.assertEqual(sorted(set(PENDING_EVENTS) & set(self.sent)), [], "이미 보내는 이벤트가 PENDING_EVENTS 에 남아 있다")
+
+    def test_scenarios_expect_only_sent_events(self):
+        for scenario in GRAPH["scenarios"]:
+            with self.subTest(scenario=scenario["id"]):
+                missing = set(scenario["expects_events"]) - set(self.sent) - set(PENDING_EVENTS)
+                self.assertEqual(sorted(missing), [], "시나리오가 기대하는 이벤트를 소스가 보내지 않는다")
 
 
 if __name__ == "__main__":

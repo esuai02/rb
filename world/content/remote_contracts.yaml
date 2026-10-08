@@ -6,3 +6,6 @@ remotes:
     - {name: y, type: number, min: -2, max: 2, canonical: cv.coordinate_expression.grid.y}
   SlopeRemote:
     - {name: choice, type: string, canonical: cv.slope_choices.expressions}
+  ProgressRemote:   # 화면 쪽 첫 5분 사실 — 단계(ready·first_input·gate_visible·hint)와 그 값(입력 방식·힌트 단계). 열거형은 specs/analytics/events.yaml
+    - {name: step, type: string, canonical: cv.events}
+    - {name: detail, type: string, canonical: cv.events}

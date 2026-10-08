@@ -17,6 +17,7 @@ local Layout = require(ReplicatedStorage.Shared.Layout)
 local SignalRemote = ReplicatedStorage:WaitForChild("SignalRemote")
 local SlopeRemote = ReplicatedStorage:WaitForChild("SlopeRemote")
 local ResultRemote = ReplicatedStorage:WaitForChild("ResultRemote")
+local ProgressRemote = ReplicatedStorage:WaitForChild("ProgressRemote")
 
 local STAGE_PANEL, STAGE_COORDINATE, STAGE_SLOPE, STAGE_PORTAL, STAGE_DONE = "panel", "coordinate", "slope", "portal", "done"
 local STAGE_COOP = "coop"   -- 다리가 닿은 뒤 협동 프리즘을 함께 비추는 차례 (coop.gate_prisms → m.gate_open)
@@ -540,6 +541,8 @@ local function showHint()
 		end
 	end
 	layout()
+	-- 힌트 단계가 올랐다고 서버에 알린다 — 어느 미션인지·처음 오른 단계인지는 서버가 정한다 (hint_shown)
+	ProgressRemote:FireServer("hint", if hintLevel <= 1 then "level_1" elseif hintLevel == 2 then "level_2" else "level_3")
 end
 
 -- 발견한 수학 이름은 2초 크게 보인 뒤 탐험 카드로 줄어든다 (정본 값 cv.label_tag_display — 진행을 막지 않는다)

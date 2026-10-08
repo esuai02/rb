@@ -30,6 +30,10 @@ local done: {[string]: boolean} = {}
 -- 협동 프리즘 상태는 Coop 이 가진다(프리즘이 한 쌍뿐이다). 다른 탐험가와 함께 연 사람은 duo 로 센다.
 local together: {[string]: boolean} = {}
 local npcFlying = false
+-- 플레이어·미션별 시도 수(math_attempt·first_math_success 의 attempt)와 이미 센 힌트 단계(hint_shown)
+local tries: {[string]: number} = {}
+local hinted: {[string]: number} = {}
+local HINT_LEVELS: {[string]: number} = {level_1 = 1, level_2 = 2, level_3 = 3}   -- 정본 열거형 hint_level
 
 local function slot(player: Player, missionId: string): string
 	return tostring(player.UserId) .. "|" .. missionId
@@ -57,14 +61,112 @@ local function finish(player: Player, missionId: string)
 	done[slot(player, missionId)] = true
 end
 
--- 나가면 기록을 지운다 — 다시 들어오면 처음부터 (DEC-12 한 판 안에서만)
-Players.PlayerRemoving:Connect(function(player: Player)
+-- 이 미션에서 몇 번째 시도인가
+local function count(player: Player, missionId: string): number
+	local at = slot(player, missionId)
+	local n = (tries[at] or 0) + 1
+	tries[at] = n
+	return n
+end
+
+-- 분석 필드 값은 열거형 글자 그대로만 보낸다(Harness analytics.calls · INV-10) — 미션·결과·시도 순번마다 한 줄
+local function logCoordinate(player: Player, reached: boolean, attempt: number)
+	if reached and attempt <= 1 then
+		Analytics.log(player, "math_attempt", {mission = "m.signal_coordinate", outcome = "target_reached", attempt = "first"})
+	elseif reached and attempt == 2 then
+		Analytics.log(player, "math_attempt", {mission = "m.signal_coordinate", outcome = "target_reached", attempt = "second"})
+	elseif reached then
+		Analytics.log(player, "math_attempt", {mission = "m.signal_coordinate", outcome = "target_reached", attempt = "third_or_more"})
+	elseif attempt <= 1 then
+		Analytics.log(player, "math_attempt", {mission = "m.signal_coordinate", outcome = "other_result", attempt = "first"})
+	elseif attempt == 2 then
+		Analytics.log(player, "math_attempt", {mission = "m.signal_coordinate", outcome = "other_result", attempt = "second"})
+	else
+		Analytics.log(player, "math_attempt", {mission = "m.signal_coordinate", outcome = "other_result", attempt = "third_or_more"})
+	end
+end
+
+local function logSlope(player: Player, reached: boolean, attempt: number)
+	if reached and attempt <= 1 then
+		Analytics.log(player, "math_attempt", {mission = "m.signal_slope", outcome = "target_reached", attempt = "first"})
+	elseif reached and attempt == 2 then
+		Analytics.log(player, "math_attempt", {mission = "m.signal_slope", outcome = "target_reached", attempt = "second"})
+	elseif reached then
+		Analytics.log(player, "math_attempt", {mission = "m.signal_slope", outcome = "target_reached", attempt = "third_or_more"})
+	elseif attempt <= 1 then
+		Analytics.log(player, "math_attempt", {mission = "m.signal_slope", outcome = "other_result", attempt = "first"})
+	elseif attempt == 2 then
+		Analytics.log(player, "math_attempt", {mission = "m.signal_slope", outcome = "other_result", attempt = "second"})
+	else
+		Analytics.log(player, "math_attempt", {mission = "m.signal_slope", outcome = "other_result", attempt = "third_or_more"})
+	end
+end
+
+-- 첫 성공까지 몇 번 해 보았는가 (cv.first_try.key_metrics.attempts_to_first_success)
+local function logFirstSuccess(player: Player, attempt: number)
+	if attempt <= 1 then
+		Analytics.funnel(player, "first_math_success", {attempt = "first"})
+	elseif attempt == 2 then
+		Analytics.funnel(player, "first_math_success", {attempt = "second"})
+	else
+		Analytics.funnel(player, "first_math_success", {attempt = "third_or_more"})
+	end
+end
+
+local function logHint(player: Player, missionId: string, level: number)
+	if missionId == "m.signal_coordinate" and level == 1 then
+		Analytics.log(player, "hint_shown", {mission = "m.signal_coordinate", hint_level = "level_1"})
+	elseif missionId == "m.signal_coordinate" and level == 2 then
+		Analytics.log(player, "hint_shown", {mission = "m.signal_coordinate", hint_level = "level_2"})
+	elseif missionId == "m.signal_coordinate" then
+		Analytics.log(player, "hint_shown", {mission = "m.signal_coordinate", hint_level = "level_3"})
+	elseif level == 1 then
+		Analytics.log(player, "hint_shown", {mission = "m.signal_slope", hint_level = "level_1"})
+	elseif level == 2 then
+		Analytics.log(player, "hint_shown", {mission = "m.signal_slope", hint_level = "level_2"})
+	else
+		Analytics.log(player, "hint_shown", {mission = "m.signal_slope", hint_level = "level_3"})
+	end
+end
+
+-- 지금 진행 중인 핵심 미션 — 아직 마치지 않은 첫 핵심 미션. 다 마쳤으면 nil (session_end 의 mission)
+function MissionService.current(player: Player): string?
+	for _, mission in Missions do
+		if mission.core and not done[slot(player, mission.id)] then
+			return mission.id
+		end
+	end
+	return nil
+end
+
+-- 나가면 기록을 지운다 — 다시 들어오면 처음부터 (DEC-12 한 판 안에서만). Main 이 session_end 를 보낸 뒤에 부른다
+function MissionService.leave(player: Player)
 	for _, mission in Missions do
 		done[slot(player, mission.id)] = nil
+		tries[slot(player, mission.id)] = nil
+		hinted[slot(player, mission.id)] = nil
 	end
 	together[tostring(player.UserId)] = nil
 	Coop.remove(player)   -- 나간 탐험가가 지킨 프리즘·연 제안을 거둔다 — 다음 탐험가가 막히지 않게
-end)
+end
+
+-- 힌트가 한 단계 올라갔다(화면이 알린다 — 힌트 사다리는 화면이 돈다). 지금 차례인 수학 미션에서
+-- 처음 오른 단계만 센다(hint_shown). 미션은 서버가 가진 진행 상태로 정한다 — 화면이 말한 미션은 믿지 않는다
+function MissionService.hint(player: Player, level: string)
+	local rank = HINT_LEVELS[level]
+	local missionId = if ready(player, "m.signal_coordinate") then "m.signal_coordinate"
+		elseif ready(player, "m.signal_slope") then "m.signal_slope"
+		else nil
+	if not rank or not missionId then
+		return
+	end
+	local at = slot(player, missionId)
+	if (hinted[at] or 0) >= rank then
+		return
+	end
+	hinted[at] = rank
+	logHint(player, missionId, rank)
+end
 
 -- 나간 사람에게는 보내지 않는다 — 월드 반응을 기다리는 사이에 나갈 수 있다
 local function tell(player: Player, code: string)
@@ -103,18 +205,25 @@ function MissionService.coordinateMove(player: Player, cell: {x: number, y: numb
 	if not root or not ready(player, "m.signal_coordinate") then
 		return
 	end
+	local attempt = count(player, "m.signal_coordinate")
+	if attempt == 1 then
+		Analytics.funnel(player, "first_math_action", {})   -- 첫 수학 행동 = 처음 보낸 좌표(결과와 상관없이)
+	end
 	if cell.x == TARGET_CELL.x and cell.y == TARGET_CELL.y then
 		finish(player, "m.signal_coordinate")
-		Analytics.log(player, "math_attempt", {mission = "m.signal_coordinate", outcome = "target_reached"})
-		Analytics.funnel(player, "first_math_success", {attempt = "first"})
+		logCoordinate(player, true, attempt)
+		logFirstSuccess(player, attempt)
 		WorldView.moveLumi(root, cell.x, cell.y)
 		WorldView.restore(root, Layout.cellName(cell.x, cell.y))
 		WorldView.restore(root, "GateLamp2")
 		WorldView.restore(root, "LightBridge")
 		WorldView.goal(root, "GateThreshold")
+		if player.Parent then   -- 이 알림을 받은 화면이 '좌표' 이름표를 2초 크게 띄운다 (루미가 나는 사이 나갔으면 보이지 않는다)
+			Analytics.log(player, "label_shown", {term = "term.coordinate"})
+		end
 		tell(player, "coordinate_reached")   -- 끼어든 판정이 있어도 성공 말은 보낸다 — 단계가 멈추지 않게
 	else
-		Analytics.log(player, "math_attempt", {mission = "m.signal_coordinate", outcome = "other_result"})
+		logCoordinate(player, false, attempt)
 		if WorldView.visitLumi(root, cell.x, cell.y) then   -- 밀린 '다른 결과' 말은 보내지 않는다
 			tell(player, "coordinate_other")
 		end
@@ -129,17 +238,19 @@ function MissionService.slopeSet(player: Player, choice: string): boolean
 		return false
 	end
 	WorldView.setBridge(root, step)
+	local attempt = count(player, "m.signal_slope")
 	if step == TARGET_STEP then
 		finish(player, "m.signal_slope")
-		Analytics.log(player, "math_attempt", {mission = "m.signal_slope", outcome = "target_reached"})
+		logSlope(player, true, attempt)
 		WorldView.restore(root, "GateThreshold")
 		WorldView.restore(root, "GateLamp3")
 		WorldView.goal(root, Coop.LEFT)    -- 다음 '지금 할 곳'은 협동 프리즘 한 쌍 — 함께 비추면 게이트가 열린다
 		WorldView.goal(root, Coop.RIGHT)
+		Analytics.log(player, "label_shown", {term = "term.slope"})   -- 이 알림을 받은 화면이 '기울기' 이름표를 띄운다
 		tell(player, "slope_reached")
 		return true
 	end
-	Analytics.log(player, "math_attempt", {mission = "m.signal_slope", outcome = "other_result"})
+	logSlope(player, false, attempt)
 	tell(player, "slope_other")
 	return false
 end
@@ -148,6 +259,7 @@ end
 -- 다음 협동 프리즘은 누르기라 보상하지 않는다(INV-4). 루미가 짝이 되어 늘 끝까지 가므로 혼자 온 탐험가도 같은 보상이다(INV-9·INV-12)
 function MissionService.rewardSignals(player: Player)
 	RewardService.grant(player, "reward.explorer_card", "m.gate_open")
+	Analytics.funnel(player, "explorer_card_earned", {})
 end
 
 -- 같은 단계(게이트 열기 차례)에 있는 다른 탐험가 — 빈 프리즘을 비춰 함께하자고 알린다

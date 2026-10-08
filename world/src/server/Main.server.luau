@@ -1,9 +1,11 @@
 --!strict
 -- 원격 입력은 형식·범위를 처리 전에 거르고 쿨다운을 거친다 (INV-4 · content/remote_contracts.yaml)
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Cooldown = require(script.Parent.Cooldown)
 local MissionService = require(script.Parent.MissionService)
+local Onboarding = require(script.Parent.Onboarding)
 local WorldBuilder = require(script.Parent.WorldBuilder)
 
 local SignalRemote = Instance.new("RemoteEvent")
@@ -17,6 +19,11 @@ SlopeRemote.Parent = ReplicatedStorage
 local ResultRemote = Instance.new("RemoteEvent")
 ResultRemote.Name = "ResultRemote"
 ResultRemote.Parent = ReplicatedStorage
+
+-- 화면 쪽에서만 아는 첫 5분 사실(준비·첫 입력·게이트가 보임·힌트 단계)을 알리는 통로 — 분석은 서버가 확인한 뒤 보낸다 (F10)
+local ProgressRemote = Instance.new("RemoteEvent")
+ProgressRemote.Name = "ProgressRemote"
+ProgressRemote.Parent = ReplicatedStorage
 
 local GRID = 2   -- 정본 값 cv.coordinate_expression.grid — 신호판 격자 반폭
 local REACH = 12   -- 정본 값 cv.server_distance.server_check_studs — 화면 프롬프트보다 넓게
@@ -33,6 +40,7 @@ local panelPart = find("SignalPanel")
 local portalPart = find("ZonePortal")
 local prismLeft = find("gate_prism_left")     -- 정본 값 cv.coop_switch_ids
 local prismRight = find("gate_prism_right")
+Onboarding.bind(panelPart)   -- 첫 목적지 — 걸어서 안내 거리까지 오면 이동 완료(movement_complete)
 
 -- 거리는 서버가 다시 잰다(표시용 값은 믿지 않는다, cv.rule_source)
 local function near(player: Player, target: BasePart?): boolean
@@ -87,8 +95,30 @@ local function onPortal(player: Player)
 	MissionService.enterPortal(player)
 end
 
+-- 화면이 알린 첫 5분 사실. 정해진 넷만 받고(쿨다운 칸도 넷뿐) 단계마다 따로 연타를 막는다 — 준비와 첫 입력이 잇달아 와도 버리지 않게.
+-- 무엇을 언제 보낼지(차례·한 번만·지금 미션)는 Onboarding·MissionService 가 서버 상태로 다시 정한다
+local function onProgress(player: Player, step: unknown, detail: unknown)
+	if typeof(step) ~= "string" or typeof(detail) ~= "string" then return end
+	if step ~= "ready" and step ~= "first_input" and step ~= "gate_visible" and step ~= "hint" then return end
+	if not Cooldown.allow(player, "progress_" .. (step :: string)) then return end
+	if step == "ready" then
+		Onboarding.ready(player, detail :: string)
+	elseif step == "hint" then
+		MissionService.hint(player, detail :: string)
+	else
+		Onboarding.step(player, step :: string)
+	end
+end
+
 SignalRemote.OnServerEvent:Connect(onSignal)
 SlopeRemote.OnServerEvent:Connect(onSlope)
+ProgressRemote.OnServerEvent:Connect(onProgress)
+
+-- 나가면: 진행 중이던 미션을 기록을 지우기 전에 읽어 session_end 를 보내고, 그 뒤에 이 판의 기록을 지운다 (순서를 한 곳에서 정한다)
+Players.PlayerRemoving:Connect(function(player: Player)
+	Onboarding.leave(player, MissionService.current(player))
+	MissionService.leave(player)
+end)
 
 -- 프롬프트는 서버가 직접 받는다 — 원격 입력이 아니라 서버가 잰 근접 상호작용이다.
 -- 처리 함수는 이름으로 바로 연결한다(Harness 가 보상까지 닿는 길을 따라갈 수 있게).
