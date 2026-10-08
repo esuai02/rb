@@ -108,6 +108,7 @@ local wanted: {[TextLabel]: boolean} = {[goal] = true, [situation] = true, [resp
 -- 신호가 돌아올 때마다 큰 원 셋이 화면에 떠서 새로 찬 원이 튀어 오른다 — 숫자 글자는 잠긴 용어집에 키가 없어 쓰지 않는다
 local SIGNAL_ON = Color3.fromRGB(80, 220, 255)   -- 월드의 '돌아온 신호' 색과 같다 (WorldView.SIGNAL)
 local SIGNAL_OFF = Color3.fromRGB(60, 70, 100)
+local RING_OFF = Color3.fromRGB(180, 190, 220)   -- 큰 원의 '아직' 테두리 — 카드 없이 밤 화면 위에 바로 그려지므로 밝게(3:1 이상)
 local signalsLit = 0
 local signalBar = Instance.new("Frame")
 signalBar.Name = "SignalBar"
@@ -134,6 +135,7 @@ signalPop.Parent = screen
 local popDots: {Frame} = {}
 local popRings: {UIStroke} = {}
 local popScales: {UIScale} = {}
+local popTweens: {Tween} = {}   -- 지금 도는 원의 움직임 — 새 신호가 오면 멈추고 처음부터 (흐려지는 중에 온 신호가 지워지지 않게)
 for _ = 1, 3 do
 	local dot = Instance.new("Frame")
 	dot.Name = "PopDot"
@@ -407,10 +409,13 @@ local function layout()
 	textLimit(discoveryName, 2 * textSize + 8)
 	textLimit(discovery, textSize)
 
-	-- 큰 원 셋: 큰 화면은 위 가운데, 작은 화면은 목표 카드 왼쪽 위(이름표가 카드 자리에 뜨므로 겹치지 않게)
+	-- 큰 원 셋: 큰 화면은 위 가운데, 작은 화면은 목표 카드 왼쪽 위(이름표가 카드 자리에 뜨므로 겹치지 않게).
+	-- 큰 화면이라도 폭이 좁으면 가운데가 카드에 닿는다 — 튀어 오른 원(1.8배, 양옆 0.4칸)까지 카드 왼쪽에 둔다
 	local dotSize = if compact then 36 else 56
 	local popWidth, popHeight = 3 * dotSize + 2 * dotSize / 3, dotSize
-	local popX = if compact then margin + (area.X - 2 * margin - cardWidth - gap - popWidth) / 2 else (area.X - popWidth) / 2
+	local bounceRoom = 0.4 * dotSize
+	local popX = if compact then margin + (area.X - 2 * margin - cardWidth - gap - popWidth) / 2
+		else math.max(margin + bounceRoom, math.min((area.X - popWidth) / 2, area.X - margin - cardWidth - gap - popWidth - bounceRoom))
 	place(signalPop, popX, margin + (if compact then 24 else area.Y * 0.12), popWidth, popHeight)
 	for k, dot in popDots do
 		place(dot, (k - 1) * (dotSize + dotSize / 3) + dotSize / 2, dotSize / 2, dotSize, dotSize)
@@ -437,6 +442,10 @@ end
 
 -- 도시 신호 바와 큰 원 셋 — 찬 원(되살린 신호)·테두리 원(아직)
 local function showSignals(pop: boolean)
+	for _, tween in popTweens do
+		tween:Cancel()
+	end
+	table.clear(popTweens)
 	for k, segment in segments do
 		segment.BackgroundColor3 = if k <= signalsLit then SIGNAL_ON else SIGNAL_OFF
 	end
@@ -444,7 +453,7 @@ local function showSignals(pop: boolean)
 		local lit = k <= signalsLit
 		dot.BackgroundColor3 = SIGNAL_ON
 		dot.BackgroundTransparency = if lit then 0 else 1
-		popRings[k].Color = if lit then SIGNAL_ON else SIGNAL_OFF
+		popRings[k].Color = if lit then SIGNAL_ON else RING_OFF
 		popRings[k].Transparency = 0
 		popScales[k].Scale = 1
 	end
@@ -455,15 +464,21 @@ local function showSignals(pop: boolean)
 	signalPop.Visible = true
 	local newest = popScales[math.min(signalsLit, 3)]
 	newest.Scale = 1.8
-	TweenService:Create(newest, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
+	local bounce = TweenService:Create(newest, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1})
+	table.insert(popTweens, bounce)
+	bounce:Play()
 	local popped = signalsLit
 	task.delay(0.95, function()
 		if popped ~= signalsLit then
 			return   -- 그 사이 다음 신호가 왔다 — 새 원이 이어서 튀어 오른다
 		end
 		for k, dot in popDots do
-			TweenService:Create(dot, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play()
-			TweenService:Create(popRings[k], TweenInfo.new(0.4), {Transparency = 1}):Play()
+			local fill = TweenService:Create(dot, TweenInfo.new(0.4), {BackgroundTransparency = 1})
+			local ring = TweenService:Create(popRings[k], TweenInfo.new(0.4), {Transparency = 1})
+			table.insert(popTweens, fill)
+			table.insert(popTweens, ring)
+			fill:Play()
+			ring:Play()
 		end
 		task.delay(0.45, function()
 			if popped == signalsLit then
@@ -564,8 +579,12 @@ end
 -- 고른 칸은 월드에서 보여 준다(테두리). 보내는 것은 신호 패널을 켤 때다.
 local marker = Instance.new("SelectionBox")
 marker.Name = "CellCursor"
-marker.Color3 = Color3.fromRGB(0, 0, 0)   -- 어느 칸 색(꺼짐·깜박임·켜짐·출발) 위에서도 3:1 이상 — 기본 파랑은 꺼진 칸 위에서 거의 사라진다
+marker.Color3 = Color3.fromRGB(0, 0, 0)   -- 밝은 칸 색(깜박임·켜짐·출발) 위에서 3:1 이상 — 기본 파랑은 꺼진 칸 위에서 거의 사라진다
 marker.LineThickness = 0.2
+-- 밤(S12)에는 꺼진 칸이 어두워 검은 테두리가 묻힌다 — 고른 칸을 흰빛으로 반쯤 덮는다. 밤 화면 실측: 밝은 옆 칸엔 테두리가,
+-- 어두운 옆 칸엔 덮개가 3:1 이상 (outputs/verify/Q4/Q4-play-S12-look.json)
+marker.SurfaceColor3 = Color3.fromRGB(255, 255, 255)
+marker.SurfaceTransparency = 0.5
 marker.Parent = screen
 
 local function showCursor()

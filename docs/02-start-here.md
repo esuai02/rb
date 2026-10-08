@@ -57,6 +57,7 @@
 - 쓰기 전에 공개 저장소 누출 검사를 한다(로컬 경로·Studio 계정 이름·번호). 계정 값은 저장소 밖 `.git/info/rb-private` 에만 두고 `ship.py` 도 같은 값을 찾는다.
 - 커밋·푸시는 `tools/ship.py save` 가 한다. Stop 훅이 대화 턴이 끝날 때마다 `studio_pull.py --quiet` 다음에 `ship.py save --quiet` 를 차례로 돌린다(10분에 한 번까지 읽음, 사용자 승인 2026-10-07 "A) 대화가 끝날 때마다 자동으로", 근거 `ENV-STUDIO-PULL-3`).
 - WSL 에서 Windows 프로그램을 새로 띄우는 통로가 몇 분씩 막힐 때가 있다(`ENV-STUDIO-PULL-2`). 그동안은 읽기를 건너뛰고 다음 차례에 다시 한다.
+- `screen_capture` 가 3D 없이 하얗게(축 글자만) 나오면 Studio 창이 최소화된 것이다(창 상태 실측, `REVIEW-S12`). 이쪽에서 창을 펼칠 수는 없으니 창이 펼쳐진 뒤 다시 찍는다.
 
 ## 4. 열린 결정
 

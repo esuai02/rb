@@ -17,6 +17,8 @@ local FLY = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut
 local RISE = TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
 local DWELL_SECONDS = 0.5   -- 고른 칸에 머무는 시간 — 어디에 내렸는지 볼 틈
 local BEAT_SECONDS = 1.5    -- 다리가 닿은 뒤 문이 움직이기 전 한 박자 — '닿았어'가 먼저 보이게
+-- 빛줄기가 만나는 자리 — 문턱 가운데에서 4스터드 위. 문턱 속에서 만나면 45° 로 선 다리(3단계) 판 속을 지나 보이지 않는다
+local BEAM_MEET_LIFT = Vector3.new(0, 4, 0)
 
 -- 부품마다 지금 재생 중인 움직임 하나. 새 움직임이 앞의 것을 끊으므로 마지막 판정의 모습이 남는다.
 local playing: {[BasePart]: Tween} = {}
@@ -130,7 +132,7 @@ function WorldView.lumiTo(root: Instance, name: string): boolean
 	return finished(lumi, play(lumi, FLY, {Position = spot}))
 end
 
--- 두 프리즘의 빛줄기가 게이트 문턱 가운데에서 만난다 — 협동이 이어진 것을 월드가 보여 준다 (원천 설계 '두 빛줄기 합류')
+-- 두 프리즘의 빛줄기가 게이트 문턱 위에서 만난다 — 협동이 이어진 것을 월드가 보여 준다 (원천 설계 '두 빛줄기 합류')
 function WorldView.joinBeams(root: Instance)
 	local threshold = part(root, "GateThreshold")
 	if not threshold then
@@ -140,6 +142,7 @@ function WorldView.joinBeams(root: Instance)
 	if not meet then
 		meet = Instance.new("Attachment")
 		meet.Name = "BeamMeet"
+		meet.Position = BEAM_MEET_LIFT
 		meet.Parent = threshold
 	end
 	for _, name in {"gate_prism_left", "gate_prism_right"} do

@@ -1,7 +1,8 @@
 --!strict
--- 기능 오브젝트를 서버가 만든다 (INV-4 서버 권위). 도시 외관·조명·배경 지형은 Studio Place 몫이다(DEC-8).
+-- 기능 오브젝트를 서버가 만든다 (INV-4 서버 권위). 도시 외관·배경 지형과 Edit 화면 조명은 Studio Place 몫이다(DEC-8).
+-- Play 때의 밤 조명과 놀이 자리를 비추는 빛은 여기서 놓는다(S12 — 조명도 설정이라 저장소 코드가 정본).
 -- 화면에 보이는 글자는 하나도 여기서 넣지 않는다 — 번역표를 거쳐 클라이언트가 넣는다(INV-3).
--- 모양만 만든다. 켜고 깜박이는 상태는 WorldView 가 바꾼다.
+-- 모양과 빛을 놓는다. 켜고 깜박이는 상태(상태 빛 포함)는 WorldView 가 바꾼다.
 local Workspace = game:GetService("Workspace")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -215,13 +216,19 @@ end
 -- 놀이 자리를 읽히게 하는 빛. 늘 켜진 빛 둘(신호판 앞면·다리 출발점)과, 상태를 따라가는 빛 —
 -- 지금 할 곳이면 노랑, 되살린 곳이면 청록으로 둘레를 비춘다(WorldView.goal·restore). 상태 빛은 처음엔 꺼져 있다
 local function buildLights(root: Instance)
+	-- 신호판은 놀이 쪽(+Z, 출발 칸·루미가 있는 쪽)에서 비춘다. 칸이 판 앞면보다 0.5 나와 있어 판 면에 붙인 빛으로는
+	-- 칸 앞면이 밝아지지 않는다 — 판 앞 10스터드 자리에서 판 쪽(-Z)으로 비춘다
 	local wall = root:FindFirstChild("SignalWall", true)
 	if wall then
-		local face = Instance.new("SurfaceLight")
+		local spot = Instance.new("Attachment")
+		spot.Name = "WallLightSpot"
+		spot.Position = Vector3.new(0, 0, 10)
+		spot.Parent = wall
+		local face = Instance.new("SpotLight")
 		face.Name = "WallLight"
-		face.Face = Enum.NormalId.Front
-		face.Color, face.Range, face.Brightness, face.Shadows = Color3.fromRGB(140, 170, 255), 12, 0.6, false
-		face.Parent = wall
+		face.Face = Enum.NormalId.Front   -- 붙은 자리 기준 -Z = 판 쪽
+		face.Color, face.Angle, face.Range, face.Brightness, face.Shadows = Color3.fromRGB(140, 170, 255), 110, 24, 1.2, false
+		face.Parent = spot
 	end
 	local start = root:FindFirstChild("BridgeStart", true)
 	if start then
@@ -256,8 +263,9 @@ local function buildLights(root: Instance)
 	end
 end
 
--- 월드를 한 번만 만든다. 이미 있으면 그것을 쓴다(Place 를 사람이 꾸며 둔 경우).
+-- 월드를 한 번만 만든다. 이미 있으면 그것을 쓴다(Place 를 사람이 꾸며 둔 경우). 밤 조명은 월드와 상관없이 늘 놓는다.
 function WorldBuilder.build(): Instance
+	buildNight()
 	local existing = Workspace:FindFirstChild("CityLanguageGateWorld")
 	if existing then
 		return existing
@@ -275,7 +283,6 @@ function WorldBuilder.build(): Instance
 	buildLumi(root)
 	buildPortal(root)
 	buildLights(root)
-	buildNight()
 	return root
 end
 
