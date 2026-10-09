@@ -15,4 +15,14 @@ function Cooldown.allow(player: Player, action: string): boolean
 	return true
 end
 
+-- 나간 플레이어의 쿨다운 기록을 지운다 — 방문자가 늘어도 서버 메모리가 쌓이지 않게 (Main 의 PlayerRemoving)
+function Cooldown.forget(player: Player)
+	local prefix = tostring(player.UserId) .. "|"
+	for slot in last do
+		if string.sub(slot, 1, #prefix) == prefix then
+			last[slot] = nil
+		end
+	end
+end
+
 return Cooldown

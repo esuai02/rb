@@ -34,6 +34,11 @@ local npcFlying = false
 local tries: {[string]: number} = {}
 local hinted: {[string]: number} = {}
 local HINT_LEVELS: {[string]: number} = {level_1 = 1, level_2 = 2, level_3 = 3}   -- 정본 열거형 hint_level
+-- 힌트 단계의 때를 서버가 다시 확인한다 — 화면이 알린 단계라도 차례가 될 수 있는 때보다 이르면 세지 않는다
+local readyAt: {[string]: number} = {}    -- 미션이 차례가 된 때(앞 미션을 마친 때)
+local hintedAt: {[string]: number} = {}   -- 마지막으로 센 힌트 단계의 때
+local HINT_IDLE_SECONDS = 10   -- 정본 값 cv.hint_ladder.first_trigger.idle_seconds — 화면 사다리와 같은 값
+local HINT_SLACK_SECONDS = 2   -- 통신 지연 여유 — 화면의 10초를 서버는 8초부터 받는다
 
 local function slot(player: Player, missionId: string): string
 	return tostring(player.UserId) .. "|" .. missionId
@@ -59,6 +64,12 @@ end
 
 local function finish(player: Player, missionId: string)
 	done[slot(player, missionId)] = true
+	local now = os.clock()
+	for _, mission in Missions do   -- 이 미션을 기다리던 미션이 지금 차례가 된다
+		if table.find(mission.requires, missionId) then
+			readyAt[slot(player, mission.id)] = now
+		end
+	end
 end
 
 -- 이 미션에서 몇 번째 시도인가
@@ -145,13 +156,16 @@ function MissionService.leave(player: Player)
 		done[slot(player, mission.id)] = nil
 		tries[slot(player, mission.id)] = nil
 		hinted[slot(player, mission.id)] = nil
+		readyAt[slot(player, mission.id)] = nil
+		hintedAt[slot(player, mission.id)] = nil
 	end
 	together[tostring(player.UserId)] = nil
 	Coop.remove(player)   -- 나간 탐험가가 지킨 프리즘·연 제안을 거둔다 — 다음 탐험가가 막히지 않게
 end
 
--- 힌트가 한 단계 올라갔다(화면이 알린다 — 힌트 사다리는 화면이 돈다). 지금 차례인 수학 미션에서
--- 처음 오른 단계만 센다(hint_shown). 미션은 서버가 가진 진행 상태로 정한다 — 화면이 말한 미션은 믿지 않는다
+-- 힌트가 한 단계 올라갔다(화면이 알린다 — 힌트 사다리는 화면이 돈다). 지금 차례인 수학 미션에서 다음 단계 하나만,
+-- 그 단계가 될 수 있는 때에만 센다(hint_shown): 1단계는 다른 결과를 한 번 냈거나 미션이 차례가 된 지 10초,
+-- 그다음 단계는 앞 단계에서 다시 10초(cv.hint_ladder). 미션은 서버 진행 상태로 정한다 — 화면이 말한 미션·단계를 그대로 믿지 않는다
 function MissionService.hint(player: Player, level: string)
 	local rank = HINT_LEVELS[level]
 	local missionId = if ready(player, "m.signal_coordinate") then "m.signal_coordinate"
@@ -161,10 +175,17 @@ function MissionService.hint(player: Player, level: string)
 		return
 	end
 	local at = slot(player, missionId)
-	if (hinted[at] or 0) >= rank then
+	if rank ~= (hinted[at] or 0) + 1 then
+		return   -- 이미 센 단계거나 단계를 건너뛰었다
+	end
+	local since = if rank == 1 then readyAt[at] else hintedAt[at]
+	local waited = since ~= nil and os.clock() - since >= HINT_IDLE_SECONDS - HINT_SLACK_SECONDS
+	local tried = rank == 1 and (tries[at] or 0) >= 1   -- 다른 결과(성공하면 미션이 끝난다)
+	if not (waited or tried) then
 		return
 	end
 	hinted[at] = rank
+	hintedAt[at] = os.clock()
 	logHint(player, missionId, rank)
 end
 
@@ -259,7 +280,6 @@ end
 -- 다음 협동 프리즘은 누르기라 보상하지 않는다(INV-4). 루미가 짝이 되어 늘 끝까지 가므로 혼자 온 탐험가도 같은 보상이다(INV-9·INV-12)
 function MissionService.rewardSignals(player: Player)
 	RewardService.grant(player, "reward.explorer_card", "m.gate_open")
-	Analytics.funnel(player, "explorer_card_earned", {})
 end
 
 -- 같은 단계(게이트 열기 차례)에 있는 다른 탐험가 — 빈 프리즘을 비춰 함께하자고 알린다
@@ -371,6 +391,9 @@ function MissionService.openGate(player: Player)
 	else
 		Analytics.funnel(player, "gate_opened", {play_mode = "solo_npc"})
 	end
+	-- 카드는 기울기 판정 때 이미 받았다(rewardSignals). 퍼널은 번호 순서(9 게이트 → 10 카드)로만 보낸다 —
+	-- 10을 먼저 보내면 플랫폼이 9를 그 자리에서 끝난 것으로 쳐서, 프리즘 앞에서 나간 사람도 게이트를 연 것으로 센다
+	Analytics.funnel(player, "explorer_card_earned", {})
 	WorldView.openGate(root)
 	if done[slot(player, "m.zone_portal")] then
 		return   -- 문이 오르는 사이(1.5~2.4초) 이미 입구에 들어갔다 — 끝난 화면과 켜진 포털을 되돌리지 않는다

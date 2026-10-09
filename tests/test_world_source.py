@@ -111,6 +111,8 @@ class CanonicalValueTest(unittest.TestCase):
     def test_hint_idle_seconds(self):
         seconds = CANONICAL["cv.hint_ladder"]["first_trigger"]["idle_seconds"]
         self.assertIn(f"local HINT_IDLE_SECONDS = {seconds}", luau_text("client/Hud.client.luau"))
+        self.assertIn(f"local HINT_IDLE_SECONDS = {seconds}", luau_text("server/MissionService.luau"),
+                      "서버가 힌트 단계의 때를 확인하는 값도 화면 사다리와 같아야 한다")
 
     def test_grid_half_width_in_layout(self):
         grid = CANONICAL["cv.coordinate_expression"]["grid"]
@@ -155,51 +157,79 @@ class LocalizationTest(unittest.TestCase):
         self.assertEqual(sorted(used - set(tree.strings)), [])
 
 
-ANALYTICS_CALL = re.compile(r'Analytics\.(log|funnel)\(\w+, "([^"]+)"')
+ANALYTICS_CALL = re.compile(r'Analytics\.(log|funnel)\(\w+, "([^"]+)", \{([^}]*)\}\)')
+ANALYTICS_FIELD = re.compile(r'(\w+) = "([^"]+)"')
 # 아직 잇지 않은 이벤트와 그 까닭 — 까닭이 사라지면(그 미션이 월드에 생기면) 여기서 빼고 잇는다
 PENDING_EVENTS = {
     "term_reused": "재사용 맥락(reuse_contexts)의 미션이 이 월드에 아직 없다 — 재사용 미션·광장(Q5 뒤)과 함께 잇는다",
 }
+# 이벤트는 보내지만 아직 보내지 않는 필드 값과 그 까닭 — 이 값으로만 나올 수 있는 시나리오 기대는 이 까닭으로 기다린다
+PENDING_VALUES = {
+    ("co_play_offered", "offer_source", "invite_button"):
+        "게이트가 열린 뒤 친구 초대 안내(cv.coop_offer_timing.invite_prompt)가 아직 없다 — 초대 버튼은 사람 결정 대기",
+}
 
 
-def sent_events() -> dict[str, set[str]]:
-    """서버 소스가 보내는 분석 이벤트 → 전송 함수(log·funnel)."""
-    out: dict[str, set[str]] = {}
+def sent_calls() -> list[tuple[str, str, dict[str, str]]]:
+    """서버 소스의 분석 호출 — (전송 함수 log·funnel, 이벤트, 필드 → 글자 값)."""
+    out = []
     for path in sorted((SOURCE / "server").glob("*.luau")):
-        for sender, name in ANALYTICS_CALL.findall(path.read_text(encoding="utf-8")):
-            out.setdefault(name, set()).add(sender)
+        for sender, name, fields in ANALYTICS_CALL.findall(path.read_text(encoding="utf-8")):
+            out.append((sender, name, dict(ANALYTICS_FIELD.findall(fields))))
     return out
 
 
 class AnalyticsEventTest(unittest.TestCase):
-    """코드가 보내는 분석 이벤트가 잠긴 허용 목록 안에 있고, 목록의 이벤트를 빠짐없이 보낸다 (INV-10 · F11)."""
+    """코드가 보내는 분석 이벤트가 잠긴 허용 목록 안에 있고, 목록·시나리오가 기대하는 이벤트를 빠짐없이 보낸다 (INV-10 · F11)."""
 
     def setUp(self):
         events = source.load_rules(ROOT).events
         self.funnel = {e["name"] for e in events.get("onboarding_funnel", [])}
         self.allowed = self.funnel | {e["name"] for e in events.get("custom_events", [])}
-        self.sent = sent_events()
+        self.enums = events.get("fields", {})
+        self.calls = sent_calls()
+        self.sent = {name for _, name, _ in self.calls}
+        self.values = {(name, field, value) for _, name, fields in self.calls for field, value in fields.items()}
+
+    def test_calls_are_read(self):
+        text = "".join(p.read_text(encoding="utf-8") for p in (SOURCE / "server").glob("*.luau"))
+        self.assertEqual(len(self.calls), len(re.findall(r'Analytics\.(?:log|funnel)\(\w+, "', text)),
+                         "분석 호출을 다 읽지 못했다 — 필드 표가 { … } 글자 그대로가 아닌 호출이 있다")
 
     def test_events_are_in_the_allowlist(self):
         self.assertTrue(self.sent, "분석 이벤트를 하나도 보내지 않는다")
-        self.assertEqual(sorted(set(self.sent) - self.allowed), [])
+        self.assertEqual(sorted(self.sent - self.allowed), [])
 
     def test_funnel_events_use_the_funnel_sender(self):
-        for name, senders in sorted(self.sent.items()):
+        for sender, name, _ in self.calls:
             with self.subTest(event=name):
-                self.assertEqual(senders, {"funnel"} if name in self.funnel else {"log"},
+                self.assertEqual(sender, "funnel" if name in self.funnel else "log",
                                  "퍼널 단계는 Analytics.funnel, 사용자 정의 이벤트는 Analytics.log 로만 보낸다 (F11)")
 
     def test_every_allowed_event_is_sent(self):
-        self.assertEqual(sorted(self.allowed - set(self.sent) - set(PENDING_EVENTS)), [],
+        self.assertEqual(sorted(set(PENDING_EVENTS) - self.allowed), [], "PENDING_EVENTS 에 허용 목록 밖의 이름이 있다")
+        self.assertEqual(sorted(self.allowed - self.sent - set(PENDING_EVENTS)), [],
                          "허용 목록의 이벤트를 보내지 않는다 — 잇거나, 못 잇는 까닭을 PENDING_EVENTS 에 적는다")
-        self.assertEqual(sorted(set(PENDING_EVENTS) & set(self.sent)), [], "이미 보내는 이벤트가 PENDING_EVENTS 에 남아 있다")
+        self.assertEqual(sorted(set(PENDING_EVENTS) & self.sent), [], "이미 보내는 이벤트가 PENDING_EVENTS 에 남아 있다")
+
+    def test_pending_values_are_real_and_unsent(self):
+        for name, field, value in PENDING_VALUES:
+            with self.subTest(value=(name, field, value)):
+                self.assertIn(name, self.allowed)
+                self.assertIn(value, self.enums.get(field, []), "PENDING_VALUES 의 값이 허용 열거형에 없다")
+                self.assertNotIn((name, field, value), self.values, "이미 보내는 값이 PENDING_VALUES 에 남아 있다")
 
     def test_scenarios_expect_only_sent_events(self):
+        invite = ("co_play_offered", "offer_source", "invite_button")
         for scenario in GRAPH["scenarios"]:
             with self.subTest(scenario=scenario["id"]):
-                missing = set(scenario["expects_events"]) - set(self.sent) - set(PENDING_EVENTS)
-                self.assertEqual(sorted(missing), [], "시나리오가 기대하는 이벤트를 소스가 보내지 않는다")
+                expected = set(scenario["expects_events"])
+                self.assertEqual(sorted(expected - self.sent - set(PENDING_EVENTS)), [],
+                                 "시나리오가 기대하는 이벤트를 소스가 보내지 않는다")
+                if scenario["play_mode"] == "solo_npc" and "co_play_offered" in expected:
+                    # 혼자면 함께할 탐험가가 없어 player_present 제안은 나올 수 없다 — 초대 안내로만 나온다
+                    self.assertTrue(invite in self.values or invite in PENDING_VALUES,
+                                    "혼자 시나리오의 co_play_offered 는 offer_source = invite_button 으로만 나올 수 있다")
 
 
 if __name__ == "__main__":

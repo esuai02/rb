@@ -9,6 +9,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
+local Layout = require(ReplicatedStorage.Shared.Layout)
+
 local ProgressRemote = ReplicatedStorage:WaitForChild("ProgressRemote")
 
 local LOOK_SECONDS = 0.25   -- 게이트가 보이는지 이 간격으로 본다
@@ -47,13 +49,15 @@ UserInputService.InputChanged:Connect(function(input: InputObject)
 	end
 end)
 
--- 게이트가 처음 보였는가 — 가운데가 화면 안에 있고, 카메라에서 그 자리까지 다른 것에 가리지 않을 때
+-- 게이트를 봤는가 — 게이트 자리(닫힌 문의 가운데, 고정된 값)가 화면 안에 있고, 카메라에서 그 자리까지 다른 것에 가리지 않을 때.
+-- 문의 지금 위치를 보지 않는다 — 누가 먼저 열면 문이 위로 올라가 나중에 들어온 사람 화면 밖에 있다
 local function visible(gate: BasePart): boolean
 	local camera = Workspace.CurrentCamera
 	if not camera then
 		return false
 	end
-	local _, onScreen = camera:WorldToViewportPoint(gate.Position)
+	local spot = Layout.GATE_CENTER
+	local _, onScreen = camera:WorldToViewportPoint(spot)
 	if not onScreen then
 		return false
 	end
@@ -62,7 +66,7 @@ local function visible(gate: BasePart): boolean
 	local character = Players.LocalPlayer.Character
 	params.FilterDescendantsInstances = if character then {character} else {}
 	local origin = camera.CFrame.Position
-	local hit = Workspace:Raycast(origin, gate.Position - origin, params)
+	local hit = Workspace:Raycast(origin, spot - origin, params)
 	return hit == nil or hit.Instance == gate or hit.Instance:IsDescendantOf(gate)
 end
 

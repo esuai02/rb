@@ -118,6 +118,7 @@ ProgressRemote.OnServerEvent:Connect(onProgress)
 Players.PlayerRemoving:Connect(function(player: Player)
 	Onboarding.leave(player, MissionService.current(player))
 	MissionService.leave(player)
+	Cooldown.forget(player)
 end)
 
 -- 프롬프트는 서버가 직접 받는다 — 원격 입력이 아니라 서버가 잰 근접 상호작용이다.
