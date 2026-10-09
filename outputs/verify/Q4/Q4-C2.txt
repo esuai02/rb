@@ -1,6 +1,6 @@
 criterion: Q4-C2 — 스테이징 Place 의 내용이 저장소 소스와 같다 — Rojo 로 넣은 뒤 버전 표시로 대조한다 (사람 결정 DEC-2 로 Place 를 정한 뒤에만)
 result: PASS
-observed: S7(다리·단 추락 방지) 뒤 재대조: Windows rojo.exe 실시간 반영 상태의 Studio(rb-staging.rbxlx) 와 저장소 작업 트리 전수 대조 — Instance 15·비교 값 40 어긋남 0, 세 뿌리 밖 스크립트·번역표 0. 원본 outputs/verify/Q4/Q4-C2-place-vs-repo.json (sha256 63a8d2b3…)
-source: Claude Code 세션 4dbacf45, 2026-10-06, Studio MCP execute_luau(studio 876d3f03) 직접 대조
-binding: fd2b335f5cc9657f5296fb8d103a5ef7b870233d152e4f10c6648879936c7ccd
-time: 2026-10-06T10:50:30.389591+00:00
+observed: 스테이징 Place(rb-staging.rbxlx, Edit)의 Rojo 세 자리 인스턴스 15개 — ServerScriptService.Gate 9(Script 1·ModuleScript 8), StarterPlayerScripts.Gate 2(LocalScript), ReplicatedStorage.Shared 4(ModuleScript 3·LocalizationTable 81항목) — 가 저장소 world/src 파일과 이름·종류·길이·내용 지문(FNV-1a 32)까지 모두 같다. 저장소에 없는 인스턴스 0, Place 에 없는 파일 0. TextChatService.ChatVersion = TextChatService(default.project.json 값과 같음)
+source: Claude Code 세션 — Studio MCP execute_luau(Edit, 읽기만)로 Source·GetEntries 지문을 뽑아 저장소 파일 지문과 대조, 2026-10-09
+binding: 96b036a4bebe7efccd04951c6501d64365f0a37ef7749e2229f2314e7da215ba
+time: 2026-10-09T12:53:15.473056+00:00
