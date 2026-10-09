@@ -42,7 +42,22 @@
 | 4 | AI (범위는 사람) | 작은 단위 수정 — 원 가이드 §2. 한 요청 = 한 기능. 끝나면 바뀐 경로·diff·Play 테스트 결과를 보고한다 | 테스트 결과 |
 | 5 | AI (스테이징만) | 대규모 변경 — 원 가이드 §3 | Play 테스트 + 남은 위험 보고 |
 
-진행 현황 (2026-10-01 15:30): **0단계 완료** (세션 = WSL, `/init` 우회로 실행 가능, MCP 등록까지 끝남). **1단계 대기 — 사람.** Studio 가 붙으면 AI 가 2·3단계를 이어서 한다. MCP 도구는 세션 시작 때 불러오므로, 이번 세션에서는 stdio 로 직접 호출하고 다음 세션부터는 `Roblox_Studio` 도구로 바로 쓴다.
+진행 현황 (2026-10-05): **0·1단계 완료.** 사람이 Studio 스위치를 켠 뒤 `list_roblox_studios` 가 Studio 1개를 돌려줬다 (근거 `ENV-STUDIO-LINK-2`). Studio 의 Quick connect 화면이 보여 주는 `claude mcp add … cmd.exe …` 명령은 Windows용 Claude Code 용이다. 이 WSL 세션에는 이미 `/init` 경유로 등록돼 있으므로 다시 실행하지 않는다. 2단계도 끝났다: 사람이 `rb-staging.rbxlx` 를 다시 열었다(자동 복구본은 무시).
+
+**Rojo 운영 (2026-10-05, 근거 `ENV-ROJO-1`·`ENV-ROJO-2`):**
+- Rojo 7.7.1 플러그인은 `%LOCALAPPDATA%\Roblox\Plugins\Rojo.rbxm` 에 있다.
+- 서버는 **Windows 쪽** `%LOCALAPPDATA%\Programs\rojo\rojo.exe serve default.project.json`(저장소의 `world` 폴더에서, 127.0.0.1:34872)으로 띄운다. WSL 에서는 `/init cmd.exe /c …` 로 실행한다.
+- WSL 의 `rojo serve` 는 D:\ 가 9p 마운트라 파일 변경을 보지 못한다. WSL 쪽 `rojo` 는 build·검사에만 쓴다.
+- 서버를 새로 띄우면 Studio 의 Rojo 창에서 Connect 를 다시 눌러야 한다.
+- Rojo 가 못 넣는 설정이 있다: `TextChatService.ChatVersion` 은 쓰기 권한이 RobloxScriptSecurity 라 Rojo·Studio AI·MCP 스크립트 모두 바꾸지 못한다(공식 문서, `ENV-CHAT-1`). 저장소 값(`default.project.json`)은 `rojo build` 로 새 Place 를 만들 때만 들어가므로, 열린 Place 는 사람이 Studio 속성 창(TextChatService → Data → ChatVersion)에서 한 번 바꾼다.
+
+**Studio → 저장소 사본 (2026-10-06, 근거 `ENV-STUDIO-PULL-1`):**
+- `python3 tools/studio_pull.py --now` 는 Studio 에 지금 열린 스테이징 Place 를 읽기만 한다. 저장 버튼을 누르지 않아도 되고 Place 는 바꾸지 않는다. Place 몫(DEC-8: 지형·꾸밈·조명 등)을 `place/<서비스>/<이름>.rbxmx` 와 `place/settings.json` 에 사본으로 쓴다. 단 Play 중 조명(밤 시각·밝기·블룸 등)은 코드(`WorldBuilder` 의 밤 조명, S12)가 덮어쓴다 — 사본의 조명 값은 Edit 화면 값이다. Rojo 가 넣는 코드 자리와 Play 때 코드가 짓는 월드는 뺀다.
+- 사본은 이력·백업용이다. 정본은 여전히 Place 이므로 사본을 손으로 고치지 않는다. 사본을 Studio 로 되살리는 일은 아직 시험하지 않았다.
+- 쓰기 전에 공개 저장소 누출 검사를 한다(로컬 경로·Studio 계정 이름·번호). 계정 값은 저장소 밖 `.git/info/rb-private` 에만 두고 `ship.py` 도 같은 값을 찾는다.
+- 커밋·푸시는 `tools/ship.py save` 가 한다. Stop 훅이 대화 턴이 끝날 때마다 `studio_pull.py --quiet` 다음에 `ship.py save --quiet` 를 차례로 돌린다(10분에 한 번까지 읽음, 사용자 승인 2026-10-07 "A) 대화가 끝날 때마다 자동으로", 근거 `ENV-STUDIO-PULL-3`).
+- WSL 에서 Windows 프로그램을 새로 띄우는 통로가 몇 분씩 막힐 때가 있다(`ENV-STUDIO-PULL-2`). 그동안은 읽기를 건너뛰고 다음 차례에 다시 한다.
+- `screen_capture` 가 3D 없이 하얗게(축 글자만) 나오면 Studio 창이 최소화된 것이다(창 상태 실측, `REVIEW-S12`). 이쪽에서 창을 펼칠 수는 없으니 창이 펼쳐진 뒤 다시 찍는다.
 
 ## 4. 열린 결정
 

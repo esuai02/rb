@@ -1,8 +1,8 @@
 criterion: Q1-C2 — 도시 언어 게이트 원본 명세가 검사를 통과하고, 성숙도 설문 예상 답이 16세 이상 항목(소셜 행아웃·자유 창작·민감 이슈·확장 AI 상호작용·유료 랜덤·유료 거래)에 모두 '아니오'다 (INV-16) — 금지어 용어집 파일의 존재와 내용은 Q2-C5 에서 검사한다(Q1 은 시장과 맞는 경로만)
 command: python3 -m unittest tests.test_validate_spec.OriginalWorldTest -v
 exit: 0
-binding: 9c3b4caa40a3b4f08cdb56787e18229067c34b5910755b7c01573aeaf81da88f
-time: 2026-10-01T14:32:10.951003+00:00
+binding: f6689fbe8dd92e75ebf1bad4f14943c08653c8b23ab23bc6cd5adf008bfc4004
+time: 2026-10-04T14:27:28.648455+00:00
 
 test_any_age_gating_answer_fails (tests.test_validate_spec.OriginalWorldTest.test_any_age_gating_answer_fails) ... ok
 test_banned_terms_ref_must_be_this_market (tests.test_validate_spec.OriginalWorldTest.test_banned_terms_ref_must_be_this_market)
@@ -25,6 +25,6 @@ test_questionnaire_all_false (tests.test_validate_spec.OriginalWorldTest.test_qu
 test_safety_flags_cannot_be_enabled (tests.test_validate_spec.OriginalWorldTest.test_safety_flags_cannot_be_enabled) ... ok
 
 ----------------------------------------------------------------------
-Ran 13 tests in 0.255s
+Ran 13 tests in 0.247s
 
 OK

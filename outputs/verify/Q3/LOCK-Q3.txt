@@ -1,0 +1,5 @@
+hold: LOCK-Q3
+node: Q3
+binding: 80f5cb7209c8af5dc267020dfede3b244f4906481a8a5c2deddf35fb08f789fd
+time: 2026-10-04T20:33:22.445010+00:00
+source: 사용자 메시지 2026-10-05 "잠금 승인" — intent r4 뒤 Q1~Q3 재잠금 요청(리뷰 CLEAR·6방향 새로 작성·남은 위험 표시, DEC-8 재확인 포함)에 대한 답

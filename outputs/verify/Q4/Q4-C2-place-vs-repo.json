@@ -1,0 +1,175 @@
+{
+ "criterion": "Q4-C2",
+ "result": "PASS",
+ "checked_at": "2026-10-06T10:50:28.071319+00:00",
+ "repo_head": "9feb101",
+ "world_dirty": "M world/src/server/WorldBuilder.luau\n M world/src/server/WorldView.luau\n M world/src/shared/Layout.luau",
+ "rojo": "7.7.1 (Windows serve)",
+ "studio_place": "rb-staging.rbxlx",
+ "compared_instances": 15,
+ "compared_fields": 40,
+ "missing": [],
+ "extra": [],
+ "mismatch": [],
+ "stray_scripts": [],
+ "method": "저장소 world/src 파일 바이트와 Studio Source 의 길이·FNV-1a32(코드), Rojo 변환 번역 항목 정규화 길이·FNV-1a32(번역표), 경로·종류 전수, 세 뿌리 밖 스크립트·번역표 0. 소스에 버전 표시가 없어 전체 내용 해시로 대신함",
+ "expected": {
+  "ServerScriptService.Gate": {
+   "class": "Folder"
+  },
+  "ServerScriptService.Gate.Analytics": {
+   "class": "ModuleScript",
+   "len": 1362,
+   "fnv": 390509306,
+   "file": "world/src/server/Analytics.luau"
+  },
+  "ServerScriptService.Gate.Cooldown": {
+   "class": "ModuleScript",
+   "len": 495,
+   "fnv": 1318663135,
+   "file": "world/src/server/Cooldown.luau"
+  },
+  "ServerScriptService.Gate.Main": {
+   "class": "Script",
+   "len": 3693,
+   "fnv": 3349192828,
+   "file": "world/src/server/Main.server.luau"
+  },
+  "ServerScriptService.Gate.MissionService": {
+   "class": "ModuleScript",
+   "len": 7114,
+   "fnv": 221841370,
+   "file": "world/src/server/MissionService.luau"
+  },
+  "ServerScriptService.Gate.RewardService": {
+   "class": "ModuleScript",
+   "len": 1048,
+   "fnv": 3915140747,
+   "file": "world/src/server/RewardService.luau"
+  },
+  "ServerScriptService.Gate.WorldBuilder": {
+   "class": "ModuleScript",
+   "len": 10407,
+   "fnv": 3331190940,
+   "file": "world/src/server/WorldBuilder.luau"
+  },
+  "ServerScriptService.Gate.WorldView": {
+   "class": "ModuleScript",
+   "len": 6497,
+   "fnv": 1171739199,
+   "file": "world/src/server/WorldView.luau"
+  },
+  "ReplicatedStorage.Shared": {
+   "class": "Folder"
+  },
+  "ReplicatedStorage.Shared.Layout": {
+   "class": "ModuleScript",
+   "len": 4708,
+   "fnv": 1568893775,
+   "file": "world/src/shared/Layout.luau"
+  },
+  "ReplicatedStorage.Shared.Localization": {
+   "class": "LocalizationTable",
+   "file": "world/src/shared/Localization.csv",
+   "entries_len": 6833,
+   "entries_fnv": 1427963783,
+   "entries_n": 81,
+   "source_file_len": 6794,
+   "source_file_fnv": 1256863984
+  },
+  "ReplicatedStorage.Shared.Missions": {
+   "class": "ModuleScript",
+   "len": 1376,
+   "fnv": 348161944,
+   "file": "world/src/shared/Missions.luau"
+  },
+  "ReplicatedStorage.Shared.Text": {
+   "class": "ModuleScript",
+   "len": 1435,
+   "fnv": 3716350301,
+   "file": "world/src/shared/Text.luau"
+  },
+  "StarterPlayer.StarterPlayerScripts.Gate": {
+   "class": "Folder"
+  },
+  "StarterPlayer.StarterPlayerScripts.Gate.Hud": {
+   "class": "LocalScript",
+   "len": 14439,
+   "fnv": 1469886921,
+   "file": "world/src/client/Hud.client.luau"
+  }
+ },
+ "actual": {
+  "ServerScriptService.Gate.Analytics": {
+   "len": 1362,
+   "class": "ModuleScript",
+   "fnv": 390509306
+  },
+  "StarterPlayer.StarterPlayerScripts.Gate.Hud": {
+   "len": 14439,
+   "class": "LocalScript",
+   "fnv": 1469886921
+  },
+  "ReplicatedStorage.Shared.Text": {
+   "len": 1435,
+   "class": "ModuleScript",
+   "fnv": 3716350301
+  },
+  "ServerScriptService.Gate.WorldView": {
+   "len": 6497,
+   "class": "ModuleScript",
+   "fnv": 1171739199
+  },
+  "ReplicatedStorage.Shared.Missions": {
+   "len": 1376,
+   "class": "ModuleScript",
+   "fnv": 348161944
+  },
+  "ReplicatedStorage.Shared.Localization": {
+   "entries_n": 81,
+   "entries_len": 6833,
+   "class": "LocalizationTable",
+   "entries_fnv": 1427963783,
+   "source_locale": "en-us"
+  },
+  "ServerScriptService.Gate.Main": {
+   "len": 3693,
+   "class": "Script",
+   "fnv": 3349192828
+  },
+  "ServerScriptService.Gate.MissionService": {
+   "len": 7114,
+   "class": "ModuleScript",
+   "fnv": 221841370
+  },
+  "ReplicatedStorage.Shared": {
+   "class": "Folder"
+  },
+  "StarterPlayer.StarterPlayerScripts.Gate": {
+   "class": "Folder"
+  },
+  "ServerScriptService.Gate": {
+   "class": "Folder"
+  },
+  "ServerScriptService.Gate.RewardService": {
+   "len": 1048,
+   "class": "ModuleScript",
+   "fnv": 3915140747
+  },
+  "ReplicatedStorage.Shared.Layout": {
+   "len": 4708,
+   "class": "ModuleScript",
+   "fnv": 1568893775
+  },
+  "ServerScriptService.Gate.Cooldown": {
+   "len": 495,
+   "class": "ModuleScript",
+   "fnv": 1318663135
+  },
+  "ServerScriptService.Gate.WorldBuilder": {
+   "len": 10407,
+   "class": "ModuleScript",
+   "fnv": 3331190940
+  }
+ }
+}

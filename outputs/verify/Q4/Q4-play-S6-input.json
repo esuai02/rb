@@ -1,0 +1,37 @@
+{
+ "slice": "S6 입력 3종 — 게임패드 초점 (감사 번호 S8)",
+ "checked_at": "2026-10-05T14:25:56.954809+00:00",
+ "place": "rb-staging.rbxlx",
+ "design": "워크플로 wf_913ed950-623 (공식 문서 조사 → 설계 → 반박 검토). 최종안: 게임패드(PreferredInput)일 때만 지금 고르는 패널의 틀에 초점, 4방향 48칸 명시 연결, 기울기 틀 ↑=내리기(정답 우발 방지), 멈춤 지점은 틀 초점(미리 고르지 않음), 고른 뒤·걷는 단계 해제, 기울기 단계 서서 10초 재초점, PreferredInput 변경 시 재결정. P0: UseLabel 삭제(기울기 전 누르면 label.slope.line '방금 더 올라가게…' 노출 = 정답 누출)",
+ "auto_checks": {
+  "A0 정적": "harness 18/18, tests_world 19, tools 82, tests 292, validate_spec OK, Q4-C1 PASS, Localization.csv 변경 0, Hud 358줄·14.4KB",
+  "A1 구조": "PreferredInput=KeyboardAndMouse(읽힘·Enum 4종·변경 신호), GuiNavigationEnabled·AutoSelectGuiEnabled=true, 틀 3개 Selectable·SelectionOrder -1, 연결 48/48, UseLabel 없음, 시작 SelectedObject nil",
+  "A2 회귀": "키보드에서 결과마다 SelectedObject nil 유지, 보이는 고르는 패널 Moves→Slopes→없음→StopPoint→없음, 다른 칸·성공·게이트 +2.40s·포털 +0.27s",
+  "A3 이동 순서(방향키=십자키 대리)": "십자 틀→MoveRight/Up/Left/Down, 기울기 틀 ↑=SlopeDown·↑=SlopeUp·↑ 그대로·↓ Down·↓ Flat·↓ 그대로·←→ 그대로, 멈춤 지점 ↑↓ 그대로·→ Rest·← Continue — 선택 중 방향키로 캐릭터 이동 0.00 studs",
+  "A4 누르기·보내기": "초점 중 E → coordinate_other, 초점 다시 → Enter 로 cell_2_1 (초점 유지) → 키보드 종류 ButtonX → coordinate_reached",
+  "A5 \\ 토글(Select 대리)": "패널 단계: 선택 없음(UseLabel 삭제 효과), 좌표 단계: \\ → Moves 틀(버튼 아님) → \\ → nil",
+  "A6 해제": "기울기 Enter → slope_reached → gate_opened 때 nil, W 로 7.87 studs. 멈춤 지점 Continue Enter → 창 닫힘·nil·S 로 7.97 studs",
+  "A7 시야": "S4 V13 패널 시점 측정(다리 끝·문턱 포함 9개 화면 안·가림 0)으로 갈음",
+  "A8 초점 표시": "엔진 기본 선택 표시가 틀 전체·버튼을 흰 테두리로 분명히 감쌈(캡처 2장), 틀 초점 때 어느 버튼도 강조 안 됨 → C8(직접 테두리) 불필요"
+ },
+ "not_auto_verifiable": [
+  "실제 게임패드에서 A 로 버튼이 눌리는지(R2 만이면 중단·재설계)",
+  "초점 중 실제 패드 X 가 패널 프롬프트에 닿는지(안 되면 F1)",
+  "B 로 초점이 풀리는지(안 되면 F2)",
+  "선택 중 오른쪽 스틱 카메라",
+  "PreferredInput 이 패드 연결로 Gamepad 로 바뀌는지·C6/C7 재초점",
+  "터치에서 초점이 한 번도 안 나오는지",
+  "VirtualCursorMode(스크립트로 읽을 수 없음 — 디스크 Place 파일에 설정 없음 = 기본값으로 판단)"
+ ],
+ "human_checklist": [
+  "H1 패드 아무 버튼",
+  "H2 패널 앞 X → 십자 틀 테두리, A 한 번",
+  "H3 테두리 있는 채 왼쪽 스틱 1초·오른쪽 스틱",
+  "H4 X(다른 칸) → 오른쪽 A X(다른 칸 2) → 테두리 십자로 복귀",
+  "H5 오른쪽 A A 위 A → X → 기울기 틀로 테두리",
+  "H6 아래 A(다른 결과) → B · 12초 대기 · Select 두 번 · 메뉴 열고 닫기 · 마우스↔패드",
+  "H7 기울기 틀에서 스틱 앞 1초 + A(반사 관찰) → 위 위 A → 게이트 열림·걷기",
+  "H8 입구 X → 멈춤 지점 틀 테두리, 왼쪽=계속하기·오른쪽=쉬기, A → 닫힘·걷기",
+  "H9(선택) 휴대폰 에뮬레이터 탭으로 전체 — 테두리 0회"
+ ]
+}

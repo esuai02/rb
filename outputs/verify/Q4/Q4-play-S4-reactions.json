@@ -1,0 +1,53 @@
+{
+ "slice": "S4 보이는 월드 반응 (감사 번호 S6 — Q4-play-S3-layout.json 의 '색·빛 반응(S6)' 이 이번 S4)",
+ "checked_at": "2026-10-05T09:50:38.623003+00:00",
+ "place": "rb-staging.rbxlx",
+ "design": "설계 워크플로 wf_a4269d0d-fd2 (요구 57·문구 주장 53·충돌 14 → 설계 A 최소 / B 플레이어 우선 → 판정 병합 16요소, 사람 질문 0)",
+ "checks": {
+  "V0 Tween Cancel": "Completed 1회·Cancelled·0.017s 뒤, 기다리던 스레드 풀림 → PASS",
+  "V1 정적": "harness 18/18, tools 82, tests 292, validate_spec OK, Q4-C1 PASS, 새 문자열 전부 식별자, random/PointLight/Particle/Sound 0 → PASS",
+  "V2 빌드": "StartPad(Cylinder, SignalWall)·BridgeEnd(LightBridge)·BridgeStart·GateLamp1..3(게이트 자식은 이 셋뿐)·GateThreshold·프리즘(루트)·CityTower 6·Lumi Ball, 기능 부품 Plastic 0, 편집 모드 월드 폴더 nil → PASS",
+  "V3 시작": "패널 Neon (255,176,32) 투명도 0.01..0.40 깜박임, 발광은 패널·루미뿐, Lit 0 → PASS",
+  "V4 신호 1": "E 뒤 0.23s 에 패널 SIGNAL 고정(1초 변동 0.000)·탑 6/6·불1 Neon, 불2·3 꺼짐, cell_2_1 GOAL 깜박임(변동 0.39) → PASS (수신 순간 스냅샷은 V6 부터)",
+  "V5 먼 도시 불빛": "출발 카메라 4/6, 패널 카메라 2/6 탑이 화면 안·광선 첫 충돌 → PASS(기준 ≥2)",
+  "V6 좌표 성공": "도착 +0.70s, 수신 순간 루미 도착·칸/불2/다리 켜짐·문턱 깜박임, 이름표는 도착 뒤, 비행 샘플 16, 직선 벗어남 0.004 → PASS",
+  "V7 다른 결과 (-1,2)": "착지 +0.499s, 머묾 0.6s, 복귀 +1.533s, 말 +1.564s, 직선 0.004, 루미 색·재질 변화 0, 커서 출발 칸 → PASS",
+  "V8 겹친 입력": "(a) 머묾 중 정답 → coordinate_reached 하나·루미 (2,1) 고정·불2 / (b) 복귀 중 정답 → coordinate_reached 하나 / (c) 다른 칸 2번 → coordinate_other 정확히 1번·루미 출발 칸, 콘솔 오류 0 → PASS",
+  "V9 기울기": "끝 막대 = Layout.bridgeTip 오차 0.000, 낮은 끝 (0,0.5,-16), 문턱 윗면-막대 0단계 12.50·1단계 8.50·3단계 0.50, 다른 높이 동안 문턱 깜박임, 닿으면 문턱 고정·불3 → PASS",
+  "V10 게이트": "닿음 뒤 1.55s 정지 → 상승, gate_opened +2.40s, 문 아랫면 32·통과 가능·불 ΔY 19, 문턱·프리즘 이동 0, 바닥→다리→띠→단→게이트→포털 앞 걷기 → PASS",
+  "V11 문턱 띠": "띠 z -28.0..-27.6, 윗면 13, 단과 겹치는 부피 0(배치 수치) → PASS(계산)",
+  "V12 금지 요소": "SurfaceGui·BillboardGui·TextLabel·Decal·Texture·Sound·Particle·PointLight 0, 빨강 계열 부품 0 → PASS",
+  "V13 대비·가림": "대비 GOAL/DIM 3.50·SIGNAL/DIM 3.97·START/DIM 5.67·DIM/UNLIT 2.52·커서 검정/DIM 3.28(GOAL/SIGNAL 1.13 은 깜박임/고정으로 구별). 가림: 패널 시점 0·다리 출발점 시점 0, 출발 시점에서 StartPad(시작 때는 루미도)가 HUD Top 에 가림 → S9 막힘으로 기록",
+  "V14 낮은 그래픽": "QualityLevel Level01 캡처에서 켜진/꺼진 불·깜박이는 문턱·탑·굴대 구별 → PASS (설정은 Automatic 으로 되돌림)",
+  "V15 첫 화면·60초": "출발 카메라에서 패널 광선 3/3, 생성 뒤 약 29s 에 패널 고정(AI 조작 기준) → PASS(실사용 중앙값은 Q4-C4)",
+  "V16 독립 리뷰": "Codex(tri_tool ask review, 읽기 전용) 지적 2건. ① 높음: 루미·움직임 표를 플레이어들이 공유해 다른 사람의 오답이 내 성공 비행을 끊을 수 있음 → DEFERRED(플레이어·파티별 월드 슬라이스와 같은 문제. 혼자일 때는 좌표 단계가 닫혀 불가, 자기 겹침은 V8 a·b·c 로 확인). ② 중간: 게이트가 올라가는 동안 다른 호출은 닫힌 게이트에서 '열렸어'를 받음 → VALID, 수정(Open 속성 없음/false/true 세 상태, 여는 중 호출은 다 열릴 때까지 대기). 회귀: 0.5초 간격 두 호출 모두 +2.40s 에 Open=true·y=41 에서 돌아옴, 문 한 번만 상승, 이미 열린 뒤 호출 0.000s. 혼자 정상 진행 slope_reached→gate_opened 2.38s, 수신 때 Open=true·y=41"
+ },
+ "s9_blockers_found": [
+  "출발 시점 HUD Top 이 신호판 출발 칸(StartPad·루미)을 가림",
+  "힌트·이름표 상자가 화면 왼쪽을 넓게 덮음(낮은 품질 캡처)",
+  "Roblox 기본 채팅창이 HUD Top 을 가림"
+ ],
+ "still_false_texts": [
+  "hint.coordinate.l1·hint.slope.l1 의 빛줄, hint.slope.l3 의 '옆 작은 다리' — S7",
+  "출발 칸 (0,0) 자체를 고른 시도에 'other_spot' 문구 — E4(S17)"
+ ],
+ "review": {
+  "tool": "codex via ~/.claude/scripts/tri_tool.py ask review",
+  "packet": "scratchpad/review/s4-packet.md",
+  "findings": [
+   {
+    "severity": "high",
+    "where": "WorldView.luau playing/Lumi 공유, MissionService.coordinateMove 성공 경로",
+    "class": "DEFERRED",
+    "reason": "다인 공유 월드 문제 — 파티별 월드 슬라이스"
+   },
+   {
+    "severity": "medium",
+    "where": "WorldView.openGate Open 을 상승 전에 설정",
+    "class": "VALID",
+    "fix": "Open 세 상태 + 여는 중 호출 대기",
+    "regression": "PASS"
+   }
+  ]
+ }
+}

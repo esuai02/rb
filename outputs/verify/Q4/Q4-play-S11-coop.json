@@ -1,0 +1,27 @@
+{
+ "slice": "S11 협동 프리즘 (coop.gate_prisms) — 혼자면 루미가 맡는다",
+ "date": "2026-10-07",
+ "intent": "게이트에 온 탐험가가 기울기로 세 신호를 되살린 뒤 두 프리즘을 함께 비춰 게이트를 연다. 혼자면 루미가 다른 프리즘을 맡아 기다림 없이 끝까지 간다(INV-9). 다른 탐험가가 있으면 빈 프리즘을 알리고 10초 뒤 루미",
+ "design_sources": [
+  "specs/graph coop.gate_prisms·cv.coop_sync_window 3·cv.match_wait 10·cv.hold_time 0.6·cv.hold_cancel",
+  "specs/analytics/events.yaml '협동 미션 참가/완주 = co_play_started, gate_opened'",
+  "docs '도시의 신호를 복구하고…' 신호 3: 협동 · 'HoldDuration 홀드 게이지…' 상태표"
+ ],
+ "design_choices": {
+  "order": "기울기 정답(신호 3/3) → 두 프리즘 → 게이트 열림",
+  "reward": "탐험 카드는 기울기 판정이 참인 갈래에서 지급(Main: if slopeSet then rewardSignals) — 잠긴 Q3 Harness 의 '판정 뒤 보상' 규칙. 프리즘 누르기는 보상하지 않는다(INV-4). 루미 덕분에 혼자도 같은 보상(INV-12)",
+  "text": "새 글자 없음 — 잠긴 용어집 키만: 목표 goal.portal(m.gate_open 정본), 역할 role.switch_holder.name, coop.prism.left/right, ping.ready, coop.ready, coop.npc_takes_prism, coop.partner_waiting"
+ },
+ "verification": {
+  "state_machine_studio": "Coop 모듈 복제본으로 가짜 참가자·시각 21경우 PASS — 혼자 루미 즉시, 2인 제안 뒤 5초에 합류, 짝 없으면 10초 뒤 루미가 와서 바로 연결, 같은 제안 되풀이 없음, 옮긴 프리즘 맞은편, 나간 탐험가 정리, 연결 뒤 초기화, 다른 탐험가 쪽 가져가기 불가, 루미 자리 교대, 프리즘 아닌 이름",
+  "e2e_solo_desktop": "실제 입력: 패널 E → 좌표 (2,1) → 기울기 올리기 → 게이트 닫힌 채(Open=nil) · HUD 목표 '다음 구역 입구를 찾자'/'프리즘 지킴이' · 프리즘 안내 '왼쪽/오른쪽 프리즘 — 준비' 0.6초. 0.3초 누르고 떼면 반응 없음. 0.9초 누르기 → prism_ready + npc_takes_prism → 루미가 맞은편 프리즘 위 → gate_opened 2.89초·2.90초 뒤 (두 번)",
+  "harness": "18 검사 위반 0 · tests 292 · tools 109 · 명세 OK"
+ },
+ "review": "Codex 독립 리뷰 5건 모두 VALID → 수정: 짝을 기다리는 탐험가의 준비 유지(막힘), 나간 탐험가 정리, 제안 단위의 기다림(옛 콜백 무시), 루미 비행 끊김 재시도, 제안 알림 한 번",
+ "not_verified": [
+  "2인 실제 Play(Studio 클라이언트 하나) — 판정은 모듈 시험으로만",
+  "터치·게임패드의 길게 누르기",
+  "길게 누르기 어려운 사람을 위한 탭 전환(cv.hold_time.accessible_alternative)",
+  "친구 초대 버튼(co_play_offered invite_button) — 사람 결정 대기"
+ ]
+}

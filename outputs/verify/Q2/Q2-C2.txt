@@ -1,0 +1,23 @@
+criterion: Q2-C2 — 용어마다 그 용어를 새로 붙이는 미션은 하나이고 단계가 Q1 순서(상황 → 일상 표현 → 행동 → 월드 반응 → 이름표)를 따른다. 선수 용어는 앞에서 먼저 배운 용어와 같다. 단계 종류는 허용 목록뿐(퀴즈·정의 카드 없음)이고 종류마다 꼭 필요한 항목(문구 키 등)이 비지 않고 있다. 이름표 뒤에 서로 다른 미션의 재사용 맥락이 3개 이상 있고, 모두 일상어로도 진행된다 (INV-15·INV-8)
+command: python3 -m unittest tests.test_q2_graph.ReuseTest -v
+exit: 0
+binding: c320af63325c990101d582b9e5616f06383a94b851bbca9b879de4c43ddf6b37
+time: 2026-10-04T14:27:30.467062+00:00
+
+test_all_q1_everyday_expressions_offered (tests.test_q2_graph.ReuseTest.test_all_q1_everyday_expressions_offered) ... ok
+test_baseline_passes (tests.test_q2_graph.ReuseTest.test_baseline_passes) ... ok
+test_duplicate_context_is_not_a_different_context (tests.test_q2_graph.ReuseTest.test_duplicate_context_is_not_a_different_context) ... ok
+test_label_before_action_breaks_language_first (tests.test_q2_graph.ReuseTest.test_label_before_action_breaks_language_first) ... ok
+test_label_cannot_be_introduced_twice (tests.test_q2_graph.ReuseTest.test_label_cannot_be_introduced_twice) ... ok
+test_listed_mutations_are_caught (tests.test_q2_graph.ReuseTest.test_listed_mutations_are_caught) ... ok
+test_one_new_label_per_mission (tests.test_q2_graph.ReuseTest.test_one_new_label_per_mission) ... ok
+test_prerequisite_term_must_come_first (tests.test_q2_graph.ReuseTest.test_prerequisite_term_must_come_first) ... ok
+test_quiz_step_is_not_allowed (tests.test_q2_graph.ReuseTest.test_quiz_step_is_not_allowed) ... ok
+test_reuse_before_label_does_not_count (tests.test_q2_graph.ReuseTest.test_reuse_before_label_does_not_count) ... ok
+test_reuse_must_accept_everyday_language (tests.test_q2_graph.ReuseTest.test_reuse_must_accept_everyday_language) ... ok
+test_two_reuse_contexts_are_not_enough (tests.test_q2_graph.ReuseTest.test_two_reuse_contexts_are_not_enough) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.014s
+
+OK

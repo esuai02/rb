@@ -1,0 +1,10 @@
+{
+  "name": "neo-seoul-city-language-gate",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {"Gate": {"$path": "src/server"}},
+    "ReplicatedStorage": {"Shared": {"$path": "src/shared"}},
+    "StarterPlayer": {"StarterPlayerScripts": {"Gate": {"$path": "src/client"}}},
+    "TextChatService": {"$properties": {"ChatVersion": "TextChatService"}}
+  }
+}

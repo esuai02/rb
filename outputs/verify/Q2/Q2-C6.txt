@@ -1,0 +1,19 @@
+criterion: Q2-C6 — Q1 명세의 번역 금지 패턴이 경계 표본(큰 수·음수·소수·공백)을 모두 잡고 좁게 바꾼 패턴은 잡아낸다 (넘겨받은 지적 DEFER-Q1-9c3b4caa-1)
+command: python3 -m unittest tests.test_q2_graph.DoNotTranslateBoundaryTest -v
+exit: 0
+binding: c320af63325c990101d582b9e5616f06383a94b851bbca9b879de4c43ddf6b37
+time: 2026-10-04T14:27:31.649092+00:00
+
+test_baseline_passes (tests.test_q2_graph.DoNotTranslateBoundaryTest.test_baseline_passes) ... ok
+test_glossary_math_fragment_is_protected (tests.test_q2_graph.DoNotTranslateBoundaryTest.test_glossary_math_fragment_is_protected) ... ok
+test_invalid_regex (tests.test_q2_graph.DoNotTranslateBoundaryTest.test_invalid_regex) ... ok
+test_listed_mutations_are_caught (tests.test_q2_graph.DoNotTranslateBoundaryTest.test_listed_mutations_are_caught) ... ok
+test_narrow_coordinate_pattern_passes_q1_random_check_but_not_boundary (tests.test_q2_graph.DoNotTranslateBoundaryTest.test_narrow_coordinate_pattern_passes_q1_random_check_but_not_boundary) ... ok
+test_narrow_linear_pattern (tests.test_q2_graph.DoNotTranslateBoundaryTest.test_narrow_linear_pattern) ... ok
+test_no_negative_numbers (tests.test_q2_graph.DoNotTranslateBoundaryTest.test_no_negative_numbers) ... ok
+test_unparenthesised_expression_is_protected (tests.test_q2_graph.DoNotTranslateBoundaryTest.test_unparenthesised_expression_is_protected) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.006s
+
+OK

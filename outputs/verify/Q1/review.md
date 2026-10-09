@@ -1,1 +1,1 @@
-minor | tools/validate_spec.py:120-128; tests/test_validate_spec.py:166-193 | 번역 금지 패턴 검사가 무작위·유한 표본만 확인해 범위가 좁은 우회 패턴을 통과시킨다 | 두 패턴을 0~99 숫자만 허용하도록 바꿔도 `validate(...) == []`였지만 `(100, 0)`과 `y = 100x + 1`은 잡히지 않았다 | 허용 수식 문법을 명시하고 경계·대형 수·형식 변형을 고정 표본으로 추가해 검사한다
+minor | specs/templates/world-intent.schema.json:373-391 | 일상 표현과 행동 키의 대응 관계가 명세되지 않아 표현 4개·행동 1개 같은 정직한 실수가 통과함 | `validate()`에서 `everyday_action_keys=["action.position.move_right"]`로 바꿔도 `[]`; 후속 코드는 위치 기반 대응을 가정함 | 표현·행동 쌍 구조를 추가하거나 최소한 배열 길이 동일성을 검사하고 회귀 테스트 추가

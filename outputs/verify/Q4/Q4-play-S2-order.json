@@ -1,0 +1,34 @@
+{
+ "slice": "S2 서버 진행 순서",
+ "checked_at": "2026-10-05T07:42:47.480174+00:00",
+ "place": "rb-staging.rbxlx",
+ "mode": "Studio Play 혼자, 키보드 E + 마우스 클릭(MCP)",
+ "runs": [
+  {
+   "session": "A",
+   "client": "5.70 signal_panel_lit · 10.96 coordinate_other(원인 미상) · 50.03 coordinate_other(원인 미상) · 118.03 coordinate_reached · 150.09 slope_other · 152.09 slope_reached · 152.09 gate_opened",
+   "server": "S9.10 Signal(2,1)·P9.10 (서버 기록은 118s 무렵부터)",
+   "checks": {
+    "패널 전 Slope(rise_more)·Signal(2,1)": "결과 0·게이트 닫힘·다리/루미 그대로",
+    "패널 뒤 좌표 전 Slope(rise_more)": "결과 0",
+    "좌표 성공 뒤": "gate_opened 없음·기울기 화면 표시",
+    "끝난 뒤 Signal(2,1)·Slope(rise_more) 재전송": "결과 0"
+   }
+  },
+  {
+   "session": "B(깨끗한 재실행)",
+   "client": "1.57 TrigCli · 1.63 signal_panel_lit · 37.70 cur=cell_1_0 · 38.25 cur=cell_2_0 · 39.06 cur=cell_2_1 · 39.75 TrigCli · 39.81 coordinate_reached · 42.11 slope_other · 43.85 slope_reached · 43.85 gate_opened",
+   "server": "13.13 PromptSrv · 30.95 Slope(rise_more)[차례 아님→무시] · 51.31 Signal(2,1) · 51.31 PromptSrv · 53.61 Slope(flat) · 55.35 Slope(rise_more)",
+   "checks": {
+    "E 1회 = 트리거 1회": "예",
+    "9초 대기 중 끼어드는 결과": "0",
+    "패널 뒤 좌표 전 Slope": "결과 0",
+    "최종": "gateOpen=true·SlopeStep=3"
+   }
+  }
+ ],
+ "unresolved": "세션 A 의 끼어든 coordinate_other 2건은 세션 B 에서 같은 조작으로 재현되지 않음. 시험 도구(MCP 입력) 쪽 현상인지 게임 쪽인지 미확정 — 이후 Play 에서 계속 관찰",
+ "not_verified": [
+  "나갔다 다시 들어오면 처음부터(PlayerRemoving 정리) — Studio Play 클라이언트 1개로는 재접속 시험 불가"
+ ]
+}
