@@ -552,7 +552,7 @@ class GlossaryTest(CheckCase):
 
     def test_real_world_identity_words(self):
         for key, text in (("reward.explorer_badge.name", "Seoul Cyber Citizen 배지"), ("sit.gate_dark", "Neo Seoul 입국을 위해 패널을 켜 보자."),
-                          ("reward.explorer_card.name", "Neo Seoul Passport"), ("sit.gate_dark", "도시 언어 심사가 멈췄어.")):
+                          ("reward.explorer_card.name", "Neo Seoul Passport"), ("sit.gate_dark", "현실 입국심사를 시작하자.")):
             b = bundle()
             b.glossary["strings"][key] = text
             self.assertCaught(b, "금지어")

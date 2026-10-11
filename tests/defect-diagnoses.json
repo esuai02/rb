@@ -225,7 +225,7 @@
  },
  "D-banned-term": {
   "safety.banned_terms": [
-   "resp.gate_open[Source] 금지어 ['입국', '심사']"
+   "resp.gate_open[Source] 금지어 ['입국']"
   ]
  },
  "D-bare-number-math": {
@@ -2114,7 +2114,7 @@
  },
  "D-zero-width-banned": {
   "safety.banned_terms": [
-   "resp.gate_open[Source] 금지어 ['입국', '심사']"
+   "resp.gate_open[Source] 금지어 ['입국']"
   ]
  }
 }

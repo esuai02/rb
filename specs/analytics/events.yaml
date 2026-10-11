@@ -21,6 +21,7 @@ fields:
   play_mode: [solo_npc, duo]
   input: [touch, keyboard_mouse, gamepad]
   offer_source: [player_present, invite_button]
+  inspection_step: [case_started, question_opened, evidence_selected, decision_retry, result_shown, next_chosen, rest_chosen]
 
 # 첫 5분 퍼널 — 순서대로 한 줄 (협동처럼 갈라지는 단계는 퍼널에 넣지 않고 아래 이벤트로 둔다)
 onboarding_funnel:
@@ -38,6 +39,7 @@ onboarding_funnel:
   - {step: 12, name: onboarding_complete, fields: [play_mode], frequency: once_per_user}
 
 custom_events:
+  - {name: inspection_progress, fields: [inspection_step], frequency: per_occurrence, trigger: server_confirmed_world_response, when: 심사대의 서버 확정 전환 — result_shown 대비 next_chosen으로 자발적 다음 사건 선택을 집계}
   - {name: session_start, fields: [input], frequency: every_session, when: 매 세션 입장 — 북극성 지표의 분모(주간 고유 사용자)}
   - {name: math_attempt, fields: [mission, outcome, attempt], frequency: per_occurrence, trigger: server_confirmed_world_response, when: 수학 행동 하나가 월드 결과를 냈을 때}
   - {name: hint_shown, fields: [mission, hint_level], frequency: per_occurrence, when: 힌트 단계가 올라갔을 때}
