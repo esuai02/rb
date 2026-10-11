@@ -8,6 +8,7 @@ local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextChatService = game:GetService("TextChatService")
+local TextService = game:GetService("TextService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
@@ -56,10 +57,35 @@ cardScreen.ResetOnSpawn = false
 cardScreen.ScreenInsets = Enum.ScreenInsets.TopbarSafeInsets
 cardScreen.Parent = playerGui
 
+-- 사용자 설정을 따른다 (U10, K4 §5 접근성): 배경 투명도·글자 크기·움직임 줄이기. 그 설정이 없는 엔진이면 기본값
+local PANEL_SHADE = 0.3   -- 패널·이름 칩 배경의 기본 투명도 — 사용자의 배경 투명도 값(0 불투명 ~ 1 기본)을 곱한다
+local backed: {GuiObject} = {}   -- 배경을 칠하는 패널·칩
+
+local function userShade(): number
+	local ok, value = pcall(function() return GuiService.PreferredTransparency end)
+	return if ok and typeof(value) == "number" then value else 1
+end
+
+local function userTextScale(): number
+	local ok, value = pcall(function() return GuiService.PreferredTextSize end)
+	local size = if ok and typeof(value) == "EnumItem" then value.Name else "Medium"
+	return if size == "Largest" then 1.5 elseif size == "Larger" then 1.3 elseif size == "Large" then 1.15 else 1
+end
+
+local function userCalm(): boolean
+	local ok, value = pcall(function() return GuiService.ReducedMotionEnabled end)
+	return ok and value == true
+end
+
+local function shade(item: GuiObject)
+	item.BackgroundTransparency = PANEL_SHADE * userShade()
+	table.insert(backed, item)
+end
+
 local function panel(name: string, parent: Instance): Frame
 	local frame = Instance.new("Frame")
 	frame.Name = name
-	frame.BackgroundTransparency = 0.3
+	shade(frame)
 	frame.Parent = parent
 	return frame
 end
@@ -179,7 +205,7 @@ local coordinateTerm = label("TermCoordinate", card)
 local slopeTerm = label("TermSlope", card)
 coordinateTerm.LayoutOrder, slopeTerm.LayoutOrder = 1, 2
 for _, term in {coordinateTerm, slopeTerm} do
-	term.BackgroundTransparency = 0.3
+	shade(term)
 	term.Visible = false
 end
 
@@ -204,9 +230,11 @@ moveRight.Text = Text.get("action.position.move_right")
 moveLeft.Text = Text.get("action.position.move_left")
 moveUp.Text = Text.get("action.position.move_up")
 moveDown.Text = Text.get("action.position.move_down")
-slopeUp.Text = Text.get("action.slope.increase")
-slopeDown.Text = Text.get("action.slope.decrease")
-slopeFlat.Text = Text.get("action.slope.set_zero")
+-- 기울기 선택지는 표현 키다(cv.slope_choices, 이름표·힌트 대사도 '더/덜 올라가게'). 행동 키('끝 올리기·내리기')는 지금 높이에 대한
+-- 말이라, 평평하게 시작하는 다리에서 '끝 내리기'가 다리를 1단계로 올렸다(2026-10-10 Studio 실측: 끝 높이 0.5 → 4.5)
+slopeUp.Text = Text.get("expr.slope.rise_more")
+slopeDown.Text = Text.get("expr.slope.rise_less")
+slopeFlat.Text = Text.get("expr.slope.flat")
 keepGoing.Text = Text.get("pacing.continue")
 takeRest.Text = Text.get("pacing.rest")
 coordinateTerm.Text = Text.get("term.coordinate.name")
@@ -261,6 +289,20 @@ local function place(item: GuiObject, x: number, y: number, width: number, heigh
 	item.Size = UDim2.fromOffset(math.floor(width), math.floor(height))
 end
 
+-- 가장 작은 글자(MIN_TEXT)로 이 폭에 줄바꿈해 넣을 때 필요한 높이와 기본 높이 중 큰 쪽
+local function tall(row: TextLabel, width: number, base: number): number
+	if row.Text == "" or width <= 0 then
+		return base
+	end
+	local ok, size = pcall(function()
+		return TextService:GetTextSize(row.Text, MIN_TEXT, row.Font, Vector2.new(width, 10000))
+	end)
+	if not ok then
+		return base
+	end
+	return math.max(base, math.ceil(size.Y) + 4)
+end
+
 local function textLimit(item: GuiObject, size: number)
 	local limit = item:FindFirstChildOfClass("UITextSizeConstraint")
 	if limit then
@@ -312,9 +354,10 @@ local function layout()
 	local tv = GuiService:IsTenFootInterface()
 	local margin = if tv then math.floor(math.max(area.X, area.Y) * TV_SAFE) elseif compact then 8 else 16
 	local gap = if compact then 4 else 8
-	local line = if compact then 17 else 26        -- 글자 한 줄 높이
+	local grow = userTextScale()   -- 사용자의 글자 크기 설정(U10) — 줄 높이와 글자 상한을 함께 키운다
+	local line = math.floor((if compact then 17 else 26) * grow)        -- 글자 한 줄 높이
 	local rowHeight = if compact then MIN_TOUCH else 52   -- 손가락으로 누르는 버튼 높이
-	local textSize = if compact then 14 else 20
+	local textSize = math.floor((if compact then 14 else 20) * grow)
 
 	-- 채팅창: 터치 기기는 기본 자리(왼쪽 위 — 열 때만 보인다), 그 밖은 왼쪽 아래
 	if chatWindow and TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
@@ -361,7 +404,11 @@ local function layout()
 		end
 	end
 	local cardWidth = math.clamp(math.floor(area.X * (if compact then 0.46 else 0.32)), 240, 480)
-	local heights = {[goal] = line + 6, [situation] = 3 * line, [response] = 2 * line, [hint] = 3 * line}
+	-- 줄 높이는 기본(목표 1줄·응답 2줄·상황·힌트 3줄)이고, 가장 작은 글자로도 안 들어가는 긴 글(긴 번역문, U7)이면 그 줄만 늘린다.
+	-- 늘어난 만큼 자리가 모자라면 아래 우선순위대로 덜 중요한 줄이 숨는다
+	local rowWidth = cardWidth - 2 * gap
+	local heights = {[goal] = tall(goal, rowWidth, line + 6), [situation] = tall(situation, rowWidth, 3 * line),
+		[response] = tall(response, rowWidth, 2 * line), [hint] = tall(hint, rowWidth, 3 * line)}
 	local fresh = os.clock() - respondedAt < RESPONSE_FRESH_SECONDS
 	local order = if fresh then {goal, response, hint, situation} else {goal, hint, situation, response}
 	local barHeight = if compact then 12 else 16
@@ -464,10 +511,12 @@ local function showSignals(pop: boolean)
 	-- 새로 찬 원이 튀어 오르고(0.25초) 잠깐 머문 뒤(0.7초) 셋이 흐려진다(0.4초) — 진행을 막지 않는다
 	signalPop.Visible = true
 	local newest = popScales[math.min(signalsLit, 3)]
-	newest.Scale = 1.8
-	local bounce = TweenService:Create(newest, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1})
-	table.insert(popTweens, bounce)
-	bounce:Play()
+	if not userCalm() then   -- 움직임 줄이기(U10)를 켠 사람에게는 튀어 오르지 않고 바로 보인다
+		newest.Scale = 1.8
+		local bounce = TweenService:Create(newest, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1})
+		table.insert(popTweens, bounce)
+		bounce:Play()
+	end
 	local popped = signalsLit
 	task.delay(0.95, function()
 		if popped ~= signalsLit then
@@ -771,6 +820,17 @@ UserInputService:GetPropertyChangedSignal("PreferredInput"):Connect(function()
 end)
 screen:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout)   -- 화면을 돌리거나 창 크기를 바꾸면 다시 놓는다
 cardScreen:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout)
+-- 사용자가 설정 메뉴에서 배경 투명도·글자 크기를 바꾸면 바로 따른다(U10). 그 설정이 없는 엔진이면 건너뛴다
+pcall(function()
+	GuiService:GetPropertyChangedSignal("PreferredTransparency"):Connect(function()
+		for _, item in backed do
+			item.BackgroundTransparency = PANEL_SHADE * userShade()
+		end
+	end)
+end)
+pcall(function()
+	GuiService:GetPropertyChangedSignal("PreferredTextSize"):Connect(layout)
+end)
 -- 터치 조작은 PlayerModule 이 따로, 늦게 만든다(점프 버튼은 캐릭터가 생긴 뒤). 생기거나 움직이면 다시 놓는다
 local relayoutQueued = false
 local function relayout()
