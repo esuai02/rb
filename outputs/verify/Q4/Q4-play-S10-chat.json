@@ -1,0 +1,18 @@
+{
+ "slice": "S10 새 채팅(TextChatService)과 채팅창 자리",
+ "date": "2026-10-07",
+ "setting": "TextChatService.ChatVersion = TextChatService — 저장소 default.project.json, 열린 Place 는 사람이 속성 창에서 바꾸고 저장(19:41, 파일에 token 1)",
+ "desktop_hd720": {
+  "chat": "HUD 가 VerticalAlignment=Bottom 으로 내림. 입력줄 16,492-475,529 (메시지를 보내도 ChatWindowConfiguration.AbsoluteSize 는 0)",
+  "spawn": "출발 칸 (383,115)·루미 (378,114) 가림 없음 — 이전 LegacyChatService 창 0,2-511,181 이 덮던 자리",
+  "hud": "6상태 위반 0. 첫 측정에서 십자가 입력줄과 겹침(376-902 vs 16-475) → 창이 숨어도 입력줄을 따로 띠에서 빼게 고친 뒤 십자 610-1136, 기울기 733-1013, 멈춤 지점 669-1077"
+ },
+ "phone_a06": {
+  "chat": "터치는 기본 자리(Top) 유지. CoreGui ExperienceChat: 입력줄 Visible=false, 창 틀 appLayout 배경 투명도 1.0 — 닫힌 채로 시작",
+  "hud": "5상태 위반 0, 출발 칸·루미 가림 없음"
+ },
+ "not_verified": [
+  "Xbox 등 콘솔의 새 채팅 모습",
+  "PC 에서 메시지가 쌓였을 때 채팅창이 이름표(2초)와 겹치는지 — 화면 캡처에 Roblox 기본 UI 가 찍히지 않음"
+ ]
+}

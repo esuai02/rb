@@ -1,0 +1,6 @@
+criterion: Q4-C3 — Play 테스트: 혼자(NPC 대체)·2인·터치/키보드/게임패드로 게이트를 끝까지 연다 (INV-9)
+result: FAIL
+observed: 진척: 혼자·키보드(마우스 버튼 포함) 핵심 경로가 Studio Play 에서 끝까지 완주 — 패널 E → 좌표 (2,1) → 기울기 더 올라가게 → 게이트 열림 → 다리·게이트를 걸어 포털 E → zone_portal_entered·멈춤 지점(S1~S5, outputs/verify/Q4/Q4-play-S1..S5). 미충족: 6개 시나리오 중 어느 것도 완전 충족 아님 — 터치·게임패드 입력 경로(S8), 2인·NPC 대체·협동 프리즘(S15), 광장 미션(S16), 힌트 사다리 서버화·hint_shown(S7), 분석 이벤트 16종 중 다수 미전송(S11), 재사용 맥락·term_reused(S13), 표현 선택(S14)
+source: Claude Code 세션 4dbacf45, 2026-10-05, Studio MCP Play(studio 876d3f03, rb-staging.rbxlx)
+binding: eae7ad21aa0a46696cc8b81d6ada2643246a97f7948f4c364f0407dc27934865
+time: 2026-10-05T11:23:44.640044+00:00

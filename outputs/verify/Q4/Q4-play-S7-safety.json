@@ -1,0 +1,26 @@
+{
+ "slice": "S7 다리·단 추락 방지 (Studio AI 보고 재현에서 나온 막힘)",
+ "checked_at": "2026-10-06T10:50:30.432610+00:00",
+ "place": "rb-staging.rbxlx",
+ "before": {
+  "0°": "1.4s 단 도착",
+  "10°": "1.4s 단 도착",
+  "20°": "y12.9 에서 옆으로 떨어짐",
+  "0° W 3.5s": "포털 통과 → 단 뒤(z -60)로 떨어짐"
+ },
+ "change": [
+  "다리 양옆 난간 BridgeRailLeft/Right(두께 0.5·높이 3, 판과 같은 기울기·길이, Layout.bridgeRails)",
+  "게이트 단 가장자리 난간 5개(옆 2·뒤 1·앞 2, 다리 입구 폭만 열림, DIM 색으로 보이게)",
+  "ZonePortal 을 부딪히는 문으로(CanCollide 기본값) — 들어가기는 프롬프트 그대로",
+  "다리 놓기를 WorldView.setBridge 한 곳으로 통합(WorldBuilder 의 중복 배치 2줄 삭제)"
+ ],
+ "after": {
+  "난간 배치": "0단계 길이 12·3단계 16.97 = 판, 판 윗면 가장자리 어긋남 0.000, 기울기 45.0° = 판",
+  "20°": "1.6s 단 도착·단 위 유지",
+  "30°": "1.8s 단 도착·단 위 유지",
+  "0° W 4.5s": "포털 앞 2.3 studs 에서 멈춤, 최저 y 15.9",
+  "단 가장자리 걷기 D→S→W→A": "x -6.9..6.9, z -58.9..-29.1, 최저 y 16.0 — 떨어짐 0",
+  "포털 진입": "단단한 포털 앞 E → zone_portal_entered·멈춤 지점"
+ },
+ "static": "harness 18/18, tests_world 19, tools 82, tests 292, validate_spec OK, Q4-C1 PASS, Q4-C2 PASS"
+}

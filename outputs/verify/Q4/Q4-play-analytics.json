@@ -1,0 +1,80 @@
+{
+  "slice": "분석 이벤트 연결 — 시나리오가 기대하는데 빠져 있던 12종 중 11종",
+  "date": "2026-10-08",
+  "intent": "운영자가 첫 5분 퍼널의 이탈 지점(입장→첫 입력→게이트가 보임→첫 이동→첫 상호작용→첫 수학 행동→첫 성공…)과 북극성 지표의 분모(세션 시작), 힌트·이름표 노출, 나간 자리를 Roblox 대시보드에서 볼 수 있게 한다",
+  "events_connected": {
+    "server_only": {
+      "movement_complete": "서버가 0.5초마다 재서, 신호 패널 안내 거리(10스터드) 밖에 있던 캐릭터가 그 안으로 걸어왔을 때 — 스폰 자리가 이미 안이면 한 번 나갔다 와야 센다",
+      "first_math_action": "처음 보낸 좌표(결과와 상관없이)",
+      "explorer_card_earned": "게이트 열림(gate_opened) 바로 뒤 — 카드는 기울기 판정 때 받지만(S11) 퍼널은 번호 순서(9 → 10)로만 보낸다",
+      "label_shown": "이름표를 띄우는 결과 알림(coordinate_reached·slope_reached)을 보낼 때 {term}",
+      "session_end": "나갈 때 진행 중이던 핵심 미션 {mission}, 다 마쳤으면 필드 없이 — 화면 준비를 알린 판만"
+    },
+    "client_reported_then_server_checked": {
+      "session_start + onboarding_start": "화면이 준비를 알릴 때 {input: touch|keyboard_mouse|gamepad — PreferredInput}. 한 판에 한 번",
+      "first_input": "첫 키·버튼·터치·막대 입력(마우스 이동만은 제외). 알림을 놓쳐도 첫 목적지에 오면 서버가 함께 보낸다",
+      "gate_visible": "고정된 게이트 자리(Layout.GATE_CENTER)가 화면 안이고 카메라에서 가리지 않을 때 — 누가 먼저 문을 열어 올라가 있어도 잰다",
+      "hint_shown": "Hud 힌트 사다리가 단계를 올릴 때 {hint_level}. 서버는 지금 미션의 다음 단계 하나만, 그 단계가 될 수 있는 때에만 센다(1단계 = 다른 결과 1번 또는 미션 차례 뒤 8초+, 다음 단계 = 앞 단계 뒤 8초+ — cv.hint_ladder 10초에서 통신 여유 2초)"
+    },
+    "pending": {
+      "term_reused": "재사용 맥락(reuse_contexts)의 미션이 이 월드에 아직 없다 — 거짓 없이 보낼 순간이 없다. 재사용 미션·광장(Q5 뒤)과 함께 잇는다 (tests PENDING_EVENTS)"
+    },
+    "ordered_funnel_2_to_5": "character_spawned → first_input → gate_visible → movement_complete 는 Onboarding 이 사실(캐릭터·입력·게이트를 봄·도착)을 적어 두고 번호 순서로만 보낸다 — 플랫폼은 뒤 단계가 먼저 오면 건너뛴 앞 단계를 그때 끝난 것으로 치고 같은 단계는 처음 것만 센다(Roblox funnel 문서 'Skipped steps'·'Repeated steps'). 이 월드는 처음부터 게이트가 보이므로 gate_visible 은 첫 입력 뒤에 나간다",
+    "pending_values": {
+      "co_play_offered{offer_source: invite_button}": "게이트가 열린 뒤 친구 초대 안내(cv.coop_offer_timing.invite_prompt)가 아직 없다 — 혼자 시나리오 3개가 기대하는 co_play_offered 는 이 값으로만 나올 수 있어 기다린다(초대 버튼은 사람 결정 대기)"
+    }
+  },
+  "fixed_existing": [
+    "first_math_success 가 늘 attempt=first — 플레이어·미션별 시도 수로 first/second/third_or_more",
+    "math_attempt 에 attempt 필드가 빠져 있었음 — 같은 시도 수로 채움(cv.first_try 의 재시도율)"
+  ],
+  "new_parts": {
+    "ProgressRemote": "화면 → 서버 한 통로(step, detail). 정해진 넷(ready·first_input·gate_visible·hint)만 받고 단계마다 쿨다운(0.5초). 계약 world/content/remote_contracts.yaml",
+    "Onboarding.luau": "미션 판정이 아닌 퍼널 단계와 세션 이벤트(서버)",
+    "Progress.client.luau": "화면 쪽 사실(준비·첫 입력·게이트가 보임)을 한 번씩 알림",
+    "Analytics trace": "Studio 에서만 출력 창에 [analytics] 이벤트 이름·필드를 적음(라이브 서버는 적지 않음, 플레이어 없음)"
+  },
+  "verification": {
+    "gates": "Harness 18 PASS · tests 296 OK(허용 목록 이벤트를 빠짐없이 보냄 — PENDING 제외, 시나리오 기대 이벤트 — 혼자 시나리오의 초대 제안은 대기 값으로, 대기 목록이 허용 목록 안·아직 안 보냄, 서버 힌트 시각 값 = 정본) · tools 109 OK · validate_spec·validate_graph OK. 새 테스트는 대기 항목을 지우거나 바꾸면 실패하는 것을 확인",
+    "play_keyboard_full_path": [
+      "시작(입력 없음): session_start{input:keyboard_mouse} · onboarding_start{input:keyboard_mouse} · character_spawned · gate_visible",
+      "W 키: first_input → 신호 패널 앞: movement_complete → E: first_interaction",
+      "출발 칸 그대로 E: first_math_action · math_attempt{m.signal_coordinate, other_result, first} · hint_shown{m.signal_coordinate, level_1}",
+      "오른쪽 2·위 1 E: math_attempt{m.signal_coordinate, target_reached, second} · first_math_success{second} · label_shown{term.coordinate}",
+      "기울기: hint_shown{m.signal_slope, level_1}(10초 대기 힌트) · math_attempt{m.signal_slope, other_result, first} · math_attempt{m.signal_slope, target_reached, second} · label_shown{term.slope} · explorer_card_earned",
+      "왼쪽 프리즘 0.9초: gate_opened{play_mode:solo_npc} → 입구 E: zone_portal_entered · onboarding_complete{play_mode:solo_npc}",
+      "내보내기(Kick): session_end{} (핵심 미션을 다 마침)"
+    ],
+    "play_touch_a06": "session_start{input:touch} · onboarding_start{input:touch} · character_spawned · gate_visible → 신호 1 중 내보내기: session_end{mission:m.signal_wake}",
+    "play_xbox_sim": "Studio 에 게임패드가 없어 PreferredInput=KeyboardAndMouse → input:keyboard_mouse (게임패드 값은 실기기 몫)",
+    "after_review_play": [
+      "입력 없이 4초: session_start · onboarding_start · character_spawned 만 — gate_visible 은 보이지만 기다림",
+      "W 키: first_input → 바로 gate_visible → 패널 앞(스폰 거리 12.3 → 7.2): movement_complete → E: first_interaction",
+      "힌트 위조(화면에서 직접 보냄): 0초 level_1(이름) · 0.7초 level_3(건너뜀) · 10.0초 level_2(1단계 0.7초 뒤) 모두 버림, 9.3초 level_1 만 셈. 이후 실제 대기 힌트 level_2·level_3 은 셈",
+      "좌표 첫 시도 성공: first_math_action · math_attempt{first} · first_math_success{first} · label_shown",
+      "기울기 성공 → 프리즘: gate_opened{solo_npc} → explorer_card_earned (순서 바뀜 확인)",
+      "게이트가 열린 상태에서 출발 자리 카메라: 예전 기준(문 지금 위치 y41) 화면 밖 → 새 기준(GATE_CENTER y22) 화면 안·가림 없음",
+      "입구 직전 Kick: session_end{mission:m.zone_portal}, 오류 0 (쿨다운 기록 정리 포함)"
+    ]
+  },
+  "review": {
+    "independent_codex": "8건 → VALID 5(카드 퍼널 순서 · 3~5단계 순서 · 힌트 위조 · 쿨다운 기록 누적 · 대기 목록 검사) · INVALID 2(끊긴 루미 비행도 기록 — 판정 때 기록하는 설계, 재접속 때 카드 재전송 — 퍼널은 첫 기록만 셈) · DEFERRED 1(정답 직후 0.5~2.4초 사이 나가면 session_end 미션이 한 칸 앞)",
+    "workflow_3_lenses_plus_verifier": "13건 → VALID 6(카드 순서 · gate_visible 순서 · 열린 게이트 뒤 gate_visible · 스폰이 패널 근처면 이동 완료 오판 · 플레이어별 연결 미해제 · 시나리오 검사가 늘 통과) · DUPLICATE 4 · INVALID 3(ready 를 안 보내는 변조 클라이언트 — 자기 기록만, 힌트 per_occurrence 해석 2) · DEFERRED 1(쿨다운 — Codex 와 겹쳐 고침)",
+    "fixed": [
+      "explorer_card_earned 를 gate_opened 뒤로",
+      "퍼널 2~5단계를 Onboarding 이 번호 순서로만 보냄(사실을 적어 두고 차례에 보냄)",
+      "게이트를 봄 판정은 고정된 게이트 자리로",
+      "이동 완료는 안내 거리 밖에 있다가 들어와야 셈",
+      "플레이어별 CharacterAdded 연결을 지우고 0.5초 검사에서 캐릭터 확인(DELETE)",
+      "힌트는 다음 단계 하나만, 그 단계가 될 수 있는 때에만 셈",
+      "나가면 쿨다운 기록도 지움(Cooldown.forget)",
+      "테스트: 필드 값 단위 대기(PENDING_VALUES), 혼자 시나리오의 초대 제안, 대기 목록이 허용 목록 안"
+    ]
+  },
+  "not_verified": [
+    "실제 게임패드에서 input:gamepad 와 막대 첫 입력",
+    "두 사람이 한 서버에 있을 때 각자의 퍼널(같은 패널·게이트, 나중에 들어온 사람의 gate_visible 은 계산으로만 확인)",
+    "Roblox 대시보드에 실제로 쌓이는 모습 — 게시된 경험에서만 보인다(Studio 는 '이벤트 보냄' 로그까지)",
+    "정답 직후 0.5~2.4초 사이에 나간 경우의 session_end 미션(한 칸 앞으로 찍힘 — DEFERRED)"
+  ]
+}

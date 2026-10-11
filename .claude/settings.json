@@ -31,6 +31,11 @@
             "type": "command",
             "command": "python3 \"${CLAUDE_PROJECT_DIR}\"/tools/flow_guard.py scan --event Stop",
             "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}\"/tools/studio_pull.py --quiet; python3 \"${CLAUDE_PROJECT_DIR}\"/tools/ship.py save --quiet",
+            "timeout": 600
           }
         ]
       }

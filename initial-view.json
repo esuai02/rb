@@ -2,10 +2,10 @@
   "schema_version": 1,
   "kind": "intent_view",
   "run_id": "rb-mission",
-  "revision": 5,
+  "revision": 6,
   "locale": "ko",
   "intent_file": "intent.md",
-  "intent_sha256": "615140fbb8634268268ad0def1e932bbc4fcded7c0241f46316ee85ceeed3616",
+  "intent_sha256": "31116e96b8627d1d88e8409bff9ce6caf96bb2fdf1da48e5d02da57071fc28aa",
   "mission": "Neo Seoul 의 도시 언어 게이트에서 시작하는, 수학을 잘하지 않아도 수학적 언어로 친구와 도시를 움직이는 글로벌 소셜 어드벤처 (DEC-10 B안·DEC-1)",
   "focus": "Q1",
   "nodes": [
@@ -28,7 +28,7 @@
     {
       "id": "Q3",
       "label": "생성·검수 Harness",
-      "outcome": "고정 시험 데이터에 심은 결함을 수학 6종·서버 권위·UI 14종·금지어 검사가 모두 잡고 기록을 남긴다.",
+      "outcome": "고정 시험 데이터에 심은 결함(목록은 DEC-18 로 고정)을 정적 검사(서버 권위·번역·수학 E1·E2·금지어·안전·분석)가 모두 잡고 기록을 남긴다. UI 실행 검사·오개념·쿨다운 실측은 Q4 로 넘긴다.",
       "depends_on": [
         "Q2"
       ],
@@ -37,7 +37,7 @@
     {
       "id": "Q4",
       "label": "원본 월드 제작",
-      "outcome": "엔진(UI 틀·현지화 배선·서버 권위 보상)과 ko-KR 원본 월드가 스테이징 Place 에 있고 Harness 를 통과한다.",
+      "outcome": "엔진(UI 틀·현지화 배선·서버 권위 보상)과 ko-KR 원본 월드가 스테이징 Place 에 있고 Harness 를 통과하며, Q3 가 넘긴 실행 검사(UI·오개념·쿨다운 실측)를 Play 에서 통과한다.",
       "depends_on": [
         "Q3"
       ],

@@ -12,3 +12,6 @@ graft/.cache/
 
 # Python 실행 부산물
 __pycache__/
+
+# 하네스 실행 기록 — 다시 만들 수 있다. 단계 근거는 outputs/verify/ 가 맡는다
+outputs/harness/

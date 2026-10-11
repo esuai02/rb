@@ -1,0 +1,49 @@
+{
+ "slice": "S3 게이트 배치·충돌",
+ "checked_at": "2026-10-05T08:03:09.076576+00:00",
+ "place": "rb-staging.rbxlx",
+ "layout": {
+  "WALL_CENTER": [
+   -18,
+   12,
+   -22
+  ],
+  "PANEL_POSITION": [
+   -10,
+   3,
+   -12
+  ],
+  "BRIDGE_START": [
+   0,
+   0.5,
+   -16
+  ],
+  "BRIDGE_RUN": 12,
+  "BRIDGE_RISE_PER_STEP": 4,
+  "BRIDGE_WIDTH": 6,
+  "BRIDGE_REACH_STEP": 3,
+  "DECK_TOP": 13,
+  "DECK_FRONT_Z": -28,
+  "GATE": "16×18×1 @ (0,22,-31)",
+  "PORTAL": "(0,18,-50)",
+  "PRISMS": "(±6,2,-20)"
+ },
+ "checks": {
+  "게이트 보임(출발 카메라 (1.0,8.7,10.9) 에서 게이트 중심·±6 광선 3개)": "3개 모두 CityLanguageGate 가 첫 충돌, 화면 안",
+  "부딪힘": "GateDeck·CityLanguageGate·GateThreshold·SignalPanel·LightBridge=true, Lumi·ZonePortal=false",
+  "닫힌 게이트": "단 위 게이트 앞에 세우고 경로 탐색 → 'Can not find a route', 직접 MoveTo+점프 2번 → z=-30.0 에서 멈춤(게이트 앞면 -30.5)",
+  "다리 0단계": "끝 윗면 (0,1,-28) — 단 윗면 13 보다 12 낮음",
+  "다리 1단계(덜 올라가게)": "끝 윗면 y=4.97 — 단 윗면보다 8.03 낮음, slope_other",
+  "다리 3단계(더 올라가게)": "끝 윗면 (0,12.85,-27.65) vs 단 윗면 13·앞면 z=-28 → 차이 0.15/0.35 studs(기운 판의 모서리), slope_reached·gate_opened, 게이트 CanCollide=false",
+  "걷기(물리)": "바닥 → 다리 출발 끝(y3.8) → 다리 높은 끝(y14.3) → 게이트 지나 (z-32.3, y16) → 포털 앞 (z-47.3)",
+  "실제 입력": "새 패널 위치에서 E → 버튼 (2,1) → E → 기울기 버튼, 결과 1.01 lit · 5.05 coordinate_reached · 23.58 slope_other · 25.68 slope_reached·gate_opened (끼어든 결과 없음)"
+ },
+ "known_limits": [
+  "경로 탐색(PathfindingService·MCP character_navigation)은 다리 높이 7~10 구간에서 NoPath — 폭 4→6 으로 넓혀도 같음. 다리 아래·위 끝, 단 위(열린 게이트 → 포털)는 Success. 실제 걷기는 통과 — NPC 가 걸어야 할 때(S15) 다시 본다"
+ ],
+ "not_in_this_slice": [
+  "색·빛 반응(S6)",
+  "포털 진입(S10)",
+  "기울기 의미·초기 단계(S5, 교사 검토)"
+ ]
+}

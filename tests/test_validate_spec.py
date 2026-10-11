@@ -95,6 +95,12 @@ class RequiredFieldsTest(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertNotEqual(vs.validate(without(SPEC, path), SCHEMA), [], f"{path} 를 빼도 통과함")
 
+    def test_required_lists_cannot_be_empty(self):
+        """필드를 지우는 것뿐 아니라 빈 목록으로 두는 것도 실패해야 한다 — minItems 가 빠지는 회귀를 잡는다 (Q1 재검증 리뷰 minor)."""
+        for path in ("language_goals", "do_not_translate"):
+            with self.subTest(path=path):
+                self.assertNotEqual(vs.validate(with_value(SPEC, path, []), SCHEMA), [], f"{path} 가 비어도 통과함")
+
     def test_unknown_fields_are_rejected(self):
         self.assertNotEqual(vs.validate({**SPEC, "free_chat": True}, SCHEMA), [])
 
@@ -195,6 +201,12 @@ class OriginalWorldTest(unittest.TestCase):
 
 class KeySeparationTest(unittest.TestCase):
     """Q1-C3: 언어·시장·교육과정 키가 나뉜다 (INV-3)."""
+
+    def test_mixed_keys_inside_sections_are_rejected(self):
+        """시장·언어·교육과정 키를 섹션 안에서 섞어도 실패한다 — 중첩 additionalProperties 가 빠지는 회귀를 잡는다 (Q1 재검증 리뷰 minor)."""
+        for path, value in (("market.locale", "ko-KR"), ("audience.market_id", "kr"), ("localization.market_id", "kr")):
+            with self.subTest(path=path):
+                self.assertNotEqual(vs.validate(with_value(SPEC, path, value), SCHEMA), [], f"{path} 를 넣어도 통과함")
 
     def test_locale_is_language_only(self):
         self.assertNotEqual(vs.validate(with_value(SPEC, "localization.source_locale", "ko-KR"), SCHEMA), [])
