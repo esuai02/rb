@@ -1,6 +1,6 @@
 criterion: Q4-6V — 이 단계를 잠그기 전에 6방향(전방·후방·위·아래·좌·우) 검토가 이 단계를 대상으로 기록된다 (intent §11)
-binding: 96b036a4bebe7efccd04951c6501d64365f0a37ef7749e2229f2314e7da215ba
-time: 2026-10-09T12:51:47.967988+00:00
+binding: 1af25dec78fca7c462cea3776a9146d4d2b3a647b650da0eb68fb06f6f1590a2
+time: 2026-10-11T20:18:47.610370+00:00
 
 V-BWD: 없음
 V-DOWN: 없음

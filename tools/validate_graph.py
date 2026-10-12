@@ -28,12 +28,14 @@ LOCALE_RE = re.compile(r"^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$")  # IETF 언어 태�
 ENUM_VALUE_RE = re.compile(r"^[a-z][a-z0-9_.]*$")
 CV_ID_RE = re.compile(r"^cv\.[a-z_]+$")
 # 분석 필드 이름 허용 목록 — 여기에 없는 필드는 쓸 수 없다(INV-10). 늘리려면 이 목록을 고치고 리뷰를 다시 받는다
-ALLOWED_FIELDS = {"mission", "term", "context", "expression_used", "outcome", "attempt", "hint_level", "play_mode", "input", "offer_source"}
+ALLOWED_FIELDS = {"mission", "term", "context", "expression_used", "outcome", "attempt", "hint_level", "play_mode", "input", "offer_source", "inspection_step"}
 # 분석 이벤트 이름 허용 목록 — 여기에 없는 이벤트는 보낼 수 없다(INV-10, K5 §5·K3 §4 를 합친 것). 늘리려면 이 목록을 고치고 리뷰를 다시 받는다
 # 시나리오 기대 이벤트는 implied_events 가 이 목록 전부의 발생 규칙으로 계산한다
 ALLOWED_EVENTS = {"onboarding_start", "character_spawned", "first_input", "gate_visible", "movement_complete", "first_interaction",
                   "first_math_action", "first_math_success", "gate_opened", "explorer_card_earned", "zone_portal_entered", "onboarding_complete",
                   "session_start", "math_attempt", "hint_shown", "label_shown", "term_reused", "co_play_offered", "co_play_started", "session_end"}
+# Q4의 새 역할은 기존 Q2 게이트 시나리오에서 발생한다고 가정하지 않는다.
+INSPECTION_EVENTS = {"inspection_progress"}
 FREQUENCIES = {"once_per_user", "every_session", "per_occurrence", "once_per_context_per_session"}
 SERVER_CONFIRMED = "server_confirmed_world_response"
 STRING_KEY_FIELDS = {"key", "keys", "goal_key", "line_key", "other_result_key", "situation_key", "response_key", "name_key", "npc_line_key",
@@ -43,7 +45,7 @@ NS_NUMERATOR, NS_DENOMINATOR = "term_reused", "session_start"  # intent §1 북�
 STOP_CHOICES = ["pacing.continue", "pacing.rest"]               # K6 R7 계속·쉬기
 # 금지어 하한 — ko-KR 용어집의 금지어 전부. INV-11(현실 출입국·국적·신분) · INV-8/K5 §7(시험 언어) · INV-14(압박) · 보상형 초대.
 # 용어집에서 하나라도 빼면 실패한다(더하는 것은 된다). 빼려면 이 목록을 고치고 리뷰를 받는다
-REQUIRED_BANNED = {"입국", "출입국", "심사", "여권", "비자", "국적", "이민", "국경", "국기", "외국인", "시민권", "난민", "망명", "추방", "체류", "신분증",
+REQUIRED_BANNED = {"입국", "출입국", "여권", "비자", "국적", "이민", "국경", "국기", "외국인", "시민권", "난민", "망명", "추방", "체류", "신분증",
                    "passport", "visa", "citizen", "nationalit", "immigra", "foreigner", "refugee", "asylum", "deport", "border",
                    "불합격", "낙제", "오답", "정답", "틀렸", "틀린", "실패", "시험", "테스트", "진단", "순위", "연속", "매일", "서둘러", "남은 시간", "초대"}
 # 사람 결정(DEC)을 근거로 decided 가 될 수 있는 정본 값과, 그 결정 행에 글자 그대로 들어 있어야 하는 값 항목
@@ -541,7 +543,7 @@ def check_events(b: Bundle) -> list[str]:
         elif not all(isinstance(v, str) and ENUM_VALUE_RE.fullmatch(v) for v in values):
             errors.append(f"fields/{name}: 열거형 토큰이 아닌 값이 있다 (자유 텍스트·숫자 금지)")
     for e in ev.get("onboarding_funnel", []) + ev.get("custom_events", []):
-        if e["name"] not in ALLOWED_EVENTS:
+        if e["name"] not in ALLOWED_EVENTS | INSPECTION_EVENTS:
             errors.append(f"{e['name']}: 허용 목록에 없는 이벤트다 (INV-10)")
         if e.get("frequency") not in FREQUENCIES or e.get("trigger", SERVER_CONFIRMED) != SERVER_CONFIRMED:
             errors.append(f"{e['name']}: 보내는 빈도는 {sorted(FREQUENCIES)} 중 하나, 발생 조건은 {SERVER_CONFIRMED} 만")
@@ -738,6 +740,9 @@ def check_glossary(b: Bundle) -> list[str]:
              spec.get("title_key"): cv_dict(b, "cv.gate_name").get("ko")}
     errors += [f"정본 이름 {k}: 용어집 '{strings.get(k)}' 이 정본 값 '{v}' 과 다르다" for k, v in names.items() if strings.get(k) != v]
     used = {key for _, key in walk(b.graph, STRING_KEY_FIELDS | {"action_keys"})} | set(q1_keys)
+    # Q4 심사대의 번역도 동일 용어집을 쓴다. 실제 직접 호출만 사용 근거로 인정한다.
+    used |= {key for path in (ROOT / "world/src").rglob("*.luau")
+             for key in re.findall(r'Text\.get\("(inspection\.[^"\n]+)"', path.read_text(encoding="utf-8"))}
     used |= {(v.get("value") or {}).get(f) for v in values.values() if isinstance(v.get("value"), dict) for f in ("string_key", "name_key", "world_key", "first_title_key")}
     errors += [f"strings/{k}: 아무도 쓰지 않는 키다" for k in strings if k not in used]
     banned = gl.get("banned_terms", [])

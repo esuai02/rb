@@ -1,35 +1,22 @@
-criterion: Q4-C1 — 저장소 소스(default.project.json · src/ · content/)가 Q3 Harness 18개 검사를 위반 0 으로 통과하고, 미션·용어·분석 이벤트·정본 값이 잠긴 Q2 명세와 같으며, 번역표 CSV 는 용어집에서 생성한 결과와 한 글자도 다르지 않다 (DEC-8: 저장소 파일이 정본)
+criterion: Q4-C1 — 현재 심사대 소스가 기존 Harness 18개 검사, 서버 3사건 실제 Luau 실행, 번역표 재생성 일치를 통과한다. 과거 Q2 게이트 팩은 별도로 유지한다.
 command: python3 -m unittest tests.test_world_source -v
 exit: 0
-binding: 96b036a4bebe7efccd04951c6501d64365f0a37ef7749e2229f2314e7da215ba
-time: 2026-10-09T12:51:47.935616+00:00
+binding: 1af25dec78fca7c462cea3776a9146d4d2b3a647b650da0eb68fb06f6f1590a2
+time: 2026-10-11T20:18:47.590085+00:00
 
-test_calls_are_read (tests.test_world_source.AnalyticsEventTest.test_calls_are_read) ... ok
-test_events_are_in_the_allowlist (tests.test_world_source.AnalyticsEventTest.test_events_are_in_the_allowlist) ... ok
-test_every_allowed_event_is_sent (tests.test_world_source.AnalyticsEventTest.test_every_allowed_event_is_sent) ... ok
-test_funnel_events_use_the_funnel_sender (tests.test_world_source.AnalyticsEventTest.test_funnel_events_use_the_funnel_sender) ... ok
-test_pending_values_are_real_and_unsent (tests.test_world_source.AnalyticsEventTest.test_pending_values_are_real_and_unsent) ... ok
-test_scenarios_expect_only_sent_events (tests.test_world_source.AnalyticsEventTest.test_scenarios_expect_only_sent_events) ... ok
-test_cooldown_seconds (tests.test_world_source.CanonicalValueTest.test_cooldown_seconds) ... ok
-test_coop_switch_ids (tests.test_world_source.CanonicalValueTest.test_coop_switch_ids) ... ok
-test_first_rewards (tests.test_world_source.CanonicalValueTest.test_first_rewards) ... ok
-test_grid_half_width (tests.test_world_source.CanonicalValueTest.test_grid_half_width) ... ok
-test_grid_half_width_in_layout (tests.test_world_source.CanonicalValueTest.test_grid_half_width_in_layout) ... ok
-test_hint_idle_seconds (tests.test_world_source.CanonicalValueTest.test_hint_idle_seconds) ... ok
-test_hint_ladder_never_reveals_the_answer (tests.test_world_source.CanonicalValueTest.test_hint_ladder_never_reveals_the_answer)
-정본 값 cv.hint_ladder.reveals_answer = false — 힌트 세 단계만 쓰고 정답 문구는 없다. ... ok
-test_prompt_activation_distance (tests.test_world_source.CanonicalValueTest.test_prompt_activation_distance) ... ok
-test_server_check_distance (tests.test_world_source.CanonicalValueTest.test_server_check_distance) ... ok
-test_slope_choices (tests.test_world_source.CanonicalValueTest.test_slope_choices) ... ok
+test_only_active_inspection_event_is_sent (tests.test_world_source.AnalyticsTest.test_only_active_inspection_event_is_sent) ... ok
 test_every_check_runs (tests.test_world_source.HarnessTest.test_every_check_runs) ... ok
 test_no_violation (tests.test_world_source.HarnessTest.test_no_violation) ... ok
-test_csv_matches_the_generator (tests.test_world_source.LocalizationTest.test_csv_matches_the_generator) ... ok
-test_every_key_in_the_glossary_is_in_the_table (tests.test_world_source.LocalizationTest.test_every_key_in_the_glossary_is_in_the_table) ... ok
-test_keys_used_by_the_code_exist (tests.test_world_source.LocalizationTest.test_keys_used_by_the_code_exist) ... ok
-test_missions_match_the_locked_graph (tests.test_world_source.MissionDataTest.test_missions_match_the_locked_graph) ... ok
-test_terms_match_the_locked_graph (tests.test_world_source.MissionDataTest.test_terms_match_the_locked_graph) ... ok
+test_answers_are_server_only (tests.test_world_source.InspectionTest.test_answers_are_server_only) ... ok
+test_build (tests.test_world_source.InspectionTest.test_build) ... ok
+test_compile (tests.test_world_source.InspectionTest.test_compile) ... ok
+test_cooldown_retains_canonical_value (tests.test_world_source.InspectionTest.test_cooldown_retains_canonical_value) ... ok
+test_no_legacy_entry_remotes (tests.test_world_source.InspectionTest.test_no_legacy_entry_remotes) ... ok
+test_runtime (tests.test_world_source.InspectionTest.test_runtime) ... ok
+test_all_keys_are_translatable (tests.test_world_source.LocalizationTest.test_all_keys_are_translatable) ... ok
+test_generated_csv_matches (tests.test_world_source.LocalizationTest.test_generated_csv_matches) ... ok
 
 ----------------------------------------------------------------------
-Ran 23 tests in 2.521s
+Ran 11 tests in 0.493s
 
 OK

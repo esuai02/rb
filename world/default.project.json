@@ -1,10 +1,62 @@
 {
-  "name": "neo-seoul-city-language-gate",
+  "name": "math-village-inspection-mvp",
   "tree": {
     "$className": "DataModel",
-    "ServerScriptService": {"Gate": {"$path": "src/server"}},
-    "ReplicatedStorage": {"Shared": {"$path": "src/shared"}},
-    "StarterPlayer": {"StarterPlayerScripts": {"Gate": {"$path": "src/client"}}},
-    "TextChatService": {"$properties": {"ChatVersion": "TextChatService"}}
+    "ServerScriptService": {
+      "Gate": {
+        "$path": "src/server"
+      }
+    },
+    "ReplicatedStorage": {
+      "Shared": {
+        "$path": "src/shared"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Gate": {
+          "$path": "src/client"
+        }
+      }
+    },
+    "TextChatService": {
+      "$properties": {
+        "ChatVersion": "TextChatService"
+      }
+    },
+    "Workspace": {
+      "$className": "Workspace",
+      "SpawnLocation": {
+        "$className": "SpawnLocation",
+        "$properties": {
+          "Anchored": true,
+          "Size": [
+            4,
+            1,
+            4
+          ],
+          "Position": [
+            0,
+            0.5,
+            6
+          ],
+          "Neutral": true,
+          "Transparency": 1,
+          "CanCollide": false,
+          "Duration": 0
+        }
+      }
+    },
+    "Lighting": {
+      "$properties": {
+        "ClockTime": 14,
+        "Brightness": 2,
+        "Ambient": [
+          0.4,
+          0.4,
+          0.5
+        ]
+      }
+    }
   }
 }

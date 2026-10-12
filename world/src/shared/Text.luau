@@ -32,10 +32,10 @@ local function translators_for(): {Translator}
 end
 
 -- 키 하나를 그 플레이어의 언어로. 번역을 못 얻으면 원문 표에서 찾는다.
-function Text.get(key: string): string
+function Text.get(key: string, parameters: {[string]: any}?): string
 	for _, found in translators_for() do
 		local ok, value = pcall(function()
-			return found:FormatByKey(key)
+			return found:FormatByKey(key, parameters)
 		end)
 		if ok then
 			return value

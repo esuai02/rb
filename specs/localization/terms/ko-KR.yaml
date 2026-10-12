@@ -117,11 +117,117 @@ strings:
   pacing.continue: 계속하기
   pacing.rest: 쉬기
 
+  # 현재 Q4: 수학마을 배송 심사대 — 모든 문구/수치 형식은 같은 번역표를 쓴다.
+  inspection.empty: —
+  inspection.title: 수학마을 · 배송 심사대
+  inspection.loading: 심사대를 준비하고 있어요.
+  inspection.sending: 자료를 확인하고 있어요.
+  inspection.intro.title: 오늘은 내가 심사관
+  inspection.intro.body: 여섯 사건의 도착 기록을 차례로 확인해요. 질문으로 자료를 얻고, 근거를 골라 도장을 찍어요. 언제든 결과에서 쉴 수 있어요.
+  inspection.start: 첫 사건 받기
+  inspection.claim: 배달을 마쳤어요. 이동 이야기와 도착 기록을 확인해 주세요.
+  inspection.question.title: 먼저 세 가지를 물어보세요. 다시 누르면 자료를 다시 볼 수 있어요.
+  inspection.question.origin: 출발 칸은?
+  inspection.question.move: 어떻게 이동했나요?
+  inspection.question.record: 도착 기록은?
+  inspection.origin.point: "출발 칸: 가로 {x:int}, 세로 {y:int}"
+  inspection.origin.missing: 출발 칸 기록이 없어요.
+  inspection.move.point: "이동: 오른쪽 {x:int}칸, 위 {y:int}칸"
+  inspection.record.point: "도착 기록: 가로 {x:int}, 세로 {y:int}"
+  inspection.record.pair: 도착 기록 (가로, 세로 순서)
+  inspection.record.missing: 출발 칸이 없어 도착 칸을 확정하지 못했어요.
+  inspection.axes: 가로는 오른쪽으로, 세로는 위로 커져요.
+  inspection.point: "{x:int}, {y:int}"
+  inspection.path.point: "계산한 칸
+{x:int}, {y:int}"
+  inspection.match.cell: "계산·기록\n{x:int}, {y:int}"
+  inspection.record.cell: "기록
+{x:int}, {y:int}"
+  inspection.legend: 푸른 칸은 출발점에서 따라간 경로예요. 기록 칸과 비교해 보세요. 출발점이 없으면 경로를 그릴 수 없어요.
+  inspection.evidence.title: 자료를 모두 보고, 판정에 쓸 근거 하나를 골라 주세요.
+  inspection.evidence.match: 경로와 기록이 같아요
+  inspection.evidence.mismatch: 경로와 기록이 달라요
+  inspection.evidence.missing: 필요한 자료가 빠졌어요
+  inspection.verdict.title: 이 근거로 어떤 도장을 찍을까요?
+  inspection.verdict.approve: 승인
+  inspection.verdict.verify: 추가 확인
+  inspection.verdict.reject: 반려
+  inspection.retry.questions: 아직 보지 않은 자료가 있어요. 질문 세 개를 모두 눌러 보세요.
+  inspection.retry.evidence: 자료에서 찾은 근거 하나를 먼저 골라 주세요.
+  inspection.retry.origin: 출발 칸부터 이동을 따라가 경로 끝을 직접 찾아보세요. 근거와 도장이 짝이 맞는지도 확인해요.
+  inspection.retry.record: 경로 끝과 기록 칸을 가로, 세로 순서대로 다시 비교해요. 근거와 도장이 짝이 맞는지도 확인해요.
+  inspection.retry.missing: 질문 답에 정말 빠진 자료가 있는지 다시 보세요. 모두 있으면 직접 계산해 비교해요.
+  inspection.result.approve: 승인 · 통과
+  inspection.result.verify: 추가 확인 · 자료 요청
+  inspection.result.reject: 반려 · 기록 수정
+  inspection.result.match: 경로 끝과 도착 기록이 같아요. 루미가 문을 지나 다음 배달로 갔어요.
+  inspection.label.meaning: 방금 쓴 가로, 세로 순서의 위치 표현에 붙이는 수학 이름이에요.
+  inspection.next: 다음 사건 받기
+  inspection.rest.body: 잠깐 쉬어요. 준비되면 결과 화면으로 돌아올 수 있어요.
+  inspection.resume: 결과로 돌아가기
+  # 워크숍 순회(2026-10-12): 주제 3개 × 처음 장면/새 장면. 숫자 자리는 모두 :int 로 정수 표기한다.
+  inspection.tour.status: "사건 {index:int}/{total:int} · 확인 {count:int}건"
+  inspection.finish: 방문 기록 보기
+  inspection.restart: 다음 사람 처음부터
+  inspection.help: 그림으로 확인하기 (도움)
+  inspection.help.missing: 빠진 자료가 있어 계산한 칸을 그릴 수 없어요.
+  inspection.data.missing: 이 자료는 기록이 없어요.
+  inspection.label.reuse: 앞 장면에서 붙인 이름을 새 장면에서도 그대로 썼어요.
+  inspection.label.slope.meaning: 옆으로 1칸 갈 때 위로 1칸 오르면 기울기는 1이에요. 옆으로 한 칸 갈 때 얼마나 오르는지를 수학에서는 기울기라고 불러요.
+  inspection.label.symmetry.meaning: 선을 따라 접었을 때 꼭 겹치는 관계를 수학에서는 선대칭이라고 불러요.
+  # 워크숍 시연용 표시 이름 — Q2 교육과정 용어(term.*)가 아니다.
+  inspection.label.symmetry.name: 선대칭
+  inspection.evidence.slope.match: 계산한 높이와 같아요
+  inspection.evidence.slope.mismatch: 계산한 높이와 달라요
+  inspection.evidence.symmetry.match: 접은 자리와 같아요
+  inspection.evidence.symmetry.mismatch: 접은 자리와 달라요
+  inspection.slope.question.origin: 어디서 출발했나요?
+  inspection.slope.question.move: 한 칸마다 얼마나 올라요?
+  inspection.slope.question.record: 어디에 도착했다고 적었나요?
+  inspection.slope.origin.point: "출발: 가로 {x:int}, 높이 {y:int}"
+  inspection.slope.move.point: "규칙: 오른쪽으로 한 칸 갈 때마다 위로 {y:int}"
+  inspection.slope.move.missing: 한 칸마다 얼마나 오르는지 기록이 없어요.
+  inspection.slope.record.point: "기록: 가로 {x:int}에서 높이 {y:int}"
+  inspection.slope.legend: 푸른 칸은 출발에서 규칙대로 한 칸씩 오른 자리예요. 기록 칸과 비교해 보세요.
+  inspection.symmetry.question.origin: 원래 점은 어디예요?
+  inspection.symmetry.question.move: 어디를 따라 접었나요?
+  inspection.symmetry.question.record: 접힌 점은 어디라고 적었나요?
+  inspection.symmetry.origin.point: "원래 점: 가로 {x:int}, 세로 {y:int}"
+  inspection.symmetry.line.point: "접는 선: 가로 {x:int}을 지나는 세로선"
+  inspection.symmetry.line.half: "접는 선: 가로 {a:int}과 {b:int} 한가운데를 지나는 세로선"
+  inspection.symmetry.record.point: "기록: 가로 {x:int}, 세로 {y:int}"
+  inspection.symmetry.legend: 노란 세로선이 접는 선이에요. 푸른 칸은 원래 점과, 선에서 같은 거리만큼 반대쪽인 칸이에요.
+  inspection.retry.slope.match: 출발 높이에 한 칸마다 오르는 양을 칸 수만큼 더해 보세요. 근거와 도장이 짝이 맞는지도 확인해요.
+  inspection.retry.slope.mismatch: 칸 수를 세고, 오르는 양을 그만큼 더한 높이와 기록을 다시 비교해요. 근거와 도장이 짝이 맞는지도 확인해요.
+  inspection.retry.symmetry.match: 원래 점에서 선까지 칸 수를 세고, 반대쪽으로 같은 만큼 가 보세요. 근거와 도장이 짝이 맞는지도 확인해요.
+  inspection.retry.symmetry.mismatch: 선에서 원래 점까지, 선에서 기록까지의 거리를 각각 세어 비교해요. 근거와 도장이 짝이 맞는지도 확인해요.
+  inspection.case.coord_drone.claim: 드론 배달도 끝났어요. 착륙한 칸의 위치를 기록에 적었대요.
+  inspection.case.coord_drone.result: (0, 1)에서 오른쪽 3, 위 1이면 (3, 2)인데 기록은 (2, 3)이에요. 가로와 세로를 바꾼 좌표라 다시 적으러 갔어요.
+  inspection.case.slope_stairs.claim: 로봇이 계단을 일정하게 올라왔대요. 도착한 높이를 확인해 주세요.
+  inspection.case.slope_stairs.result: 한 칸마다 1씩 오르면 3칸 뒤 높이는 3이에요. 기록한 1은 한 칸만 센 값이라 고치러 갔어요.
+  inspection.case.slope_tank.claim: 물통 물높이가 한 칸마다 일정하게 올랐대요. 기록한 높이가 맞는지 봐 주세요.
+  inspection.case.slope_tank.result: 확인할 기록으로 규칙을 거꾸로 구하면 그 기록을 따로 확인한 게 아니에요. 한 칸마다 오르는 양을 보여 줄 다른 자료를 요청했어요.
+  inspection.case.sym_butterfly.claim: 나비 그림을 세로선을 따라 접어서 반대쪽 점을 찍었대요.
+  inspection.case.sym_butterfly.result: 선에서 원래 점과 기록한 점까지 거리가 같고 방향만 반대예요. 접으면 꼭 겹쳐서 통과했어요.
+  inspection.case.sym_tile.claim: 타일 무늬를 선대칭으로 옮겨 그렸대요. 찍은 점을 확인해 주세요.
+  inspection.case.sym_tile.result: 원래 점 (0, 3)은 가로 1의 접는 선에서 1칸 떨어져 있어요. 반대쪽으로 1칸 더, 모두 오른쪽으로 2칸 가면 (2, 3)이에요. 기록 (3, 3)은 한 칸 더 가서 다시 그리러 갔어요.
+  inspection.summary.title: 방문 기록 — 주제마다 처음 장면과 새 장면
+  inspection.summary.note: 이번 방문에서 질문하고, 근거를 고르고, 도장을 찍었어요. 그때 어떤 말이 판단을 도왔는지 떠올려 보세요.
+  inspection.summary.first.correct: 처음 장면 — 첫 선택이 맞았어요 · 그림 도움 없이
+  inspection.summary.first.correct_help: 처음 장면 — 첫 선택이 맞았어요 · 첫 선택 전에 그림 도움을 봤어요
+  inspection.summary.first.retry: "처음 장면 — 다시 {retries:int}번 골라 해결했어요 · 그림 도움 없이"
+  inspection.summary.first.retry_help: "처음 장면 — 다시 {retries:int}번 골라 해결했어요 · 첫 선택 전에 그림 도움을 봤어요"
+  inspection.summary.first.retry_later: "처음 장면 — 다시 {retries:int}번 골라 해결했어요 · 첫 선택 뒤에 그림 도움을 열었어요"
+  inspection.summary.new.correct: 새 장면 — 첫 선택이 맞았어요 · 그림 도움 없이
+  inspection.summary.new.correct_help: 새 장면 — 첫 선택이 맞았어요 · 첫 선택 전에 그림 도움을 봤어요
+  inspection.summary.new.retry: "새 장면 — 다시 {retries:int}번 골라 해결했어요 · 그림 도움 없이"
+  inspection.summary.new.retry_help: "새 장면 — 다시 {retries:int}번 골라 해결했어요 · 첫 선택 전에 그림 도움을 봤어요"
+  inspection.summary.new.retry_later: "새 장면 — 다시 {retries:int}번 골라 해결했어요 · 첫 선택 뒤에 그림 도움을 열었어요"
+
 # 금지어 — 화면 문구 어디에도 들어가면 안 된다. replacement 는 대신 쓸 말 (없으면 그 개념 자체를 쓰지 않는다)
 banned_terms:
   - {term: 입국, replacement: 게이트 통과, reason: INV-11 현실 출입국 재현 — 입국심사·입국 거부 등 모든 활용형}
   - {term: 출입국, replacement: 게이트 통과, reason: INV-11}
-  - {term: 심사, replacement: 도시 언어 게이트, reason: INV-11·INV-8 — 원천 문서의 '도시 언어 심사'는 버린 이름(K0 §3)}
   - {term: 여권, replacement: 탐험 카드, reason: INV-11}
   - {term: 비자, replacement: 탐험 카드, reason: INV-11}
   - {term: 국적, replacement: null, reason: INV-11 국적으로 구분·평가하지 않는다}
