@@ -99,5 +99,53 @@ class AnalyticsTest(unittest.TestCase):
         self.assertEqual(text.count('inspection_step = "result_shown"'), 1)
         self.assertEqual(text.count('inspection_step = "next_chosen"'), 1)
 
+class WorkshopSourceTest(unittest.TestCase):
+    """워크숍 순회(2026-10-12) — 정적 계약. 실제 동작은 tests/test_inspection.luau 와 Studio Play 로 본다."""
+
+    def test_numbers_use_integer_format(self):
+        import yaml
+        strings = yaml.safe_load(build_localization.GLOSSARY.read_text(encoding='utf-8'))['strings']
+        for key, text in strings.items():
+            if key.startswith('inspection.'):
+                self.assertNotRegex(str(text), r'\{[a-z]+\}', f'{key}: Translator 는 숫자를 0.00 으로 찍는다 — {{x:int}} 로 쓴다')
+
+    def test_new_actions_are_whitelisted_on_server(self):
+        text = (SOURCE / 'server/Main.server.luau').read_text()
+        for action in ('help', 'restart'):
+            self.assertIn(f'action ~= "{action}"', text)
+        self.assertNotIn('UserId % 2', text)
+
+    def test_snapshot_never_carries_expected_evidence(self):
+        service = (SOURCE / 'server/MissionService.luau').read_text()
+        self.assertNotRegex(service, r'evidence\s*=\s*case\.evidence')
+        self.assertIn('verdict = if phase == "resolved" or phase == "rest" then case.verdict else nil', service)
+
+    def test_camera_and_avatar_rebind_without_accumulating(self):
+        hud = (SOURCE / 'client/Hud.client.luau').read_text()
+        self.assertIn('GetPropertyChangedSignal("CurrentCamera")', hud)
+        self.assertIn('if cameraWatch then cameraWatch:Disconnect() end', hud)
+        self.assertIn('if avatarWatch then avatarWatch:Disconnect() end', hud)
+        self.assertIn('DescendantAdded:Connect(hide)', hud)
+        self.assertIn('if current.CameraType ~= Enum.CameraType.Scriptable then', hud)
+
+    def test_answer_graphic_is_optional_help(self):
+        hud = (SOURCE / 'client/Hud.client.luau').read_text()
+        self.assertIn('local open = s.help == true', hud)
+        self.assertNotIn('replayPath', hud)
+
+    def test_fold_line_and_checkable_tables(self):
+        hud = (SOURCE / 'client/Hud.client.luau').read_text()
+        service = (SOURCE / 'server/MissionService.luau').read_text()
+        # 반 칸(1.5) 접는 선은 칸을 칠하지 않고 얇은 세로선 하나로 그린다
+        self.assertNotIn('paint(s.line', hud)
+        self.assertIn('foldLine.Visible = open and s.theme == "symmetry" and s.line ~= nil', hud)
+        # gamepad 판단은 UIPadding 이 아니라 GamepadEnabled 로 한다
+        self.assertNotIn('if pad then', hud)
+        self.assertNotIn('commands[b][2]', hud)
+        # 기록 표는 한 번 만든 표를 비우고 다시 채운다 — 함수 결과로 다시 묶지 않는다
+        self.assertNotRegex(service, r'(?m)^\s*records\s*=')
+        self.assertNotIn('table.clone(pack)', service)
+
+
 if __name__ == '__main__':
     unittest.main()

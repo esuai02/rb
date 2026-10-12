@@ -14,3 +14,25 @@ claims:
     run: 1
     states: 0
     conditions: {run_nonzero: true, same_unit: grid_cell}
+  # 워크숍 심사대 (DEC-20) — 결과 문구가 실제로 말하는 계산만 등록한다.
+  - id: claim.inspection.coord_drone
+    line_key: inspection.case.coord_drone.result
+    kind: coordinate
+    origin: [0, 1]
+    moves: [{dir: right, n: 3}, {dir: up, n: 1}]
+    states: [3, 2]
+    conditions: {origin: [0, 1], axes: x_right_y_up}
+  - id: claim.inspection.sym_tile
+    line_key: inspection.case.sym_tile.result
+    kind: coordinate
+    origin: [0, 3]
+    moves: [{dir: right, n: 2}]
+    states: [2, 3]
+    conditions: {origin: [0, 3], axes: x_right_y_up}
+  - id: claim.inspection.slope_meaning
+    line_key: inspection.label.slope.meaning
+    kind: slope
+    rise: 1
+    run: 1
+    states: 1
+    conditions: {run_nonzero: true, same_unit: grid_cell}

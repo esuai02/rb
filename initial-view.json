@@ -2,10 +2,10 @@
   "schema_version": 1,
   "kind": "intent_view",
   "run_id": "rb-mission",
-  "revision": 7,
+  "revision": 8,
   "locale": "ko",
   "intent_file": "intent.md",
-  "intent_sha256": "95ca240ced0c04e6943d357f3f26ef9314f2e1d874b33df18589745faac9872a",
+  "intent_sha256": "87dc1d43cb53c2e3bfecd695e2e8b872f694ed547893be8e6f21daf07e858c18",
   "mission": "심사대 하나에서 근거를 얻어 판정하고 자발적으로 다음 사건에 참여하게 한다.",
   "focus": "Q4",
   "nodes": [
@@ -37,7 +37,7 @@
     {
       "id": "Q4",
       "label": "원본 월드 제작",
-      "outcome": "서버 권위 심사대 하나에서 질문 → 새 자료/경로 확인 → 근거 선택 → 승인·추가 확인·반려 → 원인과 NPC 결과 → 다음 사건/쉬기를 제공한다.",
+      "outcome": "서버 권위 심사대 하나에서 좌표·기울기·선대칭마다 처음 장면과 다른 맥락의 새 장면을 짝지은 여섯 사건을 질문 → 새 자료/경로 확인 → 근거 선택 → 승인·추가 확인·반려 → 원인과 NPC 결과 → 다음 사건/쉬기로 제공하고, 끝에 세션 읽기 기록 보고와 다음 사람을 위한 처음부터 다시 시작을 제공한다.",
       "depends_on": [
         "Q3"
       ],

@@ -43,7 +43,8 @@ local function onInspection(player: Player, action: unknown, detail: unknown, to
     if typeof(action) ~= "string" or typeof(detail) ~= "string" or typeof(token) ~= "string" then return end
     if #token < 1 or #token > 10 then return end
     if action ~= "sync" and action ~= "start" and action ~= "ask" and action ~= "evidence"
-        and action ~= "decide" and action ~= "next" and action ~= "rest" and action ~= "resume" then return end
+        and action ~= "decide" and action ~= "next" and action ~= "rest" and action ~= "resume"
+        and action ~= "help" and action ~= "restart" then return end
     if detail ~= "none" and detail ~= "origin" and detail ~= "move" and detail ~= "record"
         and detail ~= "match" and detail ~= "mismatch" and detail ~= "missing"
         and detail ~= "approve" and detail ~= "verify" and detail ~= "reject" then return end
@@ -51,7 +52,7 @@ local function onInspection(player: Player, action: unknown, detail: unknown, to
     if not near(player) then return end
     local session = sessions[player]
     if not session then
-        session = MissionService.new(Missions, player.UserId % 2 == 1)
+        session = MissionService.new(Missions) -- 워크숍 순회는 모든 참여자에게 같은 순서다.
         sessions[player] = session
     end
     local event = session.apply(action :: string, detail :: string, token :: string)
